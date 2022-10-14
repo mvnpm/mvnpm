@@ -1,8 +1,8 @@
-package org.npmaven;
+package org.mavenpm;
 
 import io.quarkus.test.junit.QuarkusIntegrationTest;
 
 @QuarkusIntegrationTest
-public class GreetingResourceIT extends GreetingResourceTest {
+public class MavenRepositoryApiIT extends MavenRepositoryApiTest {
     // Execute the same tests but in packaged mode.
 }
