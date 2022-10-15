@@ -1,5 +1,7 @@
-package org.mavenpm.maven.xml;
+package org.mavenpm.file.type;
 
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -8,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.IssueManagement;
@@ -16,7 +19,7 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.mavenpm.file.Sha1Util;
+import org.mavenpm.file.FileStore;
 import org.mavenpm.npm.model.Author;
 import org.mavenpm.npm.model.Bugs;
 import org.mavenpm.npm.model.Maintainer;
@@ -27,27 +30,25 @@ import org.mavenpm.npm.model.Repository;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class PomCreator {
+public class PomClient {
+    
+    @Inject 
+    FileStore fileCreator;
     
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
-    public String pomSha1(org.mavenpm.npm.model.Package p) {
-        try {
-            byte[] pomxml = toPomXml(p);
-            return Sha1Util.sha1(pomxml);
+    public Uni<AsyncFile> createPom(org.mavenpm.npm.model.Package p, String localFileName) {
+        
+        try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
+            writePomToStream(p, baos);
+            byte[] contents = baos.toByteArray();
+            return fileCreator.createFile(p, localFileName, contents);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
     
-    public byte[] toPomXml(org.mavenpm.npm.model.Package npmpackage) throws IOException{
-        try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
-            writeTo(npmpackage, baos);
-            return baos.toByteArray();
-        }
-    }
-    
-    public void writeTo(org.mavenpm.npm.model.Package npmpackage, OutputStream entityStream) throws IOException {
+    private void writePomToStream(org.mavenpm.npm.model.Package npmpackage, OutputStream entityStream) throws IOException {
         Model model = new Model();
         model.setGroupId(GROUP_ID);
         model.setArtifactId(npmpackage.name());

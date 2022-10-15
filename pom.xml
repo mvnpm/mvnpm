@@ -56,12 +56,6 @@
             <version>${version.maven-model}</version>
         </dependency>
 
-        <!-- To cache the generated files -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-cache</artifactId>
-        </dependency>
-
         <!-- To fetch the info from npm -->
         <dependency>
             <groupId>io.quarkus</groupId>
