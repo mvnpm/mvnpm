@@ -6,6 +6,9 @@ import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
@@ -29,11 +32,7 @@ public class FileStore {
     @ConfigProperty(name = "mvnpm.local-user-directory")
     Optional<String> localUserDirectory;
     
-    @ConfigProperty(name = "mvnpm.group-id", defaultValue = "org.mvnpm")
-    String groupId;
-    
     public Uni<AsyncFile> createFile(org.mvnpm.npm.model.Package p, String localFileName, byte[] content){
-        
         Uni<Void> createdDir = vertx.fileSystem().mkdirs(getLocalDirectory(p));
         return createdDir.onItem().transformToUni((createdDirs) -> {
             Uni<Void> emptyFile = vertx.fileSystem().createFile(localFileName);
@@ -62,9 +61,19 @@ public class FileStore {
         return localUserDirectory.orElse(CACHE_DIR) + File.separator + 
                 DOT + localM2Directory + File.separator +
                 REPOSITORY + File.separator + 
-                groupId.replaceAll(DOT, File.separator) + File.separator +
+                ORG_MVNPM + File.separator +
                 p.name() + File.separator + 
                 p.version();
+    }
+    
+    public String encode(String s){
+        return s.replaceAll(SLASH, UNDERSCORE);
+//        try {
+//            return URLEncoder.encode(s, StandardCharsets.UTF_8.name());
+//        } catch (UnsupportedEncodingException ex) {
+//            ex.printStackTrace();
+//            return s;
+//        }
     }
     
     public String getLocalShaFullPath(FileType type, org.mvnpm.npm.model.Package p){
@@ -77,7 +86,7 @@ public class FileStore {
     }
     
     public String getLocalFileName(FileType type, org.mvnpm.npm.model.Package p){
-        return p.name() + DASH + p.version() + DOT + type.name();
+        return encode(p.name()) + DASH + p.version() + DOT + type.name();
     }
     
     public String getLocalSha1FileName(FileType type, org.mvnpm.npm.model.Package p){
@@ -101,9 +110,11 @@ public class FileStore {
     public static final OpenOptions READ_ONLY_OPTIONS = (new OpenOptions()).setCreate(false).setWrite(false);
     public static final String DOT = ".";
     public static final String SHA1 = "sha1";
-    
+    private static final String SLASH = "/";
+    private static final String UNDERSCORE = "_";
     private static final String DASH = "-";
     private static final String REPOSITORY = "repository";
+    private static final String ORG_MVNPM = "org" + File.separator + "mvnpm";
     private static final String USER_HOME = "user.home";
     private static final String CACHE_DIR = System.getProperty(USER_HOME);
 }

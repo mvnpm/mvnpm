@@ -49,20 +49,33 @@ public class MavenRepositoryApi {
             String name = String.join(URICreator.SLASH, nameParts);
             String version = parts[numberOfPartsInName];
             String filename = parts[parts.length-1];
-            String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);
-            
-            return getFile(name, version, FileType.valueOf(type));
-            
+            if(isSha1Request(filename)){
+                filename = filename.substring(0, filename.lastIndexOf(URICreator.DOT));
+                String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);
+                return getSha1(name, version, FileType.valueOf(type));
+            } else {
+                String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);
+                return getFile(name, version, FileType.valueOf(type));                
+            }
         } else if (parts.length == 3) {
             String name = parts[0];
             String version = parts[1];
             String filename = parts[2];
-            String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);
-            
-            return getFile(name, version, FileType.valueOf(type));
+            if(isSha1Request(filename)){
+                filename = filename.substring(0, filename.lastIndexOf(URICreator.DOT));
+                String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);            
+                return getSha1(name, version, FileType.valueOf(type));
+            }else{
+                String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);            
+                return getFile(name, version, FileType.valueOf(type));
+            }
         }
         
         return Uni.createFrom().item(Response.status(Response.Status.NOT_FOUND).build());
+    }
+    
+    private boolean isSha1Request(String filename){
+        return filename.endsWith(URICreator.DOT + SHA1);
     }
     
     private Uni<Response> getFile(String artifactId, String version, FileType type) {

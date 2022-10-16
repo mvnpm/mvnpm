@@ -38,7 +38,7 @@ public class FileClient {
         Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
         return checkIfLocal.onItem()
                 .transformToUni((local) -> { 
-                    return isLocalFile(type, p, localFileName, local);
+                    return fetch(type, p, localFileName, local);
                 });
     }
     
@@ -48,19 +48,21 @@ public class FileClient {
         Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
         return checkIfLocal.onItem()
                 .transformToUni((local) -> { 
-                    return isLocalSha1(type, p, localFileName, local);
+                    return fetchSha1(type, p, localFileName, local);
                 });
     }
     
-    private Uni<AsyncFile> isLocalFile(FileType type, org.mvnpm.npm.model.Package p, String localFileName, Boolean local){
+    private Uni<AsyncFile> fetch(FileType type, org.mvnpm.npm.model.Package p, String localFileName, Boolean local){
         if(local){
+            Log.debug("Serving from cache [" + localFileName + "]");
             return fileStore.readFile(localFileName);
         }else{
+            Log.debug("Serving from origin [" + localFileName + "]");
             return fetchOriginal(type, p, localFileName);
         }
     }
     
-    private Uni<AsyncFile> isLocalSha1(FileType type, org.mvnpm.npm.model.Package p, String localFileName, Boolean local){
+    private Uni<AsyncFile> fetchSha1(FileType type, org.mvnpm.npm.model.Package p, String localFileName, Boolean local){
         if(local){
             Log.info("Serving from cache [" + localFileName + "]");
             return fileStore.readFile(localFileName);

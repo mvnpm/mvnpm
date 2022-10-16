@@ -20,7 +20,6 @@ import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.mvnpm.file.FileStore;
-import org.mvnpm.npm.model.Author;
 import org.mvnpm.npm.model.Bugs;
 import org.mvnpm.npm.model.Maintainer;
 import org.mvnpm.npm.model.Repository;
