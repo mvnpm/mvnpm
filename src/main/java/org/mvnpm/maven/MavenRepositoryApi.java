@@ -22,7 +22,7 @@ import org.mvnpm.npm.model.Project;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  * TODO: Add source jar
  */
-@Path("/mvn")
+@Path("/maven2")
 public class MavenRepositoryApi {
 
     @RestClient 
