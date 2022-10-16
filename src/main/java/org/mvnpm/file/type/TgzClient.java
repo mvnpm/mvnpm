@@ -1,4 +1,4 @@
-package org.mavenpm.file.type;
+package org.mvnpm.file.type;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.http.HttpMethod;
@@ -10,7 +10,7 @@ import io.vertx.mutiny.core.http.HttpClientResponse;
 import java.net.URL;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import org.mavenpm.file.FileStore;
+import org.mvnpm.file.FileStore;
 
 /**
  * Downloads or stream the tar files from npm
@@ -26,9 +26,9 @@ public class TgzClient {
     Vertx vertx;
     
     @Inject 
-    FileStore fileCreator;
+    FileStore fileStore;
     
-    public Uni<AsyncFile> fetchRemote(org.mavenpm.npm.model.Package p, String localFileName){
+    public Uni<AsyncFile> fetchRemote(org.mvnpm.npm.model.Package p, String localFileName){
         URL tarball = p.dist().tarball();
         
         RequestOptions requestOptions = getRequestOptions(tarball);
@@ -38,7 +38,7 @@ public class TgzClient {
         });
     }
     
-    private Uni<AsyncFile> request(org.mavenpm.npm.model.Package p, String localFileName, HttpClientRequest req){
+    private Uni<AsyncFile> request(org.mvnpm.npm.model.Package p, String localFileName, HttpClientRequest req){
         return req.connect().onItem().transformToUni((res) -> {
             
             int statusCode = res.statusCode();
@@ -50,9 +50,9 @@ public class TgzClient {
         });
     }
     
-    private Uni<AsyncFile> response(org.mavenpm.npm.model.Package p, String localFileName, HttpClientResponse res){
+    private Uni<AsyncFile> response(org.mvnpm.npm.model.Package p, String localFileName, HttpClientResponse res){
         return res.body().onItem().transformToUni((body)  -> {
-            return fileCreator.createFile(p, localFileName, body.getBytes());
+            return fileStore.createFile(p, localFileName, body.getBytes());
         });
     }
     

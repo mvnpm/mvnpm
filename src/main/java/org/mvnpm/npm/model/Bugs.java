@@ -1,4 +1,4 @@
-package org.mavenpm.npm.model;
+package org.mvnpm.npm.model;
 
 import java.net.URL;
 

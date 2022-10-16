@@ -1,11 +1,11 @@
-package org.mavenpm.npm;
+package org.mvnpm.npm;
 
 import io.smallrye.mutiny.Uni;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import org.mavenpm.npm.model.Project;
+import org.mvnpm.npm.model.Project;
 
 /**
  * The main client on https://registry.npmjs.org
@@ -21,7 +21,7 @@ public interface NpmRegistryClient {
 
     @GET
     @Path("/{project}/{version}")
-    public Uni<org.mavenpm.npm.model.Package> getPackage(
+    public Uni<org.mvnpm.npm.model.Package> getPackage(
             @PathParam("project") String project, 
             @PathParam("version") String version);
 }

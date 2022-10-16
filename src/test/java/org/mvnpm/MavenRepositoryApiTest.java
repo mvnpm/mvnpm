@@ -1,4 +1,4 @@
-package org.mavenpm;
+package org.mvnpm;
 
 import io.quarkus.test.junit.QuarkusTest;
 import org.junit.jupiter.api.Test;

@@ -1,4 +1,4 @@
-package org.mavenpm.event;
+package org.mvnpm.event;
 
 import io.quarkus.logging.Log;
 import javax.enterprise.context.ApplicationScoped;

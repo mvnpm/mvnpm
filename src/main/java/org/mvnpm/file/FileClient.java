@@ -1,14 +1,14 @@
-package org.mavenpm.file;
+package org.mvnpm.file;
 
-import org.mavenpm.file.type.JarClient;
-import org.mavenpm.file.type.TgzClient;
+import org.mvnpm.file.type.JarClient;
+import org.mvnpm.file.type.TgzClient;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.file.AsyncFile;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import org.mavenpm.file.type.PomClient;
+import org.mvnpm.file.type.PomClient;
 
 /**
  * Get the jar or tgz from either local file system or from it's origin
@@ -32,7 +32,7 @@ public class FileClient {
     @Inject
     FileStore fileStore;
     
-    public Uni<AsyncFile> streamFile(FileType type, org.mavenpm.npm.model.Package p) {
+    public Uni<AsyncFile> streamFile(FileType type, org.mvnpm.npm.model.Package p) {
         String localFileName = fileStore.getLocalFullPath(type, p);
         
         Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
@@ -42,7 +42,7 @@ public class FileClient {
                 });
     }
     
-    public Uni<AsyncFile> streamSha1(FileType type, org.mavenpm.npm.model.Package p) {
+    public Uni<AsyncFile> streamSha1(FileType type, org.mvnpm.npm.model.Package p) {
         String localFileName = fileStore.getLocalShaFullPath(type, p);
         
         Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
@@ -52,7 +52,7 @@ public class FileClient {
                 });
     }
     
-    private Uni<AsyncFile> isLocalFile(FileType type, org.mavenpm.npm.model.Package p, String localFileName, Boolean local){
+    private Uni<AsyncFile> isLocalFile(FileType type, org.mvnpm.npm.model.Package p, String localFileName, Boolean local){
         if(local){
             return fileStore.readFile(localFileName);
         }else{
@@ -60,7 +60,7 @@ public class FileClient {
         }
     }
     
-    private Uni<AsyncFile> isLocalSha1(FileType type, org.mavenpm.npm.model.Package p, String localFileName, Boolean local){
+    private Uni<AsyncFile> isLocalSha1(FileType type, org.mvnpm.npm.model.Package p, String localFileName, Boolean local){
         if(local){
             Log.info("Serving from cache [" + localFileName + "]");
             return fileStore.readFile(localFileName);
@@ -74,7 +74,7 @@ public class FileClient {
         }
     }
     
-    private Uni<AsyncFile> fetchOriginal(FileType type, org.mavenpm.npm.model.Package p, String localFileName){
+    private Uni<AsyncFile> fetchOriginal(FileType type, org.mvnpm.npm.model.Package p, String localFileName){
         switch (type) {
             case tgz -> {
                 return tgzClient.fetchRemote(p, localFileName);

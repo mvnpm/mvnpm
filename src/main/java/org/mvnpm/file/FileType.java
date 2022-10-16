@@ -1,4 +1,4 @@
-package org.mavenpm.file;
+package org.mvnpm.file;
 
 public enum FileType {
     jar, tgz, pom

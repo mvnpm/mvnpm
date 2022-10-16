@@ -1,4 +1,4 @@
-package org.mavenpm.file.type;
+package org.mvnpm.file.type;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.file.AsyncFile;
@@ -19,11 +19,11 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.mavenpm.file.FileStore;
-import org.mavenpm.npm.model.Author;
-import org.mavenpm.npm.model.Bugs;
-import org.mavenpm.npm.model.Maintainer;
-import org.mavenpm.npm.model.Repository;
+import org.mvnpm.file.FileStore;
+import org.mvnpm.npm.model.Author;
+import org.mvnpm.npm.model.Bugs;
+import org.mvnpm.npm.model.Maintainer;
+import org.mvnpm.npm.model.Repository;
 
 /**
  * Creates a pom.xml from the NPM Package
@@ -37,7 +37,7 @@ public class PomClient {
     
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
-    public Uni<AsyncFile> createPom(org.mavenpm.npm.model.Package p, String localFileName) {
+    public Uni<AsyncFile> createPom(org.mvnpm.npm.model.Package p, String localFileName) {
         
         try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
             writePomToStream(p, baos);
@@ -48,21 +48,21 @@ public class PomClient {
         }
     }
     
-    private void writePomToStream(org.mavenpm.npm.model.Package npmpackage, OutputStream entityStream) throws IOException {
+    private void writePomToStream(org.mvnpm.npm.model.Package p, OutputStream entityStream) throws IOException {
         Model model = new Model();
         model.setGroupId(GROUP_ID);
-        model.setArtifactId(npmpackage.name());
-        model.setVersion(npmpackage.version());
+        model.setArtifactId(p.name());
+        model.setVersion(p.version());
         model.setPackaging(JAR);
-        model.setName(toName(npmpackage.name()));
-        model.setDescription(npmpackage.description());
-        model.setLicenses(List.of(toLicense(npmpackage.license())));
-        model.setUrl(npmpackage.homepage().toString());
-        model.setOrganization(toOrganization(npmpackage.author()));
-        model.setScm(toScm(npmpackage.repository()));
-        model.setIssueManagement(toIssueManagement(npmpackage.bugs()));
-        model.setDevelopers(toDevelopers(npmpackage.maintainers()));
-        model.setDependencies(toDependencies(npmpackage.dependencies()));
+        model.setName(toName(p.name()));
+        model.setDescription(p.description());
+        model.setLicenses(List.of(toLicense(p.license())));
+        model.setUrl(p.homepage().toString());
+        model.setOrganization(toOrganization(p.author()));
+        model.setScm(toScm(p.repository()));
+        model.setIssueManagement(toIssueManagement(p.bugs()));
+        model.setDevelopers(toDevelopers(p.maintainers()));
+        model.setDependencies(toDependencies(p.dependencies()));
         mavenXpp3Writer.write(entityStream, model);
     }
     
@@ -142,7 +142,7 @@ public class PomClient {
     }
     
     private static final String JAR = "jar";
-    private static final String GROUP_ID = "org.mavenpm";
+    private static final String GROUP_ID = "org.mvnpm";
     private static final String RUNTIME = "runtime";
     private static final String AT = "@";
     private static final String EMPTY = "";

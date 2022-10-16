@@ -1,4 +1,4 @@
-package org.mavenpm.npm.model;
+package org.mvnpm.npm.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URL;

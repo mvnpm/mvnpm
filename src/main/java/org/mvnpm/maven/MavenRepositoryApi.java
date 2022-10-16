@@ -1,4 +1,4 @@
-package org.mavenpm.maven;
+package org.mvnpm.maven;
 
 import io.smallrye.mutiny.Uni;
 import javax.inject.Inject;
@@ -10,12 +10,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.mavenpm.file.FileClient;
-import org.mavenpm.file.FileStore;
-import org.mavenpm.file.FileType;
-import org.mavenpm.npm.NpmRegistryClient;
-import org.mavenpm.npm.model.Package;
-import org.mavenpm.npm.model.Project;
+import org.mvnpm.file.FileClient;
+import org.mvnpm.file.FileStore;
+import org.mvnpm.file.FileType;
+import org.mvnpm.npm.NpmRegistryClient;
+import org.mvnpm.npm.model.Package;
+import org.mvnpm.npm.model.Project;
 
 /**
  * The maven repository endpoint
@@ -35,7 +35,7 @@ public class MavenRepositoryApi {
     FileStore fileStore;
     
     @GET
-    @Path("/org/mavenpm/{artifactId}/{version}/{artifactId}-{version}.tgz")
+    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.tgz")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Uni<Response> getTgz(@PathParam("artifactId") String artifactId, 
                            @DefaultValue(LATEST) @PathParam("version") String version){
@@ -43,7 +43,7 @@ public class MavenRepositoryApi {
     }
     
     @GET
-    @Path("/org/mavenpm/{artifactId}/{version}/{artifactId}-{version}.tgz.sha1")
+    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.tgz.sha1")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Uni<Response> getTgzSha1(@PathParam("artifactId") String artifactId, 
                            @DefaultValue(LATEST) @PathParam("version") String version){
@@ -51,7 +51,7 @@ public class MavenRepositoryApi {
     }
     
     @GET
-    @Path("/org/mavenpm/{artifactId}/{version}/{artifactId}-{version}.jar")
+    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.jar")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Uni<Response> getJar(@PathParam("artifactId") String artifactId, 
                            @DefaultValue(LATEST) @PathParam("version") String version){
@@ -59,7 +59,7 @@ public class MavenRepositoryApi {
     }
     
     @GET
-    @Path("/org/mavenpm/{artifactId}/{version}/{artifactId}-{version}.jar.sha1")
+    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.jar.sha1")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Uni<Response> getJarSha1(@PathParam("artifactId") String artifactId, 
                            @DefaultValue(LATEST) @PathParam("version") String version){
@@ -67,7 +67,7 @@ public class MavenRepositoryApi {
     }
     
     @GET
-    @Path("/org/mavenpm/{artifactId}/{version}/{artifactId}-{version}.pom")
+    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.pom")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Uni<Response> getPom(@PathParam("artifactId") String artifactId, 
                            @DefaultValue(LATEST) @PathParam("version") String version){
@@ -75,7 +75,7 @@ public class MavenRepositoryApi {
     }
     
     @GET
-    @Path("/org/mavenpm/{artifactId}/{version}/{artifactId}-{version}.pom.sha1")
+    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.pom.sha1")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Uni<Response> getPomSha1(@PathParam("artifactId") String artifactId, 
                            @DefaultValue(LATEST) @PathParam("version") String version){

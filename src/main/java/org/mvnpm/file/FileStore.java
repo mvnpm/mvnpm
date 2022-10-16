@@ -1,4 +1,4 @@
-package org.mavenpm.file;
+package org.mvnpm.file;
 
 import io.smallrye.mutiny.Uni;
 import io.vertx.core.file.OpenOptions;
@@ -23,16 +23,16 @@ public class FileStore {
     @Inject
     Vertx vertx;
     
-    @ConfigProperty(name = "mavenpm.local-m2-directory", defaultValue = "m2")
+    @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = "m2")
     String localM2Directory;
     
-    @ConfigProperty(name = "mavenpm.local-user-directory")
+    @ConfigProperty(name = "mvnpm.local-user-directory")
     Optional<String> localUserDirectory;
     
-    @ConfigProperty(name = "mavenpm.group-id", defaultValue = "org.mavenpm")
+    @ConfigProperty(name = "mvnpm.group-id", defaultValue = "org.mvnpm")
     String groupId;
     
-    public Uni<AsyncFile> createFile(org.mavenpm.npm.model.Package p, String localFileName, byte[] content){
+    public Uni<AsyncFile> createFile(org.mvnpm.npm.model.Package p, String localFileName, byte[] content){
         
         Uni<Void> createdDir = vertx.fileSystem().mkdirs(getLocalDirectory(p));
         return createdDir.onItem().transformToUni((createdDirs) -> {
@@ -58,7 +58,7 @@ public class FileStore {
         return vertx.fileSystem().open(localFileName, READ_ONLY_OPTIONS);
     }
     
-    public String getLocalDirectory(org.mavenpm.npm.model.Package p){
+    public String getLocalDirectory(org.mvnpm.npm.model.Package p){
         return localUserDirectory.orElse(CACHE_DIR) + File.separator + 
                 DOT + localM2Directory + File.separator +
                 REPOSITORY + File.separator + 
@@ -67,20 +67,20 @@ public class FileStore {
                 p.version();
     }
     
-    public String getLocalShaFullPath(FileType type, org.mavenpm.npm.model.Package p){
+    public String getLocalShaFullPath(FileType type, org.mvnpm.npm.model.Package p){
         return getLocalFullPath(type, p) + DOT + SHA1;
     }
     
-    public String getLocalFullPath(FileType type, org.mavenpm.npm.model.Package p){
+    public String getLocalFullPath(FileType type, org.mvnpm.npm.model.Package p){
         return getLocalDirectory(p) + File.separator + 
                 getLocalFileName(type, p);
     }
     
-    public String getLocalFileName(FileType type, org.mavenpm.npm.model.Package p){
+    public String getLocalFileName(FileType type, org.mvnpm.npm.model.Package p){
         return p.name() + DASH + p.version() + DOT + type.name();
     }
     
-    public String getLocalSha1FileName(FileType type, org.mavenpm.npm.model.Package p){
+    public String getLocalSha1FileName(FileType type, org.mvnpm.npm.model.Package p){
         return getLocalFileName(type, p) + DOT + SHA1;
     }
     

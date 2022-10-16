@@ -1,6 +1,5 @@
-package org.mavenpm.maven;
+package org.mvnpm.maven;
 
-import io.quarkus.logging.Log;
 import java.util.Optional;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
