@@ -2,7 +2,6 @@ package org.mvnpm.maven;
 
 import io.smallrye.mutiny.Uni;
 import javax.inject.Inject;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -35,58 +34,40 @@ public class MavenRepositoryApi {
     FileStore fileStore;
     
     @GET
-    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.tgz")
+    @Path("/org/mvnpm/{artifactIdVersionType : (.+)?}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Uni<Response> getTgz(@PathParam("artifactId") String artifactId, 
-                           @DefaultValue(LATEST) @PathParam("version") String version){
-        return getFile(artifactId, version, FileType.tgz);
-    }
-    
-    @GET
-    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.tgz.sha1")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Uni<Response> getTgzSha1(@PathParam("artifactId") String artifactId, 
-                           @DefaultValue(LATEST) @PathParam("version") String version){
-        return getSha1(artifactId, version, FileType.tgz);
-    }
-    
-    @GET
-    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.jar")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Uni<Response> getJar(@PathParam("artifactId") String artifactId, 
-                           @DefaultValue(LATEST) @PathParam("version") String version){
-        return getFile(artifactId, version, FileType.jar);
-    }
-    
-    @GET
-    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.jar.sha1")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Uni<Response> getJarSha1(@PathParam("artifactId") String artifactId, 
-                           @DefaultValue(LATEST) @PathParam("version") String version){
-        return getSha1(artifactId, version, FileType.jar);
-    }
-    
-    @GET
-    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.pom")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Uni<Response> getPom(@PathParam("artifactId") String artifactId, 
-                           @DefaultValue(LATEST) @PathParam("version") String version){
-        return getFile(artifactId, version, FileType.pom);
-    }
-    
-    @GET
-    @Path("/org/mvnpm/{artifactId}/{version}/{artifactId}-{version}.pom.sha1")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Uni<Response> getPomSha1(@PathParam("artifactId") String artifactId, 
-                           @DefaultValue(LATEST) @PathParam("version") String version){
-        return getSha1(artifactId, version, FileType.pom);
+    public Uni<Response> getAny(@PathParam("artifactIdVersionType") String artifactIdVersionType){
+        
+        String[] parts = artifactIdVersionType.split(URICreator.SLASH);
+        
+        if(parts.length>3){
+            int numberOfPartsInName = ((parts.length - 3)/2) + 1;
+            String[] nameParts = new String[numberOfPartsInName];
+            for (int i = 0; i < numberOfPartsInName; i++) {
+                nameParts[i] = parts[i];
+            }
+            String name = String.join(URICreator.SLASH, nameParts);
+            String version = parts[numberOfPartsInName];
+            String filename = parts[parts.length-1];
+            String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);
+            
+            return getFile(name, version, FileType.valueOf(type));
+            
+        } else if (parts.length == 3) {
+            String name = parts[0];
+            String version = parts[1];
+            String filename = parts[2];
+            String type = filename.substring(filename.lastIndexOf(URICreator.DOT) + 1);
+            
+            return getFile(name, version, FileType.valueOf(type));
+        }
+        
+        return Uni.createFrom().item(Response.status(Response.Status.NOT_FOUND).build());
     }
     
     private Uni<Response> getFile(String artifactId, String version, FileType type) {
         if(version.equalsIgnoreCase(LATEST)){
-            Uni<Project> project = extensionsService.getProject(artifactId);
-            return project.onItem()
-                    .transformToUni(p -> getFile(artifactId, p.distTags().latest(), type));
+            return redirectToLatest(artifactId, type.name());
         }else {
             Uni<Package> npmPackage = extensionsService.getPackage(artifactId, version);
             
@@ -102,9 +83,7 @@ public class MavenRepositoryApi {
     
     private Uni<Response> getSha1(String artifactId, String version, FileType type) {
         if(version.equalsIgnoreCase(LATEST)){
-            Uni<Project> project = extensionsService.getProject(artifactId);
-            return project.onItem()
-                    .transformToUni(p -> getFile(artifactId, p.distTags().latest(), type));
+            return redirectToLatest(artifactId, type.name() + URICreator.DOT + SHA1);
         }else {
             Uni<Package> npmPackage = extensionsService.getPackage(artifactId, version);
             
@@ -118,6 +97,22 @@ public class MavenRepositoryApi {
         }
     }
     
+    private Uni<Response> redirectToLatest(String artifactId, String type){
+        Uni<String> version = getLatestVersion(artifactId);
+        return version.onItem().transform((latest) -> {
+            return Response.temporaryRedirect(URICreator.createURI(artifactId, latest, type)).build();
+        });
+    }
+    
+    private Uni<String> getLatestVersion(String artifactId){
+        Uni<Project> project = extensionsService.getProject(artifactId);
+        return project.onItem()
+                .transform((p) -> {
+                    return p.distTags().latest();
+                });
+    }
+    
+    private static final String SHA1 = "sha1";
     private static final String LATEST = "latest";
     private static final String HEADER_CONTENT_DISPOSITION_KEY = "Content-Disposition";
     private static final String HEADER_CONTENT_DISPOSITION_VALUE = "attachment, filename=";

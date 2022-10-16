@@ -1,4 +1,4 @@
-package org.mvnpm.maven;
+package org.mvnpm.maven.filter;
 
 import java.util.Optional;
 import javax.enterprise.event.Event;

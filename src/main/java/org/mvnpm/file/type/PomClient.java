@@ -58,7 +58,7 @@ public class PomClient {
         model.setDescription(p.description());
         model.setLicenses(List.of(toLicense(p.license())));
         model.setUrl(p.homepage().toString());
-        model.setOrganization(toOrganization(p.author()));
+        model.setOrganization(toOrganization(p));
         model.setScm(toScm(p.repository()));
         model.setIssueManagement(toIssueManagement(p.bugs()));
         model.setDevelopers(toDevelopers(p.maintainers()));
@@ -72,9 +72,16 @@ public class PomClient {
         return l;
     }
     
-    private Organization toOrganization(Author author){
+    private Organization toOrganization(org.mvnpm.npm.model.Package p){
         Organization o = new Organization();
-        o.setName(author.name());
+        if(p.author()!=null){
+            o.setName(p.author().name());
+        }else{
+            o.setName(p.name());
+        }
+        if(p.homepage()!=null){
+            o.setUrl(p.homepage().toString());
+        }
         return o;
     }
     
