@@ -4,14 +4,38 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     
     <name>mvnpm</name>
+    <description>Maven on NPM</description>
+    <url>https://mvnpm.org/</url>
+    
+    <organization>
+        <name>mvnpm</name>
+        <url>https://mvnpm.org/</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>Apache-2.0</name>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>Phillip Kruger</name>
+            <email>phillip.kruger@gmail.com</email>
+            <url>https://www.phillip-kruger.com</url>
+        </developer>
+    </developers>
+    <scm>
+        <connection>git+https://github.com/mvnpm/mvnpm.git</connection>
+        <developerConnection>git+https://github.com/mvnpm/mvnpm.git</developerConnection>
+        <url>git+https://github.com/mvnpm/mvnpm.git</url>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/mvnpm/mvnpm/issues</url>
+    </issueManagement>
     
     <properties>
-        <version.maven-model>3.8.6</version.maven-model>
-        <version.commons-compress>1.21</version.commons-compress>
-        
         <compiler-plugin.version>3.8.1</compiler-plugin.version>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -50,14 +74,12 @@
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
-            <version>${version.maven-model}</version>
         </dependency>
 
         <!-- To read the tar -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>${version.commons-compress}</version>
         </dependency>
 
         <!-- To fetch the info from npm -->
