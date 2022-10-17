@@ -45,4 +45,5 @@ TODO ... (import map etc)
 
 ## Server install
 
-export MVNPM_LOCAL_USER_DIRECTORY=/home/pkruger/mvnpm
+`export MVNPM_LOCAL_USER_DIRECTORY=/home/pkruger/mvnpm`
+`nohup mvnpm-1.0.0-runner > mvnpm.log &`
