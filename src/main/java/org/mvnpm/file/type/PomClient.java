@@ -20,6 +20,7 @@ import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.mvnpm.file.FileStore;
+import org.mvnpm.maven.NameCreator;
 import org.mvnpm.npm.model.Bugs;
 import org.mvnpm.npm.model.Maintainer;
 import org.mvnpm.npm.model.Repository;
@@ -49,11 +50,12 @@ public class PomClient {
     
     private void writePomToStream(org.mvnpm.npm.model.Package p, OutputStream entityStream) throws IOException {
         Model model = new Model();
+        model.setModelVersion(MODEL_VERSION);
         model.setGroupId(GROUP_ID);
-        model.setArtifactId(p.name());
+        model.setArtifactId(NameCreator.toArtifactId(p.name()));
         model.setVersion(p.version());
         model.setPackaging(JAR);
-        model.setName(toName(p.name()));
+        model.setName(NameCreator.toDisplayName(p.name()));
         model.setDescription(p.description());
         model.setLicenses(toLicenses(p.license()));
         if(p.homepage()!=null)model.setUrl(p.homepage().toString());
@@ -79,7 +81,7 @@ public class PomClient {
         if(p.author()!=null){
             o.setName(p.author().name());
         }else{
-            o.setName(p.name());
+            o.setName(NameCreator.toDisplayName(p.name()));
         }
         if(p.homepage()!=null){
             o.setUrl(p.homepage().toString());
@@ -96,27 +98,27 @@ public class PomClient {
         return null;
     }
     
-    // TODO: Clean this a bit
     private Scm toScm(Repository repository){
         if(repository!=null && repository.url()!=null && !repository.url().isEmpty()){
+            String u = repository.url();
+            if(u.startsWith(GIT_PLUS)){
+                u = u.substring(GIT_PLUS.length());
+            }
+            String conn = u;
+            String repo = u;
+            if(repo.endsWith(DOT_GIT)){
+                repo = repo.substring(0, repo.length() - DOT_GIT.length());
+            }
+            if(!conn.endsWith(DOT_GIT)){
+                conn = conn + DOT_GIT;
+            }
             Scm s = new Scm();
-            s.setUrl(repository.url());
-            s.setConnection(repository.url());
-            s.setDeveloperConnection(repository.url());
+            s.setUrl(repo);
+            s.setConnection(conn);
+            s.setDeveloperConnection(conn);
             return s;
         }
         return null;
-    }
-    
-    private String toName(String name){
-        if(name.contains(AT)){
-            name = name.replace(AT, EMPTY);
-        }
-        if(name.contains(SLASH)){
-            name = name.replace(SLASH, SPACE);
-        }
-        
-        return name;
     }
     
     private List<Developer> toDevelopers(List<Maintainer> maintainers){
@@ -137,13 +139,13 @@ public class PomClient {
         if(dependencies!=null && !dependencies.isEmpty()){
             List<Dependency> ds = new ArrayList<>();
             for(Map.Entry<String,String> e:dependencies.entrySet()){
-                String artifactId = e.getKey();
+                String artifactId = NameCreator.toArtifactId(e.getKey());
                 String version = e.getValue();
                 Dependency d = new Dependency();
                 d.setGroupId(GROUP_ID);
                 d.setArtifactId(artifactId);
                 d.setVersion(toVersion(version));
-                d.setScope(RUNTIME); // TODO: Confirm this.
+                d.setScope(RUNTIME);
                 ds.add(d);
             }
             return ds;
@@ -162,10 +164,10 @@ public class PomClient {
     private static final String JAR = "jar";
     private static final String GROUP_ID = "org.mvnpm";
     private static final String RUNTIME = "runtime";
-    private static final String AT = "@";
     private static final String EMPTY = "";
-    private static final String SLASH = "/";
-    private static final String SPACE = " ";
-    private static final String CARET = "^";
     
+    private static final String CARET = "^";
+    private static final String MODEL_VERSION = "4.0.0";
+    private static final String GIT_PLUS = "git+";
+    private static final String DOT_GIT = ".git";
 }

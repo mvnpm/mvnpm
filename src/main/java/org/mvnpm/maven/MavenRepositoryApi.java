@@ -25,7 +25,7 @@ import org.mvnpm.npm.model.Project;
 public class MavenRepositoryApi {
 
     @RestClient 
-    NpmRegistryClient extensionsService;
+    NpmRegistryClient npmRegistryClient;
     
     @Inject
     FileClient fileClient; 
@@ -82,7 +82,7 @@ public class MavenRepositoryApi {
         if(version.equalsIgnoreCase(LATEST)){
             return redirectToLatest(artifactId, type.name());
         }else {
-            Uni<Package> npmPackage = extensionsService.getPackage(artifactId, version);
+            Uni<Package> npmPackage = npmRegistryClient.getPackage(NameCreator.toName(artifactId), version);
             
             return npmPackage.onItem().transformToUni((p) -> {
                 String filename = fileStore.getLocalFileName(type, p);
@@ -98,7 +98,7 @@ public class MavenRepositoryApi {
         if(version.equalsIgnoreCase(LATEST)){
             return redirectToLatest(artifactId, type.name() + URICreator.DOT + SHA1);
         }else {
-            Uni<Package> npmPackage = extensionsService.getPackage(artifactId, version);
+            Uni<Package> npmPackage = npmRegistryClient.getPackage(NameCreator.toName(artifactId), version);
             
             return npmPackage.onItem().transformToUni((p) -> {
                 String filename = fileStore.getLocalSha1FileName(type, p);
@@ -118,7 +118,7 @@ public class MavenRepositoryApi {
     }
     
     private Uni<String> getLatestVersion(String artifactId){
-        Uni<Project> project = extensionsService.getProject(artifactId);
+        Uni<Project> project = npmRegistryClient.getProject(NameCreator.toName(artifactId));
         return project.onItem()
                 .transform((p) -> {
                     return p.distTags().latest();

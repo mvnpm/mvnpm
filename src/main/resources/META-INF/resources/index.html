@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>mvnpm</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <script type="importmap" src="/_static/lit/importmap.json"></script>
+            
+        <style>
+            html, body {
+                font-family: 'Trebuchet MS', sans-serif;
+                margin: 0;
+                width:100vw;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                overflow: hidden;
+                line-height: 1.6;
+                -webkit-font-smoothing: antialiased;
+            }
+            header {
+                background: #66b343;
+                color: white;
+                display: flex;
+                align-items: center;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            header img{
+                height: 100px;
+            }
+            main {
+                width:100vw;
+                height: 100%;
+                display: flex;
+                flex-direction: row;
+                justify-content: flex-start;
+                overflow-y: scroll;
+            }
+            .slogan {
+                padding-right: 10px;
+            }
+            footer {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                width: 100%;
+                font-size: smaller;
+                color: grey;
+            }
+        </style>    
+    </head>
+    
+    <body>
+    <header>
+        <img src="banner.png" alt="mvnpm"/>
+        <span class="slogan">Maven on NPM</span>
+    </header>
+
+    <main>
+      Here some content
+    </main>
+
+    <footer>
+      &copy; 2022 mvnpm.org | Made by Phillip Kruger
+    </footer>
+  </body>
+</html>

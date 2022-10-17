@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -46,6 +46,14 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
     </properties>
+    
+    <repositories>
+        <repository>
+            <id>mvnpm.org</id>
+            <name>mvnpm</name>
+            <url>https://repo.mvnpm.org/maven2</url>
+        </repository>
+    </repositories>
     
     <dependencyManagement>
         <dependencies>
@@ -92,6 +100,20 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
+        
+        <!-- UI (from mvnpm) -->
+        <dependency>
+            <groupId>org.mvnpm</groupId>
+            <artifactId>lit</artifactId>
+            <version>2.4.0</version>
+            <scope>runtime</scope>
+        </dependency>
+<!--        <dependency>
+            <groupId>org.mvnpm</groupId>
+            <artifactId>_a_vaadin_._router</artifactId>
+            <version>1.7.4</version>
+            <scope>runtime</scope>       
+        </dependency>-->
         
         <!-- Testing -->
         <dependency>

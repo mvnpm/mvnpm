@@ -16,7 +16,6 @@ import org.mvnpm.npm.model.SearchResults;
  */
 @RegisterRestClient(configKey="npm-registry")
 public interface NpmRegistryClient {
-    
   
     @GET
     @Path("/{project}")

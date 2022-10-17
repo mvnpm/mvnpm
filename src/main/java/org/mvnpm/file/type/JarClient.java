@@ -72,7 +72,7 @@ public class JarClient {
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_PROPERTIES, createPomProperties(p));
             
             // Import map
-            writeJarEntry(jarOutput, MVN_ROOT + IMPORT_MAP, createImportMap(p));
+            writeJarEntry(jarOutput, MVN_ROOT + p.name() + SLASH + IMPORT_MAP, createImportMap(p));
             
             TarArchiveEntry tarEntry;
             try {
