@@ -1,11 +1,14 @@
 package org.mvnpm.npm;
 
 import io.smallrye.mutiny.Uni;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.mvnpm.npm.model.Project;
+import org.mvnpm.npm.model.SearchResults;
 
 /**
  * The main client on https://registry.npmjs.org
@@ -24,4 +27,15 @@ public interface NpmRegistryClient {
     public Uni<org.mvnpm.npm.model.Package> getPackage(
             @PathParam("project") String project, 
             @PathParam("version") String version);
+    
+    @GET
+    @Path("/-/v1/search")
+    public Uni<SearchResults> search(
+            @QueryParam("text") String text, 
+            @QueryParam("size") int size,
+            @QueryParam("from") int from,
+            @QueryParam("quality") double quality,
+            @QueryParam("maintenance") double maintenance,
+            @QueryParam("popularity") double popularity);
+    
 }
