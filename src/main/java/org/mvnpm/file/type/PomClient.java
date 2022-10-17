@@ -55,8 +55,8 @@ public class PomClient {
         model.setPackaging(JAR);
         model.setName(toName(p.name()));
         model.setDescription(p.description());
-        model.setLicenses(List.of(toLicense(p.license())));
-        model.setUrl(p.homepage().toString());
+        model.setLicenses(toLicenses(p.license()));
+        if(p.homepage()!=null)model.setUrl(p.homepage().toString());
         model.setOrganization(toOrganization(p));
         model.setScm(toScm(p.repository()));
         model.setIssueManagement(toIssueManagement(p.bugs()));
@@ -65,10 +65,13 @@ public class PomClient {
         mavenXpp3Writer.write(entityStream, model);
     }
     
-    private License toLicense(String license){
-        License l = new License();
-        l.setName(license);
-        return l;
+    private List<License> toLicenses(String license){
+        if(license!=null && !license.isEmpty()){
+            License l = new License();
+            l.setName(license);
+            return List.of(l);
+        }
+        return Collections.EMPTY_LIST;
     }
     
     private Organization toOrganization(org.mvnpm.npm.model.Package p){
@@ -85,18 +88,24 @@ public class PomClient {
     }
     
     private IssueManagement toIssueManagement(Bugs bugs){
-        IssueManagement i = new IssueManagement();
-        i.setUrl(bugs.url().toString());
-        return i;
+        if(bugs!=null && bugs.url()!=null){
+            IssueManagement i = new IssueManagement();
+            i.setUrl(bugs.url().toString());
+            return i;
+        }
+        return null;
     }
     
     // TODO: Clean this a bit
     private Scm toScm(Repository repository){
-        Scm s = new Scm();
-        s.setUrl(repository.url());
-        s.setConnection(repository.url());
-        s.setDeveloperConnection(repository.url());
-        return s;
+        if(repository!=null && repository.url()!=null && !repository.url().isEmpty()){
+            Scm s = new Scm();
+            s.setUrl(repository.url());
+            s.setConnection(repository.url());
+            s.setDeveloperConnection(repository.url());
+            return s;
+        }
+        return null;
     }
     
     private String toName(String name){
@@ -111,14 +120,17 @@ public class PomClient {
     }
     
     private List<Developer> toDevelopers(List<Maintainer> maintainers){
-        List<Developer> ds = new ArrayList<>();
-        for(Maintainer m:maintainers){
-            Developer d = new Developer();
-            d.setEmail(m.email());
-            d.setName(m.name());
-            ds.add(d);
+        if(maintainers!=null && !maintainers.isEmpty()){
+            List<Developer> ds = new ArrayList<>();
+            for(Maintainer m:maintainers){
+                Developer d = new Developer();
+                d.setEmail(m.email());
+                d.setName(m.name());
+                ds.add(d);
+            }
+            return ds;
         }
-        return ds;
+        return Collections.EMPTY_LIST;
     }
     
     private List<Dependency> toDependencies(Map<String, String> dependencies){
@@ -131,7 +143,7 @@ public class PomClient {
                 d.setGroupId(GROUP_ID);
                 d.setArtifactId(artifactId);
                 d.setVersion(toVersion(version));
-                d.setScope(RUNTIME);
+                d.setScope(RUNTIME); // TODO: Confirm this.
                 ds.add(d);
             }
             return ds;

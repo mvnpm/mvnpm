@@ -2,6 +2,7 @@ package org.mvnpm.file.type;
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.tuples.Tuple2;
+import io.vertx.core.json.Json;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.file.AsyncFile;
@@ -9,6 +10,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
@@ -21,12 +24,11 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.FileType;
+import org.mvnpm.importmap.model.Imports;
 
 /**
  * Create the jar from the npm content
  * @author Phillip Kruger (phillip.kruger@gmail.com)
- * 
- * TODO: Generate importmap
  */
 @ApplicationScoped
 public class JarClient {
@@ -69,6 +71,9 @@ public class JarClient {
             // Pom properties entry
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_PROPERTIES, createPomProperties(p));
             
+            // Import map
+            writeJarEntry(jarOutput, MVN_ROOT + IMPORT_MAP, createImportMap(p));
+            
             TarArchiveEntry tarEntry;
             try {
                 while ((tarEntry = tarInput.getNextTarEntry()) != null) {
@@ -102,6 +107,53 @@ public class JarClient {
         
     }
     
+    private byte[] createImportMap(org.mvnpm.npm.model.Package p) {
+        
+        String root = getImportMapRoot(p);
+        
+        String main = getMain(p);
+        Map<String, String> v = new HashMap<>();
+        
+        v.put(p.name(), root + main);
+        v.put(p.name() + SLASH, root);
+        
+        Imports imports = new Imports(v);
+        
+        String importmapJson = Json.encode(imports);
+        
+        return importmapJson.getBytes();
+    }
+    
+    private String getImportMapRoot(org.mvnpm.npm.model.Package p){
+        String root = STATIC_ROOT + p.name();
+        if(p.repository()!=null && p.repository().directory()!=null && !p.repository().directory().isEmpty()){
+            String d = p.repository().directory();
+            if(d.startsWith(PACKAGES + SLASH)){
+                root = d.replaceFirst(PACKAGES + SLASH, STATIC_ROOT);
+            }else if (d.startsWith(PACKAGE + SLASH)){
+                root = d.replaceFirst(PACKAGE + SLASH, STATIC_ROOT);
+            }
+        }
+        if(!root.endsWith(SLASH)){
+            root = root + SLASH;
+        }
+        
+        // TODO: Validate that the folder exist ?
+        // Else search for the first "main" / "module" in the tree ?
+        return root;
+    }
+    
+    private String getMain(org.mvnpm.npm.model.Package p){
+        if(p.module()!=null && !p.module().isEmpty()){
+            return p.module();
+        }else if(p.main()!=null && !p.main().isBlank()){
+            return p.main();
+        }
+        
+        // Default
+        return INDEX_JS;
+    }
+    
     private byte[] createPomProperties(org.mvnpm.npm.model.Package p) throws IOException{
         Properties properties = new Properties();
         try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
@@ -133,9 +185,14 @@ public class JarClient {
     private static final String GROUP_ID = "groupId";
     private static final String ARTIFACT_ID = "artifactId";
     
+    private static final String IMPORT_MAP = "importmap.json";
+    private static final String PACKAGES = "packages";
+    private static final String PACKAGE = "package";
     private static final String SLASH = "/";
-    private static final String NPM_ROOT = "package/";
-    private static final String MVN_ROOT = "META-INF/resources/_static/";
+    private static final String NPM_ROOT = PACKAGE + SLASH;
+    private static final String STATIC_ROOT = "/_static/";
+    private static final String INDEX_JS = "index.js";
+    private static final String MVN_ROOT = "META-INF/resources" + STATIC_ROOT;
     private static final String POM_ROOT = "META-INF/maven/" + ORG_MVNPM + "/";
     private static final String POM_DOT_XML = "pom.xml";
     private static final String POM_DOT_PROPERTIES = "pom.properties";
