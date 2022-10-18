@@ -10,6 +10,7 @@ import io.vertx.mutiny.core.http.HttpClientResponse;
 import java.net.URL;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import org.mvnpm.Constants;
 import org.mvnpm.file.FileStore;
 
 /**
@@ -60,7 +61,7 @@ public class TgzClient {
         RequestOptions requestOptions = new RequestOptions();
         if(u.getPort()>0){
             requestOptions.setPort(u.getPort());
-        } else if(HTTPS.equalsIgnoreCase(u.getProtocol())){
+        } else if(Constants.HTTPS.equalsIgnoreCase(u.getProtocol())){
             requestOptions.setPort(443);
             requestOptions.setSsl(Boolean.TRUE);
         } else {
@@ -74,5 +75,4 @@ public class TgzClient {
         return requestOptions;
     }
     
-    private static final String HTTPS = "https";
 }

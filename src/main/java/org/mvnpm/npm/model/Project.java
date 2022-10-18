@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.net.URL;
 
 public record Project (
-        String name, 
+        FullName name, 
         String description,
         @JsonProperty("dist-tags")
         DistTags distTags,

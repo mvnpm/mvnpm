@@ -17,7 +17,6 @@ import org.mvnpm.npm.model.SearchResults;
  */
 @Path("/info")
 public class ProjectInfoApi {
-    private static final int ITEMS_PER_PAGE = 50;
 
     @RestClient 
     NpmRegistryClient extensionsService;
@@ -34,4 +33,6 @@ public class ProjectInfoApi {
         if(page<0) page = 1;
         return extensionsService.search(term, ITEMS_PER_PAGE, page - 1, 1.0, 0.0, 0.0);
     }
+    
+    private static final int ITEMS_PER_PAGE = 50;
 }

@@ -20,8 +20,8 @@ import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.mvnpm.file.FileStore;
-import org.mvnpm.maven.NameCreator;
 import org.mvnpm.npm.model.Bugs;
+import org.mvnpm.npm.model.FullName;
 import org.mvnpm.npm.model.Maintainer;
 import org.mvnpm.npm.model.Repository;
 
@@ -51,11 +51,11 @@ public class PomClient {
     private void writePomToStream(org.mvnpm.npm.model.Package p, OutputStream entityStream) throws IOException {
         Model model = new Model();
         model.setModelVersion(MODEL_VERSION);
-        model.setGroupId(GROUP_ID);
-        model.setArtifactId(NameCreator.toArtifactId(p.name()));
+        model.setGroupId(p.name().mvnGroupId());
+        model.setArtifactId(p.name().mvnArtifactId());
         model.setVersion(p.version());
         model.setPackaging(JAR);
-        model.setName(NameCreator.toDisplayName(p.name()));
+        model.setName(p.name().displayName());
         model.setDescription(p.description());
         model.setLicenses(toLicenses(p.license()));
         if(p.homepage()!=null)model.setUrl(p.homepage().toString());
@@ -81,7 +81,7 @@ public class PomClient {
         if(p.author()!=null){
             o.setName(p.author().name());
         }else{
-            o.setName(NameCreator.toDisplayName(p.name()));
+            o.setName(p.name().displayName());
         }
         if(p.homepage()!=null){
             o.setUrl(p.homepage().toString());
@@ -135,15 +135,15 @@ public class PomClient {
         return Collections.EMPTY_LIST;
     }
     
-    private List<Dependency> toDependencies(Map<String, String> dependencies){
+    private List<Dependency> toDependencies(Map<FullName, String> dependencies){
         if(dependencies!=null && !dependencies.isEmpty()){
             List<Dependency> ds = new ArrayList<>();
-            for(Map.Entry<String,String> e:dependencies.entrySet()){
-                String artifactId = NameCreator.toArtifactId(e.getKey());
+            for(Map.Entry<FullName,String> e:dependencies.entrySet()){
+                FullName name = e.getKey();
                 String version = e.getValue();
                 Dependency d = new Dependency();
-                d.setGroupId(GROUP_ID);
-                d.setArtifactId(artifactId);
+                d.setGroupId(name.mvnGroupId());
+                d.setArtifactId(name.mvnArtifactId());
                 d.setVersion(toVersion(version));
                 d.setScope(RUNTIME);
                 ds.add(d);
@@ -162,7 +162,7 @@ public class PomClient {
     }
     
     private static final String JAR = "jar";
-    private static final String GROUP_ID = "org.mvnpm";
+    
     private static final String RUNTIME = "runtime";
     private static final String EMPTY = "";
     

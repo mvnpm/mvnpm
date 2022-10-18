@@ -8,7 +8,7 @@ import java.util.Map;
 public record Package(
         @JsonProperty("_id")
         String id,
-        String name,
+        FullName name,
         String version, 
         String description,
         String license,
@@ -20,6 +20,6 @@ public record Package(
         String module,
         String type,
         List<Maintainer> maintainers,
-        Map<String,String> dependencies,
+        Map<FullName,String> dependencies,
         Dist dist) {
 }

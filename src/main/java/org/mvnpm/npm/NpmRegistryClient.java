@@ -1,7 +1,6 @@
 package org.mvnpm.npm;
 
 import io.smallrye.mutiny.Uni;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
