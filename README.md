@@ -39,6 +39,8 @@ example (lit):
     </dependency>
 ```
 
+TODO: Show advance example (with namespaced npm packages)
+
 ## Use 
 
 TODO ... (import map etc)
@@ -46,4 +48,8 @@ TODO ... (import map etc)
 ## Server install
 
 `export MVNPM_LOCAL_USER_DIRECTORY=/home/pkruger/mvnpm`
-`nohup mvnpm-1.0.0-runner > mvnpm.log &`
+`nohup ./mvnpm-1.0.1-runner > mvnpm.log &`
+
+## TODO
+
+- Handle maven-metadata.xml

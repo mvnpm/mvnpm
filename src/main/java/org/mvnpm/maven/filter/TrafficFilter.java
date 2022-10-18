@@ -1,11 +1,9 @@
 package org.mvnpm.maven.filter;
 
-import java.util.Optional;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
-import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 import org.jboss.resteasy.reactive.server.ServerResponseFilter;
 
@@ -21,15 +19,13 @@ public class TrafficFilter {
     @Inject
     Event<ContainerResponseContext> out;
     
-    @ServerRequestFilter
-    public Optional<RestResponse<Void>> inFilter(ContainerRequestContext ctx) {
+    @ServerRequestFilter(preMatching = true)
+    public void inFilter(ContainerRequestContext ctx) {
         in.fireAsync(ctx);
-        return Optional.empty();
     }
     
     @ServerResponseFilter
     public void outFilter(ContainerResponseContext ctx) {
         out.fireAsync(ctx);
-    }
-    
+    }    
 }

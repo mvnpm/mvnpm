@@ -108,12 +108,12 @@
             <version>2.4.0</version>
             <scope>runtime</scope>
         </dependency>
-<!--        <dependency>
+        <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>_a_vaadin_._router</artifactId>
             <version>1.7.4</version>
             <scope>runtime</scope>       
-        </dependency>-->
+        </dependency>
         
         <!-- Testing -->
         <dependency>

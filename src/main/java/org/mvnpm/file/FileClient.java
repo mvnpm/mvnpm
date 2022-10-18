@@ -32,6 +32,13 @@ public class FileClient {
     @Inject
     FileStore fileStore;
     
+    public Uni<String> getFileName(FileType type, org.mvnpm.npm.model.Package p) {
+        Uni<AsyncFile> streamFile = streamFile(type, p);
+        return streamFile.onItem().transform((f) -> {
+            return fileStore.getLocalFullPath(type, p);
+        });
+    }
+    
     public Uni<AsyncFile> streamFile(FileType type, org.mvnpm.npm.model.Package p) {
         String localFileName = fileStore.getLocalFullPath(type, p);
         

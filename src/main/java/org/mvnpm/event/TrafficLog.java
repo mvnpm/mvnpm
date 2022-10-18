@@ -14,10 +14,31 @@ import javax.ws.rs.container.ContainerResponseContext;
 public class TrafficLog {
 
     public void in(@ObservesAsync ContainerRequestContext ctx) {
-        Log.info(">>>>>>> " + ctx.getUriInfo().getRequestUri().toString());
+        String remoteIp = getClientIP(ctx);
+        Log.info("---> [" + remoteIp + "] " + ctx.getUriInfo().getRequestUri().toString());
     }
 
     public void out(@ObservesAsync ContainerResponseContext ctx) {
-        Log.info("<<<<<<< " + ctx.getStatus() + " - " + ctx.getStatusInfo().getReasonPhrase());
+        String remoteIp = getClientIP(ctx);
+        Log.info("<--- [" + remoteIp + "] " + ctx.getStatus() + " - " + ctx.getStatusInfo().getReasonPhrase());
     }
+    
+    private String getClientIP(ContainerResponseContext ctx){
+        String remoteAddr = ctx.getHeaderString(X_FORWARDED_FOR);
+        if(remoteAddr!=null && !remoteAddr.isEmpty()){
+            return remoteAddr;
+        }
+        return UNKNOWN;
+    }
+    
+    private String getClientIP(ContainerRequestContext ctx){
+        String remoteAddr = ctx.getHeaderString(X_FORWARDED_FOR);
+        if(remoteAddr!=null && !remoteAddr.isEmpty()){
+            return remoteAddr;
+        }
+        return UNKNOWN;
+    }
+    
+    private static final String X_FORWARDED_FOR = "X-FORWARDED-FOR";
+    private static final String UNKNOWN = "unknown";
 }

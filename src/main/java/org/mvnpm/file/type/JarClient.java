@@ -3,24 +3,26 @@ package org.mvnpm.file.type;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.tuples.Tuple2;
 import io.vertx.core.json.Json;
-import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.file.AsyncFile;
-import java.io.ByteArrayInputStream;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.zip.GZIPInputStream;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.apache.commons.compress.utils.IOUtils;
 import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.FileType;
@@ -32,9 +34,6 @@ import org.mvnpm.importmap.model.Imports;
  */
 @ApplicationScoped
 public class JarClient {
-
-    @Inject
-    Vertx vertx;
     
     @Inject
     FileClient fileClient;
@@ -43,68 +42,77 @@ public class JarClient {
     FileStore fileStore;
     
     public Uni<AsyncFile> createJar(org.mvnpm.npm.model.Package p, String localFileName){
+        Uni<String> pomFile = fileClient.getFileName(FileType.pom, p);
+        Uni<String> tgzFile = fileClient.getFileName(FileType.tgz, p);
         
-        Uni<Buffer> pomContent = getFileContent(p, FileType.pom);
-        Uni<Buffer> tgzContent = getFileContent(p, FileType.tgz);
+        Uni<Tuple2<String, String>> inputFiles = Uni.combine().all().unis(pomFile, tgzFile).asTuple();
         
-        Uni<Tuple2<Buffer, Buffer>> inputContent = Uni.combine().all().unis(pomContent, tgzContent).asTuple();
-        
-        return inputContent.onItem().transformToUni((t) -> {
-            return tgzToJar(p, localFileName, t.getItem1(), t.getItem2());
-        });
-        
+        return inputFiles.onItem().transformToUni((t) -> {
+            return jarInput(p, localFileName, t.getItem1(), t.getItem2());
+        });        
     }
     
-    private Uni<AsyncFile> tgzToJar(org.mvnpm.npm.model.Package p, String localFileName, Buffer pomBuffer, Buffer tgzBuffer){
-            
-        try (GzipCompressorInputStream gzInput = new GzipCompressorInputStream(new ByteArrayInputStream(tgzBuffer.getBytes()));
-                TarArchiveInputStream tarInput = new TarArchiveInputStream(gzInput);
-                ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
+    private Uni<AsyncFile> jarInput(org.mvnpm.npm.model.Package p, String localFileName, String pomFile, String tgzFile){
+        
+        try (ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
                 JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(byteOutput)){
-
+            
             // Pom details 
             String pomXmlDir = POM_ROOT + p.name() + SLASH;
             
             // Pom xml entry
-            writeJarEntry(jarOutput, pomXmlDir + POM_DOT_XML, pomBuffer.getBytes());
+            // TODO: Add dependency to importmap merger
+            byte[] pomBytes = Files.readAllBytes(Paths.get(pomFile));
+            writeJarEntry(jarOutput, pomXmlDir + POM_DOT_XML, pomBytes);
             
             // Pom properties entry
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_PROPERTIES, createPomProperties(p));
             
             // Import map
-            writeJarEntry(jarOutput, MVN_ROOT + p.name() + SLASH + IMPORT_MAP, createImportMap(p));
+            writeJarEntry(jarOutput, MVN_ROOT + IMPORT_MAP, createImportMap(p));
             
-            TarArchiveEntry tarEntry;
-            try {
-                while ((tarEntry = tarInput.getNextTarEntry()) != null) {
-                    String name = tarEntry.getName();
-                    if (tarEntry.isDirectory()) {
-                        continue;
-                    }
-
-                    name = name.replaceFirst(NPM_ROOT, MVN_ROOT + p.name()  + SLASH);
-                    // TODO: Allow filtering from config ? Filter out unwanted files
-                    try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
-                        IOUtils.copy(tarInput, baos);
-                        writeJarEntry(jarOutput, name, baos.toByteArray());
-                    }catch(EOFException eofe){
-                        // Just continue
-                    }
-                }
-            }catch(EOFException e) {
-                // Just continue
-            }
-
+            // Tar contents
+            tgzToJar(p, tgzFile, jarOutput);
+            
             jarOutput.finish();
 
             byte[] jarFileContents = byteOutput.toByteArray();
 
             return fileStore.createFile(p, localFileName, jarFileContents);
-
+            
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
-        
+    }
+    
+    private void tgzToJar(org.mvnpm.npm.model.Package p, String tarFile, JarArchiveOutputStream jarOutput) throws IOException {
+        try(InputStream is = new BufferedInputStream(new FileInputStream(tarFile))){
+            tgzToJar(p, is,jarOutput);
+        }
+    }
+    
+    private void tgzToJar(org.mvnpm.npm.model.Package p, InputStream tarInput, JarArchiveOutputStream jarOutput) throws IOException {
+        try (GZIPInputStream inputStream = new GZIPInputStream(tarInput);
+                TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(inputStream)) {
+
+            for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry(); entry != null; entry = tarArchiveInputStream
+                    .getNextTarEntry()) {
+                tgzEntryToJarEntry(p, entry, tarArchiveInputStream, jarOutput);
+            }
+        }
+    }
+
+    private void tgzEntryToJarEntry(org.mvnpm.npm.model.Package p, ArchiveEntry entry, InputStream tar, JarArchiveOutputStream jarOutput) throws IOException {
+        int count;
+        byte[] data = new byte[BUFFER_SIZE];
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream();
+                BufferedOutputStream dest = new BufferedOutputStream(os, BUFFER_SIZE)) {
+            while ((count = tar.read(data, 0, BUFFER_SIZE)) != -1) {
+                dest.write(data, 0, count);
+            }
+            String name = entry.getName().replaceFirst(NPM_ROOT, MVN_ROOT + p.name()  + SLASH);
+            writeJarEntry(jarOutput, name, os.toByteArray());
+        }
     }
     
     private byte[] createImportMap(org.mvnpm.npm.model.Package p) {
@@ -173,13 +181,6 @@ public class JarClient {
         jarOutput.closeArchiveEntry();
     }
     
-    private Uni<Buffer> getFileContent(org.mvnpm.npm.model.Package p, FileType type){
-        Uni<AsyncFile> pomFile = fileClient.streamFile(type, p);
-        return pomFile.onItem().transformToUni((pomContent) -> {
-            return pomContent.toMulti().toUni();
-        });
-    }
-    
     private static final String ORG_MVNPM = "org.mvnpm";
     private static final String VERSION = "version";
     private static final String GROUP_ID = "groupId";
@@ -197,5 +198,5 @@ public class JarClient {
     private static final String POM_DOT_XML = "pom.xml";
     private static final String POM_DOT_PROPERTIES = "pom.properties";
     private static final String POM_DOT_PROPERTIES_COMMENT = "Generated by mvnpm.org";
-    
+    private static final int BUFFER_SIZE = 4096;
 }
