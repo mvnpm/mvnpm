@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -27,9 +27,9 @@
         </developer>
     </developers>
     <scm>
-        <connection>git+https://github.com/mvnpm/mvnpm.git</connection>
-        <developerConnection>git+https://github.com/mvnpm/mvnpm.git</developerConnection>
-        <url>git+https://github.com/mvnpm/mvnpm.git</url>
+        <connection>https://github.com/mvnpm/mvnpm</connection>
+        <developerConnection>https://github.com/mvnpm/mvnpm.git</developerConnection>
+        <url>https://github.com/mvnpm/mvnpm.git</url>
     </scm>
     <issueManagement>
         <url>https://github.com/mvnpm/mvnpm/issues</url>
@@ -96,6 +96,13 @@
             <artifactId>quarkus-rest-client-reactive-jackson</artifactId>
         </dependency>
         
+        <!-- To create the importmap -->
+        <dependency>
+            <groupId>org.mvnpm</groupId>
+            <artifactId>importmap</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+        
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
@@ -109,8 +116,8 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>org.mvnpm</groupId>
-            <artifactId>_a_vaadin_._router</artifactId>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>router</artifactId>
             <version>1.7.4</version>
             <scope>runtime</scope>       
         </dependency>

@@ -2,7 +2,6 @@ package org.mvnpm.file.type;
 
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.tuples.Tuple2;
-import io.vertx.core.json.Json;
 import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -29,6 +28,8 @@ import org.mvnpm.Constants;
 import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.FileType;
+import org.mvnpm.importmap.ImportsDataBinding;
+import org.mvnpm.importmap.Location;
 import org.mvnpm.importmap.model.Imports;
 
 /**
@@ -72,7 +73,7 @@ public class JarClient {
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_PROPERTIES, createPomProperties(p));
             
             // Import map
-            writeJarEntry(jarOutput, MVN_ROOT + IMPORT_MAP, createImportMap(p));
+            writeJarEntry(jarOutput, Location.IMPORTMAP_PATH, createImportMap(p));
             
             // Tar contents
             tgzToJar(p, tgzFile, jarOutput);
@@ -106,13 +107,13 @@ public class JarClient {
     }
 
     private void tgzEntryToJarEntry(org.mvnpm.npm.model.Package p, ArchiveEntry entry, TarArchiveInputStream tar, JarArchiveOutputStream jarOutput) throws IOException {
+        String root = MVN_ROOT + getImportMapRoot(p);
         // Let's filter out files we do not need..
         String name = entry.getName();
         
         if(!shouldIgnore(name)){
             
-            name = name.replaceFirst(NPM_ROOT, MVN_ROOT + p.name()  + Constants.SLASH);
-
+            name = name.replaceFirst(NPM_ROOT, Constants.EMPTY);
             final int bufferSize = 4096;
 
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -120,7 +121,7 @@ public class JarClient {
                     IOUtils.copy(tar, bos, bufferSize);
                     bos.flush();
                     baos.flush();
-                    writeJarEntry(jarOutput, name, baos.toByteArray());
+                    writeJarEntry(jarOutput, root + name, baos.toByteArray());
             }
         }
     }
@@ -146,7 +147,7 @@ public class JarClient {
         
         Imports imports = new Imports(v);
         
-        String importmapJson = Json.encode(imports);
+        String importmapJson = ImportsDataBinding.toJson(imports);
         
         return importmapJson.getBytes();
     }
@@ -200,14 +201,13 @@ public class JarClient {
         jarOutput.closeArchiveEntry();
     }
     
-    private static final String IMPORT_MAP = "importmap.json";
     private static final String PACKAGES = "packages";
     private static final String PACKAGE = "package";
     
     private static final String NPM_ROOT = PACKAGE + Constants.SLASH;
     private static final String STATIC_ROOT = "/_static/";
     private static final String INDEX_JS = "index.js";
-    private static final String MVN_ROOT = "META-INF/resources" + STATIC_ROOT;
+    private static final String MVN_ROOT = "META-INF/resources";
     private static final String POM_ROOT = "META-INF/maven/";
     private static final String POM_DOT_XML = "pom.xml";
     private static final String POM_DOT_PROPERTIES = "pom.properties";

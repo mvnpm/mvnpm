@@ -6,19 +6,19 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import java.io.IOException;
 
-public class FullNameDeserializer extends StdDeserializer<FullName> {
+public class NameDeserializer extends StdDeserializer<Name> {
 
-    public FullNameDeserializer() { 
+    public NameDeserializer() { 
         this(null); 
     } 
 
-    public FullNameDeserializer(Class<?> vc) { 
+    public NameDeserializer(Class<?> vc) { 
         super(vc); 
     }
     
     @Override
-    public FullName deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
-        return FullNameParser.parse(jp.getValueAsString());
+    public Name deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
+        return NameParser.parse(jp.getValueAsString());
     }
 
 }

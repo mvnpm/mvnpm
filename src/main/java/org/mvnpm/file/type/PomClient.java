@@ -21,7 +21,7 @@ import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.npm.model.Bugs;
-import org.mvnpm.npm.model.FullName;
+import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Maintainer;
 import org.mvnpm.npm.model.Repository;
 
@@ -38,7 +38,7 @@ public class PomClient {
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
     public Uni<AsyncFile> createPom(org.mvnpm.npm.model.Package p, String localFileName) {
-        
+                
         try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
             writePomToStream(p, baos);
             byte[] contents = baos.toByteArray();
@@ -135,11 +135,11 @@ public class PomClient {
         return Collections.EMPTY_LIST;
     }
     
-    private List<Dependency> toDependencies(Map<FullName, String> dependencies){
+    private List<Dependency> toDependencies(Map<Name, String> dependencies){
         if(dependencies!=null && !dependencies.isEmpty()){
             List<Dependency> ds = new ArrayList<>();
-            for(Map.Entry<FullName,String> e:dependencies.entrySet()){
-                FullName name = e.getKey();
+            for(Map.Entry<Name,String> e:dependencies.entrySet()){
+                Name name = e.getKey();
                 String version = e.getValue();
                 Dependency d = new Dependency();
                 d.setGroupId(name.mvnGroupId());

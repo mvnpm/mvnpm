@@ -8,11 +8,11 @@ import org.mvnpm.Constants;
  * Parse a name
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
-public class FullNameParser {
+public class NameParser {
     
-    private FullNameParser(){}
+    private NameParser(){}
     
-    public static FullName parse(String npmFullName){
+    public static Name parse(String npmFullName){
         
         String name;
         String npmNamespace;
@@ -42,9 +42,7 @@ public class FullNameParser {
             npmNamespace = Constants.EMPTY;
             
             // Mvn GroupId
-            mvnGroupId = Constants.ORG_DOT_MVNPM;
-            
-            
+            mvnGroupId = Constants.ORG_DOT_MVNPM;            
         }
         
         // Mvn Path
@@ -59,7 +57,7 @@ public class FullNameParser {
             displayName = displayName.replace(Constants.SLASH, Constants.SPACE);
         }
         
-        return new FullName(npmFullName, 
+        return new Name(npmFullName, 
                 npmNamespace, 
                 name, 
                 mvnGroupId,

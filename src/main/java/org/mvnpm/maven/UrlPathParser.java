@@ -3,7 +3,7 @@ package org.mvnpm.maven;
 import java.util.Arrays;
 import org.mvnpm.Constants;
 import org.mvnpm.file.FileType;
-import org.mvnpm.npm.model.FullNameParser;
+import org.mvnpm.npm.model.NameParser;
 
 /**
  * Parse a url path
@@ -34,7 +34,7 @@ public class UrlPathParser {
             fullName = fullName.replaceFirst(Constants.AT_SLASH, Constants.AT);
         }
         
-        return new NameVersionType(FullNameParser.parse(fullName), version, fileType, isSha1);
+        return new NameVersionType(NameParser.parse(fullName), version, fileType, isSha1);
     }
     
     private static boolean isSha1Request(String filename){

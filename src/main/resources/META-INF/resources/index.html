@@ -4,9 +4,28 @@
         <title>mvnpm</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="shortcut icon" type="image/png" href="./favicon.ico"></link>
+
+        <script src="./_static/importmap.js"></script>
+
+        <script type="module" src="./mvnpm-home.js"></script>
+        <script type="module" src="./mvnpm-about.js"></script>
         
-        <script type="importmap" src="/_static/lit/importmap.json"></script>
-            
+        <script type="module" src="./mvnpm-nav.js"></script>
+        <script type="module" src="./mvnpm-footer.js"></script>
+
+        <script type="module">
+            import {Router} from '@vaadin/router';
+
+            const router = new Router(document.getElementById('outlet'));
+            router.setRoutes([
+                {path: '/', component: 'mvnpm-home'},
+                {path: '/about', component: 'mvnpm-about'}
+            ]);
+        </script>
+
+        
+
         <style>
             html, body {
                 font-family: 'Trebuchet MS', sans-serif;
@@ -40,7 +59,7 @@
                 justify-content: flex-start;
                 overflow-y: scroll;
             }
-            .slogan {
+            mvnpm-nav {
                 padding-right: 10px;
             }
             footer {
@@ -48,8 +67,6 @@
                 flex-direction: row;
                 justify-content: center;
                 width: 100%;
-                font-size: smaller;
-                color: grey;
             }
         </style>    
     </head>
@@ -57,15 +74,15 @@
     <body>
     <header>
         <img src="banner.png" alt="mvnpm"/>
-        <span class="slogan">Maven on NPM</span>
+        <mvnpm-nav></mvnpm-nav>
     </header>
 
-    <main>
-      Here some content
+    <main id="outlet">
+      
     </main>
 
     <footer>
-      &copy; 2022 mvnpm.org
+        <mvnpm-footer></mvnpm-footer>
     </footer>
   </body>
 </html>

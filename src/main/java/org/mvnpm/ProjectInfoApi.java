@@ -1,4 +1,4 @@
-package org.mvnpm.maven;
+package org.mvnpm;
 
 import io.smallrye.mutiny.Uni;
 import javax.ws.rs.DefaultValue;
@@ -12,8 +12,9 @@ import org.mvnpm.npm.model.Project;
 import org.mvnpm.npm.model.SearchResults;
 
 /**
- * Some info on the NPM Project
+ * Some info on the Project
  * @author Phillip Kruger (phillip.kruger@gmail.com)
+ * TODO: Add per version info endpoint ?
  */
 @Path("/info")
 public class ProjectInfoApi {
@@ -23,8 +24,14 @@ public class ProjectInfoApi {
     
     @GET
     @Path("/project/{project : (.+)?}")
-    public Uni<Project> project(@PathParam("project") String project) {
+    public Uni<Project> projectInfo(@PathParam("project") String project ) {
         return extensionsService.getProject(project);
+    }
+    
+    @GET
+    @Path("/package/{project : (.+)?}")
+    public Uni<org.mvnpm.npm.model.Package> packageInfo(@PathParam("project") String project, @DefaultValue("latest") @QueryParam("version") String version ) {
+        return extensionsService.getPackage(project, version);
     }
     
     @GET

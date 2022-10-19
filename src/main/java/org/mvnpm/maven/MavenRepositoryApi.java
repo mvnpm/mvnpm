@@ -14,7 +14,7 @@ import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.FileType;
 import org.mvnpm.npm.NpmRegistryClient;
-import org.mvnpm.npm.model.FullName;
+import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Package;
 import org.mvnpm.npm.model.Project;
 
@@ -50,7 +50,7 @@ public class MavenRepositoryApi {
         }
     }
     
-    private Uni<Response> getFile(FullName fullName, String version, FileType type) {
+    private Uni<Response> getFile(Name fullName, String version, FileType type) {
         if(version.equalsIgnoreCase(Constants.LATEST)){
             Uni<String> latestVersion = getLatestVersion(fullName);
             return latestVersion.onItem().transformToUni((latest)->{
@@ -69,7 +69,7 @@ public class MavenRepositoryApi {
         }
     }
     
-    private Uni<Response> getSha1(FullName fullName, String version, FileType type) {
+    private Uni<Response> getSha1(Name fullName, String version, FileType type) {
         if(version.equalsIgnoreCase(Constants.LATEST)){
             Uni<String> latestVersion = getLatestVersion(fullName);
             return latestVersion.onItem().transformToUni((latest)->{
@@ -88,7 +88,7 @@ public class MavenRepositoryApi {
         }
     }
     
-    private Uni<String> getLatestVersion(FullName fullName){
+    private Uni<String> getLatestVersion(Name fullName){
         Uni<Project> project = npmRegistryClient.getProject(fullName.npmFullName());
         return project.onItem()
                 .transform((p) -> {
