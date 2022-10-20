@@ -1,7 +1,7 @@
 import { LitElement, html, css} from 'lit';
 
 // TODO: Waiting for Import Assertions. see https://chromestatus.com/feature/5765269513306112
-// import footer from './_static/footer.json' assert { type: "json" };;
+// import footer from './_static/footer.json' assert { type: "json" };
 
 /**
  * This component shows the Bottom Footer
@@ -21,14 +21,17 @@ import { LitElement, html, css} from 'lit';
 
     constructor() {
         super();
-        
+    }
+
+    connectedCallback() {
+        super.connectedCallback()
         fetch("./_static/footer.json")
             .then((res) => res.json())
             .then((footer) => {
                 this.year = footer.year;
                 this.version = footer.version;
             });
-    }
+      }
 
     render() {
         return html`<span>&copy; ${this.year} mvnpm.org | v${this.version}</span>`;

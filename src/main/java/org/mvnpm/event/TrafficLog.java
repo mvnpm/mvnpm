@@ -1,10 +1,12 @@
 package org.mvnpm.event;
 
 import io.quarkus.logging.Log;
+import java.util.Set;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
+import javax.ws.rs.core.MultivaluedMap;
 import org.mvnpm.Constants;
 
 /**
@@ -25,6 +27,7 @@ public class TrafficLog {
     }
     
     private String getClientIP(ContainerResponseContext ctx){
+        printHeaders(ctx.getHeaders());
         String remoteAddr = ctx.getHeaderString(Constants.X_FORWARDED_FOR);
         if(remoteAddr!=null && !remoteAddr.isEmpty()){
             return remoteAddr;
@@ -33,10 +36,18 @@ public class TrafficLog {
     }
     
     private String getClientIP(ContainerRequestContext ctx){
+        printHeaders(ctx.getHeaders());
         String remoteAddr = ctx.getHeaderString(Constants.X_FORWARDED_FOR);
         if(remoteAddr!=null && !remoteAddr.isEmpty()){
             return remoteAddr;
         }
         return Constants.UNKNOWN;
+    }
+    
+    private void printHeaders(MultivaluedMap headers){
+        headers.forEach((t, u) -> {
+            Log.info("******* " + t + " = " + u);
+        });
+        
     }
 }

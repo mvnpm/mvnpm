@@ -71,10 +71,10 @@ public class FileClient {
     
     private Uni<AsyncFile> fetchSha1(FileType type, org.mvnpm.npm.model.Package p, String localFileName, Boolean local){
         if(local){
-            Log.info("Serving from cache [" + localFileName + "]");
+            Log.debug("Serving from cache [" + localFileName + "]");
             return fileStore.readFile(localFileName);
         }else{
-            Log.info("Fetching from origin [" + localFileName + "]");
+            Log.debug("Fetching from origin [" + localFileName + "]");
             String localFullFileName = fileStore.getLocalFullPath(type, p);
             Uni<AsyncFile> fetchOriginal = fetchOriginal(type, p, localFullFileName);
             return fetchOriginal.onItem().transformToUni((downloaded) -> {

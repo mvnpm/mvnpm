@@ -8,24 +8,6 @@
 
         <script src="./_static/importmap.js"></script>
 
-        <script type="module" src="./mvnpm-home.js"></script>
-        <script type="module" src="./mvnpm-about.js"></script>
-        
-        <script type="module" src="./mvnpm-nav.js"></script>
-        <script type="module" src="./mvnpm-footer.js"></script>
-
-        <script type="module">
-            import {Router} from '@vaadin/router';
-
-            const router = new Router(document.getElementById('outlet'));
-            router.setRoutes([
-                {path: '/', component: 'mvnpm-home'},
-                {path: '/about', component: 'mvnpm-about'}
-            ]);
-        </script>
-
-        
-
         <style>
             html, body {
                 font-family: 'Trebuchet MS', sans-serif;
@@ -74,7 +56,10 @@
     <body>
     <header>
         <img src="banner.png" alt="mvnpm"/>
-        <mvnpm-nav></mvnpm-nav>
+        <mvnpm-nav>
+            <mvnpm-navitem path="/" component="mvnpm-home" text="Home"></mvnpm-navitem>
+            <mvnpm-navitem path="/about" component="mvnpm-about" text="About"></mvnpm-navitem>
+        </mvnpm-nav>
     </header>
 
     <main id="outlet">
@@ -84,5 +69,12 @@
     <footer>
         <mvnpm-footer></mvnpm-footer>
     </footer>
+
+    <script type="module" src="./mvnpm-home.js"></script>
+    <script type="module" src="./mvnpm-about.js"></script>
+    
+    <script type="module" src="./mvnpm-nav.js"></script>
+    <script type="module" src="./mvnpm-navitem.js"></script>
+    <script type="module" src="./mvnpm-footer.js"></script>
   </body>
 </html>

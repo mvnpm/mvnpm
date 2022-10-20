@@ -9,8 +9,7 @@ import { LitElement, html, css} from 'lit';
     `;
 
     static properties = {
-      year: {type: String},
-      version: {type: String},
+      
     };
 
     constructor() {

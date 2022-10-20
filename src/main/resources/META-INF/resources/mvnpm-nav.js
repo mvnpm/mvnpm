@@ -1,4 +1,5 @@
 import { LitElement, html, css} from 'lit';
+import {Router} from '@vaadin/router';
 
 /**
  * This component shows the navigation
@@ -6,37 +7,50 @@ import { LitElement, html, css} from 'lit';
  export class MvnpmNav extends LitElement {
 
     static styles = css`
-      a {
-        color: white;
-        padding: 2px;
-      }
-
-      a:link { 
-        text-decoration: none; 
-      }
-      a:visited { 
-        text-decoration: none; 
-      }
-      a:hover { 
-        text-decoration: none; 
-      }
-      a:active { 
-        text-decoration: none; 
-      }
+      
     `;
 
     static properties = {
-      year: {type: String},
-      version: {type: String},
+      
     };
 
     constructor() {
-        super();
-        
+        super();  
+    }
+
+    connectedCallback() {
+      super.connectedCallback()
+
+      var routes = [];
+      
+
+      for (const child of this.children) {
+
+        if(child.tagName.toLowerCase() === "mvnpm-navitem"){
+          var route = {};
+
+          let nodeMap = child.attributes;
+          
+          for (let i = 0; i < nodeMap.length; i++) {
+            if(nodeMap[i].name === "path"){
+              route.path = nodeMap[i].value;
+            }
+            if(nodeMap[i].name === "component"){
+              route.component = nodeMap[i].value;
+            }
+          }
+
+          routes.push({...route});
+        }
+
+      }
+
+      const router = new Router(document.getElementById('outlet'));
+      router.setRoutes(routes);
     }
 
     render() {
-        return html`<a href="/">Home<a><a href="/about">About<a>`;
+        return html`<slot></slot>`;
     }
     
  }

@@ -33,7 +33,7 @@ public class UiApi {
      * see https://github.com/WICG/import-maps/issues/235
      * 
      * Once this is supported, users can just add this to the top of their index.html:
-     * <script type="importmap" src="http://localhost:8080/_static/importmap.json">
+     * <script type="importmap" src="/_static/importmap.json">
     */
     @GET
     @Path("/importmap.json")
@@ -52,7 +52,7 @@ public class UiApi {
     @GET
     @Path("/importmap.js")
     @Produces("application/javascript")
-    public String importmapJs() { // TODO: byte[] ?
+    public String importmapJs() {
         Imports imports = Aggregator.aggregate();
         Set<Map.Entry<String, String>> importSet = imports.imports().entrySet();
         
@@ -69,7 +69,6 @@ public class UiApi {
         }
     }
 
-    
     @GET
     @Path("footer.json")
     public Footer footer() {
