@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -47,14 +47,6 @@
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
     </properties>
     
-    <repositories>
-        <repository>
-            <id>mvnpm.org</id>
-            <name>mvnpm</name>
-            <url>https://repo.mvnpm.org/maven2</url>
-        </repository>
-    </repositories>
-    
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -83,6 +75,11 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
         </dependency>
+	<dependency>
+            <groupId>com.github.villadora</groupId>
+            <artifactId>semver</artifactId>
+            <version>0.0.3</version>
+        </dependency>
 
         <!-- To read the tar -->
         <dependency>
@@ -100,7 +97,7 @@
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>importmap</artifactId>
-            <version>1.0.0</version>
+            <version>1.0.1</version>
         </dependency>
         
         <dependency>

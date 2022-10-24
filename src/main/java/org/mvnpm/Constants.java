@@ -3,6 +3,7 @@ package org.mvnpm;
 public interface Constants {
 
     public static final String DOT = ".";
+    public static final String COMMA = ",";
     public static final String ESCAPED_DOT = "\\.";
     public static final String DASH = "-";
     public static final String SPACE = " ";
@@ -17,6 +18,7 @@ public interface Constants {
     
     public static final String DOUBLE_QUOTE = "\"";
     public static final String ORG_DOT_MVNPM = "org.mvnpm";
+    public static final String IMPORTMAP = "importmap";
     public static final String VERSION = "version";
     public static final String GROUP_ID = "groupId";
     public static final String ARTIFACT_ID = "artifactId";
@@ -25,7 +27,8 @@ public interface Constants {
     public static final String X_FORWARDED_FOR = "X-FORWARDED-FOR";
     public static final String UNKNOWN = "unknown";
     
-    public static final String LATEST = "latest";
+    public static final String LATEST = "latest"; // Will find the latest 
+    
     public static final String HEADER_CONTENT_DISPOSITION_KEY = "Content-Disposition";
     public static final String HEADER_CONTENT_DISPOSITION_VALUE = "attachment, filename=";
     

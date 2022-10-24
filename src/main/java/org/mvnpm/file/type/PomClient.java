@@ -1,5 +1,8 @@
 package org.mvnpm.file.type;
 
+import com.github.villadora.semver.SemVer;
+import com.github.villadora.semver.Version;
+import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.ByteArrayOutputStream;
@@ -19,6 +22,8 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.mvnpm.Constants;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.npm.model.Bugs;
 import org.mvnpm.npm.model.Name;
@@ -34,6 +39,9 @@ public class PomClient {
     
     @Inject 
     FileStore fileCreator;
+    
+    @ConfigProperty(name = "mvnpm.importmap-version", defaultValue = "1.0.1")
+    String importMapVersion;
     
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
@@ -136,38 +144,98 @@ public class PomClient {
     }
     
     private List<Dependency> toDependencies(Map<Name, String> dependencies){
+        List<Dependency> ds = new ArrayList<>();
         if(dependencies!=null && !dependencies.isEmpty()){
-            List<Dependency> ds = new ArrayList<>();
             for(Map.Entry<Name,String> e:dependencies.entrySet()){
                 Name name = e.getKey();
                 String version = e.getValue();
                 Dependency d = new Dependency();
                 d.setGroupId(name.mvnGroupId());
                 d.setArtifactId(name.mvnArtifactId());
-                d.setVersion(toVersion(version));
+                d.setVersion(toVersion(name, version));
                 d.setScope(RUNTIME);
                 ds.add(d);
             }
-            return ds;
         }
-        return Collections.EMPTY_LIST;
+        
+        // Also add mvnpm importmap dependency
+        Dependency d = new Dependency();
+        d.setGroupId(Constants.ORG_DOT_MVNPM);
+        d.setArtifactId(Constants.IMPORTMAP);
+        d.setVersion(importMapVersion);
+        
+        return ds;
     }
     
-    private String toVersion(String version){
-        if(version.startsWith(CARET)){
-            version = version.replace(CARET, EMPTY);
+    // TODO: This needs more work
+    // see https://docs.npmjs.com/cli/v6/using-npm/semver#ranges
+    
+    private String toVersion(Name name, String version){
+        
+        if(SemVer.valid(version)){
+            Version v = SemVer.version(version);
+            return v.toString();
+        } else if(SemVer.rangeValid(version)){
+            String range = SemVer.range(version).toString();
+            String[] maxMin = range.split(Constants.SPACE);
+            if(maxMin.length!=2){
+                Log.warn("Could not parse range " + range + " for " + name.npmFullName());
+                return exactVersion(version);
+            }
+            String max = maxMin[0];
+            String min = maxMin[1];
             
+            if(min.startsWith(GREATER_THAN + EQUALS)){
+                min = OPEN_BLOCK_BRACKET + min.substring(2);
+            }else if(min.startsWith(GREATER_THAN)){
+                min = OPEN_ROUND_BRACKET + min.substring(1);
+            }
+            if(max.startsWith(LESS_THAN + EQUALS)){
+                max = max.substring(2) + CLOSE_BLOCK_BRACKET;
+            }else if(max.startsWith(LESS_THAN)){
+                max = max.substring(1) + CLOSE_ROUND_BRACKET;
+            }
+            
+            return min + Constants.COMMA + max;
+        } else {
+            Log.warn("Could not parse version " + version + " for " + name.npmFullName());
+            return exactVersion(version);
         }
-        return version.trim();
+    }
+    
+    
+    /**
+     * Removes all range indicators
+     */
+    private String exactVersion(String v){
+        if(v.startsWith(LESS_THAN) 
+                || v.startsWith(GREATER_THAN) 
+                || v.startsWith(EQUALS)
+                || v.startsWith(CARET)
+                || v.startsWith(TILDE)){
+            v = v.substring(1);
+            return exactVersion(v);
+        }
+        return v;
     }
     
     private static final String JAR = "jar";
     
     private static final String RUNTIME = "runtime";
-    private static final String EMPTY = "";
     
-    private static final String CARET = "^";
     private static final String MODEL_VERSION = "4.0.0";
     private static final String GIT_PLUS = "git+";
     private static final String DOT_GIT = ".git";
+    
+    private static final String LESS_THAN = "<";
+    private static final String GREATER_THAN = ">";
+    private static final String EQUALS = "=";
+    private static final String CARET = "^";
+    private static final String TILDE = "~";
+    
+    private static final String OPEN_BLOCK_BRACKET = "[";
+    private static final String CLOSE_BLOCK_BRACKET = "]";
+    
+    private static final String OPEN_ROUND_BRACKET = "(";
+    private static final String CLOSE_ROUND_BRACKET = ")";
 }

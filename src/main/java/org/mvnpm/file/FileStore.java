@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.mvnpm.Constants;
@@ -22,9 +23,12 @@ import org.mvnpm.Constants;
 public class FileStore {
 
     @Inject
+    Event<FileStoreEvent> fileStored;
+    
+    @Inject
     Vertx vertx;
     
-    @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = "m2")
+    @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = ".m2")
     String localM2Directory;
     
     @ConfigProperty(name = "mvnpm.local-user-directory")
@@ -43,6 +47,7 @@ public class FileStore {
                     return emptySha1File.onItem().transformToUni((createdSha) -> {
                         Uni<Void> writtenSha = vertx.fileSystem().writeFile(localSha1FileName, Buffer.buffer(sha1));
                         return writtenSha.onItem().transformToUni((doneSha) -> {
+                            fileStored.fireAsync(new FileStoreEvent(localFileName));
                             return readFile(localFileName);
                         });
                     });
@@ -57,7 +62,7 @@ public class FileStore {
     
     public String getLocalDirectory(org.mvnpm.npm.model.Package p){
         return localUserDirectory.orElse(Constants.CACHE_DIR) + File.separator + 
-                Constants.DOT + localM2Directory + File.separator +
+                localM2Directory + File.separator +
                 Constants.REPOSITORY + File.separator +
                 p.name().mvnPath() + File.separator +
                 p.name().mvnArtifactId() + File.separator + 

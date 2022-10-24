@@ -1,7 +1,6 @@
 package org.mvnpm.event;
 
 import io.quarkus.logging.Log;
-import java.util.Set;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.ObservesAsync;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -17,37 +16,10 @@ import org.mvnpm.Constants;
 public class TrafficLog {
 
     public void in(@ObservesAsync ContainerRequestContext ctx) {
-        String remoteIp = getClientIP(ctx);
-        Log.info("---> [" + remoteIp + "] " + ctx.getUriInfo().getRequestUri().toString());
+        Log.info("---> " + ctx.getUriInfo().getRequestUri().toString());
     }
 
     public void out(@ObservesAsync ContainerResponseContext ctx) {
-        String remoteIp = getClientIP(ctx);
-        Log.info("<--- [" + remoteIp + "] " + ctx.getStatus() + Constants.SPACE + Constants.DASH + Constants.SPACE + ctx.getStatusInfo().getReasonPhrase());
-    }
-    
-    private String getClientIP(ContainerResponseContext ctx){
-        printHeaders(ctx.getHeaders());
-        String remoteAddr = ctx.getHeaderString(Constants.X_FORWARDED_FOR);
-        if(remoteAddr!=null && !remoteAddr.isEmpty()){
-            return remoteAddr;
-        }
-        return Constants.UNKNOWN;
-    }
-    
-    private String getClientIP(ContainerRequestContext ctx){
-        printHeaders(ctx.getHeaders());
-        String remoteAddr = ctx.getHeaderString(Constants.X_FORWARDED_FOR);
-        if(remoteAddr!=null && !remoteAddr.isEmpty()){
-            return remoteAddr;
-        }
-        return Constants.UNKNOWN;
-    }
-    
-    private void printHeaders(MultivaluedMap headers){
-        headers.forEach((t, u) -> {
-            Log.info("******* " + t + " = " + u);
-        });
-        
+        Log.info("<--- " + ctx.getStatus() + Constants.SPACE + Constants.DASH + Constants.SPACE + ctx.getStatusInfo().getReasonPhrase());
     }
 }

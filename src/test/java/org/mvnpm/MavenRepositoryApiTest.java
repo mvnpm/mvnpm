@@ -1,21 +1,18 @@
 package org.mvnpm;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.RestAssured;
 import org.junit.jupiter.api.Test;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
 public class MavenRepositoryApiTest {
 
     @Test
     public void testHelloEndpoint() {
-//        given()
-//          .when().get("/hello")
-//          .then()
-//             .statusCode(200)
-//             .body(is("Hello from RESTEasy Reactive"));
+        RestAssured.given().header("User-Agent", "m2e/unit-test")
+          .when().get("/maven2/org/mvnpm/lit/2.4.0/lit-2.4.0.pom")
+          .then().log().all().and()
+             .statusCode(200);
     }
 
 }
