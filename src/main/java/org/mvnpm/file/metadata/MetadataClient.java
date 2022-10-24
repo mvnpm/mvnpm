@@ -1,5 +1,8 @@
 package org.mvnpm.file.metadata;
 
+import com.github.villadora.semver.SemVer;
+import com.github.villadora.semver.Version;
+import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -70,7 +73,14 @@ public class MetadataClient {
             versioning.setRelease(latest);
         
             for(String v:p.versions()){
-                versioning.addVersion(v);
+                // Here ignore invalid and unreleased version 
+                if(SemVer.valid(v)){
+                    Version semver = SemVer.version(v);
+                    String prerelease = semver.getPrerelease();
+                    if(prerelease==null || prerelease.isEmpty()){
+                        versioning.addVersion(v);
+                    }
+                }
             }
         
             String timestamp = new SimpleDateFormat(TIME_STAMP_FORMAT).format(new Date());
