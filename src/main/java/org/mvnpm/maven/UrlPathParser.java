@@ -1,8 +1,10 @@
 package org.mvnpm.maven;
 
+import io.quarkus.logging.Log;
 import java.util.Arrays;
 import org.mvnpm.Constants;
 import org.mvnpm.file.FileType;
+import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.NameParser;
 
 /**
@@ -13,7 +15,16 @@ public class UrlPathParser {
     
     private UrlPathParser(){}
     
-    public static NameVersionType parse(String urlPath){
+    public static Name parseMavenMetaDataXml(String fullName){
+        
+        if(fullName.startsWith(Constants.AT_SLASH)){
+            fullName = fullName.replaceFirst(Constants.AT_SLASH, Constants.AT);
+        }
+        
+        return NameParser.parse(fullName);
+    }
+    
+    public static NameVersionType parseMavenFile(String urlPath){
         String[] parts = urlPath.split(Constants.SLASH);
         
         // We need at least 3 (name / version / filename)

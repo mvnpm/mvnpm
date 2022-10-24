@@ -4,9 +4,7 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import io.quarkus.logging.Log;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 

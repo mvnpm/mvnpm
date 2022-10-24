@@ -6,8 +6,6 @@ import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.File;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
@@ -41,7 +39,7 @@ public class FileStore {
             return emptyFile.onItem().transformToUni((createdFile) -> {
                 Uni<Void> download = vertx.fileSystem().writeFile(localFileName, Buffer.buffer(content));
                 return download.onItem().transformToUni((doneDownload) -> {
-                    String sha1 = sha1(content);
+                    String sha1 = Sha1Util.sha1(content);
                     String localSha1FileName = localFileName + Constants.DOT_SHA1;
                     Uni<Void> emptySha1File = vertx.fileSystem().createFile(localSha1FileName);
                     return emptySha1File.onItem().transformToUni((createdSha) -> {
@@ -84,20 +82,6 @@ public class FileStore {
     
     public String getLocalSha1FileName(FileType type, org.mvnpm.npm.model.Package p){
         return getLocalFileName(type, p) + Constants.DOT_SHA1;
-    }
-    
-    private String sha1(byte[] value) {
-        try {
-            MessageDigest md = MessageDigest.getInstance(Constants.SHA1);
-            byte[] digest = md.digest(value);
-            StringBuilder sb = new StringBuilder(40);
-            for (int i = 0; i < digest.length; ++i) {
-                sb.append(Integer.toHexString((digest[i] & 0xFF) | 0x100).substring(1, 3));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
     }
     
     private static final OpenOptions READ_ONLY_OPTIONS = (new OpenOptions()).setCreate(false).setWrite(false);

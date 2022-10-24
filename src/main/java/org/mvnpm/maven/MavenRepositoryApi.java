@@ -13,6 +13,7 @@ import org.mvnpm.Constants;
 import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.FileType;
+import org.mvnpm.file.metadata.MetadataClient;
 import org.mvnpm.npm.NpmRegistryClient;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Package;
@@ -36,12 +37,42 @@ public class MavenRepositoryApi {
     @Inject 
     FileStore fileStore;
     
+    @Inject
+    MetadataClient metadataClient;
+    
+    @GET
+    @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Uni<Response> getMavenMetadata(@PathParam("ga") String ga){
+        Name name = UrlPathParser.parseMavenMetaDataXml(ga);
+        
+        Uni<byte[]> bytes = metadataClient.getMetadataBytes(name);
+        return bytes.onItem().transform((b) -> {
+            return Response.ok(b).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.DOUBLE_QUOTE)
+                            .build();
+        });
+        
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml.sha1")
+    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    public Uni<Response> getMavenMetadataSha1(@PathParam("ga") String ga){
+        Name name = UrlPathParser.parseMavenMetaDataXml(ga);
+        
+        Uni<String> sha1 = metadataClient.getMetadataSha1(name);
+        return sha1.onItem().transform((s)-> {
+            return Response.ok(s).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.SHA1 + Constants.DOUBLE_QUOTE)
+                            .build();
+        });
+    }
+    
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
     public Uni<Response> getAny(@PathParam("gavt") String gavt){
         
-        NameVersionType nameVersionType = UrlPathParser.parse(gavt);
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
         
         if(nameVersionType.sha1()){
             return getSha1(nameVersionType.name(), nameVersionType.version(), nameVersionType.type());
@@ -95,4 +126,6 @@ public class MavenRepositoryApi {
                     return p.distTags().latest();
                 });
     }
+    
+    private static final String MAVEN_META_DATA_XML = "maven-metadata.xml";
 }

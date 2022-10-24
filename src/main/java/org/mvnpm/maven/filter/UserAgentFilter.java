@@ -5,6 +5,7 @@ import io.vertx.core.http.HttpMethod;
 import java.util.List;
 import java.util.Optional;
 import javax.ws.rs.container.ContainerRequestContext;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 
@@ -14,20 +15,27 @@ import org.jboss.resteasy.reactive.server.ServerRequestFilter;
  */
 public class UserAgentFilter {
 
+    
+    @ConfigProperty(name = "mvnpm.filter-useragent", defaultValue = "true")
+    boolean filterUserAgent;
+    
     @ServerRequestFilter
     public Optional<RestResponse<Void>> getFilter(ContainerRequestContext ctx) {
-        // only allow GET methods for now
+        if(filterUserAgent){
+            // only allow GET methods for now
         
-        if(ctx.getMethod().equals(HttpMethod.GET.name()) && ctx.getUriInfo().getPath().startsWith(MAVEN_2)) {
-            String ua = ctx.getHeaderString(USER_AGENT);
-            if(isAllowedUserAgent(ua)){
+            if(ctx.getMethod().equals(HttpMethod.GET.name()) && ctx.getUriInfo().getPath().startsWith(MAVEN_2)) {
+                String ua = ctx.getHeaderString(USER_AGENT);
+                if(isAllowedUserAgent(ua)){
+                    return Optional.empty();
+                }else{
+                    return Optional.of(RestResponse.status(444, NO_RESPONSE));
+                }
+            } else {
                 return Optional.empty();
-            }else{
-                return Optional.of(RestResponse.status(444, NO_RESPONSE));
             }
-        } else {
-            return Optional.empty();
         }
+        return Optional.empty();
     }
     
     private boolean isAllowedUserAgent(String ua){
@@ -40,7 +48,7 @@ public class UserAgentFilter {
         return false;
     }
     
-    private static final List<String> ALLOWED_USER_AGENTS = List.of("m2e", "netBeans"); // TODO: Test other IDEs and build tools
+    private static final List<String> ALLOWED_USER_AGENTS = List.of("m2e", "netBeans", "Apache-Maven"); // TODO: Test other IDEs and build tools
     private static final String USER_AGENT = "User-Agent";
     private static final String NO_RESPONSE = "No Response";
     private static final String MAVEN_2 = "/maven2";
