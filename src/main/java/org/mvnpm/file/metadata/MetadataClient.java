@@ -2,19 +2,22 @@ package org.mvnpm.file.metadata;
 
 import com.github.villadora.semver.SemVer;
 import com.github.villadora.semver.Version;
-import io.quarkus.logging.Log;
+import io.quarkus.cache.Cache;
+import io.quarkus.cache.CacheName;
+import io.quarkus.cache.CaffeineCache;
 import io.smallrye.mutiny.Uni;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.concurrent.CompletableFuture;
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.mvnpm.file.Sha1Util;
-import org.mvnpm.npm.NpmRegistryClient;
+import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Project;
 
@@ -26,28 +29,33 @@ import org.mvnpm.npm.model.Project;
 public class MetadataClient {
     private final MetadataXpp3Writer metadataXpp3Writer = new MetadataXpp3Writer();
     
-    @RestClient 
-    NpmRegistryClient extensionsService;
+    @Inject
+    NpmRegistryFacade npmRegistryFacade;
     
-    // TODO: cache
+    @Inject 
+    @CacheName("metadata-cache")
+    Cache cache;
     
-    public Uni<String> getMetadataSha1(Name name){
-        Uni<byte[]> metadataString = getMetadataBytes(name);
-        return metadataString.onItem().transform((s -> {
-            return Sha1Util.sha1(s);
-        }));
-    }
-    
-    public Uni<byte[]> getMetadataBytes(Name name){
-        Uni<Metadata> metadata = getMetadata(name);
-        return metadata.onItem().transformToUni((m) -> {
-            try(StringWriter sw = new StringWriter()){
-               metadataXpp3Writer.write(sw, m);
-               return Uni.createFrom().item(sw.toString().getBytes());
-            } catch (IOException ex) {
-                return Uni.createFrom().failure(ex);
-            }
-        });   
+    public Uni<MetadataAndSha> getMetadataAndSha(Name name){
+        CaffeineCache caffeineCache = cache.as(CaffeineCache.class);
+        if(caffeineCache.keySet().contains(name.npmFullName())){
+            CompletableFuture<MetadataAndSha> completableFuture = caffeineCache.getIfPresent(name.npmFullName());
+            return Uni.createFrom().completionStage(completableFuture);
+        }else{
+            Uni<Metadata> metadata = getMetadata(name);
+            return metadata.onItem().transformToUni((Metadata m) -> {
+                try(StringWriter sw = new StringWriter()){
+                    metadataXpp3Writer.write(sw, m);
+                    byte[] value = sw.toString().getBytes();
+                    String sha1 = Sha1Util.sha1(value);
+                    MetadataAndSha mas = new MetadataAndSha(sha1, value);
+                    caffeineCache.put(name.npmFullName(), CompletableFuture.completedFuture(mas));
+                    return Uni.createFrom().item(mas);
+                } catch (IOException ex) {
+                    return Uni.createFrom().failure(ex);
+                }
+            });   
+        }
     }
     
     private Uni<Metadata> getMetadata(Name name){
@@ -63,8 +71,8 @@ public class MetadataClient {
         });
     }
     
-    private Uni<Versioning> getVersioning(Name name) {
-        Uni<Project> project = extensionsService.getProject(name.npmFullName());
+    public Uni<Versioning> getVersioning(Name name) {
+        Uni<Project> project = npmRegistryFacade.getProject(name.npmFullName());
         return project.onItem().transform((p) -> {
             
             Versioning versioning = new Versioning();

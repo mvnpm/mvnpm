@@ -1,6 +1,7 @@
 package org.mvnpm.npm.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ public record Package(
         String version, 
         String description,
         String license,
+        @JsonDeserialize(using = AuthorDeserializer.class)
         Author author,
         URL homepage,
         Repository repository,

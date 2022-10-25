@@ -22,13 +22,13 @@ public interface NpmRegistryClient {
 
     @GET
     @Path("/{project}/{version}")
-    public Uni<org.mvnpm.npm.model.Package> getPackage(
+    Uni<org.mvnpm.npm.model.Package> getPackage(
             @PathParam("project") String project, 
             @PathParam("version") String version);
     
     @GET
     @Path("/-/v1/search")
-    public Uni<SearchResults> search(
+    Uni<SearchResults> search(
             @QueryParam("text") String text, 
             @QueryParam("size") int size,
             @QueryParam("from") int from,

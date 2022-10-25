@@ -28,6 +28,7 @@ public interface Constants {
     public static final String UNKNOWN = "unknown";
     
     public static final String LATEST = "latest"; // Will find the latest 
+    public static final String ZERO_ZERO_ONE = "0.0.1";
     
     public static final String HEADER_CONTENT_DISPOSITION_KEY = "Content-Disposition";
     public static final String HEADER_CONTENT_DISPOSITION_VALUE = "attachment, filename=";

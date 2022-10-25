@@ -8,13 +8,13 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.mvnpm.Constants;
 import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.FileType;
+import org.mvnpm.file.metadata.MetadataAndSha;
 import org.mvnpm.file.metadata.MetadataClient;
-import org.mvnpm.npm.NpmRegistryClient;
+import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Package;
 import org.mvnpm.npm.model.Project;
@@ -23,13 +23,12 @@ import org.mvnpm.npm.model.Project;
  * The maven repository endpoint
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  * TODO: Add source jar
- * TODO: Add metadata xml
  */
 @Path("/maven2")
 public class MavenRepositoryApi {
 
-    @RestClient 
-    NpmRegistryClient npmRegistryClient;
+    @Inject
+    NpmRegistryFacade npmRegistryFacade;
     
     @Inject
     FileClient fileClient; 
@@ -46,9 +45,9 @@ public class MavenRepositoryApi {
     public Uni<Response> getMavenMetadata(@PathParam("ga") String ga){
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         
-        Uni<byte[]> bytes = metadataClient.getMetadataBytes(name);
-        return bytes.onItem().transform((b) -> {
-            return Response.ok(b).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.DOUBLE_QUOTE)
+        Uni<MetadataAndSha> mas = metadataClient.getMetadataAndSha(name);
+        return mas.onItem().transform((b) -> {
+            return Response.ok(b.data()).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.DOUBLE_QUOTE)
                             .build();
         });
         
@@ -60,9 +59,9 @@ public class MavenRepositoryApi {
     public Uni<Response> getMavenMetadataSha1(@PathParam("ga") String ga){
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         
-        Uni<String> sha1 = metadataClient.getMetadataSha1(name);
-        return sha1.onItem().transform((s)-> {
-            return Response.ok(s).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.SHA1 + Constants.DOUBLE_QUOTE)
+        Uni<MetadataAndSha> mas = metadataClient.getMetadataAndSha(name);
+        return mas.onItem().transform((s)-> {
+            return Response.ok(s.sha1()).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.SHA1 + Constants.DOUBLE_QUOTE)
                             .build();
         });
     }
@@ -88,7 +87,7 @@ public class MavenRepositoryApi {
                 return getFile(fullName, latest, type);
             });
         }else {
-            Uni<Package> npmPackage = npmRegistryClient.getPackage(fullName.npmFullName(), version);
+            Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
             
             return npmPackage.onItem().transformToUni((p) -> {
                 String filename = fileStore.getLocalFileName(type, p);
@@ -107,7 +106,7 @@ public class MavenRepositoryApi {
                 return getSha1(fullName, latest, type);
             });
         }else {
-            Uni<Package> npmPackage = npmRegistryClient.getPackage(fullName.npmFullName(), version);
+            Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
             
             return npmPackage.onItem().transformToUni((p) -> {
                 String filename = fileStore.getLocalSha1FileName(type, p);
@@ -120,7 +119,7 @@ public class MavenRepositoryApi {
     }
     
     private Uni<String> getLatestVersion(Name fullName){
-        Uni<Project> project = npmRegistryClient.getProject(fullName.npmFullName());
+        Uni<Project> project = npmRegistryFacade.getProject(fullName.npmFullName());
         return project.onItem()
                 .transform((p) -> {
                     return p.distTags().latest();

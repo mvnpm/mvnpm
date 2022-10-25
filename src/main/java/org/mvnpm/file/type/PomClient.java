@@ -7,13 +7,13 @@ import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.IssueManagement;
@@ -25,6 +25,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.mvnpm.Constants;
 import org.mvnpm.file.FileStore;
+import org.mvnpm.file.metadata.MetadataClient;
 import org.mvnpm.npm.model.Bugs;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Maintainer;
@@ -40,39 +41,47 @@ public class PomClient {
     @Inject 
     FileStore fileCreator;
     
+    @Inject 
+    MetadataClient metadataClient;
+    
     @ConfigProperty(name = "mvnpm.importmap-version", defaultValue = "1.0.1")
     String importMapVersion;
     
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
-    public Uni<AsyncFile> createPom(org.mvnpm.npm.model.Package p, String localFileName) {
-                
-        try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
-            writePomToStream(p, baos);
-            byte[] contents = baos.toByteArray();
-            return fileCreator.createFile(p, localFileName, contents);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
+    public Uni<AsyncFile> createPom(org.mvnpm.npm.model.Package p, String localFileName) {     
+        Uni<byte[]> contents = writePomToStream(p);
+        return contents.onItem().transformToUni((c) -> {
+            return fileCreator.createFile(p, localFileName, c);
+        });
     }
     
-    private void writePomToStream(org.mvnpm.npm.model.Package p, OutputStream entityStream) throws IOException {
-        Model model = new Model();
-        model.setModelVersion(MODEL_VERSION);
-        model.setGroupId(p.name().mvnGroupId());
-        model.setArtifactId(p.name().mvnArtifactId());
-        model.setVersion(p.version());
-        model.setPackaging(JAR);
-        model.setName(p.name().displayName());
-        model.setDescription(p.description());
-        model.setLicenses(toLicenses(p.license()));
-        if(p.homepage()!=null)model.setUrl(p.homepage().toString());
-        model.setOrganization(toOrganization(p));
-        model.setScm(toScm(p.repository()));
-        model.setIssueManagement(toIssueManagement(p.bugs()));
-        model.setDevelopers(toDevelopers(p.maintainers()));
-        model.setDependencies(toDependencies(p.dependencies()));
-        mavenXpp3Writer.write(entityStream, model);
+    private Uni<byte[]> writePomToStream(org.mvnpm.npm.model.Package p) {
+        
+        Uni<List<Dependency>> toDependencies = toDependencies(p.dependencies());
+        return toDependencies.onItem().transform((deps) -> {
+            try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
+                Model model = new Model();
+                model.setModelVersion(MODEL_VERSION);
+                model.setGroupId(p.name().mvnGroupId());
+                model.setArtifactId(p.name().mvnArtifactId());
+                model.setVersion(p.version());
+                model.setPackaging(JAR);
+                model.setName(p.name().displayName());
+                model.setDescription(p.description());
+                model.setLicenses(toLicenses(p.license()));
+                if(p.homepage()!=null)model.setUrl(p.homepage().toString());
+                model.setOrganization(toOrganization(p));
+                model.setScm(toScm(p.repository()));
+                model.setIssueManagement(toIssueManagement(p.bugs()));
+                model.setDevelopers(toDevelopers(p.maintainers()));
+                model.setDependencies(deps);
+                mavenXpp3Writer.write(baos, model);
+                return baos.toByteArray();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
     }
     
     private List<License> toLicenses(String license){
@@ -143,18 +152,13 @@ public class PomClient {
         return Collections.EMPTY_LIST;
     }
     
-    private List<Dependency> toDependencies(Map<Name, String> dependencies){
-        List<Dependency> ds = new ArrayList<>();
+    private Uni<List<Dependency>> toDependencies(Map<Name, String> dependencies){
+        List<Uni<Dependency>> deps = new ArrayList<>();
         if(dependencies!=null && !dependencies.isEmpty()){
             for(Map.Entry<Name,String> e:dependencies.entrySet()){
                 Name name = e.getKey();
                 String version = e.getValue();
-                Dependency d = new Dependency();
-                d.setGroupId(name.mvnGroupId());
-                d.setArtifactId(name.mvnArtifactId());
-                d.setVersion(toVersion(name, version));
-                d.setScope(RUNTIME);
-                ds.add(d);
+                deps.add(toDependency(name, version));
             }
         }
         
@@ -164,45 +168,91 @@ public class PomClient {
         d.setArtifactId(Constants.IMPORTMAP);
         d.setVersion(importMapVersion);
         
-        return ds;
+        deps.add(Uni.createFrom().item(d));
+        
+        Uni<List<Dependency>> all = Uni.join().all(deps).andCollectFailures();
+        
+        return all.onItem().transform((a)->{
+            List<Dependency> ds = new ArrayList<>();
+            ds.addAll(a);
+            return ds;
+        });
+    }
+    
+    private Uni<Dependency> toDependency(Name name, String version){
+        Uni<String> convertedVersion = toVersion(name, version);
+        return convertedVersion.onItem().transform((cv)-> {
+            Dependency d = new Dependency();
+            d.setGroupId(name.mvnGroupId());
+            d.setArtifactId(name.mvnArtifactId());
+            d.setVersion(cv);
+            d.setScope(RUNTIME);
+            return d;
+        });
     }
     
     // TODO: This needs more work
     // see https://docs.npmjs.com/cli/v6/using-npm/semver#ranges
     
-    private String toVersion(Name name, String version){
+    private Uni<String> toVersion(Name name, String version){
         
         if(SemVer.valid(version)){
             Version v = SemVer.version(version);
-            return v.toString();
+            return Uni.createFrom().item(v.toString());
         } else if(SemVer.rangeValid(version)){
             String range = SemVer.range(version).toString();
             String[] maxMin = range.split(Constants.SPACE);
             if(maxMin.length!=2){
                 Log.warn("Could not parse range " + range + " for " + name.npmFullName());
-                return exactVersion(version);
+                return Uni.createFrom().item(exactVersion(version));
             }
-            String max = maxMin[0];
-            String min = maxMin[1];
+            String maxPart = maxMin[0];
+            String minPart = maxMin[1];
+            String minBracket = Constants.EMPTY;
+            String maxBracket = Constants.EMPTY;
+            String min = Constants.ZERO_ZERO_ONE;
+            String max = Constants.ZERO_ZERO_ONE;
             
-            if(min.startsWith(GREATER_THAN + EQUALS)){
-                min = OPEN_BLOCK_BRACKET + min.substring(2);
-            }else if(min.startsWith(GREATER_THAN)){
-                min = OPEN_ROUND_BRACKET + min.substring(1);
+            if(minPart.startsWith(GREATER_THAN + EQUALS)){
+                minBracket = OPEN_BLOCK_BRACKET;
+                min = minPart.substring(2);
+            }else if(minPart.startsWith(GREATER_THAN)){
+                minBracket = OPEN_ROUND_BRACKET;
+                min = minPart.substring(1);
             }
-            if(max.startsWith(LESS_THAN + EQUALS)){
-                max = max.substring(2) + CLOSE_BLOCK_BRACKET;
-            }else if(max.startsWith(LESS_THAN)){
-                max = max.substring(1) + CLOSE_ROUND_BRACKET;
+            if(maxPart.startsWith(LESS_THAN + EQUALS)){
+                maxBracket = CLOSE_BLOCK_BRACKET;
+                max = maxPart.substring(2);
+            }else if(maxPart.startsWith(LESS_THAN)){
+                maxBracket = CLOSE_ROUND_BRACKET;
+                max = maxPart.substring(1);
             }
             
-            return min + Constants.COMMA + max;
+            // Try and get the latest for the min
+            return getBestVersionRange(name, min, max, minBracket, maxBracket);
+            
         } else {
             Log.warn("Could not parse version " + version + " for " + name.npmFullName());
-            return exactVersion(version);
+            return Uni.createFrom().item(exactVersion(version));
         }
     }
     
+    private Uni<String> getBestVersionRange(Name name, String min, String max, String minBracket, String maxBracket){
+        
+        Uni<Versioning> versioning = metadataClient.getVersioning(name);
+        return versioning.onItem().transform((v) -> {
+            final String latest = v.getLatest();
+            // If the latest Version is beteen the min and max, ver can use that.
+            if(SemVer.lt(latest, max)){
+                return minBracket + latest + Constants.COMMA + max + maxBracket;
+            }
+            // TODO: As a second attempt try and find it in all the versions
+            
+            return minBracket + min + Constants.COMMA + max + maxBracket;
+        });
+        
+        
+    }
     
     /**
      * Removes all range indicators

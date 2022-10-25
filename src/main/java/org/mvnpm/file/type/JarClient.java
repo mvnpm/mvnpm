@@ -62,10 +62,9 @@ public class JarClient {
                 JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(byteOutput)){
             
             // Pom details 
-            String pomXmlDir = POM_ROOT + p.name().mvnPath() + Constants.SLASH;
+            String pomXmlDir = POM_ROOT + p.name().mvnGroupId() + Constants.SLASH + p.name().mvnArtifactId() + Constants.SLASH;
             
             // Pom xml entry
-            // TODO: Add dependency to importmap merger
             byte[] pomBytes = Files.readAllBytes(Paths.get(pomFile));
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_XML, pomBytes);
             
