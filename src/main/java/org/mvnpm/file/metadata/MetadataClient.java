@@ -10,12 +10,14 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer;
+import org.mvnpm.Constants;
 import org.mvnpm.file.Sha1Util;
 import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Name;
@@ -91,8 +93,26 @@ public class MetadataClient {
                 }
             }
         
-            String timestamp = new SimpleDateFormat(TIME_STAMP_FORMAT).format(new Date());
-            versioning.setLastUpdated(timestamp);
+            
+            Map<String, String> time = p.time();
+            if(time!=null && time.containsKey(MODIFIED)){
+                String dateTime = time.get(MODIFIED);
+                // 2022-07-20T09:14:55.450Z
+                dateTime = dateTime.replaceAll(Constants.DASH, Constants.EMPTY);
+                // 20220720T09:14:55.450Z
+                dateTime = dateTime.replaceAll("T", Constants.EMPTY);
+                // 2022072009:14:55.450Z
+                dateTime = dateTime.replaceAll(Constants.DOUBLE_POINT, Constants.EMPTY);
+                // 20220720091455.450Z
+                if(dateTime.contains(Constants.DOT)){
+                    int i = dateTime.indexOf(Constants.DOT);
+                    dateTime = dateTime.substring(0, i);
+                }
+                versioning.setLastUpdated(dateTime);
+            }else{    
+                String timestamp = new SimpleDateFormat(TIME_STAMP_FORMAT).format(new Date());
+                versioning.setLastUpdated(timestamp);
+            }
         
             return versioning;
         });
@@ -104,5 +124,5 @@ public class MetadataClient {
     }
     
     private static final String TIME_STAMP_FORMAT = "yyyyMMddHHmmss";
-    
+    private static final String MODIFIED = "modified";
 }

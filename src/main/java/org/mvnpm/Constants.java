@@ -3,6 +3,7 @@ package org.mvnpm;
 public interface Constants {
 
     public static final String DOT = ".";
+    public static final String DOUBLE_POINT = ":";
     public static final String COMMA = ",";
     public static final String ESCAPED_DOT = "\\.";
     public static final String DASH = "-";

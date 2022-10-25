@@ -22,7 +22,6 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.mvnpm.Constants;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.metadata.MetadataClient;
@@ -43,9 +42,6 @@ public class PomClient {
     
     @Inject 
     MetadataClient metadataClient;
-    
-    @ConfigProperty(name = "mvnpm.importmap-version", defaultValue = "1.0.1")
-    String importMapVersion;
     
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
@@ -75,7 +71,9 @@ public class PomClient {
                 model.setScm(toScm(p.repository()));
                 model.setIssueManagement(toIssueManagement(p.bugs()));
                 model.setDevelopers(toDevelopers(p.maintainers()));
-                model.setDependencies(deps);
+                if(!deps.isEmpty()){
+                    model.setDependencies(deps);
+                }
                 mavenXpp3Writer.write(baos, model);
                 return baos.toByteArray();
             } catch (IOException ex) {
@@ -162,21 +160,18 @@ public class PomClient {
             }
         }
         
-        // Also add mvnpm importmap dependency
-        Dependency d = new Dependency();
-        d.setGroupId(Constants.ORG_DOT_MVNPM);
-        d.setArtifactId(Constants.IMPORTMAP);
-        d.setVersion(importMapVersion);
+        if(!deps.isEmpty()){
+            Uni<List<Dependency>> all = Uni.join().all(deps).andCollectFailures();
         
-        deps.add(Uni.createFrom().item(d));
+            return all.onItem().transform((a)->{
+                List<Dependency> ds = new ArrayList<>();
+                ds.addAll(a);
+                return ds;
+            });
+        }else {
+            return Uni.createFrom().item(List.of());
+        }
         
-        Uni<List<Dependency>> all = Uni.join().all(deps).andCollectFailures();
-        
-        return all.onItem().transform((a)->{
-            List<Dependency> ds = new ArrayList<>();
-            ds.addAll(a);
-            return ds;
-        });
     }
     
     private Uni<Dependency> toDependency(Name name, String version){
@@ -186,7 +181,6 @@ public class PomClient {
             d.setGroupId(name.mvnGroupId());
             d.setArtifactId(name.mvnArtifactId());
             d.setVersion(cv);
-            d.setScope(RUNTIME);
             return d;
         });
     }
@@ -244,14 +238,13 @@ public class PomClient {
             final String latest = v.getLatest();
             // If the latest Version is beteen the min and max, ver can use that.
             if(SemVer.lt(latest, max)){
-                return minBracket + latest + Constants.COMMA + max + maxBracket;
+                Version maxVersion = SemVer.version(max);
+                return minBracket + latest + Constants.COMMA + maxVersion.toString() + maxBracket;
             }
             // TODO: As a second attempt try and find it in all the versions
-            
-            return minBracket + min + Constants.COMMA + max + maxBracket;
+            Version maxVersion = SemVer.version(max);
+            return minBracket + min + Constants.COMMA + maxVersion.toString() + maxBracket;
         });
-        
-        
     }
     
     /**
