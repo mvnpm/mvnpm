@@ -53,3 +53,7 @@ TODO ... (import map etc)
 ## TODO
 
 - Handle maven-metadata.xml
+- Fix dependensies.
+- Consider allowing version in path with link added to no version path
+- dependency bundles ? i.e whole of vaadin ?
+- dependency clashes. See pom

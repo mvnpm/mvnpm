@@ -1,8 +1,5 @@
 package org.mvnpm.file.type;
 
-import com.github.villadora.semver.SemVer;
-import com.github.villadora.semver.Version;
-import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.ByteArrayOutputStream;
@@ -11,9 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import org.apache.maven.artifact.repository.metadata.Versioning;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.IssueManagement;
@@ -22,13 +18,13 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
-import org.mvnpm.Constants;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.metadata.MetadataClient;
 import org.mvnpm.npm.model.Bugs;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Maintainer;
 import org.mvnpm.npm.model.Repository;
+import org.mvnpm.semver.VersionConverter;
 
 /**
  * Creates a pom.xml from the NPM Package
@@ -46,13 +42,13 @@ public class PomClient {
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
     public Uni<AsyncFile> createPom(org.mvnpm.npm.model.Package p, String localFileName) {     
-        Uni<byte[]> contents = writePomToStream(p);
+        Uni<byte[]> contents = writePomToBytes(p);
         return contents.onItem().transformToUni((c) -> {
             return fileCreator.createFile(p, localFileName, c);
         });
     }
     
-    private Uni<byte[]> writePomToStream(org.mvnpm.npm.model.Package p) {
+    private Uni<byte[]> writePomToBytes(org.mvnpm.npm.model.Package p) {
         
         Uni<List<Dependency>> toDependencies = toDependencies(p.dependencies());
         return toDependencies.onItem().transform((deps) -> {
@@ -175,7 +171,7 @@ public class PomClient {
     }
     
     private Uni<Dependency> toDependency(Name name, String version){
-        Uni<String> convertedVersion = toVersion(name, version);
+        Uni<String> convertedVersion = toVersion(version);
         return convertedVersion.onItem().transform((cv)-> {
             Dependency d = new Dependency();
             d.setGroupId(name.mvnGroupId());
@@ -188,97 +184,14 @@ public class PomClient {
     // TODO: This needs more work
     // see https://docs.npmjs.com/cli/v6/using-npm/semver#ranges
     
-    private Uni<String> toVersion(Name name, String version){
-        
-        if(SemVer.valid(version)){
-            Version v = SemVer.version(version);
-            return Uni.createFrom().item(v.toString());
-        } else if(SemVer.rangeValid(version)){
-            String range = SemVer.range(version).toString();
-            String[] maxMin = range.split(Constants.SPACE);
-            if(maxMin.length!=2){
-                Log.warn("Could not parse range " + range + " for " + name.npmFullName());
-                return Uni.createFrom().item(exactVersion(version));
-            }
-            String maxPart = maxMin[0];
-            String minPart = maxMin[1];
-            String minBracket = Constants.EMPTY;
-            String maxBracket = Constants.EMPTY;
-            String min = Constants.ZERO_ZERO_ONE;
-            String max = Constants.ZERO_ZERO_ONE;
-            
-            if(minPart.startsWith(GREATER_THAN + EQUALS)){
-                minBracket = OPEN_BLOCK_BRACKET;
-                min = minPart.substring(2);
-            }else if(minPart.startsWith(GREATER_THAN)){
-                minBracket = OPEN_ROUND_BRACKET;
-                min = minPart.substring(1);
-            }
-            if(maxPart.startsWith(LESS_THAN + EQUALS)){
-                maxBracket = CLOSE_BLOCK_BRACKET;
-                max = maxPart.substring(2);
-            }else if(maxPart.startsWith(LESS_THAN)){
-                maxBracket = CLOSE_ROUND_BRACKET;
-                max = maxPart.substring(1);
-            }
-            
-            // Try and get the latest for the min
-            return getBestVersionRange(name, min, max, minBracket, maxBracket);
-            
-        } else {
-            Log.warn("Could not parse version " + version + " for " + name.npmFullName());
-            return Uni.createFrom().item(exactVersion(version));
-        }
-    }
-    
-    private Uni<String> getBestVersionRange(Name name, String min, String max, String minBracket, String maxBracket){
-        
-        Uni<Versioning> versioning = metadataClient.getVersioning(name);
-        return versioning.onItem().transform((v) -> {
-            final String latest = v.getLatest();
-            // If the latest Version is beteen the min and max, ver can use that.
-            if(SemVer.lt(latest, max)){
-                Version maxVersion = SemVer.version(max);
-                return minBracket + latest + Constants.COMMA + maxVersion.toString() + maxBracket;
-            }
-            // TODO: As a second attempt try and find it in all the versions
-            Version maxVersion = SemVer.version(max);
-            return minBracket + min + Constants.COMMA + maxVersion.toString() + maxBracket;
-        });
-    }
-    
-    /**
-     * Removes all range indicators
-     */
-    private String exactVersion(String v){
-        if(v.startsWith(LESS_THAN) 
-                || v.startsWith(GREATER_THAN) 
-                || v.startsWith(EQUALS)
-                || v.startsWith(CARET)
-                || v.startsWith(TILDE)){
-            v = v.substring(1);
-            return exactVersion(v);
-        }
-        return v;
+    private Uni<String> toVersion(String version){
+        return Uni.createFrom().item(VersionConverter.toMavenString(version));
     }
     
     private static final String JAR = "jar";
-    
-    private static final String RUNTIME = "runtime";
     
     private static final String MODEL_VERSION = "4.0.0";
     private static final String GIT_PLUS = "git+";
     private static final String DOT_GIT = ".git";
     
-    private static final String LESS_THAN = "<";
-    private static final String GREATER_THAN = ">";
-    private static final String EQUALS = "=";
-    private static final String CARET = "^";
-    private static final String TILDE = "~";
-    
-    private static final String OPEN_BLOCK_BRACKET = "[";
-    private static final String CLOSE_BLOCK_BRACKET = "]";
-    
-    private static final String OPEN_ROUND_BRACKET = "(";
-    private static final String CLOSE_ROUND_BRACKET = ")";
 }

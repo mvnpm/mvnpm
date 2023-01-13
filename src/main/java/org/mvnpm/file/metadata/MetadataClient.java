@@ -1,7 +1,5 @@
 package org.mvnpm.file.metadata;
 
-import com.github.villadora.semver.SemVer;
-import com.github.villadora.semver.Version;
 import io.quarkus.cache.Cache;
 import io.quarkus.cache.CacheName;
 import io.quarkus.cache.CaffeineCache;
@@ -12,8 +10,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer;
@@ -83,22 +81,17 @@ public class MetadataClient {
             versioning.setRelease(latest);
         
             for(String v:p.versions()){
-                // Here ignore invalid and unreleased version 
-                if(SemVer.valid(v)){
-                    Version semver = SemVer.version(v);
-                    String prerelease = semver.getPrerelease();
-                    if(prerelease==null || prerelease.isEmpty()){
-                        versioning.addVersion(v);
-                    }
+                // Here ignore invalid and unreleased version
+                if(!v.contains("SNAPSHOT") && !v.contains("-alpha") && !v.contains("-beta")){
+                    versioning.addVersion(v);
                 }
             }
-        
             
             Map<String, String> time = p.time();
             if(time!=null && time.containsKey(MODIFIED)){
                 String dateTime = time.get(MODIFIED);
                 // 2022-07-20T09:14:55.450Z
-                dateTime = dateTime.replaceAll(Constants.DASH, Constants.EMPTY);
+                dateTime = dateTime.replaceAll(Constants.HYPHEN, Constants.EMPTY);
                 // 20220720T09:14:55.450Z
                 dateTime = dateTime.replaceAll("T", Constants.EMPTY);
                 // 2022072009:14:55.450Z

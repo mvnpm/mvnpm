@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.6</version>
+    <version>1.0.7-SNAPSHOT</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -42,9 +42,16 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>2.13.3.Final</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
+        
+        <quarkus.platform.version>3.0.0.Alpha2</quarkus.platform.version>
+        <importmap.version>1.0.3</importmap.version>
+        
+        <!-- UI Libs -->
+        <lit.version>2.5.0</lit.version>
+        <vaadin.version>23.3.2</vaadin.version>
+        <vaadin-router.version>1.7.4</vaadin-router.version>
     </properties>
     
     <dependencyManagement>
@@ -88,13 +95,6 @@
             <artifactId>quarkus-cache</artifactId>
         </dependency>
         
-        <!-- To parse the version ranges -->
-	<dependency>
-            <groupId>com.github.villadora</groupId>
-            <artifactId>semver</artifactId>
-            <version>0.0.3</version>
-        </dependency>
-        
         <!-- To read the tar -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -111,7 +111,7 @@
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>importmap</artifactId>
-            <version>1.0.1</version>
+            <version>${importmap.version}</version>
         </dependency>
         
         <dependency>
@@ -123,14 +123,33 @@
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>lit</artifactId>
-            <version>2.4.0</version>
+            <version>${lit.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>router</artifactId>
-            <version>1.7.4</version>
+            <version>${vaadin-router.version}</version>
             <scope>runtime</scope>       
+        </dependency>
+        
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>form-layout</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>text-field</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>button</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
         </dependency>
         
         <!-- Testing -->

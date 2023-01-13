@@ -1,10 +1,10 @@
 package org.mvnpm.npm;
 
 import io.smallrye.mutiny.Uni;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.mvnpm.npm.model.Project;
 import org.mvnpm.npm.model.SearchResults;

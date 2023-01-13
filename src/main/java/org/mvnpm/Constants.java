@@ -2,12 +2,25 @@ package org.mvnpm;
 
 public interface Constants {
 
-    public static final String DOT = ".";
-    public static final String DOUBLE_POINT = ":";
-    public static final String COMMA = ",";
-    public static final String ESCAPED_DOT = "\\.";
-    public static final String DASH = "-";
+    public static final String OR = "||";
+    public static final String OR_ESCAPED = "\\|\\|";
     public static final String SPACE = " ";
+    public static final String ZERO = "0";
+    public static final String DOT = ".";
+    public static final String COMMA = ",";
+    public static final String STAR = "*";
+    public static final String EX = "x";
+    
+    public static final String OPEN_BLOCK = "[";
+    public static final String CLOSE_BLOCK = "]";
+    public static final String OPEN_ROUND = "(";
+    public static final String CLOSE_ROUND = ")";
+    
+    public static final String DOUBLE_POINT = ":";
+    public static final String ESCAPED_DOT = "\\.";
+    public static final String HYPHEN = "-";
+    public static final String TILDE = "~";
+    public static final String CARET = "^";
     public static final String SLASH = "/";
     public static final String EMPTY = "";
     public static final String SHA1 = "sha1";
@@ -19,7 +32,6 @@ public interface Constants {
     
     public static final String DOUBLE_QUOTE = "\"";
     public static final String ORG_DOT_MVNPM = "org.mvnpm";
-    public static final String IMPORTMAP = "importmap";
     public static final String VERSION = "version";
     public static final String GROUP_ID = "groupId";
     public static final String ARTIFACT_ID = "artifactId";

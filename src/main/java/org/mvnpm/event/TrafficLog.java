@@ -1,11 +1,10 @@
 package org.mvnpm.event;
 
 import io.quarkus.logging.Log;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.ObservesAsync;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.ObservesAsync;
+import jakarta.ws.rs.container.ContainerRequestContext;
+import jakarta.ws.rs.container.ContainerResponseContext;
 import org.mvnpm.Constants;
 
 /**
@@ -20,6 +19,6 @@ public class TrafficLog {
     }
 
     public void out(@ObservesAsync ContainerResponseContext ctx) {
-        Log.info("<--- " + ctx.getStatus() + Constants.SPACE + Constants.DASH + Constants.SPACE + ctx.getStatusInfo().getReasonPhrase());
+        Log.info("<--- " + ctx.getStatus() + Constants.SPACE + Constants.HYPHEN + Constants.SPACE + ctx.getStatusInfo().getReasonPhrase());
     }
 }

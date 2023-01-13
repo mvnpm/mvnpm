@@ -1,5 +1,13 @@
 import { LitElement, html, css} from 'lit';
 import {Router} from '@vaadin/router';
+import './mvnpm-home.js';
+import './mvnpm-about.js';
+
+const router = new Router(document.getElementById('outlet'));
+router.setRoutes([
+    {path: '/', component: 'mvnpm-home', name: 'Home'},
+    {path: '/about', component: 'mvnpm-about', name: 'About'}
+]);
 
 /**
  * This component shows the navigation
@@ -7,51 +15,27 @@ import {Router} from '@vaadin/router';
  export class MvnpmNav extends LitElement {
 
     static styles = css`
-      
+        a {
+          color: white;
+          padding: 2px;
+        }
+        a:link, a:visited, a:active { 
+          text-decoration: none; 
+        }
+        a:hover { 
+          text-decoration: dashed; 
+        }
     `;
 
     static properties = {
       
     };
 
-    constructor() {
-        super();  
-    }
-
-    connectedCallback() {
-      super.connectedCallback()
-
-      var routes = [];
-      
-
-      for (const child of this.children) {
-
-        if(child.tagName.toLowerCase() === "mvnpm-navitem"){
-          var route = {};
-
-          let nodeMap = child.attributes;
-          
-          for (let i = 0; i < nodeMap.length; i++) {
-            if(nodeMap[i].name === "path"){
-              route.path = nodeMap[i].value;
-            }
-            if(nodeMap[i].name === "component"){
-              route.component = nodeMap[i].value;
-            }
-          }
-
-          routes.push({...route});
-        }
-
-      }
-
-      const router = new Router(document.getElementById('outlet'));
-      router.setRoutes(routes);
-    }
-
     render() {
-        return html`<slot></slot>`;
+        var routes = router.getRoutes();
+        return html`${routes.map((r) =>
+                html`<a href='${r.path}'>${r.name}<a>`
+            )}`;
     }
-    
  }
  customElements.define('mvnpm-nav', MvnpmNav);

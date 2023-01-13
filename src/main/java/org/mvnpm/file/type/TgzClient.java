@@ -8,8 +8,8 @@ import io.vertx.mutiny.core.file.AsyncFile;
 import io.vertx.mutiny.core.http.HttpClientRequest;
 import io.vertx.mutiny.core.http.HttpClientResponse;
 import java.net.URL;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.mvnpm.Constants;
 import org.mvnpm.file.FileStore;
 

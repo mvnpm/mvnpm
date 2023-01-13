@@ -7,9 +7,9 @@ import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.File;
 import java.util.Optional;
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
-import javax.inject.Inject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
+import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.mvnpm.Constants;
 
@@ -77,7 +77,7 @@ public class FileStore {
     }
     
     public String getLocalFileName(FileType type, org.mvnpm.npm.model.Package p){
-        return p.name().mvnArtifactId() + Constants.DASH + p.version() + Constants.DOT + type.name();
+        return p.name().mvnArtifactId() + Constants.HYPHEN + p.version() + Constants.DOT + type.name();
     }
     
     public String getLocalSha1FileName(FileType type, org.mvnpm.npm.model.Package p){

@@ -2,7 +2,7 @@ package org.mvnpm.npm;
 
 import io.quarkus.cache.CacheResult;
 import io.smallrye.mutiny.Uni;
-import javax.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.mvnpm.npm.model.Project;
 import org.mvnpm.npm.model.SearchResults;

@@ -1,12 +1,12 @@
 package org.mvnpm;
 
 import io.smallrye.mutiny.Uni;
-import javax.inject.Inject;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.QueryParam;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.QueryParam;
 import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Project;
 import org.mvnpm.npm.model.SearchResults;
