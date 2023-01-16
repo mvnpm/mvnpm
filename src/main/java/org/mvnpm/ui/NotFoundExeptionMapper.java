@@ -32,7 +32,8 @@ public class NotFoundExeptionMapper implements ExceptionMapper<NotFoundException
     public Response toResponse(NotFoundException exception) {
         if(isHtmlRequest()){ // We only care about html requests here.
             URI uri = uriInfo.getRequestUri();
-            if(uri.getPath().equals(SLASH) || (uri.getPath().startsWith(SLASH) && uri.getPath().split(SLASH).length == 1)){
+            long numberOfSlashes = uri.getPath().chars().filter(ch -> ch == '/').count();
+            if(uri.getPath().equals(SLASH) || (uri.getPath().startsWith(SLASH) && numberOfSlashes == 1)){
                 return Response.ok(indexHtml.getHomePage(), MediaType.TEXT_HTML).build();
             }
         }

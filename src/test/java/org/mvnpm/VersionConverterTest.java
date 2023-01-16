@@ -578,5 +578,11 @@ public class VersionConverterTest {
         Assertions.assertEquals("[0.0,1.0)", mavenVersion);
     }
     
+    // Prerelease strip out
+    @Test
+    public void testPrereleaseStrip(){
+        String mavenVersion = VersionConverter.toMavenString("^3.0.0-pre.26");
+        Assertions.assertEquals("[3.0.0,4.0.0)", mavenVersion);
+    }
     
 }

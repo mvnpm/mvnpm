@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.7-SNAPSHOT</version>
+    <version>1.0.10</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -46,12 +46,13 @@
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         
         <quarkus.platform.version>3.0.0.Alpha2</quarkus.platform.version>
-        <importmap.version>1.0.3</importmap.version>
+        <importmap.version>1.0.4</importmap.version>
         
         <!-- UI Libs -->
-        <lit.version>2.5.0</lit.version>
-        <vaadin.version>23.3.2</vaadin.version>
+        <lit.version>2.6.1</lit.version>
+        <vaadin.version>23.3.3</vaadin.version>
         <vaadin-router.version>1.7.4</vaadin-router.version>
+        <wc-codemirror.version>2.1.0</wc-codemirror.version>
     </properties>
     
     <dependencyManagement>
@@ -126,6 +127,7 @@
             <version>${lit.version}</version>
             <scope>runtime</scope>
         </dependency>
+        
         <dependency>
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>router</artifactId>
@@ -149,6 +151,49 @@
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>button</artifactId>
             <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>icon</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>icons</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>vaadin-lumo-styles</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>tabs</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>tabsheet</artifactId>
+            <version>${vaadin.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.vaadin</groupId>
+            <artifactId>combo-box</artifactId>
+            <version>latest</version>
+            <scope>runtime</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.mvnpm.at.vanillawc</groupId>
+            <artifactId>wc-codemirror</artifactId>
+            <version>${wc-codemirror.version}</version>
             <scope>runtime</scope>
         </dependency>
         
@@ -232,6 +277,7 @@
             <properties>
                 <skipITs>false</skipITs>
                 <quarkus.package.type>native</quarkus.package.type>
+                <quarkus.native.additional-build-args>-H:ReflectionConfigurationFiles=reflection-config.json</quarkus.native.additional-build-args>
             </properties>
         </profile>
     </profiles>

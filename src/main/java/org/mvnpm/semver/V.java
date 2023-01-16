@@ -4,6 +4,8 @@ import org.mvnpm.Constants;
 import static org.mvnpm.Constants.DOT;
 import static org.mvnpm.Constants.STAR;
 import static org.mvnpm.Constants.EX;
+import static org.mvnpm.Constants.ESCAPED_DOT;
+import static org.mvnpm.Constants.HYPHEN;
 
 public record V(Integer major,Integer minor,Integer patch){
     
@@ -15,22 +17,28 @@ public record V(Integer major,Integer minor,Integer patch){
     }
     
     public static V fromString(String version){
-        if(version.contains(DOT)){
-            String parts[] = version.split(Constants.ESCAPED_DOT);
-            if(parts.length == 3){
-                return new V(toNumber(parts[0]),toNumber(parts[1]),toNumber(parts[2]));
-            }else if(parts.length == 2){
-                return new V(toNumber(parts[0]),toNumber(parts[1]));
+        try {
+            if(version.contains(DOT)){
+                String parts[] = version.split(ESCAPED_DOT);
+                if(parts.length > 2){
+                    return new V(toNumber(parts[0]),toNumber(parts[1]),toNumber(parts[2]));
+                }else if(parts.length == 2){
+                    return new V(toNumber(parts[0]),toNumber(parts[1]));
+                }
+            }else{
+                return new V(toNumber(version));
             }
-        }else{
-            return new V(toNumber(version));
+        }catch(Throwable t){
+            throw new InvalidVersionException(version, t);
         }
-        throw new RuntimeException("Could not create V from version " + version);
+        throw new InvalidVersionException(version);
     }
     
     private static int toNumber(String part){
         if(part.equals(STAR) || part.equalsIgnoreCase(EX)){
             return Integer.MIN_VALUE;
+        }if (part.contains(HYPHEN)){
+            part = part.split(HYPHEN)[0]; // Strip out pre-release
         }
         return Integer.parseInt(part);
     }

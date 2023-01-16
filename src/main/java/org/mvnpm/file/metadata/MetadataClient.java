@@ -3,6 +3,7 @@ package org.mvnpm.file.metadata;
 import io.quarkus.cache.Cache;
 import io.quarkus.cache.CacheName;
 import io.quarkus.cache.CaffeineCache;
+import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -20,6 +21,8 @@ import org.mvnpm.file.Sha1Util;
 import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Project;
+import org.mvnpm.semver.InvalidVersionException;
+import org.mvnpm.semver.V;
 
 /**
  * Creates a maven-metadata.xml from the NPM Project
@@ -80,10 +83,15 @@ public class MetadataClient {
             versioning.setLatest(latest);
             versioning.setRelease(latest);
         
-            for(String v:p.versions()){
+            for(String version:p.versions()){
                 // Here ignore invalid and unreleased version
-                if(!v.contains("SNAPSHOT") && !v.contains("-alpha") && !v.contains("-beta")){
-                    versioning.addVersion(v);
+                try {
+                    V v = V.fromString(version);
+                    if(!versioning.getVersions().contains(v.toString())){
+                        versioning.addVersion(v.toString());
+                    }
+                }catch(InvalidVersionException ive){
+                    Log.warn("Ignoring version [" + ive.getVersion() + "] for " + name.displayName());
                 }
             }
             

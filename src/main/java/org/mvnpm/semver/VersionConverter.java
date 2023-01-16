@@ -3,7 +3,7 @@ package org.mvnpm.semver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.mvnpm.Constants;
+import org.jboss.logging.Logger;
 
 import static org.mvnpm.Constants.OR;
 import static org.mvnpm.Constants.OR_ESCAPED;
@@ -20,6 +20,7 @@ import static org.mvnpm.Constants.OPEN_BLOCK;
 import static org.mvnpm.Constants.CLOSE_BLOCK;
 import static org.mvnpm.Constants.OPEN_ROUND;
 import static org.mvnpm.Constants.CLOSE_ROUND;
+import static org.mvnpm.Constants.EMPTY;
 
 /**
  * Convert a npm version to a maven version
@@ -30,20 +31,26 @@ import static org.mvnpm.Constants.CLOSE_ROUND;
  * see https://semver.org/
  */
 public class VersionConverter {
-
+    private static final Logger LOG = Logger.getLogger(VersionConverter.class);
+    
     private VersionConverter(){}
     
     public static String toMavenString(String versionString){
-        if(null==versionString)versionString=Constants.EMPTY;
+        try {
+            if(null==versionString)versionString=EMPTY;
         
-        versionString = versionString.trim();
-        String[] orSet;
-        if(versionString.contains(OR)){
-           orSet = versionString.split(OR_ESCAPED);
-        }else{
-            orSet = new String[]{versionString};
+            versionString = versionString.trim();
+            String[] orSet;
+            if(versionString.contains(OR)){
+                orSet = versionString.split(OR_ESCAPED);
+            }else{
+                orSet = new String[]{versionString};
+            }
+            return toMavenString(orSet);
+        }catch(Throwable t) {
+            LOG.warn("Error getting maven version from [" + versionString + "]");
+            throw t;
         }
-        return toMavenString(orSet);
     }
     
     private static String toMavenString(String[] versions){

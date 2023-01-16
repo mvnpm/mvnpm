@@ -1,0 +1,15 @@
+[Unit]
+Description=mvnpm service
+After=network.service nginx.service
+
+[Service]
+User=pkruger
+Group=pkruger
+WorkingDirectory=/opt/mvnpm
+ExecStart=/opt/mvnpm/mvnpm-runner
+StandardOutput=/opt/mvnpm/output.log
+StandardError=/opt/mvnpm/error.log
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
