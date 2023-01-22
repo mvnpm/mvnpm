@@ -77,6 +77,10 @@ public class FileStore {
     }
     
     public String getLocalFileName(FileType type, org.mvnpm.npm.model.Package p){
+        if(p.version().contains("next") && type.equals(FileType.jar)){
+            return p.name().mvnArtifactId() + Constants.HYPHEN + p.version() + "-prerelease" + Constants.DOT + type.name();
+        }
+        
         return p.name().mvnArtifactId() + Constants.HYPHEN + p.version() + Constants.DOT + type.name();
     }
     

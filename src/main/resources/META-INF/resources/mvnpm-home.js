@@ -161,14 +161,16 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
             var groupId = this._getGroupId(this._coordinates.groupId.trim());
             var artifactId = this._coordinates.artifactId.trim();
 
-            groupId = groupId.replaceAll('.', '/');
+            if(artifactId) {
+                groupId = groupId.replaceAll('.', '/');
 
-            var metadataUrl = "/maven2/" + groupId + "/" + artifactId + "/maven-metadata.xml";
+                var metadataUrl = "/maven2/" + groupId + "/" + artifactId + "/maven-metadata.xml";
 
-            fetch(metadataUrl)
-                .then(response => response.text())
-                .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
-                .then(metadata => this._inspectMetadata(metadata));
+                fetch(metadataUrl)
+                    .then(response => response.text())
+                    .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
+                    .then(metadata => this._inspectMetadata(metadata));
+            }
         }
     }
     

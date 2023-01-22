@@ -64,7 +64,11 @@ import { LitElement, html, css} from 'lit';
     }
 
     render() {
-        return html` mvnpm (Maven NPM) is a maven repository facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>
+        return html` 
+            <img src="logo.png" alt="mvnpm" width="200px"/>
+            <p>
+                mvnpm (Maven NPM) is a maven repository facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>
+            </p>
             <p>
             When requesting a dependency, it will inspect the registry to see if it exist and if it does, convert of to a maven dependeny.
             </p>

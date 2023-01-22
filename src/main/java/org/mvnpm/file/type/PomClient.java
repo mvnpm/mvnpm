@@ -19,12 +19,11 @@ import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.mvnpm.file.FileStore;
-import org.mvnpm.file.metadata.MetadataClient;
 import org.mvnpm.npm.model.Bugs;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Maintainer;
 import org.mvnpm.npm.model.Repository;
-import org.mvnpm.semver.VersionConverter;
+import org.mvnpm.version.VersionConverter;
 
 /**
  * Creates a pom.xml from the NPM Package
@@ -35,9 +34,6 @@ public class PomClient {
     
     @Inject 
     FileStore fileCreator;
-    
-    @Inject 
-    MetadataClient metadataClient;
     
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
@@ -181,11 +177,8 @@ public class PomClient {
         });
     }
     
-    // TODO: This needs more work
-    // see https://docs.npmjs.com/cli/v6/using-npm/semver#ranges
-    
     private Uni<String> toVersion(String version){
-        return Uni.createFrom().item(VersionConverter.toMavenString(version));
+        return Uni.createFrom().item(VersionConverter.convert(version));
     }
     
     private static final String JAR = "jar";

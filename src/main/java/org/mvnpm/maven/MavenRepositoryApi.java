@@ -41,43 +41,76 @@ public class MavenRepositoryApi {
     
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.APPLICATION_XML)
     public Uni<Response> getMavenMetadata(@PathParam("ga") String ga){
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         
         Uni<MetadataAndSha> mas = metadataClient.getMetadataAndSha(name);
         return mas.onItem().transform((b) -> {
-            return Response.ok(b.data()).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.DOUBLE_QUOTE)
+            return Response.ok(b.data())
                             .build();
         });
-        
     }
     
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml.sha1")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
+    @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getMavenMetadataSha1(@PathParam("ga") String ga){
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         
         Uni<MetadataAndSha> mas = metadataClient.getMetadataAndSha(name);
         return mas.onItem().transform((s)-> {
-            return Response.ok(s.sha1()).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + MAVEN_META_DATA_XML + Constants.SHA1 + Constants.DOUBLE_QUOTE)
+            return Response.ok(s.sha1())
                             .build();
         });
     }
     
     @GET
-    @Path("/org/mvnpm/{gavt : (.+)?}")
-    @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Uni<Response> getAny(@PathParam("gavt") String gavt){
-        
+    @Path("/org/mvnpm/{gavt : (.+)?}.pom")
+    @Produces(MediaType.APPLICATION_XML)
+    public Uni<Response> getPom(@PathParam("gavt") String gavt){
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + ".pom");
+        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.pom);                
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{gavt : (.+)?}.pom.sha1")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Uni<Response> getPomSha1(@PathParam("gavt") String gavt){
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + ".pom.sha1");
+        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.pom);
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{gavt : (.+)?}.jar")
+    @Produces("application/java-archive")
+    public Uni<Response> getJar(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        
-        if(nameVersionType.sha1()){
-            return getSha1(nameVersionType.name(), nameVersionType.version(), nameVersionType.type());
-        } else {
-            return getFile(nameVersionType.name(), nameVersionType.version(), nameVersionType.type());                
-        }
+        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.jar);
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{gavt : (.+)?}.jar.sha1")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Uni<Response> getJarSha1(@PathParam("gavt") String gavt){
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
+        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.jar);
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{gavt : (.+)?}.tgz")
+    @Produces("application/gzip")
+    public Uni<Response> getTgz(@PathParam("gavt") String gavt){
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
+        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{gavt : (.+)?}.tzg.sha1")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Uni<Response> getTgzSha1(@PathParam("gavt") String gavt){
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
+        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
     }
     
     private Uni<Response> getFile(Name fullName, String version, FileType type) {
@@ -90,10 +123,8 @@ public class MavenRepositoryApi {
             Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
             
             return npmPackage.onItem().transformToUni((p) -> {
-                String filename = fileStore.getLocalFileName(type, p);
                 return fileClient.streamFile(type, p).onItem().transform((file) -> {
-                        return Response.ok(file).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + filename + Constants.DOUBLE_QUOTE)
-                            .build();
+                    return Response.ok(file).build();
                 });
             }); 
         }
@@ -109,10 +140,8 @@ public class MavenRepositoryApi {
             Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
             
             return npmPackage.onItem().transformToUni((p) -> {
-                String filename = fileStore.getLocalSha1FileName(type, p);
                 return fileClient.streamSha1(type, p).onItem().transform((file) -> {
-                        return Response.ok(file).header(Constants.HEADER_CONTENT_DISPOSITION_KEY, Constants.HEADER_CONTENT_DISPOSITION_VALUE + Constants.DOUBLE_QUOTE + filename + Constants.DOUBLE_QUOTE)
-                            .build();
+                    return Response.ok(file).build();
                 });
             }); 
         }
@@ -126,5 +155,4 @@ public class MavenRepositoryApi {
                 });
     }
     
-    private static final String MAVEN_META_DATA_XML = "maven-metadata.xml";
 }

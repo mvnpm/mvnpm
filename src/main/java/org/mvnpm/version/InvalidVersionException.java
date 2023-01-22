@@ -1,4 +1,4 @@
-package org.mvnpm.semver;
+package org.mvnpm.version;
 
 public class InvalidVersionException extends RuntimeException {
     private final String version;

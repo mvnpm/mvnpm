@@ -11,6 +11,13 @@ public interface Constants {
     public static final String STAR = "*";
     public static final String EX = "x";
     
+    public static final String LESS_THAN = "<";
+    public static final String LESS_THAN_OR_EQUAL_TO = "<=";
+    public static final String GREATER_THAN = ">";
+    public static final String GREATER_THAN_OR_EQUAL_TO = ">=";
+    public static final String EQUAL_TO = "=";
+    public static final String VEE = "v";
+    
     public static final String OPEN_BLOCK = "[";
     public static final String CLOSE_BLOCK = "]";
     public static final String OPEN_ROUND = "(";

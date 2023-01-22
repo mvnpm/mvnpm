@@ -23,5 +23,12 @@ public class MavenRepositoryApiTest {
              .statusCode(200);
     }
     
+    @Test
+    public void testIgnoreBetaPom() {
+        RestAssured.given().header("User-Agent", "m2e/unit-test")
+          .when().get("/maven2/org/mvnpm/at/vaadin/tabs/23.2.3/vaadin-23.2.3.pom")
+          .then().log().all().and()
+             .statusCode(200);
+    }
     
 }

@@ -33,22 +33,14 @@ public class UrlPathParser {
         }
         
         // Start from the back
-        String filename = parts[parts.length-1]; // filename
         String version = parts[parts.length-2]; // version
         String[] nameParts = Arrays.copyOfRange(parts, 0, parts.length - 2); // groupid and artifactId
-        
-        boolean isSha1 = isSha1Request(filename);
-        FileType fileType = FileType.fromFileName(filename);
         
         String fullName = String.join(Constants.SLASH, nameParts);
         if(fullName.startsWith(Constants.AT_SLASH)){
             fullName = fullName.replaceFirst(Constants.AT_SLASH, Constants.AT);
         }
         
-        return new NameVersionType(NameParser.parse(fullName), version, fileType, isSha1);
-    }
-    
-    private static boolean isSha1Request(String filename){
-        return filename.endsWith(Constants.DOT_SHA1);
+        return new NameVersionType(NameParser.parse(fullName), version);
     }
 }

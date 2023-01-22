@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.10</version>
+    <version>1.0.15</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -50,7 +50,7 @@
         
         <!-- UI Libs -->
         <lit.version>2.6.1</lit.version>
-        <vaadin.version>23.3.3</vaadin.version>
+        <vaadin.version>23.3.4</vaadin.version>
         <vaadin-router.version>1.7.4</vaadin-router.version>
         <wc-codemirror.version>2.1.0</wc-codemirror.version>
     </properties>
@@ -186,7 +186,7 @@
         <dependency>
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>combo-box</artifactId>
-            <version>latest</version>
+            <version>${vaadin.version}</version>
             <scope>runtime</scope>
         </dependency>
         
