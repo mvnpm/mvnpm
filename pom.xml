@@ -119,7 +119,7 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
-        
+                        
         <!-- UI (from mvnpm) -->
         <dependency>
             <groupId>org.mvnpm</groupId>

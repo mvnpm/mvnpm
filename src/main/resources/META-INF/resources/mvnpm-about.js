@@ -38,19 +38,12 @@ import { LitElement, html, css} from 'lit';
             <id>mvnpm</id>
             <repositories>
                 <repository>
-                    <id>mvnpm.org</id>
-                    <name>mvnpm</name>
-                    <url>https://repo.mvnpm.org/maven2</url>
-                    <releases>
-                        <enabled>true</enabled>
-                        <updatePolicy>daily</updatePolicy>
-                        <checksumPolicy>warn</checksumPolicy>
-                    </releases>
                     <snapshots>
                         <enabled>false</enabled>
-                        <updatePolicy>never</updatePolicy>
-                        <checksumPolicy>fail</checksumPolicy>
                     </snapshots>
+                    <id>mvnpm.org</id> 
+                    <name>mvnpm</name>
+                    <url>https://repo.mvnpm.org/maven2</url>
                 </repository>
             </repositories>
         </profile>

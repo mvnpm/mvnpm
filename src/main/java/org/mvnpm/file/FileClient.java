@@ -8,6 +8,7 @@ import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.file.AsyncFile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.io.FileNotFoundException;
 import org.mvnpm.file.type.PomClient;
 
 /**
@@ -50,12 +51,33 @@ public class FileClient {
     }
     
     public Uni<AsyncFile> streamSha1(FileType type, org.mvnpm.npm.model.Package p) {
-        String localFileName = fileStore.getLocalShaFullPath(type, p);
+        String localFileName = fileStore.getLocalSha1FullPath(type, p);
         
         Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
         return checkIfLocal.onItem()
                 .transformToUni((local) -> { 
                     return fetchSha1(type, p, localFileName, local);
+                });
+    }
+    
+    public Uni<AsyncFile> streamMd5(FileType type, org.mvnpm.npm.model.Package p) {
+        String localFileName = fileStore.getLocalMd5FullPath(type, p);
+        
+        Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
+        return checkIfLocal.onItem()
+                .transformToUni((local) -> { 
+                    return fetchStatic(localFileName, local);
+                });
+    }
+    
+    
+    public Uni<AsyncFile> streamAsc(FileType type, org.mvnpm.npm.model.Package p) {
+        String localFileName = fileStore.getLocalAscFullPath(type, p);
+        
+        Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
+        return checkIfLocal.onItem()
+                .transformToUni((local) -> { 
+                    return fetchStatic(localFileName, local);
                 });
     }
     
@@ -80,6 +102,15 @@ public class FileClient {
             return fetchOriginal.onItem().transformToUni((downloaded) -> {
                 return fileStore.readFile(localFileName);
             });
+        }
+    }
+    
+    private Uni<AsyncFile> fetchStatic(String localFileName, Boolean local){
+        if(local){
+            Log.debug("Serving from cache [" + localFileName + "]");
+            return fileStore.readFile(localFileName);
+        }else{
+            return Uni.createFrom().failure(new FileNotFoundException(localFileName));
         }
     }
     

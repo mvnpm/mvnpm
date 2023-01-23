@@ -1,4 +1,4 @@
-package org.mvnpm.event;
+package org.mvnpm.traffic;
 
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;

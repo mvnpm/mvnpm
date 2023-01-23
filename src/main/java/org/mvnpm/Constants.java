@@ -33,6 +33,19 @@ public interface Constants {
     public static final String SHA1 = "sha1";
     public static final String DOT_SHA1 = DOT + SHA1;
     
+    public static final String MD5 = "md5";
+    public static final String DOT_MD5 = DOT + MD5;
+    
+    public static final String ASC = "asc";
+    public static final String DOT_ASC = DOT + ASC;
+    public static final String TGZ = "tgz";
+    public static final String DOT_TGZ = DOT + TGZ;
+    public static final String JAR = "jar";
+    public static final String DOT_JAR = DOT + JAR;
+    
+    public static final String DASH_SOURCES_DOT_JAR = "-sources.jar";
+    public static final String DASH_JAVADOC_DOT_JAR = "-javadoc.jar";
+    
     public static final String AT = "@";
     public static final String AT_SLASH = "at" + SLASH;
     public static final String DOT_AT_DOT = DOT + "at" + DOT;

@@ -17,7 +17,7 @@ import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer;
 import org.mvnpm.Constants;
-import org.mvnpm.file.Sha1Util;
+import org.mvnpm.file.FileUtil;
 import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Project;
@@ -50,7 +50,7 @@ public class MetadataClient {
                 try(StringWriter sw = new StringWriter()){
                     metadataXpp3Writer.write(sw, m);
                     byte[] value = sw.toString().getBytes();
-                    String sha1 = Sha1Util.sha1(value);
+                    String sha1 = FileUtil.sha1(value);
                     MetadataAndSha mas = new MetadataAndSha(sha1, value);
                     caffeineCache.put(name.npmFullName(), CompletableFuture.completedFuture(mas));
                     return Uni.createFrom().item(mas);

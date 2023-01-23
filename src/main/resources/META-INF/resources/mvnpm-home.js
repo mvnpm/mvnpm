@@ -41,6 +41,9 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
             flex-direction: column;
             padding: 15px;
             gap: 10px;
+            border: 1px solid rgba(102,179,67,0.96);
+            border-radius: 15px;
+            width: 20%;
         }
         .files a:link { 
             text-decoration: none; 
@@ -58,13 +61,21 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
             text-decoration: none; 
             color: #626d7c;
         }
+        .block {
+            display: flex;
+            gap: 10px;
+        }
+        .heading{
+            color: #66b343;
+            font-weight: bold;
+            border-bottom: 1px dotted #66b343;
+        }
     `;
 
     static properties = {
         _coordinates:{state: true},
-        _pomUrl:{state: true},
-        _jarUrl:{state: true},
-        _jarFileName:{state: true},
+        _baseUrl:{state: true},
+        _baseFile:{state: true},
         _disabled:{state: true},
         _use:{state: true},
         _versions:{state: true},
@@ -138,20 +149,53 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
     }
     
     _loadPomTab(){
-        if(this._pomUrl){
+        if(this._baseUrl){
             return html`<wc-codemirror
                                 mode='xml'
-                                src='${this._pomUrl}'
+                                src='${this._baseUrl + this._baseFile + ".pom"}'
                                 readonly>
                             </wc-codemirror>`;
         }
     }
     
     _loadFilesTab(){
-        if(this._pomUrl){
-            return html`<div class="files">
-                            <a href="${this._pomUrl}" target="_blank"><vaadin-icon icon="vaadin:file-code"></vaadin-icon> pom.xml</a>
-                            <a href="${this._jarUrl}" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._jarFileName}</a>
+        if(this._baseUrl){
+            return html`<div class="block">
+                            <div class="files">
+                                <span class="heading">pom</span>
+                                <a href="${this._baseUrl + this._baseFile}.pom" target="_blank"><vaadin-icon icon="vaadin:file-code"></vaadin-icon> ${this._baseFile}.pom</a>
+                                <a href="${this._baseUrl + this._baseFile}.pom.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.pom.sha1</a>
+                                <a href="${this._baseUrl + this._baseFile}.pom.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.pom.md5</a>
+                                <a href="${this._baseUrl + this._baseFile}.pom.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.pom.asc</a>
+                            </div>
+                            <div class="files">
+                                <span class="heading">jar</span>
+                                <a href="${this._baseUrl + this._baseFile}.jar" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}.jar</a>
+                                <a href="${this._baseUrl + this._baseFile}.jar.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.jar.sha1</a>
+                                <a href="${this._baseUrl + this._baseFile}.jar.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.jar.md5</a>
+                                <a href="${this._baseUrl + this._baseFile}.jar.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.jar.asc</a>
+                            </div>
+                            <div class="files">
+                                <span class="heading">source</span>
+                                <a href="${this._baseUrl + this._baseFile}-sources.jar" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}-sources.jar</a>
+                                <a href="${this._baseUrl + this._baseFile}-sources.jar.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-sources.jar.sha1</a>
+                                <a href="${this._baseUrl + this._baseFile}-sources.jar.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-sources.jar.md5</a>
+                                <a href="${this._baseUrl + this._baseFile}-sources.jar.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-sources.jar.asc</a>
+                            </div>
+                            <div class="files">
+                                <span class="heading">javadoc</span>
+                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}-javadoc.jar</a>
+                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-javadoc.jar.sha1</a>
+                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-javadoc.jar.md5</a>
+                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-javadoc.jar.asc</a>
+                            </div>
+                            <div class="files">
+                                <span class="heading">original</span>
+                                <a href="${this._baseUrl + this._baseFile}.tgz" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}.tgz</a>
+                                <a href="${this._baseUrl + this._baseFile}.tgz.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.tgz.sha1</a>
+                                <a href="${this._baseUrl + this._baseFile}.tgz.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.tgz.md5</a>
+                                <a href="${this._baseUrl + this._baseFile}.tgz.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.tgz.asc</a>
+                            </div>
                         </div>`;
         }
     }
@@ -212,9 +256,8 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
             version: ''
         };
         this._disabled = "disabled";
-        this._pomUrl = null;
-        this._jarUrl = null;
-        this._jarFileName = null;
+        this._baseUrl = null;
+        this._baseFile = null;
         this._use = null;
         this._versions = null;
     }
@@ -245,9 +288,8 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
         this._use = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
             
         groupId = groupId.replaceAll('.', '/');
-        this._jarFileName = artifactId + "-" + version + ".jar";
-        this._pomUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + artifactId + "-" + version + ".pom";
-        this._jarUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/" + this._jarFileName;
+        this._baseFile = artifactId + "-" + version;
+        this._baseUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/";
     }
     
  }

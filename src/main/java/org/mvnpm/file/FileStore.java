@@ -39,7 +39,7 @@ public class FileStore {
             return emptyFile.onItem().transformToUni((createdFile) -> {
                 Uni<Void> download = vertx.fileSystem().writeFile(localFileName, Buffer.buffer(content));
                 return download.onItem().transformToUni((doneDownload) -> {
-                    String sha1 = Sha1Util.sha1(content);
+                    String sha1 = FileUtil.sha1(content);
                     String localSha1FileName = localFileName + Constants.DOT_SHA1;
                     Uni<Void> emptySha1File = vertx.fileSystem().createFile(localSha1FileName);
                     return emptySha1File.onItem().transformToUni((createdSha) -> {
@@ -67,8 +67,16 @@ public class FileStore {
                 p.version();
     }
     
-    public String getLocalShaFullPath(FileType type, org.mvnpm.npm.model.Package p){
+    public String getLocalSha1FullPath(FileType type, org.mvnpm.npm.model.Package p){
         return getLocalFullPath(type, p) + Constants.DOT_SHA1;
+    }
+    
+    public String getLocalMd5FullPath(FileType type, org.mvnpm.npm.model.Package p){
+        return getLocalFullPath(type, p) + Constants.DOT_MD5;
+    }
+    
+    public String getLocalAscFullPath(FileType type, org.mvnpm.npm.model.Package p){
+        return getLocalFullPath(type, p) + Constants.DOT_ASC;
     }
     
     public String getLocalFullPath(FileType type, org.mvnpm.npm.model.Package p){
@@ -77,11 +85,7 @@ public class FileStore {
     }
     
     public String getLocalFileName(FileType type, org.mvnpm.npm.model.Package p){
-        if(p.version().contains("next") && type.equals(FileType.jar)){
-            return p.name().mvnArtifactId() + Constants.HYPHEN + p.version() + "-prerelease" + Constants.DOT + type.name();
-        }
-        
-        return p.name().mvnArtifactId() + Constants.HYPHEN + p.version() + Constants.DOT + type.name();
+        return p.name().mvnArtifactId() + Constants.HYPHEN + p.version() + type.getPostString();
     }
     
     public String getLocalSha1FileName(FileType type, org.mvnpm.npm.model.Package p){

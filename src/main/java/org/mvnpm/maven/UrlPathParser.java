@@ -1,9 +1,7 @@
 package org.mvnpm.maven;
 
-import io.quarkus.logging.Log;
 import java.util.Arrays;
 import org.mvnpm.Constants;
-import org.mvnpm.file.FileType;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.NameParser;
 
