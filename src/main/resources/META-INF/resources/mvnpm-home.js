@@ -10,12 +10,15 @@ import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
 import '@vanillawc/wc-codemirror';
 import '@vanillawc/wc-codemirror/mode/xml/xml.js';
+import '@vanillawc/wc-codemirror/mode/asciiarmor/asciiarmor.js';
+import '@vanillawc/wc-codemirror/mode/powershell/powershell.js';
+import './mvnpm-loading.js';
 
 /**
  * This component shows the Home screen
  * 
  */
- export class MvnpmHome extends LitElement {
+export class MvnpmHome extends LitElement {
 
     static styles = css`
         :host {
@@ -32,32 +35,35 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
             column-gap: 15px;
         }
         .tabpane {
-            width: 90%;
+            width: 100%;
             display: flex;
             flex-direction: column;
         }
-        .files {
+    
+        .fileList {
             display: flex;
             flex-direction: column;
-            padding: 15px;
             gap: 10px;
-            border: 1px solid rgba(102,179,67,0.96);
-            border-radius: 15px;
             width: 20%;
+            padding-right: 5px;
         }
-        .files a:link { 
+        
+        .line a{
+            color: rgb(98, 109, 124);
+        }
+        .line a:link{ 
             text-decoration: none; 
             color: #626d7c;
         }
-        .files a:visited { 
+        .line a:visited { 
             text-decoration: none; 
             color: #626d7c;
         }
-        .files a:hover { 
+        .line a:hover { 
             text-decoration: none; 
             color: #4b8ee6;
         }
-        .files a:active { 
+        .line a:active { 
             text-decoration: none; 
             color: #626d7c;
         }
@@ -70,6 +76,56 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
             font-weight: bold;
             border-bottom: 1px dotted #66b343;
         }
+        .use {
+            display: flex;
+            gap: 10px;
+        }
+    
+        .useBlock{
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            gap: 10px;
+            border: 1px solid rgba(102,179,67,0.96);
+            border-radius: 15px;
+            width: 50%;
+        }
+        .basiccode {
+    
+        }
+        .fileBrower {
+            display: flex;
+            gap: 5px;
+            padding-top: 10px;
+        }
+        .line{
+            display: flex;
+            justify-content: space-between;
+        }
+        .line .outIcon {
+            font-size: 12px;
+        }
+        .line a {
+            cursor: pointer;
+        }
+        .codeView {
+            width: 100%;
+        }
+        .nopreview {
+            width: 100%;
+            color: lightgray;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .clearButton {
+            align-self: end;
+            margin-bottom: 14px;
+        }
+        mvnpm-loading {
+            align-self: end;
+        }
     `;
 
     static properties = {
@@ -77,15 +133,24 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
         _baseUrl:{state: true},
         _baseFile:{state: true},
         _disabled:{state: true},
-        _use:{state: true},
+        _usePom:{state: true},
+        _useJson:{state: true},
         _versions:{state: true},
         _latestVersion:{state: true},
+        _codeViewMode:{state: true},
+        _codeViewSrc:{state: true},
+        _codeViewSelection:{state: true},
+        _loadingIcon:{state:true},
     };
 
     constructor() {
         super();
         this._clearCoordinates();
         this._disabled = "disabled";
+        this._codeViewMode = "xml"; 
+        this._codeViewSelection = ".pom";
+        
+        
     }
 
     render() {
@@ -99,7 +164,8 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
                     @input="${this._artifactIdChanged}" 
                     value="${this._coordinates.artifactId}" clear-button-visible></vaadin-text-field>
             ${this._renderVersionForm()}
-            <vaadin-button theme="secondary" @click="${this._clearCoordinates}">Clear</vaadin-button>
+            <vaadin-button class="clearButton" theme="secondary" @click="${this._clearCoordinates}">Clear</vaadin-button>
+            <mvnpm-loading style="visibility: ${this._loadingIcon};"></mvnpm-loading>
         </div>
         
         ${this._renderTabPane()}
@@ -122,17 +188,12 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
         if(this._coordinates.version) {
             return html`<vaadin-tabsheet class="tabpane">
                 <vaadin-tabs slot="tabs">
-                    <vaadin-tab id="pom-xml-tab">pom</vaadin-tab>
-                    <vaadin-tab id="files-tab">files</vaadin-tab>
+                    <vaadin-tab id="pom-xml-tab">files</vaadin-tab>
                     <vaadin-tab id="usage-tab">usage</vaadin-tab>
                 </vaadin-tabs>
 
                 <div tab="pom-xml-tab">
                     ${this._loadPomTab()}
-                </div>
-                
-                <div tab="files-tab">
-                    ${this._loadFilesTab()}
                 </div>
             
                 <div tab="usage-tab">
@@ -143,65 +204,94 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
     }
     
     _loadUsageTab(){
-        if(this._use){
-            return html`<pre lang="xml">${this._use}</pre>`;
+        if(this._usePom){
+            return html`<div class="use">
+                    <div class="useBlock">
+                        <span class="heading">Pom dependency</span>
+                        <pre lang="xml" class="basiccode">${this._usePom}</pre>
+                    </div>
+                    <div class="useBlock">
+                        <span class="heading">Import map</span>
+                        <pre lang="json" class="basiccode">${this._useJson}</pre>
+                    </div>  
+                </div>
+            `;
         }
     }
     
     _loadPomTab(){
         if(this._baseUrl){
-            return html`<wc-codemirror
-                                mode='xml'
-                                src='${this._baseUrl + this._baseFile + ".pom"}'
-                                readonly>
-                            </wc-codemirror>`;
+            return html`<div class="fileBrower">
+                            ${this._renderCodeView()}
+                            <div class="fileList">
+                                ${this._renderFileGroup('pom', '.pom', 'file-code')}
+                                ${this._renderFileGroup('jar', '.jar', 'file-zip')}
+                                ${this._renderFileGroup('source', '-sources.jar', 'file-zip')}
+                                ${this._renderFileGroup('javadoc', '-javadoc.jar', 'file-zip')}
+                                ${this._renderFileGroup('original', '.tgz', 'file-zip')}
+                            </div>    
+                        </div>`;
         }
     }
     
-    _loadFilesTab(){
-        if(this._baseUrl){
-            return html`<div class="block">
-                            <div class="files">
-                                <span class="heading">pom</span>
-                                <a href="${this._baseUrl + this._baseFile}.pom" target="_blank"><vaadin-icon icon="vaadin:file-code"></vaadin-icon> ${this._baseFile}.pom</a>
-                                <a href="${this._baseUrl + this._baseFile}.pom.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.pom.sha1</a>
-                                <a href="${this._baseUrl + this._baseFile}.pom.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.pom.md5</a>
-                                <a href="${this._baseUrl + this._baseFile}.pom.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.pom.asc</a>
-                            </div>
-                            <div class="files">
-                                <span class="heading">jar</span>
-                                <a href="${this._baseUrl + this._baseFile}.jar" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}.jar</a>
-                                <a href="${this._baseUrl + this._baseFile}.jar.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.jar.sha1</a>
-                                <a href="${this._baseUrl + this._baseFile}.jar.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.jar.md5</a>
-                                <a href="${this._baseUrl + this._baseFile}.jar.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.jar.asc</a>
-                            </div>
-                            <div class="files">
-                                <span class="heading">source</span>
-                                <a href="${this._baseUrl + this._baseFile}-sources.jar" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}-sources.jar</a>
-                                <a href="${this._baseUrl + this._baseFile}-sources.jar.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-sources.jar.sha1</a>
-                                <a href="${this._baseUrl + this._baseFile}-sources.jar.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-sources.jar.md5</a>
-                                <a href="${this._baseUrl + this._baseFile}-sources.jar.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-sources.jar.asc</a>
-                            </div>
-                            <div class="files">
-                                <span class="heading">javadoc</span>
-                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}-javadoc.jar</a>
-                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-javadoc.jar.sha1</a>
-                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-javadoc.jar.md5</a>
-                                <a href="${this._baseUrl + this._baseFile}-javadoc.jar.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}-javadoc.jar.asc</a>
-                            </div>
-                            <div class="files">
-                                <span class="heading">original</span>
-                                <a href="${this._baseUrl + this._baseFile}.tgz" target="_blank"><vaadin-icon icon="vaadin:file-zip"></vaadin-icon> ${this._baseFile}.tgz</a>
-                                <a href="${this._baseUrl + this._baseFile}.tgz.sha1" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.tgz.sha1</a>
-                                <a href="${this._baseUrl + this._baseFile}.tgz.md5" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.tgz.md5</a>
-                                <a href="${this._baseUrl + this._baseFile}.tgz.asc" target="_blank"><vaadin-icon icon="vaadin:file-text-o"></vaadin-icon> ${this._baseFile}.tgz.asc</a>
+    _renderFileGroup(heading,fileExt, icon){
+        return html`
+            <span class="heading">${heading}</span>
+            ${this._renderLine(fileExt,icon)}
+            ${this._renderLine(fileExt + '.sha1','file-text-o')}
+            ${this._renderLine(fileExt + '.md5','file-text-o')}
+            ${this._renderLine(fileExt + '.asc','file-text-o')}
+        `;    
+    }
+    
+    _renderLine(fileExt, icon){
+        return html`
+            <div class="line">
+                <a @click="${this._showFile}" data-file="${this._baseUrl + this._baseFile + fileExt}"><vaadin-icon icon="vaadin:${icon}"></vaadin-icon>${this._baseFile + fileExt}</a>
+                <a href="${this._baseUrl + this._baseFile + fileExt}" target="_blank"><vaadin-icon class="outIcon" icon="vaadin:external-link"></vaadin-icon></a>
+            </div>
+        `;
+    }
+    
+    _renderCodeView(){
+        if(this._codeViewMode){
+            return html`<wc-codemirror class="codeView"
+                        mode='${this._codeViewMode}'
+                        src='${this._codeViewSrc}'
+                        readonly>
+                    </wc-codemirror>`;
+        }else{
+            return html`<div class="codeView">
+                            <div class="nopreview"> 
+                                binary format - no preview
                             </div>
                         </div>`;
         }
     }
     
+    _showFile(e){
+        this._changeCodeView(e.target.dataset.file);
+    }
+    
+    _changeCodeView(src){
+        this._codeViewSrc = src;
+        if(this._codeViewSrc.endsWith('.jar') || this._codeViewSrc.endsWith('.tgz')){
+            this._codeViewMode = null;
+        }else if(this._codeViewSrc.endsWith('.pom')){
+            this._codeViewMode = "xml";
+        }else if(this._codeViewSrc.endsWith('.asc')){
+            this._codeViewMode = "asciiarmor";
+        }else{
+            this._codeViewMode = "powershell";
+        }
+        
+        var n = this._baseUrl.length + this._baseFile.length;
+        this._codeViewSelection = this._codeViewSrc.substring(n);
+    }
+    
     _findVersionsAndShowLatest(e){    
         if (e.which == 13 || e.which == 0) {
+            this._loadingIcon = "visible";
             var groupId = this._getGroupId(this._coordinates.groupId.trim());
             var artifactId = this._coordinates.artifactId.trim();
 
@@ -234,6 +324,7 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
         
         this._changeVersion(this._latestVersion);
         this._disabled = null;
+        this._loadingIcon = "hidden";
     }
     
     _getGroupId(groupId){
@@ -258,8 +349,12 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
         this._disabled = "disabled";
         this._baseUrl = null;
         this._baseFile = null;
-        this._use = null;
+        this._usePom = null;
+        this._useJson = null;
         this._versions = null;
+        this._codeViewSelection = ".pom";
+        this._codeViewMode = "xml"; 
+        this._loadingIcon = "hidden";
     }
     
     _groupIdChanged(e){
@@ -276,21 +371,43 @@ import '@vanillawc/wc-codemirror/mode/xml/xml.js';
     }
     
     _changeVersion(version){
+        this._loadingIcon = "visible";
         this._coordinates.version = version;
         
         var groupId = this._getGroupId(this._coordinates.groupId.trim());
+        
+        groupId = groupId.replaceAll('.', '/');
+        
         var artifactId = this._coordinates.artifactId.trim();
         
         if(!version){
             version = "latest";
         }
         
-        this._use = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
+        this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
+        
+        var importMapUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/importmap.json";
+
+        fetch(importMapUrl)
+            .then(response => response.json())
+            .then(response => this._setUseJson(response));
             
         groupId = groupId.replaceAll('.', '/');
         this._baseFile = artifactId + "-" + version;
         this._baseUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/";
+        
+        this._changeCodeView(this._baseUrl + this._baseFile + this._codeViewSelection);
+        
     }
     
+    _setUseJson(response){
+        this._useJson = JSON.stringify(response)
+                .replaceAll(':{',':{\n\t\t')
+                .replaceAll('","','",\n\t\t"')
+                .replaceAll('"}','"\n\t}')
+                .replaceAll('}}','}\n}')
+                .replaceAll('{"','{\n\t"');
+        this._loadingIcon = "hidden";
+    }
  }
  customElements.define('mvnpm-home', MvnpmHome);

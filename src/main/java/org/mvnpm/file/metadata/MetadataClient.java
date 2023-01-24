@@ -39,10 +39,10 @@ public class MetadataClient {
     @CacheName("metadata-cache")
     Cache cache;
     
-    public Uni<MetadataAndSha> getMetadataAndSha(Name name){
+    public Uni<MetadataAndHash> getMetadataAndHash(Name name){
         CaffeineCache caffeineCache = cache.as(CaffeineCache.class);
         if(caffeineCache.keySet().contains(name.npmFullName())){
-            CompletableFuture<MetadataAndSha> completableFuture = caffeineCache.getIfPresent(name.npmFullName());
+            CompletableFuture<MetadataAndHash> completableFuture = caffeineCache.getIfPresent(name.npmFullName());
             return Uni.createFrom().completionStage(completableFuture);
         }else{
             Uni<Metadata> metadata = getMetadata(name);
@@ -50,10 +50,12 @@ public class MetadataClient {
                 try(StringWriter sw = new StringWriter()){
                     metadataXpp3Writer.write(sw, m);
                     byte[] value = sw.toString().getBytes();
-                    String sha1 = FileUtil.sha1(value);
-                    MetadataAndSha mas = new MetadataAndSha(sha1, value);
-                    caffeineCache.put(name.npmFullName(), CompletableFuture.completedFuture(mas));
-                    return Uni.createFrom().item(mas);
+                    String sha1 = FileUtil.getSha1(value);
+                    String md5 = FileUtil.getMd5(value);
+                    //String asc = FileUtil.readAsc();
+                    MetadataAndHash mah = new MetadataAndHash(sha1, md5, null, value);
+                    caffeineCache.put(name.npmFullName(), CompletableFuture.completedFuture(mah));
+                    return Uni.createFrom().item(mah);
                 } catch (IOException ex) {
                     return Uni.createFrom().failure(ex);
                 }

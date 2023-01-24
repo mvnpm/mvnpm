@@ -3,7 +3,7 @@ import { LitElement, html, css} from 'lit';
 /**
  * This component shows the About screen
  */
- export class MvnpmAbout extends LitElement {
+export class MvnpmAbout extends LitElement {
 
     static styles = css`
         :host {
@@ -17,11 +17,19 @@ import { LitElement, html, css} from 'lit';
         .warn {
             color: red;
             font-weight: bold;
-            padding: 15px;
+            font-family: monospace;
         }
         .use {
             width: 800px;
             color: #2b2b2b;
+            border: 1px solid rgba(102,179,67,0.96);
+            border-radius: 15px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+        }
+        .url {
+            font-family: monospace;
         }
     `;
 
@@ -58,16 +66,15 @@ import { LitElement, html, css} from 'lit';
 
     render() {
         return html` 
-            <img src="logo.png" alt="mvnpm" width="200px"/>
             <p>
-                mvnpm (Maven NPM) is a maven repository facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>
+                <b>mvnpm</b> (Maven NPM) is a maven repository facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>
             </p>
             <p>
             When requesting a dependency, it will inspect the registry to see if it exist and if it does, convert of to a maven dependeny.
             </p>
         
             <p>
-                To use this in your maven project add the following to your settings.xml (typically /home/your-username/.m2/settings.xml)
+                To use this in your maven project add the following to your settings.xml (typically <span class="url">/home/your-username/.m2/settings.xml</span>)
                 <pre lang="xml" class="use">${this._use}</pre>
             </p>
         

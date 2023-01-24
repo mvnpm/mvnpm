@@ -11,7 +11,8 @@ import jakarta.ws.rs.core.Response;
 import org.mvnpm.Constants;
 import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileType;
-import org.mvnpm.file.metadata.MetadataAndSha;
+import org.mvnpm.file.ImportMapUtil;
+import org.mvnpm.file.metadata.MetadataAndHash;
 import org.mvnpm.file.metadata.MetadataClient;
 import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Name;
@@ -41,8 +42,8 @@ public class MavenRepositoryApi {
     public Uni<Response> getMavenMetadata(@PathParam("ga") String ga){
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         
-        Uni<MetadataAndSha> mas = metadataClient.getMetadataAndSha(name);
-        return mas.onItem().transform((b) -> {
+        Uni<MetadataAndHash> mah = metadataClient.getMetadataAndHash(name);
+        return mah.onItem().transform((b) -> {
             return Response.ok(b.data())
                             .build();
         });
@@ -54,10 +55,34 @@ public class MavenRepositoryApi {
     public Uni<Response> getMavenMetadataSha1(@PathParam("ga") String ga){
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         
-        Uni<MetadataAndSha> mas = metadataClient.getMetadataAndSha(name);
-        return mas.onItem().transform((s)-> {
+        Uni<MetadataAndHash> mah = metadataClient.getMetadataAndHash(name);
+        return mah.onItem().transform((s)-> {
             return Response.ok(s.sha1())
                             .build();
+        });
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml.md5")
+    @Produces(MediaType.TEXT_PLAIN)
+    public Uni<Response> getMavenMetadataMd5(@PathParam("ga") String ga){
+        Name name = UrlPathParser.parseMavenMetaDataXml(ga);
+        
+        Uni<MetadataAndHash> mah = metadataClient.getMetadataAndHash(name);
+        return mah.onItem().transform((s)-> {
+            return Response.ok(s.md5())
+                            .build();
+        });
+    }
+    
+    @GET
+    @Path("/org/mvnpm/{gavt : (.+)?}/importmap.json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Uni<Response> getImportMap(@PathParam("gavt") String gavt){
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + "/importmap.json");
+        Uni<Package> npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version());
+        return npmPackage.onItem().transform((p) -> {
+            return Response.ok(ImportMapUtil.createImportMap(p)).build();            
         });
     }
     

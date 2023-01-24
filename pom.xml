@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.15</version>
+    <version>1.0.17</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -45,12 +45,12 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         
-        <quarkus.platform.version>3.0.0.Alpha2</quarkus.platform.version>
+        <quarkus.platform.version>3.0.0.Alpha3</quarkus.platform.version>
         <importmap.version>1.0.4</importmap.version>
         
         <!-- UI Libs -->
         <lit.version>2.6.1</lit.version>
-        <vaadin.version>23.3.4</vaadin.version>
+        <vaadin.version>23.3.5</vaadin.version>
         <vaadin-router.version>1.7.4</vaadin-router.version>
         <wc-codemirror.version>2.1.0</wc-codemirror.version>
     </properties>

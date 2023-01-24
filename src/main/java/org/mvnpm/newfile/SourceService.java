@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -37,24 +38,29 @@ public class SourceService {
             String outputFile = tgzFile.replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR);
             boolean ok = createJar(tgzFile, outputFile);
             if(ok){
-                FileUtil.sha1(outputFile);
-                FileUtil.md5(outputFile);
-                FileUtil.asc(outputFile);
+                FileUtil.createSha1(outputFile);
+                FileUtil.createMd5(outputFile);
+                FileUtil.createAsc(outputFile);
             }
             
         }
     }
     
     private boolean createJar(String tgzFile, String outputFile){
-        try (FileOutputStream fileOutput = new FileOutputStream(outputFile);
-            JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
-            tgzToJar(tgzFile, jarOutput);
-            jarOutput.finish();
-            return true;
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return false;
+        Path f = Paths.get(outputFile);
+        if(!Files.exists(f)){
+            synchronized (f) {
+                try (FileOutputStream fileOutput = new FileOutputStream(outputFile);
+                    JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
+                    tgzToJar(tgzFile, jarOutput);
+                    jarOutput.finish();
+                    return true;
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
+        return false;
     }
     
     private void tgzToJar(String tarFile, JarArchiveOutputStream jarOutput) throws IOException {

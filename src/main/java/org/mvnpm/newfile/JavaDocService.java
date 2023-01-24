@@ -5,6 +5,7 @@ import jakarta.enterprise.event.ObservesAsync;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
@@ -26,23 +27,28 @@ public class JavaDocService {
             String outputFile = jarFile.replace(Constants.DOT_JAR, Constants.DASH_JAVADOC_DOT_JAR);
             boolean ok = createJar(outputFile);
             if(ok){
-                FileUtil.sha1(outputFile);
-                FileUtil.md5(outputFile);
-                FileUtil.asc(outputFile);
+                FileUtil.createSha1(outputFile);
+                FileUtil.createMd5(outputFile);
+                FileUtil.createAsc(outputFile);
             }
         }
     }
     
     private boolean createJar(String outputFile){
-        try (FileOutputStream fileOutput = new FileOutputStream(outputFile);
-            JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
-            emptyJar(jarOutput);
-            jarOutput.finish();
-            return true;
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return false;
+        Path f = Paths.get(outputFile);
+        if(!Files.exists(f)){
+            synchronized (f) {
+                try (FileOutputStream fileOutput = new FileOutputStream(outputFile);
+                    JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
+                    emptyJar(jarOutput);
+                    jarOutput.finish();
+                    return true;
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
         }
+        return false;
     }
     
     private void emptyJar(JarArchiveOutputStream jarOutput) throws IOException {

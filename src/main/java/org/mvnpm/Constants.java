@@ -45,6 +45,7 @@ public interface Constants {
     
     public static final String DASH_SOURCES_DOT_JAR = "-sources.jar";
     public static final String DASH_JAVADOC_DOT_JAR = "-javadoc.jar";
+    public static final String DASH_IMPORTMAP_DOT_JSON = "-importmap.json";
     
     public static final String AT = "@";
     public static final String AT_SLASH = "at" + SLASH;

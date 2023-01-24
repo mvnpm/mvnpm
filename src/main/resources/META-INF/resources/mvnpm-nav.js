@@ -12,7 +12,7 @@ router.setRoutes([
 /**
  * This component shows the navigation
  */
- export class MvnpmNav extends LitElement {
+export class MvnpmNav extends LitElement {
 
     static styles = css`
         a {

@@ -3,7 +3,7 @@ package org.mvnpm.file;
 import org.mvnpm.Constants;
 
 public enum FileType {
-    jar, tgz, pom, source, javadoc;
+    jar, tgz, pom, source, javadoc, importmap;
     
     public static FileType fromFileName(String fileName){
         if(fileName.endsWith(Constants.DOT_SHA1)){
@@ -21,6 +21,9 @@ public enum FileType {
         }
         if(this.equals(FileType.javadoc)){
             return Constants.DASH_JAVADOC_DOT_JAR;
+        }
+        if(this.equals(FileType.importmap)){
+            return Constants.DASH_IMPORTMAP_DOT_JSON;
         }
         return Constants.DOT + this.name();
     }

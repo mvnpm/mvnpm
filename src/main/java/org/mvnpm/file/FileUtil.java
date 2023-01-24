@@ -3,6 +3,7 @@ package org.mvnpm.file;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -16,7 +17,7 @@ public class FileUtil {
         
     }
     
-    public static String sha1(byte[] value) {
+    public static String getSha1(byte[] value) {
         try {
             MessageDigest md = MessageDigest.getInstance(Constants.SHA1);
             byte[] digest = md.digest(value);
@@ -30,19 +31,24 @@ public class FileUtil {
         }
     }
     
-    public static void sha1(String outputFile){
+    public static void createSha1(String outputFile){
         try {
             byte[] content = Files.readAllBytes(Paths.get(outputFile));
-            
-            String sha1 = FileUtil.sha1(content);
+
+            String sha1 = FileUtil.getSha1(content);
             String localSha1FileName = outputFile + Constants.DOT_SHA1;
-            Files.writeString(Paths.get(localSha1FileName), sha1);
+            Path f = Paths.get(localSha1FileName);
+            if(!Files.exists(f)){
+                synchronized (f) {
+                    Files.writeString(f, sha1);
+                }
+            }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
     }
     
-    public static String md5(byte[] value) {
+    public static String getMd5(byte[] value) {
         try {
             MessageDigest md = MessageDigest.getInstance(Constants.MD5);
             byte[] digest = md.digest(value);
@@ -52,27 +58,38 @@ public class FileUtil {
         }
     }
     
-    public static void md5(String outputFile) {
+    public static void createMd5(String outputFile) {
         try {
             byte[] content = Files.readAllBytes(Paths.get(outputFile));
-            
-            String md5 = FileUtil.md5(content);
+
+            String md5 = FileUtil.getMd5(content);
             String localMd5FileName = outputFile + Constants.DOT_MD5;
-            Files.writeString(Paths.get(localMd5FileName), md5);
+            Path f = Paths.get(localMd5FileName);
+            if(!Files.exists(f)){
+                synchronized (f) {
+                    Files.writeString(f, md5);
+                }
+            }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
     }
     
-    public static void asc(String localFileName) {
-        try {
-            Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFileName);
-            ProcessHandle processHandle = process.toHandle();
-            
-            CompletableFuture<ProcessHandle> onProcessExit = processHandle.onExit();
-            onProcessExit.get();
-        } catch (InterruptedException | ExecutionException | IOException ex) {
-            throw new IllegalStateException(ex);
+    public static void createAsc(String localFileName) {
+        String outputFile = localFileName + Constants.DOT_ASC;
+        Path f = Paths.get(outputFile);
+        if(!Files.exists(f)){
+            try {
+                synchronized (f) {
+                    Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFileName);
+                    ProcessHandle processHandle = process.toHandle();
+
+                    CompletableFuture<ProcessHandle> onProcessExit = processHandle.onExit();
+                    onProcessExit.get();
+                }
+            } catch (InterruptedException | ExecutionException | IOException ex) {
+                throw new IllegalStateException(ex);
+            }
         }
     }
     

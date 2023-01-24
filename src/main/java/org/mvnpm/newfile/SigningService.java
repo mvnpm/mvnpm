@@ -14,7 +14,7 @@ import org.mvnpm.file.FileUtil;
 public class SigningService {
 
     public void newFileCreated(@ObservesAsync FileStoreEvent fse) {
-        FileUtil.asc(fse.fileName());
-        FileUtil.md5(fse.fileName());
+        FileUtil.createAsc(fse.fileName());
+        FileUtil.createMd5(fse.fileName());
     }
 }
