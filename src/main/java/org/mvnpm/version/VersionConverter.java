@@ -100,6 +100,12 @@ public class VersionConverter {
             return convertOperator(version);
         }
         
+        // Partial semver
+        long numberOfDots = version.chars().filter(ch -> ch == '.').count();
+        if(!version.startsWith(EQUAL_TO) && numberOfDots<2){
+            return convertPartialSemver(version);
+        }
+        
         // Exact
         return cleanVersion(version);
     }
@@ -201,6 +207,11 @@ public class VersionConverter {
             return OPEN_ROUND + COMMA + getUpperBoundary(version);
         }
         throw new InvalidVersionException(version);
+    }
+    
+    private static String convertPartialSemver(String version){
+        version = version + ".x";
+        return convertX(version);
     }
     
     private static String getLowerBoundary(String s){

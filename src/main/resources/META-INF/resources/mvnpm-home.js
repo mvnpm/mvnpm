@@ -376,16 +376,16 @@ export class MvnpmHome extends LitElement {
         
         var groupId = this._getGroupId(this._coordinates.groupId.trim());
         
-        groupId = groupId.replaceAll('.', '/');
-        
         var artifactId = this._coordinates.artifactId.trim();
         
         if(!version){
             version = "latest";
         }
         
+        groupId = groupId.replaceAll('/', '.');
         this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
         
+        groupId = groupId.replaceAll('.', '/');
         var importMapUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/importmap.json";
 
         fetch(importMapUrl)

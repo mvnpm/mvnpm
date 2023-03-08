@@ -47,13 +47,13 @@ public class VersionConverterTest {
     @Test
     public void testEmptyVersionWithoutPatch() {
         String mavenVersion = VersionConverter.convert("1.2");
-        Assertions.assertEquals("1.2", mavenVersion);
+        Assertions.assertEquals("[1.2,1.3)", mavenVersion);
     }
     
     @Test
     public void testVeeVersionWithoutPatch() {
         String mavenVersion = VersionConverter.convert("v1.2");
-        Assertions.assertEquals("1.2", mavenVersion);
+        Assertions.assertEquals("[1.2,1.3)", mavenVersion);
     }
     
     @Test
@@ -65,13 +65,13 @@ public class VersionConverterTest {
     @Test
     public void testEmptyVersionWithoutMinor() {
         String mavenVersion = VersionConverter.convert("1");
-        Assertions.assertEquals("1", mavenVersion);
+        Assertions.assertEquals("[1,2)", mavenVersion);
     }
     
     @Test
     public void testVeeVersionWithoutMinor() {
         String mavenVersion = VersionConverter.convert("v1");
-        Assertions.assertEquals("1", mavenVersion);
+        Assertions.assertEquals("[1,2)", mavenVersion);
     }
     
     @Test

@@ -14,6 +14,7 @@ import org.mvnpm.importmap.Aggregator;
 @ApplicationScoped
 public class IndexHtml {
 
+    Aggregator aggregator = new Aggregator();
     @ConfigProperty(name = "quarkus.application.version")
     String version;        
     
@@ -23,7 +24,7 @@ public class IndexHtml {
     
     @PostConstruct
     public void init(){
-        String importmap = Aggregator.aggregateAsJson();
+        String importmap = aggregator.aggregateAsJson();
         this.indexHtml = """
                <!DOCTYPE html>
                <html>
@@ -33,6 +34,7 @@ public class IndexHtml {
                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
                        <link rel="shortcut icon" type="image/png" href="./favicon.ico">
                
+                       <script async src="/_static/es-module-shims/dist/es-module-shims.js"></script>
                        <script type="importmap">
                            %s
                        </script>

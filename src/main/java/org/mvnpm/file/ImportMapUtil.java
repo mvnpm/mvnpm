@@ -1,15 +1,7 @@
 package org.mvnpm.file;
 
-import java.io.IOException;
-import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import org.mvnpm.Constants;
 import org.mvnpm.importmap.ImportsDataBinding;
 import org.mvnpm.importmap.model.Imports;

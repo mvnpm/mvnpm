@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.17</version>
+    <version>1.0.20</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -45,14 +45,15 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
         
-        <quarkus.platform.version>3.0.0.Alpha3</quarkus.platform.version>
-        <importmap.version>1.0.4</importmap.version>
+        <quarkus.platform.version>3.0.0.Alpha4</quarkus.platform.version>
+        <importmap.version>1.0.6</importmap.version>
         
         <!-- UI Libs -->
         <lit.version>2.6.1</lit.version>
-        <vaadin.version>23.3.5</vaadin.version>
+        <vaadin.version>24.0.0</vaadin.version>
         <vaadin-router.version>1.7.4</vaadin-router.version>
         <wc-codemirror.version>2.1.0</wc-codemirror.version>
+        <es-module-shims.version>1.7.0</es-module-shims.version>
     </properties>
     
     <dependencyManagement>
@@ -136,56 +137,8 @@
         </dependency>
         
         <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>form-layout</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>text-field</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>button</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>icon</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>icons</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>vaadin-lumo-styles</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>tabs</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>tabsheet</artifactId>
-            <version>${vaadin.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>combo-box</artifactId>
+            <groupId>org.mvnpm</groupId>
+            <artifactId>vaadin-web-components</artifactId>
             <version>${vaadin.version}</version>
             <scope>runtime</scope>
         </dependency>
@@ -194,6 +147,14 @@
             <groupId>org.mvnpm.at.vanillawc</groupId>
             <artifactId>wc-codemirror</artifactId>
             <version>${wc-codemirror.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        
+        <!-- Polyfill for importmaps -->
+        <dependency>
+            <groupId>org.mvnpm</groupId>
+            <artifactId>es-module-shims</artifactId>
+            <version>${es-module-shims.version}</version>
             <scope>runtime</scope>
         </dependency>
         
