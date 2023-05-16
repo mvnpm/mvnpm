@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>1.0.20</version>
+    <version>1.0.21</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -36,24 +36,24 @@
     </issueManagement>
     
     <properties>
-        <compiler-plugin.version>3.8.1</compiler-plugin.version>
+        <compiler-plugin.version>3.11.0</compiler-plugin.version>
         <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+        <quarkus.platform.version>3.0.3.Final</quarkus.platform.version>
         <skipITs>true</skipITs>
-        <surefire-plugin.version>3.0.0-M7</surefire-plugin.version>
+        <surefire-plugin.version>3.0.0</surefire-plugin.version>
         
-        <quarkus.platform.version>3.0.0.Alpha4</quarkus.platform.version>
-        <importmap.version>1.0.6</importmap.version>
+        <importmap.version>1.0.8</importmap.version>
         
         <!-- UI Libs -->
-        <lit.version>2.6.1</lit.version>
-        <vaadin.version>24.0.0</vaadin.version>
-        <vaadin-router.version>1.7.4</vaadin-router.version>
+        <lit.version>2.7.2</lit.version>
+        <vaadin.version>24.0.2.1</vaadin.version>
+        <vaadin-router.version>1.7.5</vaadin-router.version>
         <wc-codemirror.version>2.1.0</wc-codemirror.version>
-        <es-module-shims.version>1.7.0</es-module-shims.version>
+        <es-module-shims.version>1.7.1</es-module-shims.version>
     </properties>
     
     <dependencyManagement>

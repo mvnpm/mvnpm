@@ -17,6 +17,7 @@ public record Package(
         Author author,
         URL homepage,
         Repository repository,
+        @JsonDeserialize(using = BugsDeserializer.class)
         Bugs bugs,
         String main,
         String module,

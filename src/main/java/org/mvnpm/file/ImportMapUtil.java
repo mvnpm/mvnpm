@@ -16,11 +16,11 @@ public class ImportMapUtil {
         
         String root = getImportMapRoot(p);
         
-        String main = getMain(p);
+        String module = getModule(p);
         Map<String, String> v = new HashMap<>();
         
-        v.put(p.name().npmFullName(), root + main);
-        v.put(p.name().npmFullName() + Constants.SLASH, root);
+        v.put(p.name().npmFullName(), root + module);
+        v.put(p.name().npmFullName() + Constants.SLASH, root + getModuleRoot(module));
         
         Imports imports = new Imports(v);
         
@@ -48,7 +48,7 @@ public class ImportMapUtil {
         return root;
     }
     
-    private static String getMain(org.mvnpm.npm.model.Package p){
+    private static String getModule(org.mvnpm.npm.model.Package p){
         if(p.module()!=null && !p.module().isEmpty()){
             return p.module();
         }else if(p.main()!=null && !p.main().isBlank()){
@@ -57,6 +57,14 @@ public class ImportMapUtil {
         
         // Default
         return INDEX_JS;
+    }
+    
+    private static String getModuleRoot(String module){
+        if(!module.startsWith(Constants.SLASH) && module.contains(Constants.SLASH)){
+            return module.split(Constants.SLASH)[0] + Constants.SLASH;
+        }else {
+            return Constants.EMPTY;
+        }
     }
     
     private static final String INDEX_JS = "index.js";
