@@ -50,13 +50,20 @@ public class ImportMapUtil {
     
     private static String getModule(org.mvnpm.npm.model.Package p){
         if(p.module()!=null && !p.module().isEmpty()){
-            return p.module();
+            return cleanModule(p.module());
         }else if(p.main()!=null && !p.main().isBlank()){
-            return p.main();
+            return cleanModule(p.main());
         }
         
         // Default
         return INDEX_JS;
+    }
+    
+    private static String cleanModule(String module){
+        if(module.startsWith(Constants.DOT + Constants.SLASH)){
+            return module.substring(2);
+        }
+        return module;
     }
     
     private static String getModuleRoot(String module){
