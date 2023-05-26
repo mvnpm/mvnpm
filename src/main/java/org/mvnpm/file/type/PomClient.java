@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.Properties;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.IssueManagement;
@@ -18,10 +19,16 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.mvnpm.Constants;
+import static org.mvnpm.Constants.CLOSE_ROUND;
+import static org.mvnpm.Constants.COMMA;
+import static org.mvnpm.Constants.OPEN_BLOCK;
 import org.mvnpm.file.FileStore;
+import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Bugs;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Maintainer;
+import org.mvnpm.npm.model.Project;
 import org.mvnpm.npm.model.Repository;
 import org.mvnpm.version.VersionConverter;
 
@@ -35,6 +42,9 @@ public class PomClient {
     @Inject 
     FileStore fileCreator;
     
+    @Inject
+    NpmRegistryFacade npmRegistryFacade;
+    
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
     public Uni<AsyncFile> createPom(org.mvnpm.npm.model.Package p, String localFileName) {     
@@ -47,9 +57,10 @@ public class PomClient {
     private Uni<byte[]> writePomToBytes(org.mvnpm.npm.model.Package p) {
         
         Uni<List<Dependency>> toDependencies = toDependencies(p.dependencies());
-        return toDependencies.onItem().transform((deps) -> {
+        return toDependencies.onItem().transform((var deps) -> {
             try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
                 Model model = new Model();
+                
                 model.setModelVersion(MODEL_VERSION);
                 model.setGroupId(p.name().mvnGroupId());
                 model.setArtifactId(p.name().mvnArtifactId());
@@ -64,6 +75,16 @@ public class PomClient {
                 model.setIssueManagement(toIssueManagement(p.bugs()));
                 model.setDevelopers(toDevelopers(p.maintainers()));
                 if(!deps.isEmpty()){
+                    Properties properties = new Properties();
+                    
+                    for(Dependency dep:deps){
+                        String version = dep.getVersion();
+                        String propertyKey = dep.getGroupId() + Constants.HYPHEN + dep.getArtifactId() + Constants.DOT + Constants.VERSION;
+                        properties.put(propertyKey, version);
+                        dep.setVersion(Constants.DOLLAR + Constants.OPEN_CURLY + propertyKey + Constants.CLOSE_CURLY);
+                    }
+                    
+                    model.setProperties(properties);
                     model.setDependencies(deps);
                 }
                 mavenXpp3Writer.write(baos, model);
@@ -167,7 +188,7 @@ public class PomClient {
     }
     
     private Uni<Dependency> toDependency(Name name, String version){
-        Uni<String> convertedVersion = toVersion(version);
+        Uni<String> convertedVersion = toVersion(name, version);
         return convertedVersion.onItem().transform((cv)-> {
             Dependency d = new Dependency();
             d.setGroupId(name.mvnGroupId());
@@ -177,8 +198,18 @@ public class PomClient {
         });
     }
     
-    private Uni<String> toVersion(String version){
-        return Uni.createFrom().item(VersionConverter.convert(version));
+    private Uni<String> toVersion(Name name, String version){
+        String trimVersion = VersionConverter.convert(version).trim().replaceAll("\\s+","");
+        
+        // This is an open ended range. Let's get the latest for a bottom boundary
+        if(trimVersion.equals(OPEN_BLOCK + COMMA + CLOSE_ROUND)){
+            Uni<Project> project = npmRegistryFacade.getProject(name.npmFullName());
+            return project.onItem().transform((p) -> {
+                return OPEN_BLOCK + p.distTags().latest() + COMMA + CLOSE_ROUND;
+            });
+        }
+        // TODO: Make other ranges more effient too ?
+        return Uni.createFrom().item(trimVersion);
     }
     
     private static final String JAR = "jar";

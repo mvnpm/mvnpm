@@ -76,6 +76,14 @@ public class MavenRepositoryApi {
     }
     
     @GET
+    @Path("/org/mvnpm/{gavt : (.+)?}/package.json")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Uni<Package> getPackageJson(@PathParam("gavt") String gavt){
+        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + "/package.json");
+        return npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version());
+    }
+    
+    @GET
     @Path("/org/mvnpm/{gavt : (.+)?}/importmap.json")
     @Produces(MediaType.APPLICATION_JSON)
     public Uni<Response> getImportMap(@PathParam("gavt") String gavt){

@@ -22,6 +22,9 @@ public interface Constants {
     public static final String CLOSE_BLOCK = "]";
     public static final String OPEN_ROUND = "(";
     public static final String CLOSE_ROUND = ")";
+    public static final String OPEN_CURLY = "{";
+    public static final String CLOSE_CURLY = "}";
+    public static final String DOLLAR = "$";
     
     public static final String DOUBLE_POINT = ":";
     public static final String ESCAPED_DOT = "\\.";

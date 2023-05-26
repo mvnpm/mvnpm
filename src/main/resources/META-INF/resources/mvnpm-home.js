@@ -12,6 +12,7 @@ import '@vanillawc/wc-codemirror';
 import '@vanillawc/wc-codemirror/mode/xml/xml.js';
 import '@vanillawc/wc-codemirror/mode/asciiarmor/asciiarmor.js';
 import '@vanillawc/wc-codemirror/mode/powershell/powershell.js';
+import '@vanillawc/wc-codemirror/mode/javascript/javascript.js';
 import './mvnpm-loading.js';
 
 /**
@@ -190,6 +191,7 @@ export class MvnpmHome extends LitElement {
                 <vaadin-tabs slot="tabs">
                     <vaadin-tab id="pom-xml-tab">files</vaadin-tab>
                     <vaadin-tab id="usage-tab">usage</vaadin-tab>
+                    <vaadin-tab id="package-tab">package</vaadin-tab>
                 </vaadin-tabs>
 
                 <div tab="pom-xml-tab">
@@ -198,6 +200,10 @@ export class MvnpmHome extends LitElement {
             
                 <div tab="usage-tab">
                     ${this._loadUsageTab()}
+                </div>
+            
+                <div tab="package-tab">
+                    ${this._loadPackageTab()}
                 </div>
             </vaadin-tabsheet>`;
         }
@@ -217,6 +223,16 @@ export class MvnpmHome extends LitElement {
                 </div>
             `;
         }
+    }
+    
+    _loadPackageTab(){
+        var packageJson = this._baseUrl + "package.json";
+        console.log(packageJson);
+        return html`<wc-codemirror class="codeView"
+                        mode='javascript'
+                        src='${packageJson}'
+                        readonly>
+                    </wc-codemirror>`;
     }
     
     _loadPomTab(){
