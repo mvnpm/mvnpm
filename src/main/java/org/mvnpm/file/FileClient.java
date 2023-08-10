@@ -42,7 +42,6 @@ public class FileClient {
     
     public Uni<AsyncFile> streamFile(FileType type, org.mvnpm.npm.model.Package p) {
         String localFileName = fileStore.getLocalFullPath(type, p);
-        
         Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
         return checkIfLocal.onItem()
                 .transformToUni((local) -> { 

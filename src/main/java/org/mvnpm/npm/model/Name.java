@@ -18,7 +18,7 @@ public record Name (
     
     public Name(String npmFullName, String npmNamespace, String npmName, String mvnGroupId, String mvnArtifactId, String mvnPath, String displayName) {
         if(npmNamespace == null && npmName == null && mvnGroupId == null && mvnArtifactId == null && mvnPath == null && displayName == null){
-            Name parsed = NameParser.parse(npmFullName);
+            Name parsed = NameParser.fromNpmProject(npmFullName);
             this.npmFullName = parsed.npmFullName();
             this.npmNamespace = parsed.npmNamespace();
             this.npmName = parsed.npmName();

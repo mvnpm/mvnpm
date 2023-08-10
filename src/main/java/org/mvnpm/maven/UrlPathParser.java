@@ -19,7 +19,7 @@ public class UrlPathParser {
             fullName = fullName.replaceFirst(Constants.AT_SLASH, Constants.AT);
         }
         
-        return NameParser.parse(fullName);
+        return NameParser.fromNpmProject(fullName);
     }
     
     public static NameVersionType parseMavenFile(String urlPath){
@@ -39,6 +39,6 @@ public class UrlPathParser {
             fullName = fullName.replaceFirst(Constants.AT_SLASH, Constants.AT);
         }
         
-        return new NameVersionType(NameParser.parse(fullName), version);
+        return new NameVersionType(NameParser.fromNpmProject(fullName), version);
     }
 }

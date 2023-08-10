@@ -141,7 +141,7 @@ export class MvnpmHome extends LitElement {
         _codeViewMode:{state: true},
         _codeViewSrc:{state: true},
         _codeViewSelection:{state: true},
-        _loadingIcon:{state:true},
+        _loadingIcon:{state:true}
     };
 
     constructor() {
@@ -150,8 +150,6 @@ export class MvnpmHome extends LitElement {
         this._disabled = "disabled";
         this._codeViewMode = "xml"; 
         this._codeViewSelection = ".pom";
-        
-        
     }
 
     render() {
@@ -191,7 +189,7 @@ export class MvnpmHome extends LitElement {
                 <vaadin-tabs slot="tabs">
                     <vaadin-tab id="pom-xml-tab">files</vaadin-tab>
                     <vaadin-tab id="usage-tab">usage</vaadin-tab>
-                    <vaadin-tab id="package-tab">package</vaadin-tab>
+                    <vaadin-tab id="sync-tab">sync</vaadin-tab>
                 </vaadin-tabs>
 
                 <div tab="pom-xml-tab">
@@ -202,11 +200,19 @@ export class MvnpmHome extends LitElement {
                     ${this._loadUsageTab()}
                 </div>
             
-                <div tab="package-tab">
-                    ${this._loadPackageTab()}
+                <div tab="sync-tab">
+                    ${this._loadSyncTab()}
                 </div>
+            
             </vaadin-tabsheet>`;
         }
+    }
+    
+    _loadSyncTab(){
+        return html`<div class="sync">
+                Here the sync details
+            </div>
+        `;
     }
     
     _loadUsageTab(){
@@ -225,16 +231,6 @@ export class MvnpmHome extends LitElement {
         }
     }
     
-    _loadPackageTab(){
-        var packageJson = this._baseUrl + "package.json";
-        console.log(packageJson);
-        return html`<wc-codemirror class="codeView"
-                        mode='javascript'
-                        src='${packageJson}'
-                        readonly>
-                    </wc-codemirror>`;
-    }
-    
     _loadPomTab(){
         if(this._baseUrl){
             return html`<div class="fileBrower">
@@ -245,6 +241,7 @@ export class MvnpmHome extends LitElement {
                                 ${this._renderFileGroup('source', '-sources.jar', 'file-zip')}
                                 ${this._renderFileGroup('javadoc', '-javadoc.jar', 'file-zip')}
                                 ${this._renderFileGroup('original', '.tgz', 'file-zip')}
+                                ${this._renderAnyFile('package', '.json','file-text-o')}
                             </div>    
                         </div>`;
         }
@@ -261,10 +258,14 @@ export class MvnpmHome extends LitElement {
     }
     
     _renderLine(fileExt, icon){
+        return this._renderAnyFile(this._baseFile, fileExt, icon);
+    }
+    
+    _renderAnyFile(fileName, fileExt, icon){
         return html`
             <div class="line">
-                <a @click="${this._showFile}" data-file="${this._baseUrl + this._baseFile + fileExt}"><vaadin-icon icon="vaadin:${icon}"></vaadin-icon>${this._baseFile + fileExt}</a>
-                <a href="${this._baseUrl + this._baseFile + fileExt}" target="_blank"><vaadin-icon class="outIcon" icon="vaadin:external-link"></vaadin-icon></a>
+                <a @click="${this._showFile}" data-file="${this._baseUrl + fileName + fileExt}"><vaadin-icon icon="vaadin:${icon}"></vaadin-icon>${fileName + fileExt}</a>
+                <a href="${this._baseUrl + fileName + fileExt}" target="_blank"><vaadin-icon class="outIcon" icon="vaadin:external-link"></vaadin-icon></a>
             </div>
         `;
     }

@@ -12,6 +12,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.mvnpm.Constants;
+import org.mvnpm.npm.model.Name;
 
 /**
  * Store for local files.
@@ -58,13 +59,18 @@ public class FileStore {
         return vertx.fileSystem().open(localFileName, READ_ONLY_OPTIONS);
     }
     
-    public String getLocalDirectory(org.mvnpm.npm.model.Package p){
+    
+    public String getLocalDirectory(Name name, String version){
         return localUserDirectory.orElse(Constants.CACHE_DIR) + File.separator + 
                 localM2Directory + File.separator +
                 Constants.REPOSITORY + File.separator +
-                p.name().mvnPath() + File.separator +
-                p.name().mvnArtifactId() + File.separator + 
-                p.version();
+                name.mvnPath() + File.separator +
+                name.mvnArtifactId() + File.separator + 
+                version;
+    }
+    
+    public String getLocalDirectory(org.mvnpm.npm.model.Package p){
+        return getLocalDirectory(p.name(), p.version());
     }
     
     public String getLocalSha1FullPath(FileType type, org.mvnpm.npm.model.Package p){

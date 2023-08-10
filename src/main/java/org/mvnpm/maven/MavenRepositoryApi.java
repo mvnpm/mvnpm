@@ -1,6 +1,7 @@
 package org.mvnpm.maven;
 
 import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.file.AsyncFile;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -8,8 +9,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import org.mvnpm.Constants;
-import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileType;
 import org.mvnpm.file.ImportMapUtil;
 import org.mvnpm.file.metadata.MetadataAndHash;
@@ -17,22 +16,20 @@ import org.mvnpm.file.metadata.MetadataClient;
 import org.mvnpm.npm.NpmRegistryFacade;
 import org.mvnpm.npm.model.Name;
 import org.mvnpm.npm.model.Package;
-import org.mvnpm.npm.model.Project;
 
 /**
  * The maven repository endpoint
  * @author Phillip Kruger (phillip.kruger@gmail.com)
- * TODO: Add source jar
  */
 @Path("/maven2")
 public class MavenRepositoryApi {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    MavenRespositoryService mavenRespositoryService;
     
     @Inject
-    FileClient fileClient; 
-    
+    NpmRegistryFacade npmRegistryFacade;
+
     @Inject
     MetadataClient metadataClient;
     
@@ -99,7 +96,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.APPLICATION_XML)
     public Uni<Response> getPom(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + ".pom");
-        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.pom);                
+        return toResponse(nameVersionType.name(), nameVersionType.version(), FileType.pom);
     }
     
     @GET
@@ -107,7 +104,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getPomSha1(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + ".pom.sha1");
-        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.pom);
+        return toSha1Response(nameVersionType.name(), nameVersionType.version(), FileType.pom);
     }
     
     @GET
@@ -115,7 +112,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getPomMd5(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + ".pom.mp5");
-        return getMd5(nameVersionType.name(), nameVersionType.version(), FileType.pom);
+        return toMd5Response(nameVersionType.name(), nameVersionType.version(), FileType.pom);
     }
     
     @GET
@@ -123,7 +120,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getPomAsc(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + ".pom.asc");
-        return getAsc(nameVersionType.name(), nameVersionType.version(), FileType.pom);
+        return toAscResponse(nameVersionType.name(), nameVersionType.version(), FileType.pom);
     }
     
     @GET
@@ -131,7 +128,7 @@ public class MavenRepositoryApi {
     @Produces("application/java-archive")
     public Uni<Response> getJar(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.jar);
+        return toResponse(nameVersionType.name(), nameVersionType.version(), FileType.jar);
     }
     
     @GET
@@ -139,7 +136,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getJarSha1(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.jar);
+        return toSha1Response(nameVersionType.name(), nameVersionType.version(), FileType.jar);
     }
     
     @GET
@@ -147,7 +144,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getJarMd5(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getMd5(nameVersionType.name(), nameVersionType.version(), FileType.jar);
+        return toMd5Response(nameVersionType.name(), nameVersionType.version(), FileType.jar);
     }
     
     @GET
@@ -155,7 +152,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getJarAsc(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getAsc(nameVersionType.name(), nameVersionType.version(), FileType.jar);
+        return toAscResponse(nameVersionType.name(), nameVersionType.version(), FileType.jar);
     }
     
     @GET
@@ -163,7 +160,7 @@ public class MavenRepositoryApi {
     @Produces("application/java-archive")
     public Uni<Response> getSourcesJar(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.source);
+        return toResponse(nameVersionType.name(), nameVersionType.version(), FileType.source);
     }
     
     @GET
@@ -171,7 +168,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getSourcesJarSha1(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.source);
+        return toSha1Response(nameVersionType.name(), nameVersionType.version(), FileType.source);
     }
     
     @GET
@@ -179,7 +176,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getSourcesJarMd5(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getMd5(nameVersionType.name(), nameVersionType.version(), FileType.source);
+        return toMd5Response(nameVersionType.name(), nameVersionType.version(), FileType.source);
     }
     
     @GET
@@ -187,7 +184,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getSourcesJarAsc(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getAsc(nameVersionType.name(), nameVersionType.version(), FileType.source);
+        return toAscResponse(nameVersionType.name(), nameVersionType.version(), FileType.source);
     }
     
     @GET
@@ -195,7 +192,7 @@ public class MavenRepositoryApi {
     @Produces("application/java-archive")
     public Uni<Response> getJavadocJar(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
+        return toResponse(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
     }
     
     @GET
@@ -203,7 +200,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getJavadocJarSha1(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
+        return toSha1Response(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
     }
     
     @GET
@@ -211,7 +208,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getJavadocJarMd5(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getMd5(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
+        return toMd5Response(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
     }
     
     @GET
@@ -219,7 +216,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getJavadocJarAsc(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getAsc(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
+        return toAscResponse(nameVersionType.name(), nameVersionType.version(), FileType.javadoc);
     }
     
     @GET
@@ -227,7 +224,7 @@ public class MavenRepositoryApi {
     @Produces("application/gzip")
     public Uni<Response> getTgz(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getFile(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
+        return toResponse(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
     }
     
     @GET
@@ -235,7 +232,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getTgzSha1(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getSha1(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
+        return toSha1Response(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
     }
     
     @GET
@@ -243,7 +240,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getTgzMd5(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getMd5(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
+        return toMd5Response(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
     }
     
     @GET
@@ -251,83 +248,32 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Uni<Response> getTgzAsc(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return getAsc(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
+        return toAscResponse(nameVersionType.name(), nameVersionType.version(), FileType.tgz);
     }
     
-    private Uni<Response> getFile(Name fullName, String version, FileType type) {
-        if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getFile(fullName, latest, type);
-            });
-        }else {
-            Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamFile(type, p).onItem().transform((file) -> {
-                    return Response.ok(file).build();
-                });
-            }); 
-        }
+    private Uni<Response> toResponse(Name fullName, String version, FileType type){
+        Uni<AsyncFile> file = mavenRespositoryService.getFile(fullName, version, type);
+        return fileToResponse(file);
     }
     
-    private Uni<Response> getSha1(Name fullName, String version, FileType type) {
-        if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getSha1(fullName, latest, type);
-            });
-        }else {
-            Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamSha1(type, p).onItem().transform((file) -> {
-                    return Response.ok(file).build();
-                });
-            }); 
-        }
+    private Uni<Response> toSha1Response(Name fullName, String version, FileType type){
+        Uni<AsyncFile> file = mavenRespositoryService.getSha1(fullName, version, type);
+        return fileToResponse(file);
+    }
+     
+    private Uni<Response> toMd5Response(Name fullName, String version, FileType type){
+        Uni<AsyncFile> file = mavenRespositoryService.getMd5(fullName, version, type);
+        return fileToResponse(file);
     }
     
-    private Uni<Response> getMd5(Name fullName, String version, FileType type) {
-        if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getMd5(fullName, latest, type);
-            });
-        }else {
-            Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamMd5(type, p).onItem().transform((file) -> {
-                    return Response.ok(file).build();
-                });
-            }); 
-        }
+    private Uni<Response> toAscResponse(Name fullName, String version, FileType type){
+        Uni<AsyncFile> file = mavenRespositoryService.getAsc(fullName, version, type);
+        return fileToResponse(file);
     }
     
-    private Uni<Response> getAsc(Name fullName, String version, FileType type) {
-        if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getAsc(fullName, latest, type);
-            });
-        }else {
-            Uni<Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamAsc(type, p).onItem().transform((file) -> {
-                    return Response.ok(file).build();
-                });
-            }); 
-        }
+    private Uni<Response> fileToResponse(Uni<AsyncFile> file){
+        return file.onItem().transformToUni((f)->{
+            return Uni.createFrom().item(Response.ok(f).build());
+        });
     }
-    
-    private Uni<String> getLatestVersion(Name fullName){
-        Uni<Project> project = npmRegistryFacade.getProject(fullName.npmFullName());
-        return project.onItem()
-                .transform((p) -> {
-                    return p.distTags().latest();
-                });
-    }
-    
 }

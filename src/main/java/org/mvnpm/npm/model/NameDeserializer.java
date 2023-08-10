@@ -18,7 +18,7 @@ public class NameDeserializer extends StdDeserializer<Name> {
     
     @Override
     public Name deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JacksonException {
-        return NameParser.parse(jp.getValueAsString());
+        return NameParser.fromNpmProject(jp.getValueAsString());
     }
 
 }

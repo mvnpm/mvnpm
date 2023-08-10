@@ -12,7 +12,24 @@ public class NameParser {
     
     private NameParser(){}
     
-    public static Name parse(String npmFullName){
+    public static Name fromMavenGA(String groupId, String artifactId){
+        
+        if(groupId.equals(Constants.ORG_DOT_MVNPM)){
+            String mvnPath = groupId.replaceAll("\\.", Constants.SLASH);
+            return new Name(artifactId, Constants.EMPTY, artifactId, groupId, artifactId, mvnPath, artifactId);
+        }else if(groupId.startsWith(Constants.ORG_DOT_MVNPM + Constants.DOT_AT_DOT)){
+                          
+            String ns = groupId.replaceFirst(Constants.ESCAPED_ORG_DOT_MVNPM + Constants.ESCAPED_DOT_AT_DOT, Constants.AT);
+            String mvnPath = groupId.replaceAll(Constants.ESCAPED_DOT , Constants.SLASH);
+            return new Name(ns + Constants.SLASH + artifactId, ns, artifactId, groupId, artifactId, mvnPath, artifactId);
+        }else{
+            String mvnPath = groupId.replaceAll(Constants.ESCAPED_DOT, Constants.SLASH);
+            return new Name(mvnPath + Constants.SLASH + artifactId, mvnPath, artifactId, groupId, artifactId, mvnPath, artifactId);
+        }
+        
+    }
+    
+    public static Name fromNpmProject(String npmFullName){
         
         String name;
         String npmNamespace;

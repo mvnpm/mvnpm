@@ -39,6 +39,8 @@ public interface Constants {
     public static final String MD5 = "md5";
     public static final String DOT_MD5 = DOT + MD5;
     
+    public static final String POM = "pom";
+    public static final String DOT_POM = DOT + POM;
     public static final String ASC = "asc";
     public static final String DOT_ASC = DOT + ASC;
     public static final String TGZ = "tgz";
@@ -53,8 +55,9 @@ public interface Constants {
     public static final String AT = "@";
     public static final String AT_SLASH = "at" + SLASH;
     public static final String DOT_AT_DOT = DOT + "at" + DOT;
-    
+    public static final String ESCAPED_DOT_AT_DOT = ESCAPED_DOT + "at" + ESCAPED_DOT;
     public static final String DOUBLE_QUOTE = "\"";
+    public static final String ESCAPED_ORG_DOT_MVNPM = "org\\.mvnpm";
     public static final String ORG_DOT_MVNPM = "org.mvnpm";
     public static final String VERSION = "version";
     public static final String GROUP_ID = "groupId";
