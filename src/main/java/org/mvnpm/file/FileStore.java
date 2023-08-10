@@ -46,7 +46,7 @@ public class FileStore {
                     return emptySha1File.onItem().transformToUni((createdSha) -> {
                         Uni<Void> writtenSha = vertx.fileSystem().writeFile(localSha1FileName, Buffer.buffer(sha1));
                         return writtenSha.onItem().transformToUni((doneSha) -> {
-                            fileStored.fireAsync(new FileStoreEvent(localFileName));
+                            fileStored.fireAsync(new FileStoreEvent(p, localFileName));
                             return readFile(localFileName);
                         });
                     });

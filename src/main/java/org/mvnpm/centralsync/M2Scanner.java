@@ -78,7 +78,7 @@ public class M2Scanner {
     }
 
     private boolean shouldIgnore(String groupId,String artifactId){
-        return groupId.equals("org.mvnpm") && IGNORE_LIST.contains(artifactId);
+        return groupId.equals(Constants.ORG_DOT_MVNPM) && IGNORE_LIST.contains(artifactId);
     }
     
     private List<File> listFilesWithExtension(File folder) {
@@ -91,9 +91,9 @@ public class M2Scanner {
                 result.addAll(listFilesWithExtension(file));
             } else {
                 String name = file.getName();
-                if (file.getName().endsWith(".pom")) {
+                if (file.getName().endsWith(Constants.DOT_POM)) {
                     // Check if the jar is also available
-                    Path jarFile = Paths.get(file.getParent(), name.replace(".pom", ".jar"));
+                    Path jarFile = Paths.get(file.getParent(), name.replace(Constants.DOT_POM,Constants.DOT_JAR));
                     if(Files.exists(jarFile)){
                         result.add(file);
                     }

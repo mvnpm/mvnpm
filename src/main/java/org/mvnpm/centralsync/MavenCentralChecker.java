@@ -81,7 +81,7 @@ public class MavenCentralChecker {
                     + "%22+AND+a:%22" + URLEncoder.encode(artifactId, StandardCharsets.UTF_8)
                     + "%22+AND+v:%22" + URLEncoder.encode(versionToCheck, StandardCharsets.UTF_8)
                     + "%22&core=gav&rows=1&wt=json";
-            Log.info("\tChecking remote url " + url);
+            Log.debug("\tChecking remote url " + url);
             HttpClient httpClient = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
@@ -97,10 +97,10 @@ public class MavenCentralChecker {
                 JsonNode responseNode = jsonNode.get("response");
                 JsonNode docsNode = responseNode.get("docs");
                 boolean available = docsNode.size() > 0;
-                Log.info("\t" + url +" [" + available + "]");
+                Log.debug("\t" + url +" [" + available + "]");
                 return available;
             }
-            Log.info("\t" + url +" [false]");
+            Log.debug("\t" + url +" [false]");
         } catch (IOException | InterruptedException ex) {
             Log.error("Error while checking remote maven central", ex);
         }

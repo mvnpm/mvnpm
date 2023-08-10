@@ -38,8 +38,8 @@ public class ProjectUpdater {
     
     @Blocking
     public void update(Name name){
-        Log.info("====== mvnpm: Continuous Updater ======");
-        Log.info("\tChecking " + name.npmFullName());
+        Log.debug("====== mvnpm: Continuous Updater ======");
+        Log.debug("\tChecking " + name.npmFullName());
         // Get latest in NPM TODO: Later make this per patch release...
         Uni<Project> project = npmRegistryFacade.getProject(name.npmFullName());
         
@@ -47,32 +47,36 @@ public class ProjectUpdater {
         
         if(p!=null){
             String latest = p.distTags().latest();
-            // Check if it's in central   
-            boolean isInCentral = mavenCentralChecker.isAvailable(name.mvnGroupId(), name.mvnArtifactId(), latest);
-            if(isInCentral){
-                Log.info("Latest [" + latest + "] " + name.npmFullName() + " is in central");
-            }else{
-                // Kick off an update
-                Log.info("Latest [" + latest + "] " + name.npmFullName() + " is NOT in central. Kicking off sync...");
-                centralSyncer.sync(name, latest);
-            }
+            update(name, latest);
         }
+    }
+    
+    @Blocking
+    public void update(Name name, String version){
+        // Check if it's in central   
+        boolean isInCentral = mavenCentralChecker.isAvailable(name.mvnGroupId(), name.mvnArtifactId(), version);
+        if(isInCentral){
+            Log.debug("Version [" + version + "] of " + name.npmFullName() + " is in central");
+        }else{
+            // Kick off an update
+            Log.info("Version [" + version + "] of " + name.npmFullName() + " is NOT in central. Kicking off sync...");
+            centralSyncer.sync(name, version);
+        }
+        
     }
     
     @Scheduled(cron = "{cron.expr}")
     @Blocking
     public void updateAll(){
-        Log.info("Starting full update check...");
+        Log.debug("Starting full update check...");
         // Check all know libraries
         Stack<M2Scanner.ArtifactInfo> artifacts = new Stack<>();
         artifacts.addAll(m2Scanner.scan());
         
-        Log.info("...found " + artifacts.size() + " artifacts to check");
+        Log.debug("...found " + artifacts.size() + " artifacts to check");
             
         while(!artifacts.empty()) {
             M2Scanner.ArtifactInfo artifact = artifacts.pop();
-            Log.info("## Processing " + artifact);
-            // TODO: Also "update current version
             update(artifact.getGroupId(), artifact.getArtifactId());    
         }  
     }
