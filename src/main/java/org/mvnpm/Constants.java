@@ -76,4 +76,8 @@ public interface Constants {
     public static final String REPOSITORY = "repository";
     public static final String USER_HOME = "user.home";
     public static final String CACHE_DIR = System.getProperty(USER_HOME);
+    
+    public static final String AVAILABLE_IN_CENTRAL = "available-in-central";
+    public static final String STAGED_TO_OSS = "staged-to-oss";
+    public static final String TRUE = "true";
 }

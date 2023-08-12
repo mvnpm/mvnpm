@@ -109,6 +109,10 @@ export class MvnpmHome extends LitElement {
         .line a {
             cursor: pointer;
         }
+        .sync {
+            display: flex;
+            gap: 10px;
+        }
         .codeView {
             width: 100%;
         }
@@ -141,7 +145,8 @@ export class MvnpmHome extends LitElement {
         _codeViewMode:{state: true},
         _codeViewSrc:{state: true},
         _codeViewSelection:{state: true},
-        _loadingIcon:{state:true}
+        _loadingIcon:{state:true},
+        _syncInfo:{state:true}
     };
 
     constructor() {
@@ -150,6 +155,7 @@ export class MvnpmHome extends LitElement {
         this._disabled = "disabled";
         this._codeViewMode = "xml"; 
         this._codeViewSelection = ".pom";
+        this._syncInfo = null;
     }
 
     render() {
@@ -209,10 +215,28 @@ export class MvnpmHome extends LitElement {
     }
     
     _loadSyncTab(){
-        return html`<div class="sync">
-                Here the sync details
-            </div>
-        `;
+        if(this._syncInfo){
+            return html`<div class="use">
+                    <div class="useBlock">
+                        <span class="heading">Sync info</span>
+                        <div class="sync">
+                            Uploaded to Nexus OSS staging ${this._renderIcon(this._syncInfo.inStaging)}</br>
+                        </div>
+                        <div class="sync">    
+                            Available in Maven central ${this._renderIcon(this._syncInfo.inCentral)}</br>
+                        </div>    
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    _renderIcon(yes){
+        if(yes){
+            return html`<vaadin-icon style="color:green" icon="vaadin:check-circle"></vaadin-icon>`;
+        }else{
+            return html`<vaadin-icon style="color:red" icon="vaadin:close-circle"></vaadin-icon>`;
+        }
     }
     
     _loadUsageTab(){
@@ -401,6 +425,7 @@ export class MvnpmHome extends LitElement {
         
         groupId = groupId.replaceAll('/', '.');
         this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
+        var syncInfoUrl = "/sync/info/" + groupId + "/" + artifactId + "?version=" + version;
         
         groupId = groupId.replaceAll('.', '/');
         var importMapUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/importmap.json";
@@ -409,12 +434,14 @@ export class MvnpmHome extends LitElement {
             .then(response => response.json())
             .then(response => this._setUseJson(response));
             
-        groupId = groupId.replaceAll('.', '/');
         this._baseFile = artifactId + "-" + version;
         this._baseUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/";
         
         this._changeCodeView(this._baseUrl + this._baseFile + this._codeViewSelection);
         
+        fetch(syncInfoUrl)
+            .then(response => response.json())
+            .then(response => this._syncInfo = response);
     }
     
     _setUseJson(response){

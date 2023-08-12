@@ -1,7 +1,6 @@
 package org.mvnpm.npm;
 
 import io.quarkus.cache.CacheResult;
-import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
 import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.rest.client.inject.RestClient;

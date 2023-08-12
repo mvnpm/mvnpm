@@ -42,7 +42,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.2.3.Final</quarkus.platform.version>
+        <quarkus.platform.version>3.2.4.Final</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
         
@@ -128,9 +128,8 @@
         
         <!-- To upload to central -->
         <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.5.14</version>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-apache-httpclient</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -162,7 +161,7 @@
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>router</artifactId>
             <version>${vaadin-router.version}</version>
-            <scope>runtime</scope>       
+            <scope>runtime</scope>
         </dependency>
         
         <!-- Vaadin Web components -->
@@ -478,8 +477,6 @@
             <version>${vaadin.version}</version>
             <scope>runtime</scope>
         </dependency>
-        <!-- There is a cyclic dependency on icon -->
-        <!-- TODO: Detect and fix in mvnpm -->
         <dependency>
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>icon</artifactId>
@@ -549,7 +546,7 @@
             <version>${es-module-shims.version}</version>
             <scope>runtime</scope>
         </dependency>
-        
+    
         <!-- Testing -->
         <dependency>
             <groupId>io.quarkus</groupId>

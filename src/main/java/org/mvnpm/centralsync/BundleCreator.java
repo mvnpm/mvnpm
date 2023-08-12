@@ -11,10 +11,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import io.quarkus.logging.Log;
 import io.smallrye.mutiny.Uni;
-import io.vertx.core.file.OpenOptions;
-import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.file.AsyncFile;
-import io.vertx.mutiny.core.file.FileSystem;
 import jakarta.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -47,10 +44,10 @@ public class BundleCreator {
     @ConfigProperty(name = "mvnpm.bundle-creator-timeout", defaultValue = "30000") // 30 seconds
     int timeout;
     
-    public String bundle(Name name, String version){
+    public Path bundle(Name name, String version){
         Log.debug("====== mvnpm: Nexus Bundler ======");
         downloadFiles(name, version);
-        String bundleLocation = buildBundle(name, version); // TODO: Allow passing in output path ?
+        Path bundleLocation = buildBundle(name, version); // TODO: Allow passing in output path ?
         Log.debug("Bundle " + bundleLocation + " created successful");
         return bundleLocation;
     }
@@ -69,12 +66,12 @@ public class BundleCreator {
         jarFile.await().atMost(Duration.ofSeconds(30));
     }    
     
-    private String buildBundle(Name name, String version) {
+    private Path buildBundle(Name name, String version) {
         String parent = fileStore.getLocalDirectory(name, version);
-        String bundlelocation = name.mvnArtifactId() + "-" + version + "-bundle.jar";
+        String bundlelocation = name.mvnArtifactId() + Constants.HYPHEN + version + "-bundle.jar";
         Path bundlePath = Paths.get(parent, bundlelocation);
         
-        Log.debug("\tBuilding bundle " + bundlelocation + "...");
+        Log.debug("\tBuilding bundle " + bundlePath + "...");
         
         List<Path> files = new ArrayList<>() ;
         Stack<String> filesQ = new Stack<>();
@@ -114,7 +111,7 @@ public class BundleCreator {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        return bundleFile.getAbsoluteFile().getName();
+        return bundlePath;
     }
 
     private void addToZipFile(Path path, ZipOutputStream zos) throws IOException {

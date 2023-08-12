@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -24,29 +25,30 @@ public class NexusUploader {
     @ConfigProperty(name = "mvnpm.sonatype.url", defaultValue = "https://s01.oss.sonatype.org/service/local/staging/bundle_upload")
     String url;
     @ConfigProperty(name = "mvnpm.sonatype.username", defaultValue = "nothing")
-    private String username;
+    String username;
     @ConfigProperty(name = "mvnpm.sonatype.password", defaultValue = "nothing")
-    private String password;
+    String password;
     @ConfigProperty(name = "mvnpm.sonatype.mockupload")
-    private boolean mock;
+    boolean mock;
     
-    public void upload(String fileName){
+    public boolean upload(Path file){
         Log.debug("====== mvnpm: Nexus Uploader ======");
-        Log.debug("\tUploading " + fileName + "...");
+        Log.debug("\tUploading " + file + "...");
         
         if(mock){
-            mockUpload(fileName);
+            return mockUpload(file);
         }else{
-            realUpload(fileName);
+            return realUpload(file);
         }
     }
     
-    private void mockUpload(String fileName){
-        Log.info("Mock Uploaded " + fileName + " successful");
+    private boolean mockUpload(Path file){
+        Log.info("Mock Uploaded " + file + " successful");
+        return true;
     }
     
-    private void realUpload(String fileName){
-        File file = new File(fileName);
+    private boolean realUpload(Path path){
+        File file = path.toFile();
         HttpPost post = new HttpPost(url);
         post.setHeader("Authorization", "Basic " + getBase64AuthString(username, password));
 
@@ -61,9 +63,10 @@ public class NexusUploader {
             
             int statusCode = response.getStatusLine().getStatusCode();
             if(statusCode == 201){
-                Log.info("Uploaded " + fileName + " successful");
+                Log.info("Uploaded " + path + " successful");
+                return true;
             }else{
-                throw new RuntimeException("Upload failed for " + fileName + " " + statusCode + ": " + response.getStatusLine().getReasonPhrase());
+                throw new RuntimeException("Upload failed for " + path + " " + statusCode + ": " + response.getStatusLine().getReasonPhrase());
             }
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);

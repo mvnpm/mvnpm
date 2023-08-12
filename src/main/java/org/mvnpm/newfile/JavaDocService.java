@@ -2,8 +2,8 @@ package org.mvnpm.newfile;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,7 +38,7 @@ public class JavaDocService {
         Path f = Paths.get(outputFile);
         if(!Files.exists(f)){
             synchronized (f) {
-                try (FileOutputStream fileOutput = new FileOutputStream(outputFile);
+                try (OutputStream fileOutput = Files.newOutputStream(f);
                     JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
                     emptyJar(jarOutput);
                     jarOutput.finish();

@@ -30,10 +30,9 @@ public class M2Scanner {
     private static final List<String> IGNORE_LIST = List.of("centralsync","mvnpm","importmap"); // Our internal apps
     
     @ConfigProperty(name = "mvnpm.local-user-directory")
-    private String localUserDir;
-    @ConfigProperty(name = "mvnpm.local-m2-directory")
-    private String localM2Dir;
-    
+    String localUserDir;
+    @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = ".m2")
+    String localM2Dir;
     
     public List<ArtifactInfo> scan() {
         String mvnpmPath = localUserDir + "/" + localM2Dir + "/repository/org/mvnpm/";

@@ -6,9 +6,9 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -50,7 +50,7 @@ public class SourceService {
         Path f = Paths.get(outputFile);
         if(!Files.exists(f)){
             synchronized (f) {
-                try (FileOutputStream fileOutput = new FileOutputStream(outputFile);
+                try (OutputStream fileOutput = Files.newOutputStream(f);
                     JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
                     tgzToJar(tgzFile, jarOutput);
                     jarOutput.finish();

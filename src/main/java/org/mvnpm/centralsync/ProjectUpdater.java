@@ -58,9 +58,14 @@ public class ProjectUpdater {
         if(isInCentral){
             Log.debug("Version [" + version + "] of " + name.npmFullName() + " is in central");
         }else{
-            // Kick off an update
-            Log.info("Version [" + version + "] of " + name.npmFullName() + " is NOT in central. Kicking off sync...");
-            centralSyncer.sync(name, version);
+            boolean isStaging = mavenCentralChecker.isStaged(name.mvnGroupId(), name.mvnArtifactId(), version);
+            if(isStaging){
+                Log.debug("Version [" + version + "] of " + name.npmFullName() + " is in staging");
+            }else{
+                // Kick off an update
+                Log.debug("Version [" + version + "] of " + name.npmFullName() + " is NOT in central. Kicking off sync...");
+                centralSyncer.sync(name, version);
+            }
         }
         
     }
