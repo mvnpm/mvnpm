@@ -46,8 +46,9 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
         
-        <importmap.version>1.0.8</importmap.version>
-        
+        <quarkus-qute-server-pages.version>2.0.1.Final</quarkus-qute-server-pages.version>
+        <quarkus-web-bundler.version>1.0.0</quarkus-web-bundler.version>
+
         <!-- UI Libs -->
         <lit.version>2.8.0</lit.version>
         <vaadin.version>24.1.4</vaadin.version>
@@ -59,6 +60,7 @@
         <vaadin-router.version>1.7.5</vaadin-router.version>
         <wc-codemirror.version>2.1.0</wc-codemirror.version>
         <es-module-shims.version>1.8.0</es-module-shims.version>
+
     </properties>
     
     <dependencyManagement>
@@ -136,20 +138,28 @@
             <artifactId>httpmime</artifactId>
             <version>4.5.14</version>
         </dependency>
-        
-        <!-- To create the importmap -->
-        <dependency>
-            <groupId>org.mvnpm</groupId>
-            <artifactId>importmap</artifactId>
-            <version>${importmap.version}</version>
-        </dependency>
-        
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
         </dependency>
-                        
+
+
+        <!-- UI Qute and Web Bundler -->
+        <dependency>
+            <groupId>io.quarkiverse.quteserverpages</groupId>
+            <artifactId>quarkus-qute-server-pages</artifactId>
+            <version>${quarkus-qute-server-pages.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.web-bundler</groupId>
+            <artifactId>quarkus-web-bundler</artifactId>
+            <version>${quarkus-web-bundler.version}</version>
+        </dependency>
+
         <!-- UI (from mvnpm) -->
+
+
+
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>lit</artifactId>
