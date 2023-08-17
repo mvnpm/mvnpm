@@ -87,4 +87,10 @@ public record Version(Integer major,
         return EMPTY;
     }
     
+    public boolean hasQualifier(){
+        if(qualifier()==null || qualifier().isBlank()){
+            return false;
+        }
+        return true;
+    }
 }

@@ -59,6 +59,8 @@ public interface Constants {
     public static final String DOUBLE_QUOTE = "\"";
     public static final String ESCAPED_ORG_DOT_MVNPM = "org\\.mvnpm";
     public static final String ORG_DOT_MVNPM = "org.mvnpm";
+    public static final String ORG_SLASH_MVNPM = "org/mvnpm";
+    public static final String SLASH_ORG_SLASH_MVNPM_SLASH = "/org/mvnpm/";
     public static final String VERSION = "version";
     public static final String GROUP_ID = "groupId";
     public static final String ARTIFACT_ID = "artifactId";

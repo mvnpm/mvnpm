@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>2.0.1</version>
+    <version>2.0.3-SNAPSHOT</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -128,16 +128,13 @@
             <artifactId>quarkus-scheduler</artifactId>
         </dependency>
         
-        <!-- To upload to central -->
+        <!-- To create the importmap -->
         <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-apache-httpclient</artifactId>
+            <groupId>org.mvnpm</groupId>
+            <artifactId>importmap</artifactId>
+            <version>${importmap.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpmime</artifactId>
-            <version>4.5.14</version>
-        </dependency>
+        
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-arc</artifactId>
@@ -157,8 +154,6 @@
         </dependency>
 
         <!-- UI (from mvnpm) -->
-
-
 
         <dependency>
             <groupId>org.mvnpm</groupId>

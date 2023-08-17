@@ -1,10 +1,11 @@
 package org.mvnpm.newfile;
 
+import io.quarkus.logging.Log;
+import io.quarkus.vertx.ConsumeEvent;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import org.mvnpm.Constants;
-import org.mvnpm.centralsync.ProjectUpdater;
+import org.mvnpm.mavencentral.sync.ContinuousSyncService;
 
 import org.mvnpm.file.FileStoreEvent;
 import org.mvnpm.npm.model.Name;
@@ -17,14 +18,17 @@ import org.mvnpm.npm.model.Name;
 public class AutoSyncService {
 
     @Inject
-    ProjectUpdater projectUpdater;
+    ContinuousSyncService projectUpdater;
     
-    public void newFileCreated(@ObservesAsync FileStoreEvent fse) {
+    @ConsumeEvent("new-file-created")
+    public void newFileCreated(FileStoreEvent fse) {
         String jarFile = fse.fileName();
         if(jarFile.endsWith(Constants.DOT_JAR)){
             Name name = fse.p().name();
             String version = fse.p().version();
-            projectUpdater.update(name, version);
+            projectUpdater.sync(name, version).subscribe().with((t) -> {
+                Log.info(name.displayName() + " sync done");
+            });
         }
     }
     

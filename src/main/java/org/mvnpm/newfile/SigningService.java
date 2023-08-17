@@ -1,7 +1,8 @@
 package org.mvnpm.newfile;
 
+import io.quarkus.logging.Log;
+import io.quarkus.vertx.ConsumeEvent;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.ObservesAsync;
 
 import org.mvnpm.file.FileStoreEvent;
 import org.mvnpm.file.FileUtil;
@@ -13,8 +14,10 @@ import org.mvnpm.file.FileUtil;
 @ApplicationScoped
 public class SigningService {
 
-    public void newFileCreated(@ObservesAsync FileStoreEvent fse) {
+    @ConsumeEvent("new-file-created")
+    public void newFileCreated(FileStoreEvent fse) {
         FileUtil.createAsc(fse.fileName());
         FileUtil.createMd5(fse.fileName());
+        Log.info("file signed " + fse.fileName() + "[true]");
     }
 }
