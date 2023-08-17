@@ -1,4 +1,4 @@
-package org.mvnpm.centralsync;
+package org.mvnpm.mavencentral.sync;
 
 
 import java.io.IOException;

@@ -1,4 +1,4 @@
-package org.mvnpm.centralsync;
+package org.mvnpm.mavencentral.sync;
 
 import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
@@ -22,23 +22,20 @@ import org.mvnpm.npm.model.Project;
 public class CentralSyncApi {
 
     @Inject
-    ProjectUpdater projectUpdater;
+    ContinuousSyncService projectUpdater;
     @Inject
-    MavenCentralChecker mavenCentralChecker;
+    CentralSyncService centralSyncer;
     @Inject
     NpmRegistryFacade npmRegistryFacade;
     
     @GET
     @Path("/info/{groupId}/{artifactId}")
-    public SyncInfo syncInfo(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId, @DefaultValue("latest") @QueryParam("version") String version ) {
+    public Uni<SyncInfo> syncInfo(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId, @DefaultValue("latest") @QueryParam("version") String version ) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
         if(version.equalsIgnoreCase("latest")){
             version = getLatestVersion(name);
         }
-        
-        boolean inCentral = mavenCentralChecker.isAvailable(name.mvnGroupId(), name.mvnArtifactId(), version);
-        boolean inStaging = mavenCentralChecker.isStaged(name.mvnGroupId(), name.mvnArtifactId(), version);
-        return new SyncInfo(inCentral, inStaging);
+        return centralSyncer.getSyncInfo(groupId, artifactId, version);
     }
     
     @GET
@@ -50,8 +47,9 @@ public class CentralSyncApi {
     
     @GET
     @Path("/all")
-    public void syncAll() {
-        projectUpdater.updateAll();
+    public Uni<Void> syncAll() {
+        projectUpdater.checkAll();
+        return Uni.createFrom().voidItem();
     }
     
     private String getLatestVersion(Name fullName){
