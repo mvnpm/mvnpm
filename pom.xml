@@ -60,7 +60,7 @@
         <vaadin-router.version>1.7.5</vaadin-router.version>
         <wc-codemirror.version>2.1.0</wc-codemirror.version>
         <es-module-shims.version>1.8.0</es-module-shims.version>
-
+        <importmap.version>1.0.9</importmap.version>
     </properties>
     
     <dependencyManagement>
@@ -130,7 +130,7 @@
         
         <!-- To create the importmap -->
         <dependency>
-            <groupId>org.mvnpm</groupId>
+            <groupId>io.mvnpm</groupId>
             <artifactId>importmap</artifactId>
             <version>${importmap.version}</version>
         </dependency>
