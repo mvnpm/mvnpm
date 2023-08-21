@@ -1,6 +1,6 @@
 [
   {
-    "name" : "org.mvnpm.importmap.model.Imports",
+    "name" : "io.mvnpm.importmap.model.Imports",
     "allDeclaredConstructors" : true,
     "allPublicConstructors" : true,
     "allDeclaredMethods" : true,

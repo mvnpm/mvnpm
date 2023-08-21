@@ -2,7 +2,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.mvnpm</groupId>
+    <groupId>io.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
     <version>2.0.3-SNAPSHOT</version>
     
@@ -12,7 +12,7 @@
     
     <organization>
         <name>mvnpm</name>
-        <url>https://mvnpm.org/</url>
+        <url>https://mvnpm.io/</url>
     </organization>
     <licenses>
         <license>
@@ -24,6 +24,21 @@
             <name>Phillip Kruger</name>
             <email>phillip.kruger@gmail.com</email>
             <url>https://www.phillip-kruger.com</url>
+            <organization>Red Hat</organization>
+            <organizationUrl>https://www.redhat.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Andy Damevin</name>
+            <email>ia3andy@gmail.com</email>
+            <organization>Red Hat</organization>
+            <organizationUrl>https://www.redhat.com</organizationUrl>
+        </developer>
+        <developer>
+            <name>Erik Jan de Wit</name>
+            <email>erikjan.dewit@gmail.com</email>
+            <url>http://blog.nerdin.ch</url>
+            <organization>Red Hat</organization>
+            <organizationUrl>https://www.redhat.com</organizationUrl>
         </developer>
     </developers>
     <scm>
@@ -47,7 +62,7 @@
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
         
         <quarkus-qute-server-pages.version>2.0.1.Final</quarkus-qute-server-pages.version>
-        <quarkus-web-bundler.version>1.0.0</quarkus-web-bundler.version>
+        <quarkus-web-bundler.version>1.0.1</quarkus-web-bundler.version>
 
         <!-- UI Libs -->
         <lit.version>2.8.0</lit.version>
