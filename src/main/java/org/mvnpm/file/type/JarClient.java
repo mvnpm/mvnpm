@@ -27,7 +27,7 @@ import org.mvnpm.file.FileClient;
 import org.mvnpm.file.FileStore;
 import org.mvnpm.file.FileType;
 import org.mvnpm.file.ImportMapUtil;
-import org.mvnpm.importmap.Location;
+import io.mvnpm.importmap.Location;
 
 /**
  * Create the jar from the npm content

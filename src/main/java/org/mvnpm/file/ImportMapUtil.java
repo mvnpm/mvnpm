@@ -3,8 +3,8 @@ package org.mvnpm.file;
 import java.util.HashMap;
 import java.util.Map;
 import org.mvnpm.Constants;
-import org.mvnpm.importmap.ImportsDataBinding;
-import org.mvnpm.importmap.model.Imports;
+import io.mvnpm.importmap.ImportsDataBinding;
+import io.mvnpm.importmap.model.Imports;
 
 public class ImportMapUtil {
 
