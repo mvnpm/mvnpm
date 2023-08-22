@@ -8,11 +8,6 @@ import '@vaadin/tabsheet';
 import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
-import '@vanillawc/wc-codemirror';
-import '@vanillawc/wc-codemirror/mode/xml/xml.js';
-import '@vanillawc/wc-codemirror/mode/asciiarmor/asciiarmor.js';
-import '@vanillawc/wc-codemirror/mode/powershell/powershell.js';
-import '@vanillawc/wc-codemirror/mode/javascript/javascript.js';
 import './mvnpm-loading.js';
 
 /**
@@ -296,11 +291,12 @@ export class MvnpmHome extends LitElement {
     
     _renderCodeView(){
         if(this._codeViewMode){
-            return html`<wc-codemirror class="codeView"
+            return html`<code-mirror class="codeView"
+                        id="home-code-editor"
                         mode='${this._codeViewMode}'
                         src='${this._codeViewSrc}'
                         readonly>
-                    </wc-codemirror>`;
+                    </code-mirror>`;
         }else{
             return html`<div class="codeView">
                             <div class="nopreview"> 
