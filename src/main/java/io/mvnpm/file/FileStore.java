@@ -48,27 +48,20 @@ public class FileStore {
         String mvnpmRoot = getMvnpmRoot();
         return findArtifactRoots(mvnpmRoot);
     }
-    
-    public Uni<AsyncFile> createFile(io.mvnpm.npm.model.Package p, String localFileName, byte[] content){
-        Uni<Void> createdDir = vertx.fileSystem().mkdirs(getLocalDirectory(p));
-        return createdDir.onItem().transformToUni((createdDirs) -> {
-            Uni<Void> emptyFile = vertx.fileSystem().createFile(localFileName);
-            return emptyFile.onItem().transformToUni((createdFile) -> {
-                Uni<Void> download = vertx.fileSystem().writeFile(localFileName, Buffer.buffer(content));
-                return download.onItem().transformToUni((doneDownload) -> {
+
+    public Uni<AsyncFile> createFile(io.mvnpm.npm.model.Package p, String localFileName, byte[] content) {
+        return vertx.fileSystem().mkdirs(getLocalDirectory(p))
+                .chain(then -> vertx.fileSystem().createFile(localFileName))
+                .chain(then -> vertx.fileSystem().writeFile(localFileName, Buffer.buffer(content)))
+                .chain(then -> {
                     String sha1 = FileUtil.getSha1(content);
                     String localSha1FileName = localFileName + Constants.DOT_SHA1;
-                    Uni<Void> emptySha1File = vertx.fileSystem().createFile(localSha1FileName);
-                    return emptySha1File.onItem().transformToUni((createdSha) -> {
-                        Uni<Void> writtenSha = vertx.fileSystem().writeFile(localSha1FileName, Buffer.buffer(sha1));
-                        return writtenSha.onItem().transformToUni((doneSha) -> {
-                            bus.publish("new-file-created", new FileStoreEvent(p, localFileName));
-                            return readFile(localFileName);
-                        });
-                    });
+                    return vertx
+                            .fileSystem().createFile(localSha1FileName)
+                            .chain(also -> vertx.fileSystem().writeFile(localSha1FileName, Buffer.buffer(sha1)))
+                            .invoke(() -> bus.publish("new-file-created", new FileStoreEvent(p, localFileName)))
+                            .chain(also -> readFile(localFileName));
                 });
-            });
-        });
     }
     
     public Uni<AsyncFile> readFile(String localFileName){
