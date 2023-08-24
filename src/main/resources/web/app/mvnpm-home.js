@@ -148,7 +148,6 @@ export class MvnpmHome extends LitElement {
         super();
         this._clearCoordinates();
         this._disabled = "disabled";
-        this._codeViewMode = "xml"; 
         this._codeViewSelection = ".pom";
         this._syncInfo = null;
     }
@@ -291,12 +290,7 @@ export class MvnpmHome extends LitElement {
     
     _renderCodeView(){
         if(this._codeViewMode){
-            return html`<code-mirror class="codeView"
-                        id="home-code-editor"
-                        mode='${this._codeViewMode}'
-                        src='${this._codeViewSrc}'
-                        readonly>
-                    </code-mirror>`;
+            return html`<codemirror-viewer src='${this._codeViewSrc}'></codemirror-viewer>`;
         }else{
             return html`<div class="codeView">
                             <div class="nopreview"> 
