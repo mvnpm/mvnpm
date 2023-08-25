@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 
 @ApplicationScoped
 public class SPARouting {
-    private static final String[] PATH_PREFIXES = { "/q/", "/maven2", "/info" };
+    private static final String[] PATH_PREFIXES = { "/q/", "/maven2", "/api" };
     private static final Predicate<String> FILE_NAME_PREDICATE = Pattern.compile(".+\\.[a-zA-Z0-9]+$").asMatchPredicate();
 
     public void init(@Observes Router router) {

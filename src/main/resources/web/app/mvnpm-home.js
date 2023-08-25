@@ -421,7 +421,7 @@ export class MvnpmHome extends LitElement {
         
         groupId = groupId.replaceAll('/', '.');
         this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
-        var syncInfoUrl = "/sync/info/" + groupId + "/" + artifactId + "?version=" + version;
+        var syncInfoUrl = "/api/sync/info/" + groupId + "/" + artifactId + "?version=" + version;
         
         groupId = groupId.replaceAll('.', '/');
         var importMapUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/importmap.json";
