@@ -1,4 +1,5 @@
-# mvnpm
+![logo](https://github.com/mvnpm/mvnpm/assets/6836179/4304d13b-42b0-43b8-ac7b-f121cedb6631)
+
 Maven for NPM
 
 ## Maven Repository
@@ -7,6 +8,7 @@ Add the mvnpm repository:
 
 ```
     <repositories>
+
         <repository>
             <id>mvnpm.org</id>
             <name>mvnpm</name>
