@@ -62,7 +62,7 @@
 
         <!-- UI Libs -->
         <quarkus-qute-server-pages.version>2.0.1.Final</quarkus-qute-server-pages.version>
-        <quarkus-web-bundler.version>1.1.0</quarkus-web-bundler.version>
+        <quarkus-web-bundler.version>999-SNAPSHOT</quarkus-web-bundler.version>
         <importmap.version>1.0.9</importmap.version>
 
         <!-- mvnpm Libs -->
@@ -76,6 +76,10 @@
         <vaadin-router.version>1.7.5</vaadin-router.version>
         <codemirror.version>6.0.1</codemirror.version>
         <es-module-shims.version>1.8.0</es-module-shims.version>
+        <lang-javascript.version>6.1.9</lang-javascript.version>
+        <lang-xml.version>6.0.2</lang-xml.version>
+        <lang-json.version>6.0.1</lang-json.version>
+        <legacy-modes.version>6.3.3</legacy-modes.version>
     </properties>
     
     <dependencyManagement>
@@ -550,26 +554,37 @@
             <version>${dedupe-mixin.version}</version>
             <scope>runtime</scope>
         </dependency>
-        
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>codemirror</artifactId>
             <version>${codemirror.version}</version>
             <scope>runtime</scope>
         </dependency>
-
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-javascript</artifactId>
-            <version>${codemirror.version}</version>
+            <version>${lang-javascript.version}</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-xml</artifactId>
-            <version>${codemirror.version}</version>
+            <version>${lang-xml.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.codemirror</groupId>
+            <artifactId>lang-json</artifactId>
+            <version>${lang-json.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.codemirror</groupId>
+            <artifactId>legacy-modes</artifactId>
+            <version>${legacy-modes.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+
 
         <!-- Polyfill for importmaps -->
         <dependency>
