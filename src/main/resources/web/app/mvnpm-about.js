@@ -22,7 +22,7 @@ export class MvnpmAbout extends LitElement {
         .use {
             width: 800px;
             color: #2b2b2b;
-            border: 1px solid rgba(102,179,67,0.96);
+            border: 2px solid var(--mvnpm-background);
             border-radius: 15px;
             padding-left: 20px;
             padding-right: 20px;

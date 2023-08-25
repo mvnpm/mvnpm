@@ -8,7 +8,7 @@ import '@vaadin/tabsheet';
 import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
-import './mvnpm-loading.js';
+import '@vaadin/progress-bar';
 
 /**
  * This component shows the Home screen
@@ -29,6 +29,8 @@ export class MvnpmHome extends LitElement {
             justify-content: center;
             align-items: baseline;
             column-gap: 15px;
+            background: var(--mvnpm-background);
+            --lumo-body-text-color: var(--mvnpm-color);
         }
         .tabpane {
             width: 100%;
@@ -57,7 +59,7 @@ export class MvnpmHome extends LitElement {
         }
         .line a:hover { 
             text-decoration: none; 
-            color: #4b8ee6;
+            color: var(--mvnpm-background);
         }
         .line a:active { 
             text-decoration: none; 
@@ -68,9 +70,9 @@ export class MvnpmHome extends LitElement {
             gap: 10px;
         }
         .heading{
-            color: #66b343;
+            color: var(--mvnpm-background);
             font-weight: bold;
-            border-bottom: 1px dotted #66b343;
+            border-bottom: 1px dotted var(--mvnpm-background);
         }
         .use {
             display: flex;
@@ -82,14 +84,14 @@ export class MvnpmHome extends LitElement {
             flex-direction: column;
             padding: 15px;
             gap: 10px;
-            border: 1px solid rgba(102,179,67,0.96);
+            border: 2px solid var(--mvnpm-background);
             border-radius: 15px;
             width: 50%;
         }
-        .basiccode {
-    
+        codemirror-viewer {
+            width: 100%;
         }
-        .fileBrower {
+        .fileBrowser {
             display: flex;
             gap: 5px;
             padding-top: 10px;
@@ -121,10 +123,12 @@ export class MvnpmHome extends LitElement {
         }
         .clearButton {
             align-self: end;
-            margin-bottom: 14px;
+            color: var(--mvnpm-color);
         }
-        mvnpm-loading {
-            align-self: end;
+    
+        .progress {
+            --lumo-primary-color: var(--mvnpm-color);
+            background: var(--mvnpm-background);
         }
     `;
 
@@ -164,7 +168,9 @@ export class MvnpmHome extends LitElement {
                     value="${this._coordinates.artifactId}" clear-button-visible></vaadin-text-field>
             ${this._renderVersionForm()}
             <vaadin-button class="clearButton" theme="secondary" @click="${this._clearCoordinates}">Clear</vaadin-button>
-            <mvnpm-loading style="visibility: ${this._loadingIcon};"></mvnpm-loading>
+        </div>
+        <div class="coordinates">
+            <vaadin-progress-bar class="progress" style="visibility: ${this._loadingIcon};" indeterminate></vaadin-progress-bar>
         </div>
         
         ${this._renderTabPane()}
@@ -251,7 +257,7 @@ export class MvnpmHome extends LitElement {
     
     _loadPomTab(){
         if(this._baseUrl){
-            return html`<div class="fileBrower">
+            return html`<div class="fileBrowser">
                             ${this._renderCodeView()}
                             <div class="fileList">
                                 ${this._renderFileGroup('pom', '.pom', 'file-code')}
