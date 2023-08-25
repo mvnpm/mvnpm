@@ -16,7 +16,7 @@ import io.mvnpm.npm.model.SearchResults;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  * TODO: Add per version info endpoint ?
  */
-@Path("/info")
+@Path("/api/info")
 public class ProjectInfoApi {
 
     @Inject

@@ -18,7 +18,7 @@ import io.mvnpm.npm.model.Project;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  * TODO: Add security
  */
-@Path("/sync")
+@Path("/api/sync")
 public class CentralSyncApi {
 
     @Inject
