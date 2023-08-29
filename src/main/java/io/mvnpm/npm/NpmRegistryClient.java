@@ -1,13 +1,11 @@
 package io.mvnpm.npm;
 
-import io.smallrye.mutiny.Uni;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-import io.mvnpm.npm.model.Project;
-import io.mvnpm.npm.model.SearchResults;
+import jakarta.ws.rs.core.Response;
 
 /**
  * The main client on https://registry.npmjs.org
@@ -18,17 +16,17 @@ public interface NpmRegistryClient {
   
     @GET
     @Path("/{project}")
-    Uni<Project> getProject(@PathParam("project") String project);
+    Response getProject(@PathParam("project") String project);
 
     @GET
     @Path("/{project}/{version}")
-    Uni<io.mvnpm.npm.model.Package> getPackage(
+    Response getPackage(
             @PathParam("project") String project, 
             @PathParam("version") String version);
     
     @GET
     @Path("/-/v1/search")
-    Uni<SearchResults> search(
+    Response search(
             @QueryParam("text") String text, 
             @QueryParam("size") int size,
             @QueryParam("from") int from,

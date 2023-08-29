@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 
 import io.mvnpm.file.FileStoreEvent;
 import io.mvnpm.file.FileUtil;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * Sign newly created file
@@ -15,9 +16,10 @@ import io.mvnpm.file.FileUtil;
 public class SigningService {
 
     @ConsumeEvent("new-file-created")
+    @Blocking
     public void newFileCreated(FileStoreEvent fse) {
-        FileUtil.createAsc(fse.fileName());
-        FileUtil.createMd5(fse.fileName());
-        Log.info("file signed " + fse.fileName() + "[true]");
+        FileUtil.createAsc(fse.filePath());
+        FileUtil.createMd5(fse.filePath());
+        Log.debug("file signed " + fse.filePath() + " [ok]");
     }
 }

@@ -1,6 +1,5 @@
 package io.mvnpm;
 
-import io.smallrye.mutiny.Uni;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -24,19 +23,19 @@ public class ProjectInfoApi {
     
     @GET
     @Path("/project/{project : (.+)?}")
-    public Uni<Project> projectInfo(@PathParam("project") String project ) {
+    public Project projectInfo(@PathParam("project") String project ) {
         return npmRegistryFacade.getProject(project);
     }
     
     @GET
     @Path("/package/{project : (.+)?}")
-    public Uni<io.mvnpm.npm.model.Package> packageInfo(@PathParam("project") String project, @DefaultValue("latest") @QueryParam("version") String version ) {
+    public io.mvnpm.npm.model.Package packageInfo(@PathParam("project") String project, @DefaultValue("latest") @QueryParam("version") String version ) {
         return npmRegistryFacade.getPackage(project, version);
     }
     
     @GET
     @Path("/search/{term : (.+)?}")
-    public Uni<SearchResults> search(@PathParam("term") String term, @QueryParam("page") @DefaultValue("1") int page) {
+    public SearchResults search(@PathParam("term") String term, @QueryParam("page") @DefaultValue("1") int page) {
         return npmRegistryFacade.search(term, page);
     }
 }

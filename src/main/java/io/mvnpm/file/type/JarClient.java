@@ -1,19 +1,10 @@
 package io.mvnpm.file.type;
 
-import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.tuples.Tuple2;
-import io.vertx.mutiny.core.file.AsyncFile;
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
-import java.util.zip.GZIPInputStream;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -23,11 +14,18 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import io.mvnpm.Constants;
-import io.mvnpm.file.FileClient;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
 import io.mvnpm.file.ImportMapUtil;
 import io.mvnpm.importmap.Location;
+import io.mvnpm.maven.MavenRespositoryService;
+import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 /**
  * Create the jar from the npm content
@@ -35,25 +33,45 @@ import io.mvnpm.importmap.Location;
  */
 @ApplicationScoped
 public class JarClient {
-    
-    @Inject
-    FileClient fileClient;
-    
+
     @Inject 
     FileStore fileStore;
     
-    public Uni<AsyncFile> createJar(io.mvnpm.npm.model.Package p, String localFileName){
-        Uni<String> pomFile = fileClient.getFileName(FileType.pom, p);
-        Uni<String> tgzFile = fileClient.getFileName(FileType.tgz, p);
-        
-        Uni<Tuple2<String, String>> inputFiles = Uni.combine().all().unis(pomFile, tgzFile).asTuple();
-        
-        return inputFiles.onItem().transformToUni((t) -> {
-            return jarInput(p, localFileName, t.getItem1(), t.getItem2());
-        });        
+    @Inject
+    MavenRespositoryService mavenRespositoryService;
+    
+    public Path createEmptyJar(Path forJar, String replaceJarWith){
+        Path emptyFile = Paths.get(forJar.toString().replace(Constants.DOT_JAR, replaceJarWith));
+        if(!Files.exists(emptyFile)){
+            synchronized (emptyFile) {
+                try (OutputStream fileOutput = Files.newOutputStream(emptyFile);
+                    JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
+                    emptyJar(jarOutput);
+                    jarOutput.finish();
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
+                }
+            }
+        }
+        return emptyFile;
     }
     
-    private Uni<AsyncFile> jarInput(io.mvnpm.npm.model.Package p, String localFileName, String pomFile, String tgzFile){
+    private void emptyJar(JarArchiveOutputStream jarOutput) throws IOException {
+        JarArchiveEntry entry = new JarArchiveEntry("README.md");
+        byte[] filecontents = CONTENTS.getBytes();
+        entry.setSize(filecontents.length);
+        jarOutput.putArchiveEntry(entry);
+        jarOutput.write(filecontents);
+        jarOutput.closeArchiveEntry();
+    }
+    
+    public byte[] createJar(io.mvnpm.npm.model.Package p, Path localFilePath){
+        byte[] pomBytes = mavenRespositoryService.getFile(p.name(), p.version(), FileType.pom);
+        byte[] tgzBytes = mavenRespositoryService.getFile(p.name(), p.version(), FileType.tgz);
+        return jarInput(p, localFilePath, pomBytes, tgzBytes);
+    }
+    
+    private byte[] jarInput(io.mvnpm.npm.model.Package p, Path localFilePath, byte[] pomBytes, byte[] tgzBytes){
         
         try (ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
                 JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(byteOutput)){
@@ -62,7 +80,6 @@ public class JarClient {
             String pomXmlDir = POM_ROOT + p.name().mvnGroupId() + Constants.SLASH + p.name().mvnArtifactId() + Constants.SLASH;
             
             // Pom xml entry
-            byte[] pomBytes = Files.readAllBytes(Paths.get(pomFile));
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_XML, pomBytes);
             
             // Pom properties entry
@@ -72,28 +89,23 @@ public class JarClient {
             writeJarEntry(jarOutput, Location.IMPORTMAP_PATH, ImportMapUtil.createImportMap(p));
             
             // Tar contents
-            tgzToJar(p, tgzFile, jarOutput);
+            tgzToJar(p, tgzBytes, jarOutput);
             
             jarOutput.finish();
 
             byte[] jarFileContents = byteOutput.toByteArray();
 
-            return fileStore.createFile(p, localFileName, jarFileContents);
+            return fileStore.createFile(p, localFilePath, jarFileContents);
             
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
     
-    private void tgzToJar(io.mvnpm.npm.model.Package p, String tarFile, JarArchiveOutputStream jarOutput) throws IOException {
-        try(InputStream is = new BufferedInputStream(new FileInputStream(tarFile))){
-            tgzToJar(p, is,jarOutput);
-        }
-    }
-    
-    private void tgzToJar(io.mvnpm.npm.model.Package p, InputStream tarInput, JarArchiveOutputStream jarOutput) throws IOException {
-        try (GZIPInputStream inputStream = new GZIPInputStream(tarInput);
-                TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(inputStream)) {
+    private void tgzToJar(io.mvnpm.npm.model.Package p, byte[] tgzBytes, JarArchiveOutputStream jarOutput) throws IOException {
+        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(tgzBytes);
+                GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(byteArrayInputStream);
+                TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream);) {
 
             for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry(); entry != null; entry = tarArchiveInputStream
                     .getNextTarEntry()) {
@@ -158,5 +170,5 @@ public class JarClient {
     private static final String POM_DOT_PROPERTIES_COMMENT = "Generated by mvnpm.org";
     private final int bufferSize = 4096;
     private static final List<String> FILETYPES_TO_IGNORE = List.of(".md", ".ts", ".ts.map", "/logo.svg"); // Make this configuable per package ?
-    
+    private static final String CONTENTS = "No contents since this is a JavaScript Project";
 }

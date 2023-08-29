@@ -1,11 +1,9 @@
-
 package io.mvnpm.maven;
 
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.file.AsyncFile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import io.mvnpm.Constants;
+import io.mvnpm.composite.CompositeService;
 import io.mvnpm.file.FileClient;
 import io.mvnpm.file.FileType;
 import io.mvnpm.npm.NpmRegistryFacade;
@@ -23,81 +21,56 @@ public class MavenRespositoryService {
     NpmRegistryFacade npmRegistryFacade;
     
     @Inject
+    CompositeService compositeService;
+    
+    @Inject
     FileClient fileClient; 
     
-    public Uni<AsyncFile> getFile(Name fullName, String version, FileType type) {
+    public byte[] getFile(Name fullName, String version, FileType type) {
         if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getFile(fullName, latest, type);
-            });
-        }else {
-            Uni<io.mvnpm.npm.model.Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamFile(type, p).onItem().transform((file) -> {
-                    return file;
-                });
-            }); 
+            String latestVersion = getLatestVersion(fullName);
+            return getFile(fullName, latestVersion, type);
+        }else if(fullName.mvnGroupId().equals("org.mvnpm.at.mvnpm")){
+            return compositeService.getFile(fullName, version, type);
+        }else{
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            return fileClient.getFileContents(type, npmPackage);
         }
     }
     
-    public Uni<AsyncFile> getSha1(Name fullName, String version, FileType type) {
+    public byte[] getSha1(Name fullName, String version, FileType type) {
         if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getSha1(fullName, latest, type);
-            });
+            String latestVersion = getLatestVersion(fullName);
+            return getSha1(fullName, latestVersion, type);
         }else {
-            Uni<io.mvnpm.npm.model.Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamSha1(type, p).onItem().transform((file) -> {
-                    return file;
-                });
-            }); 
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            return fileClient.getFileSha1(type, npmPackage);
         }
     }
     
-    public Uni<AsyncFile> getMd5(Name fullName, String version, FileType type) {
+    public byte[] getMd5(Name fullName, String version, FileType type) {
         if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getMd5(fullName, latest, type);
-            });
+            String latestVersion = getLatestVersion(fullName);
+            return getMd5(fullName, latestVersion, type);
         }else {
-            Uni<io.mvnpm.npm.model.Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamMd5(type, p).onItem().transform((file) -> {
-                    return file;
-                });
-            }); 
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            return fileClient.getFileMd5(type, npmPackage);
         }
     }
     
-    public Uni<AsyncFile> getAsc(Name fullName, String version, FileType type) {
+    public byte[] getAsc(Name fullName, String version, FileType type) {
         if(version.equalsIgnoreCase(Constants.LATEST)){
-            Uni<String> latestVersion = getLatestVersion(fullName);
-            return latestVersion.onItem().transformToUni((latest)->{
-                return getAsc(fullName, latest, type);
-            });
+            String latestVersion = getLatestVersion(fullName);
+            return getAsc(fullName, latestVersion, type);
         }else {
-            Uni<io.mvnpm.npm.model.Package> npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
-            
-            return npmPackage.onItem().transformToUni((p) -> {
-                return fileClient.streamAsc(type, p).onItem().transform((file) -> {
-                    return file;
-                });
-            }); 
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            return fileClient.getFileAsc(type, npmPackage);
         }
     }
     
-    private Uni<String> getLatestVersion(Name fullName){
-        Uni<Project> project = npmRegistryFacade.getProject(fullName.npmFullName());
-        return project.onItem()
-                .transform((p) -> {
-                    return p.distTags().latest();
-                });
+    private String getLatestVersion(Name fullName){
+        // TODO: Handle internal
+        Project project = npmRegistryFacade.getProject(fullName.npmFullName());
+        return project.distTags().latest();
     }
 }

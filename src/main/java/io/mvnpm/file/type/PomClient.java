@@ -1,7 +1,5 @@
 package io.mvnpm.file.type;
 
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -31,6 +29,7 @@ import io.mvnpm.npm.model.Maintainer;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.Repository;
 import io.mvnpm.version.VersionConverter;
+import java.nio.file.Path;
 
 /**
  * Creates a pom.xml from the NPM Package
@@ -47,52 +46,49 @@ public class PomClient {
     
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
     
-    public Uni<AsyncFile> createPom(io.mvnpm.npm.model.Package p, String localFileName) {     
-        Uni<byte[]> contents = writePomToBytes(p);
-        return contents.onItem().transformToUni((c) -> {
-            return fileCreator.createFile(p, localFileName, c);
-        });
+    public byte[] createPom(io.mvnpm.npm.model.Package p, Path localFilePath) {     
+        byte[] contents = writePomToBytes(p);
+        return fileCreator.createFile(p, localFilePath, contents);
     }
     
-    private Uni<byte[]> writePomToBytes(io.mvnpm.npm.model.Package p) {
+    private byte[] writePomToBytes(io.mvnpm.npm.model.Package p) {
         
-        Uni<List<Dependency>> toDependencies = toDependencies(p.dependencies());
-        return toDependencies.onItem().transform((var deps) -> {
-            try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
-                Model model = new Model();
-                
-                model.setModelVersion(MODEL_VERSION);
-                model.setGroupId(p.name().mvnGroupId());
-                model.setArtifactId(p.name().mvnArtifactId());
-                model.setVersion(p.version());
-                model.setPackaging(JAR);
-                model.setName(p.name().displayName());
-                model.setDescription(p.description());
-                model.setLicenses(toLicenses(p.license()));
-                if(p.homepage()!=null)model.setUrl(p.homepage().toString());
-                model.setOrganization(toOrganization(p));
-                model.setScm(toScm(p.repository()));
-                model.setIssueManagement(toIssueManagement(p.bugs()));
-                model.setDevelopers(toDevelopers(p.maintainers()));
-                if(!deps.isEmpty()){
-                    Properties properties = new Properties();
-                    
-                    for(Dependency dep:deps){
-                        String version = dep.getVersion();
-                        String propertyKey = dep.getGroupId() + Constants.HYPHEN + dep.getArtifactId() + Constants.DOT + Constants.VERSION;
-                        properties.put(propertyKey, version);
-                        dep.setVersion(Constants.DOLLAR + Constants.OPEN_CURLY + propertyKey + Constants.CLOSE_CURLY);
-                    }
-                    
-                    model.setProperties(properties);
-                    model.setDependencies(deps);
+        List<Dependency> deps = toDependencies(p.dependencies());
+        
+        try(ByteArrayOutputStream baos = new ByteArrayOutputStream()){
+            Model model = new Model();
+
+            model.setModelVersion(MODEL_VERSION);
+            model.setGroupId(p.name().mvnGroupId());
+            model.setArtifactId(p.name().mvnArtifactId());
+            model.setVersion(p.version());
+            model.setPackaging(JAR);
+            model.setName(p.name().displayName());
+            model.setDescription(p.description());
+            model.setLicenses(toLicenses(p.license()));
+            if(p.homepage()!=null)model.setUrl(p.homepage().toString());
+            model.setOrganization(toOrganization(p));
+            model.setScm(toScm(p.repository()));
+            model.setIssueManagement(toIssueManagement(p.bugs()));
+            model.setDevelopers(toDevelopers(p.maintainers()));
+            if(!deps.isEmpty()){
+                Properties properties = new Properties();
+
+                for(Dependency dep:deps){
+                    String version = dep.getVersion();
+                    String propertyKey = dep.getGroupId() + Constants.HYPHEN + dep.getArtifactId() + Constants.DOT + Constants.VERSION;
+                    properties.put(propertyKey, version);
+                    dep.setVersion(Constants.DOLLAR + Constants.OPEN_CURLY + propertyKey + Constants.CLOSE_CURLY);
                 }
-                mavenXpp3Writer.write(baos, model);
-                return baos.toByteArray();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
+
+                model.setProperties(properties);
+                model.setDependencies(deps);
             }
-        });
+            mavenXpp3Writer.write(baos, model);
+            return baos.toByteArray();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
     }
     
     private List<License> toLicenses(String license){
@@ -163,53 +159,38 @@ public class PomClient {
         return Collections.EMPTY_LIST;
     }
     
-    private Uni<List<Dependency>> toDependencies(Map<Name, String> dependencies){
-        List<Uni<Dependency>> deps = new ArrayList<>();
+    private List<Dependency> toDependencies(Map<Name, String> dependencies){
+        List<Dependency> deps = new ArrayList<>();
         if(dependencies!=null && !dependencies.isEmpty()){
             for(Map.Entry<Name,String> e:dependencies.entrySet()){
                 Name name = e.getKey();
                 String version = e.getValue();
                 deps.add(toDependency(name, version));
             }
-        }
-        
-        if(!deps.isEmpty()){
-            Uni<List<Dependency>> all = Uni.join().all(deps).andCollectFailures();
-        
-            return all.onItem().transform((a)->{
-                List<Dependency> ds = new ArrayList<>();
-                ds.addAll(a);
-                return ds;
-            });
+            return deps;
         }else {
-            return Uni.createFrom().item(List.of());
+            return List.of();
         }
-        
     }
     
-    private Uni<Dependency> toDependency(Name name, String version){
-        Uni<String> convertedVersion = toVersion(name, version);
-        return convertedVersion.onItem().transform((cv)-> {
-            Dependency d = new Dependency();
-            d.setGroupId(name.mvnGroupId());
-            d.setArtifactId(name.mvnArtifactId());
-            d.setVersion(cv);
-            return d;
-        });
+    private Dependency toDependency(Name name, String version){
+        Dependency d = new Dependency();
+        d.setGroupId(name.mvnGroupId());
+        d.setArtifactId(name.mvnArtifactId());
+        d.setVersion(toVersion(name, version));
+        return d;
     }
     
-    private Uni<String> toVersion(Name name, String version){
+    private String toVersion(Name name, String version){
         String trimVersion = VersionConverter.convert(version).trim().replaceAll("\\s+","");
         
         // This is an open ended range. Let's get the latest for a bottom boundary
         if(trimVersion.equals(OPEN_BLOCK + COMMA + CLOSE_ROUND)){
-            Uni<Project> project = npmRegistryFacade.getProject(name.npmFullName());
-            return project.onItem().transform((p) -> {
-                return OPEN_BLOCK + p.distTags().latest() + COMMA + CLOSE_ROUND;
-            });
+            Project project = npmRegistryFacade.getProject(name.npmFullName());
+            return OPEN_BLOCK + project.distTags().latest() + COMMA + CLOSE_ROUND;
         }
         // TODO: Make other ranges more effient too ?
-        return Uni.createFrom().item(trimVersion);
+        return trimVersion;
     }
     
     private static final String JAR = "jar";

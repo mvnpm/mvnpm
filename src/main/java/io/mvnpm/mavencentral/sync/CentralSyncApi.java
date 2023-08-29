@@ -1,17 +1,20 @@
 package io.mvnpm.mavencentral.sync;
 
-import io.smallrye.mutiny.Uni;
+import io.mvnpm.maven.NameVersionType;
+import io.mvnpm.mavencentral.MavenFacade;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
-import java.time.Duration;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
+import jakarta.ws.rs.DELETE;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The central sync
@@ -22,44 +25,58 @@ import io.mvnpm.npm.model.Project;
 public class CentralSyncApi {
 
     @Inject
-    ContinuousSyncService projectUpdater;
+    ContinuousSyncService continuousSyncService;
     @Inject
-    CentralSyncService centralSyncer;
+    CentralSyncService centralSyncService;
     @Inject
     NpmRegistryFacade npmRegistryFacade;
+    @Inject
+    MavenFacade mavenFacade;
     
     @GET
     @Path("/info/{groupId}/{artifactId}")
-    public Uni<SyncInfo> syncInfo(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId, @DefaultValue("latest") @QueryParam("version") String version ) {
+    public SyncInfo syncInfo(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId, @DefaultValue("latest") @QueryParam("version") String version ) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
         if(version.equalsIgnoreCase("latest")){
             version = getLatestVersion(name);
         }
-        return centralSyncer.getSyncInfo(groupId, artifactId, version);
+        return centralSyncService.getSyncInfo(groupId, artifactId, version);
     }
     
     @GET
     @Path("/project/{project : (.+)?}")
     public void sync(@PathParam("project") String project ) {
         Name name = NameParser.fromNpmProject(project);
-        projectUpdater.update(name);
+        continuousSyncService.update(name);
     }
     
     @GET
     @Path("/all")
-    public Uni<Void> syncAll() {
-        projectUpdater.checkAll();
-        return Uni.createFrom().voidItem();
+    public void syncAll() {
+        continuousSyncService.checkAll();
+    }
+    
+    @DELETE
+    @Path("/all")
+    public void dropAll(){
+        mavenFacade.dropStagingProfileRepos();
+    }
+    
+    @GET
+    @Path("/queue/staging")
+    public List<NameVersionType> getStagingQueue() {
+        return continuousSyncService.getStagingQueue();
+    }
+    
+    @GET
+    @Path("/queue/release")
+    public List<Map.Entry<String,NameVersionType>> getReleaseQueue() {
+        return continuousSyncService.getReleaseQueue();
     }
     
     private String getLatestVersion(Name fullName){
-        Uni<Project> project = npmRegistryFacade.getProject(fullName.npmFullName());
-        return project.onItem()
-                .transform((p) -> {
-                    return p.distTags().latest();
-                }).await().atMost(Duration.ofSeconds(30));
+        Project project = npmRegistryFacade.getProject(fullName.npmFullName());
+        return project.distTags().latest();
     }
-    
-    // TODO: Add things to see and manage the q
     
 }

@@ -1,17 +1,16 @@
 package io.mvnpm.file.type;
 
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.http.HttpMethod;
-import io.vertx.core.http.RequestOptions;
-import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.core.file.AsyncFile;
-import io.vertx.mutiny.core.http.HttpClientRequest;
-import io.vertx.mutiny.core.http.HttpClientResponse;
 import java.net.URL;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.net.HttpURLConnection;
+import java.nio.file.Path;
 
 /**
  * Downloads or stream the tar files from npm
@@ -23,56 +22,44 @@ import io.mvnpm.file.FileStore;
 @ApplicationScoped
 public class TgzClient {
 
-    @Inject
-    Vertx vertx;
-    
     @Inject 
     FileStore fileStore;
     
-    public Uni<AsyncFile> fetchRemote(io.mvnpm.npm.model.Package p, String localFileName){
+    public byte[] fetchRemote(io.mvnpm.npm.model.Package p, Path localFileName){
         URL tarball = p.dist().tarball();
         
-        RequestOptions requestOptions = getRequestOptions(tarball);
-        Uni<HttpClientRequest> u = vertx.createHttpClient().request(requestOptions);
-        return u.onItem().transformToUni((req) -> {
-            return request(p, localFileName, req);
-        });
-    }
-    
-    private Uni<AsyncFile> request(io.mvnpm.npm.model.Package p, String localFileName, HttpClientRequest req){
-        return req.connect().onItem().transformToUni((res) -> {
-            
-            int statusCode = res.statusCode();
-            if(statusCode == 200){
-                return response(p, localFileName, res);
-            }else {
-                throw new RuntimeException("Error download tar from NPM " + req.getURI() + " [" + statusCode + "] - " + res.statusMessage());
-            }
-        });
-    }
-    
-    private Uni<AsyncFile> response(io.mvnpm.npm.model.Package p, String localFileName, HttpClientResponse res){
-        return res.body().onItem().transformToUni((body)  -> {
-            return fileStore.createFile(p, localFileName, body.getBytes());
-        });
-    }
-    
-    private RequestOptions getRequestOptions(URL u){
-        RequestOptions requestOptions = new RequestOptions();
-        if(u.getPort()>0){
-            requestOptions.setPort(u.getPort());
-        } else if(Constants.HTTPS.equalsIgnoreCase(u.getProtocol())){
-            requestOptions.setPort(443);
-            requestOptions.setSsl(Boolean.TRUE);
-        } else {
-            requestOptions.setPort(80);
-            requestOptions.setSsl(Boolean.FALSE);
+        try {
+            byte[] downloadFile = downloadFile(tarball);
+            return fileStore.createFile(p, localFileName, downloadFile);
+        } catch (FileNotFoundException ex) {
+            throw new RuntimeException("Error download tar from NPM " + tarball + " [" + ex.getMessage() + "]");
         }
-        
-        requestOptions.setMethod(HttpMethod.GET);
-        requestOptions.setHost(u.getHost());
-        requestOptions.setURI(u.getPath());
-        return requestOptions;
     }
     
+    private byte[] downloadFile(URL url) throws FileNotFoundException {
+        try {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode != HttpURLConnection.HTTP_OK) {
+                throw new FileNotFoundException("Status: " + responseCode);
+            }
+
+            try (InputStream in = connection.getInputStream()) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+
+                while ((bytesRead = in.read(buffer)) != -1) {
+                    baos.write(buffer, 0, bytesRead);
+                }
+
+                return baos.toByteArray();
+            } finally {
+                connection.disconnect();
+            }
+        }catch(IOException e){
+            throw new UncheckedIOException(e);
+        }
+    }
 }
