@@ -81,5 +81,6 @@ public interface Constants {
     
     public static final String AVAILABLE_IN_CENTRAL = "available-in-central";
     public static final String STAGED_TO_OSS = "staged-to-oss";
+    public static final String STAGED_REPO_ID = "staged-repo-id";
     public static final String TRUE = "true";
 }

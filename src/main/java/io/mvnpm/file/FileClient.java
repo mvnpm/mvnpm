@@ -3,13 +3,14 @@ package io.mvnpm.file;
 import io.mvnpm.file.type.JarClient;
 import io.mvnpm.file.type.TgzClient;
 import io.quarkus.logging.Log;
-import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.core.file.AsyncFile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import java.io.FileNotFoundException;
 import io.mvnpm.file.type.PomClient;
+import java.io.FileNotFoundException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Get the jar or tgz from either local file system or from it's origin
@@ -33,96 +34,68 @@ public class FileClient {
     @Inject
     FileStore fileStore;
     
-    public Uni<String> getFileName(FileType type, io.mvnpm.npm.model.Package p) {
-        Uni<AsyncFile> streamFile = streamFile(type, p);
-        return streamFile.onItem().transform((f) -> {
-            return fileStore.getLocalFullPath(type, p);
-        });
+    public byte[] getFileContents(FileType type, io.mvnpm.npm.model.Package p) {
+        Path localFilePath = fileStore.getLocalFullPath(type, p);
+        return fetch(type, p, localFilePath);
     }
     
-    public Uni<AsyncFile> streamFile(FileType type, io.mvnpm.npm.model.Package p) {
-        String localFileName = fileStore.getLocalFullPath(type, p);
-        Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
-        return checkIfLocal.onItem()
-                .transformToUni((local) -> { 
-                    return fetch(type, p, localFileName, local);
-                });
+    public byte[] getFileSha1(FileType type, io.mvnpm.npm.model.Package p) {
+        Path localFilePath = fileStore.getLocalSha1FullPath(type, p);
+        return fetchSha1(type, p, localFilePath);
     }
     
-    public Uni<AsyncFile> streamSha1(FileType type, io.mvnpm.npm.model.Package p) {
-        String localFileName = fileStore.getLocalSha1FullPath(type, p);
-        
-        Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
-        return checkIfLocal.onItem()
-                .transformToUni((local) -> { 
-                    return fetchSha1(type, p, localFileName, local);
-                });
+    public byte[] getFileMd5(FileType type, io.mvnpm.npm.model.Package p) {
+        Path localFilePath = fileStore.getLocalMd5FullPath(type, p);
+        return fetchLocal(localFilePath);
     }
     
-    public Uni<AsyncFile> streamMd5(FileType type, io.mvnpm.npm.model.Package p) {
-        String localFileName = fileStore.getLocalMd5FullPath(type, p);
-        
-        Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
-        return checkIfLocal.onItem()
-                .transformToUni((local) -> { 
-                    return fetchStatic(localFileName, local);
-                });
+    public byte[] getFileAsc(FileType type, io.mvnpm.npm.model.Package p) {
+        Path localFilePath = fileStore.getLocalAscFullPath(type, p);
+        return fetchLocal(localFilePath);
     }
     
-    
-    public Uni<AsyncFile> streamAsc(FileType type, io.mvnpm.npm.model.Package p) {
-        String localFileName = fileStore.getLocalAscFullPath(type, p);
-        
-        Uni<Boolean> checkIfLocal = vertx.fileSystem().exists(localFileName);
-        return checkIfLocal.onItem()
-                .transformToUni((local) -> { 
-                    return fetchStatic(localFileName, local);
-                });
-    }
-    
-    private Uni<AsyncFile> fetch(FileType type, io.mvnpm.npm.model.Package p, String localFileName, Boolean local){
+    private byte[] fetch(FileType type, io.mvnpm.npm.model.Package p, Path localFilePath){
+        boolean local = Files.exists(localFilePath);
         if(local){
-            Log.debug("Serving from cache [" + localFileName + "]");
-            return fileStore.readFile(localFileName);
+            Log.debug("Serving locally [" + localFilePath + "]");
+            return fileStore.readFile(localFilePath);
         }else{
-            Log.debug("Serving from origin [" + localFileName + "]");
-            return fetchOriginal(type, p, localFileName);
+            Log.debug("Serving remotely [" + localFilePath + "]");
+            return fetchRemote(type, p, localFilePath);
         }
     }
     
-    private Uni<AsyncFile> fetchSha1(FileType type, io.mvnpm.npm.model.Package p, String localFileName, Boolean local){
+    private byte[] fetchSha1(FileType type, io.mvnpm.npm.model.Package p, Path localFilePath){
+        boolean local = Files.exists(localFilePath);
         if(local){
-            Log.debug("Serving from cache [" + localFileName + "]");
-            return fileStore.readFile(localFileName);
+            Log.debug("Serving locally [" + localFilePath + "]");
+            return fileStore.readFile(localFilePath);
         }else{
-            Log.debug("Fetching from origin [" + localFileName + "]");
-            String localFullFileName = fileStore.getLocalFullPath(type, p);
-            Uni<AsyncFile> fetchOriginal = fetchOriginal(type, p, localFullFileName);
-            return fetchOriginal.onItem().transformToUni((downloaded) -> {
-                return fileStore.readFile(localFileName);
-            });
+            Log.debug("Fetching remotely [" + localFilePath + "]");
+            Path localFullFilePath = fileStore.getLocalFullPath(type, p);
+            return fetchRemote(type, p, localFullFilePath);
         }
     }
     
-    private Uni<AsyncFile> fetchStatic(String localFileName, Boolean local){
-        if(local){
-            Log.debug("Serving from cache [" + localFileName + "]");
-            return fileStore.readFile(localFileName);
+    private byte[] fetchLocal(Path localFilePath){
+        if(Files.exists(localFilePath)){
+            Log.debug("Serving locally [" + localFilePath + "]");
+            return fileStore.readFile(localFilePath);
         }else{
-            return Uni.createFrom().failure(new FileNotFoundException(localFileName));
+            throw new UncheckedIOException(new FileNotFoundException(localFilePath.toString()));
         }
     }
     
-    private Uni<AsyncFile> fetchOriginal(FileType type, io.mvnpm.npm.model.Package p, String localFileName){
+    private byte[] fetchRemote(FileType type, io.mvnpm.npm.model.Package p, Path localFilePath){
         switch (type) {
             case tgz -> {
-                return tgzClient.fetchRemote(p, localFileName);
+                return tgzClient.fetchRemote(p, localFilePath);
             }
             case jar -> {
-                return jarClient.createJar(p, localFileName);
+                return jarClient.createJar(p, localFilePath);
             }
             case pom -> {
-                return pomClient.createPom(p, localFileName);
+                return pomClient.createPom(p, localFilePath);
             }
             default -> throw new RuntimeException("Unknown type " + type);
         }

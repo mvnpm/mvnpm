@@ -1,11 +1,6 @@
 package io.mvnpm.file;
 
-import io.smallrye.mutiny.Uni;
-import io.vertx.core.file.OpenOptions;
-import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.eventbus.EventBus;
-import io.vertx.mutiny.core.file.AsyncFile;
 import java.io.File;
 import java.util.Optional;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -24,6 +19,7 @@ import java.util.List;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import io.mvnpm.Constants;
 import io.mvnpm.npm.model.Name;
+import java.io.UncheckedIOException;
 
 /**
  * Store for local files.
@@ -35,116 +31,148 @@ public class FileStore {
     @Inject
     EventBus bus;
     
-    @Inject
-    Vertx vertx;
-    
     @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = ".m2")
     String localM2Directory;
     
     @ConfigProperty(name = "mvnpm.local-user-directory")
     Optional<String> localUserDirectory;
     
-    public Uni<List<String>> getArtifactRoots() {
-        String mvnpmRoot = getMvnpmRoot();
+    public List<Path> getArtifactRoots() {
+        Path mvnpmRoot = getMvnpmRoot();
         return findArtifactRoots(mvnpmRoot);
     }
 
-    public Uni<AsyncFile> createFile(io.mvnpm.npm.model.Package p, String localFileName, byte[] content) {
-        return vertx.fileSystem().mkdirs(getLocalDirectory(p))
-                .chain(then -> vertx.fileSystem().createFile(localFileName))
-                .chain(then -> vertx.fileSystem().writeFile(localFileName, Buffer.buffer(content)))
-                .chain(then -> {
-                    String sha1 = FileUtil.getSha1(content);
-                    String localSha1FileName = localFileName + Constants.DOT_SHA1;
-                    return vertx
-                            .fileSystem().createFile(localSha1FileName)
-                            .chain(also -> vertx.fileSystem().writeFile(localSha1FileName, Buffer.buffer(sha1)))
-                            .invoke(() -> bus.publish("new-file-created", new FileStoreEvent(p, localFileName)))
-                            .chain(also -> readFile(localFileName));
-                });
+    public byte[] createFile(io.mvnpm.npm.model.Package p, Path localFileName, byte[] content) {
+        return createFile(p.name(),p.version(),localFileName, content);
     }
     
-    public Uni<AsyncFile> readFile(String localFileName){
-        return vertx.fileSystem().open(localFileName, READ_ONLY_OPTIONS);
+    public byte[] createFile(Name name, String version, Path localFilePath, byte[] content) {
+        
+        try{
+            Files.createDirectories(localFilePath.getParent());
+            Files.write(localFilePath, content);
+            String sha1 = FileUtil.getSha1(content);
+            Path localSha1FilePath = Paths.get(localFilePath.toString() + Constants.DOT_SHA1);
+            Files.writeString(localSha1FilePath, sha1);
+            touch(name, version, localFilePath);
+            return content;
+        } catch (IOException e){
+            throw new UncheckedIOException(e);
+        }
     }
     
-    public Uni<Boolean> exist(String localFileName){
-        return vertx.fileSystem().exists(localFileName);
+    public void touch(Name name, String version, Path localFilePath){
+        bus.publish("new-file-created", new FileStoreEvent(localFilePath, name, version));
     }
     
-    public String getLocalDirectory(Name name, String version){
-        return getGroupRoot(name.mvnPath()) +
-                name.mvnArtifactId() + File.separator + 
-                version;
+    public byte[] readFile(Path localFileName){
+        try {
+            return Files.readAllBytes(localFileName);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
     
-    public String getMvnpmRoot(){
+    public boolean exist(Path localFileName){
+        return Files.exists(localFileName);
+    }
+    
+    public Path getLocalDirectory(String groupId, String artifactId, String version){
+        String mvnPath = groupId.replaceAll(Constants.ESCAPED_DOT, File.separator);
+        return getGroupRoot(mvnPath).resolve(
+                Paths.get(artifactId, version));
+    }
+    
+    public Path getMvnpmRoot(){
         return getGroupRoot(Constants.ORG_SLASH_MVNPM);
     }
     
-    public String getGroupRoot(String groupId){
-        return localUserDirectory.orElse(Constants.CACHE_DIR) + File.separator + 
-                localM2Directory + File.separator +
-                Constants.REPOSITORY + File.separator +
-                groupId + File.separator;
+    public Path getGroupRoot(String groupId){
+        return Paths.get(localUserDirectory.orElse(Constants.CACHE_DIR),
+                        localM2Directory,
+                        Constants.REPOSITORY,
+                            groupId);
     } 
-    
-    public String getLocalDirectory(io.mvnpm.npm.model.Package p){
-        return getLocalDirectory(p.name(), p.version());
+
+    public Path getLocalDirectory(Name name, String version){
+        return getGroupRoot(name.mvnPath()).resolve(
+                    Paths.get(name.mvnArtifactId(),version));
     }
     
-    public String getLocalSha1FullPath(FileType type, io.mvnpm.npm.model.Package p){
-        return getLocalFullPath(type, p) + Constants.DOT_SHA1;
+    public Path getLocalSha1FullPath(FileType type, io.mvnpm.npm.model.Package p){
+        return getLocalFullPath(type, p, Optional.of(Constants.DOT_SHA1));
     }
     
-    public String getLocalMd5FullPath(FileType type, io.mvnpm.npm.model.Package p){
-        return getLocalFullPath(type, p) + Constants.DOT_MD5;
+    public Path getLocalMd5FullPath(FileType type, io.mvnpm.npm.model.Package p){
+        return getLocalFullPath(type, p, Optional.of(Constants.DOT_MD5));
     }
     
-    public String getLocalAscFullPath(FileType type, io.mvnpm.npm.model.Package p){
-        return getLocalFullPath(type, p) + Constants.DOT_ASC;
+    public Path getLocalAscFullPath(FileType type, io.mvnpm.npm.model.Package p){
+        return getLocalFullPath(type, p, Optional.of(Constants.DOT_ASC));
     }
     
-    public String getLocalFullPath(FileType type, io.mvnpm.npm.model.Package p){
-        return getLocalDirectory(p) + File.separator + 
-                getLocalFileName(type, p);
+    public boolean exists(FileType type, io.mvnpm.npm.model.Package p){
+        Path localFileName = getLocalFullPath(type, p);
+        return Files.exists(localFileName);
     }
     
-    public String getLocalFileName(FileType type, io.mvnpm.npm.model.Package p){
-        return p.name().mvnArtifactId() + Constants.HYPHEN + p.version() + type.getPostString();
+    public Path getLocalFullPath(FileType type, io.mvnpm.npm.model.Package p){
+        return getLocalFullPath(type, p, Optional.empty());
+    }
+    
+    public Path getLocalFullPath(FileType type, io.mvnpm.npm.model.Package p, Optional<String> dotSigned){
+        return getLocalDirectory(p.name(), p.version()).resolve(getLocalFileName(type, p, dotSigned));
+    }
+    
+    public Path getLocalFullPath(FileType type, Name name, String version, Optional<String> dotSigned){
+        return getLocalDirectory(name, version).resolve(getLocalFileName(type, name.mvnArtifactId(), version, dotSigned));
+    }
+    
+    public Path getLocalFullPath(FileType type, String groupId, String artifactId, String version){
+        return getLocalFullPath(type, groupId, artifactId, version, Optional.empty()); 
+    }
+    
+    public Path getLocalFullPath(FileType type, String groupId, String artifactId, String version, Optional<String> dotSigned){
+        return getLocalDirectory(groupId, artifactId, version).resolve(getLocalFileName(type, artifactId, version, dotSigned));
+    }
+    
+    public String getLocalFileName(FileType type, io.mvnpm.npm.model.Package p, Optional<String> dotSigned){
+        return getLocalFileName(type, p.name().mvnArtifactId(), p.version(), dotSigned);
+    }
+    
+    public String getLocalFileName(FileType type, String artifactId, String version, Optional<String> dotSigned){
+        return artifactId + Constants.HYPHEN + version + type.getPostString() + dotSigned.orElse(Constants.EMPTY);
     }
     
     public String getLocalSha1FileName(FileType type, io.mvnpm.npm.model.Package p){
-        return getLocalFileName(type, p) + Constants.DOT_SHA1;
+        return getLocalFileName(type, p, Optional.of(Constants.DOT_SHA1));
     }
     
-    private Uni<List<String>> findArtifactRoots(String directoryPath) {
-        List<String> roots = new ArrayList<>();
+    private List<Path> findArtifactRoots(Path directoryPath) {
+        List<Path> roots = new ArrayList<>();
         try {
-            Files.walkFileTree(Paths.get(directoryPath), EnumSet.noneOf(FileVisitOption.class), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(directoryPath, EnumSet.noneOf(FileVisitOption.class), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String fileName = file.getFileName().toString();
                     if(isJar(fileName) && !isBundle(fileName) && !isJavadoc(fileName) && !isSources(fileName)){
                         Path versionRoot = file.toAbsolutePath().getParent();
-                        String artifactRoot = versionRoot.getParent().toAbsolutePath().toString();
+                        Path artifactRoot = versionRoot.getParent();
                         if(!roots.contains(artifactRoot)){
                             roots.add(artifactRoot);
                         }
                     }
                     return FileVisitResult.CONTINUE;
                 }
-
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
                     return FileVisitResult.CONTINUE;
                 }
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new UncheckedIOException(e);
         }
-        
-        return Uni.createFrom().item(roots);
+        return roots;
     }
     
     private boolean isBundle(String fileName){
@@ -162,6 +190,4 @@ public class FileStore {
     private boolean isJar(String fileName){
         return fileName.endsWith(".jar");
     }
-    
-    private static final OpenOptions READ_ONLY_OPTIONS = (new OpenOptions()).setCreate(false).setWrite(false);
 }

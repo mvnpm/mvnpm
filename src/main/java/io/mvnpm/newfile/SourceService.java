@@ -6,13 +6,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
@@ -24,6 +22,9 @@ import io.mvnpm.Constants;
 
 import io.mvnpm.file.FileStoreEvent;
 import io.mvnpm.file.FileUtil;
+import java.io.UncheckedIOException;
+import java.nio.file.FileSystems;
+import java.nio.file.PathMatcher;
 
 /**
  * Create source jar file from tgz
@@ -32,42 +33,52 @@ import io.mvnpm.file.FileUtil;
 @ApplicationScoped
 public class SourceService {
 
+    private final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.tgz");
+    
     @ConsumeEvent("new-file-created")
     public void consumeNewFileCreatedEvent(FileStoreEvent fse) {    
-        if(fse.fileName().endsWith(Constants.DOT_TGZ)){
-            String tgzFile = fse.fileName();
-            String outputFile = tgzFile.replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR);
-            boolean ok = createJar(tgzFile, outputFile);
+        if (matcher.matches(fse.filePath().getFileName())) {
+            Path tgzFile = fse.filePath();
+            
+            Path sourceFile = Path.of(tgzFile.toString().replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR));
+            boolean ok = createJar(tgzFile, sourceFile);
             if(ok){
-                FileUtil.createSha1(outputFile);
+                FileUtil.createSha1(sourceFile);
                 // TODO: Rather fire event again ?
-                FileUtil.createMd5(outputFile);
-                FileUtil.createAsc(outputFile);
+                FileUtil.createMd5(sourceFile);
+                FileUtil.createAsc(sourceFile);
             }
-            Log.info("source created " + fse.fileName() + "[" + ok + "]");
+            Log.debug("source created " + fse.filePath() + "[" + ok + "]");
         }
     }
     
-    private boolean createJar(String tgzFile, String outputFile){
-        Path f = Paths.get(outputFile);
-        if(!Files.exists(f)){
-            synchronized (f) {
-                try (OutputStream fileOutput = Files.newOutputStream(f);
+    private boolean createJar(Path tgzFile, Path sourceFile){
+        
+        if(!Files.exists(sourceFile)){
+            synchronized (sourceFile) {
+                try {
+                    Files.createDirectories(sourceFile.getParent());
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
+                }
+                try (OutputStream fileOutput = Files.newOutputStream(sourceFile);    
                     JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)){
                     tgzToJar(tgzFile, jarOutput);
                     jarOutput.finish();
                     return true;
                 } catch (IOException ex) {
-                    ex.printStackTrace();
+                    throw new UncheckedIOException(ex);
                 }
             }
         }
         return false;
     }
     
-    private void tgzToJar(String tarFile, JarArchiveOutputStream jarOutput) throws IOException {
-        try(InputStream is = new BufferedInputStream(new FileInputStream(tarFile))){
-            tgzToJar( is,jarOutput);
+    private void tgzToJar(Path tarFile, JarArchiveOutputStream jarOutput) throws IOException {
+        if(Files.exists(tarFile)){
+            try(InputStream is = new BufferedInputStream(Files.newInputStream(tarFile))){
+                tgzToJar( is,jarOutput);
+            }
         }
     }
     

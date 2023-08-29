@@ -31,12 +31,12 @@ public class FileUtil {
         }
     }
     
-    public static void createSha1(String outputFile){
+    public static void createSha1(Path outputPath){
         try {
-            byte[] content = Files.readAllBytes(Paths.get(outputFile));
+            byte[] content = Files.readAllBytes(outputPath);
 
             String sha1 = FileUtil.getSha1(content);
-            String localSha1FileName = outputFile + Constants.DOT_SHA1;
+            String localSha1FileName = outputPath.toString() + Constants.DOT_SHA1;
             Path f = Paths.get(localSha1FileName);
             if(!Files.exists(f)){
                 synchronized (f) {
@@ -58,12 +58,12 @@ public class FileUtil {
         }
     }
     
-    public static void createMd5(String outputFile) {
+    public static void createMd5(Path outputPath) {
         try {
-            byte[] content = Files.readAllBytes(Paths.get(outputFile));
+            byte[] content = Files.readAllBytes(outputPath);
 
             String md5 = FileUtil.getMd5(content);
-            String localMd5FileName = outputFile + Constants.DOT_MD5;
+            String localMd5FileName = outputPath.toString() + Constants.DOT_MD5;
             Path f = Paths.get(localMd5FileName);
             if(!Files.exists(f)){
                 synchronized (f) {
@@ -75,13 +75,13 @@ public class FileUtil {
         }
     }
     
-    public static void createAsc(String localFileName) {
-        String outputFile = localFileName + Constants.DOT_ASC;
+    public static void createAsc(Path localFilePath) {
+        String outputFile = localFilePath.toString() + Constants.DOT_ASC;
         Path f = Paths.get(outputFile);
         if(!Files.exists(f)){
             try {
                 synchronized (f) {
-                    Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFileName);
+                    Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFilePath.toString());
                     ProcessHandle processHandle = process.toHandle();
 
                     CompletableFuture<ProcessHandle> onProcessExit = processHandle.onExit();
