@@ -20,6 +20,7 @@ import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.version.InvalidVersionException;
 import io.mvnpm.version.Version;
+import io.quarkus.cache.CacheResult;
 import java.io.UncheckedIOException;
 
 /**
@@ -37,13 +38,8 @@ public class MetadataClient {
     @CacheName("metadata-cache")
     Cache cache;
     
+    @CacheResult(cacheName = "metadata-cache")
     public MetadataAndHash getMetadataAndHash(Name name){
-//        CaffeineCache caffeineCache = cache.as(CaffeineCache.class);
-//        if(caffeineCache.keySet().contains(name.npmFullName())){
-//            CompletableFuture<MetadataAndHash> completableFuture = caffeineCache.getIfPresent(name.npmFullName());
-//            return Uni.createFrom().completionStage(completableFuture);
-//        }else{
-        System.out.println(">>>>> Add Cache back");
         Metadata metadata = getMetadata(name);
         
         try(StringWriter sw = new StringWriter()){
@@ -51,15 +47,11 @@ public class MetadataClient {
             byte[] value = sw.toString().getBytes();
             String sha1 = FileUtil.getSha1(value);
             String md5 = FileUtil.getMd5(value);
-            // String asc = FileUtil.createAsc(value)readAsc();
             MetadataAndHash mah = new MetadataAndHash(sha1, md5, null, value);
-//                    caffeineCache.put(name.npmFullName(), CompletableFuture.completedFuture(mah));
             return mah;
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
-        
-//        }
     }
     
     private Metadata getMetadata(Name name){
