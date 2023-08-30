@@ -1,6 +1,7 @@
 package io.mvnpm.mavencentral.sync;
 
 import io.mvnpm.maven.NameVersionType;
+import io.mvnpm.maven.RepoNameVersionType;
 import io.mvnpm.mavencentral.MavenFacade;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
@@ -70,7 +71,7 @@ public class CentralSyncApi {
     
     @GET
     @Path("/queue/release")
-    public List<Map.Entry<String,NameVersionType>> getReleaseQueue() {
+    public List<RepoNameVersionType> getReleaseQueue() {
         return continuousSyncService.getReleaseQueue();
     }
     

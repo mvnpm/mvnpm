@@ -29,6 +29,7 @@ import io.mvnpm.npm.model.Maintainer;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.Repository;
 import io.mvnpm.version.VersionConverter;
+import java.net.URL;
 import java.nio.file.Path;
 
 /**
@@ -66,9 +67,10 @@ public class PomClient {
             model.setName(p.name().displayName());
             model.setDescription(p.description());
             model.setLicenses(toLicenses(p.license()));
-            if(p.homepage()!=null)model.setUrl(p.homepage().toString());
-            model.setOrganization(toOrganization(p));
             model.setScm(toScm(p.repository()));
+            model.setUrl(toUrl(model, p.homepage()));
+            model.setOrganization(toOrganization(p));
+            
             model.setIssueManagement(toIssueManagement(p.bugs()));
             model.setDevelopers(toDevelopers(p.maintainers()));
             if(!deps.isEmpty()){
@@ -88,6 +90,20 @@ public class PomClient {
             return baos.toByteArray();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
+        }
+    }
+    
+    private String toUrl(Model model, URL homepage){
+        if(homepage!=null){
+            return homepage.toString();
+        }else if(model.getScm()!=null && model.getScm().getUrl()!=null){
+            return model.getScm().getUrl();
+        }else if(model.getScm()!=null && model.getScm().getConnection()!=null){
+            return model.getScm().getConnection();
+        }else if(model.getScm()!=null && model.getScm().getDeveloperConnection()!=null){
+            return model.getScm().getDeveloperConnection();
+        }else{
+            return "http://mvnpm.org"; // If all else fail, set our URL, as an empty one fails the oss sonatype validation
         }
     }
     

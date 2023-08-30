@@ -10,21 +10,23 @@ import java.util.stream.Collectors;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.maven.NameVersionType;
+import io.mvnpm.maven.RepoNameVersionType;
+import io.mvnpm.mavencentral.MavenFacade;
+import io.mvnpm.mavencentral.RepoStatus;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
+import io.smallrye.common.annotation.Blocking;
 import java.nio.file.Path;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available, 
  * and if so, kick of a sync. Can also be triggered manually
- * orgmvnpm-2433
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
@@ -35,25 +37,29 @@ public class ContinuousSyncService {
     CentralSyncService centralSyncService;
     @Inject
     FileStore fileStore;
+    @Inject
+    MavenFacade mavenFacade;
     
-    private ConcurrentLinkedQueue<NameVersionType> stagingQueue = new ConcurrentLinkedQueue<>();
-    private ConcurrentLinkedQueue<Map.Entry<String,NameVersionType>> releaseQueue = new ConcurrentLinkedQueue<>();
-    private Optional<NameVersionType> inprogress = Optional.empty();
+    private final ConcurrentLinkedQueue<NameVersionType> uploadQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<RepoNameVersionType> statusQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<RepoNameVersionType> releaseQueue = new ConcurrentLinkedQueue<>();
     
-    public List<Map.Entry<String,NameVersionType>> getReleaseQueue(){
+    private Optional<NameVersionType> uploadInProgress = Optional.empty();
+    
+    public List<RepoNameVersionType> getReleaseQueue(){
         return new ArrayList<>(releaseQueue);
     }
     
     public List<NameVersionType> getStagingQueue(){
-        return new ArrayList<>(stagingQueue);
+        return new ArrayList<>(uploadQueue);
     }
     
-    public boolean isInProgress(){
-        return inprogress.isPresent();
+    public boolean uploadInProgress(){
+        return uploadInProgress.isPresent();
     }
     
-    public NameVersionType getInProgress(){
-        return inprogress.orElse(null);
+    public NameVersionType getUploadInProgress(){
+        return uploadInProgress.orElse(null);
     }
     
     /**
@@ -89,8 +95,8 @@ public class ContinuousSyncService {
         NameVersionType itemInQ = new NameVersionType(name, version);
         SyncInfo syncInfo = centralSyncService.getSyncInfo(name.mvnGroupId(), name.mvnArtifactId(), version);
         if(syncInfo.canSync()){ // Check if this is already synced
-            if(!stagingQueue.contains(itemInQ)){ // Already queued
-                stagingQueue.add(itemInQ);
+            if(!uploadQueue.contains(itemInQ)){ // Already queued
+                uploadQueue.add(itemInQ);
                 return true;
             }
         }
@@ -98,35 +104,55 @@ public class ContinuousSyncService {
     }
     
     @Scheduled(every="10s")
-    void processStagingQueue() {
-        if(inprogress.isEmpty()){
-            if(!stagingQueue.isEmpty()){
-                NameVersionType nav = stagingQueue.remove();
-                inprogress = Optional.of(nav);
+    void processUploadQueue() {
+        if(uploadInProgress.isEmpty()){
+            if(!uploadQueue.isEmpty()){
+                NameVersionType nav = uploadQueue.remove();
+                uploadInProgress = Optional.of(nav);
                 try {
                     String repoId = dequeueStagingUploads(nav.name(), nav.version());
-                    if(repoId==null){ // Move on to the next
-                        processStagingQueue();
-                    }else{
-                        AbstractMap.SimpleEntry<String,NameVersionType> releaseEntry = new AbstractMap.SimpleEntry<String,NameVersionType>(repoId, nav);
-                        releaseQueue.add(releaseEntry);
+                    if(repoId!=null){
+                        statusQueue.add(new RepoNameVersionType(repoId, nav));
                     }
                 }finally {
-                    inprogress = Optional.empty();
+                    uploadInProgress = Optional.empty();
                 }
             }else{
                 Log.debug("Nothing in the queue to sync");
             }
         }else{
-            Log.debug("Sync upload in progress " + inprogress.get().name().displayName() + " " + inprogress.get().version());
+            Log.debug("Sync upload in progress " + uploadInProgress.get().name().displayName() + " " + uploadInProgress.get().version());
+        }
+    }
+    
+    @Scheduled(every="10s")
+    void processStatusQueue() {
+        if(!statusQueue.isEmpty()){
+            RepoNameVersionType repoNameVersionType = statusQueue.remove();
+            RepoStatus status = mavenFacade.status(repoNameVersionType.stagingRepoId());
+            if(status.equals(RepoStatus.closed)){
+                releaseQueue.add(repoNameVersionType);
+            }else{
+                statusQueue.add(repoNameVersionType);
+            }
         }
     }
     
     @Scheduled(every="10s")
     void processReleaseQueue() {
         if(!releaseQueue.isEmpty()){
-            Map.Entry<String,NameVersionType> releaseEntry = releaseQueue.remove();
-            Log.warn("WE ARE RELEASING " + releaseEntry.getKey() + " THAT CONTAINS " + releaseEntry.getValue().name().displayName() + " " + releaseEntry.getValue().version());
+            RepoNameVersionType repoNameVersionType = releaseQueue.remove();
+            boolean released = mavenFacade.release(repoNameVersionType.stagingRepoId());
+            if(released){
+                Name releasedArtifact = repoNameVersionType.nameVersionType().name();
+                String version = repoNameVersionType.nameVersionType().version();
+                Log.info("\t!! " + releasedArtifact.mvnGroupId()+":"+releasedArtifact.mvnArtifactId()+":"+version +" released !");
+                // TODO: X
+            }else{
+                // TODO: Try again ?
+            }
+            
+            
         }
     }
     
@@ -149,14 +175,19 @@ public class ContinuousSyncService {
     /**
      * Check all known artifacts for updates
      */
-    @Scheduled(cron = "{mvnpm.cron.expr}")
+    @Scheduled(cron = "{mvnpm.cron.expr}", concurrentExecution = SKIP)
+    @Blocking
     public void checkAll(){
-        Log.debug("Starting full update check...");
-        List<String[]> gavsToUpdate = findGaToUpdate();
+        try {
+            Log.debug("Starting full update check...");
+            List<String[]> gavsToUpdate = findGaToUpdate();
         
-        for(String[]ga:gavsToUpdate){
-            update(ga[0], ga[1]);
-        }        
+            for(String[]ga:gavsToUpdate){
+                update(ga[0], ga[1]);
+            }
+        }catch(Throwable t){
+            Log.error(t.getMessage());
+        }
     }
     
     public List<String[]> findGaToUpdate(){
