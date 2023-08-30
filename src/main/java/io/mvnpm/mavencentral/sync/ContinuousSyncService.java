@@ -149,7 +149,7 @@ public class ContinuousSyncService {
     /**
      * Check all known artifacts for updates
      */
-    //@Scheduled(cron = "{mvnpm.cron.expr}")
+    @Scheduled(cron = "{mvnpm.cron.expr}")
     public void checkAll(){
         Log.debug("Starting full update check...");
         List<String[]> gavsToUpdate = findGaToUpdate();

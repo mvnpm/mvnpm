@@ -56,18 +56,18 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.2.4.Final</quarkus.platform.version>
+        <quarkus.platform.version>3.2.5.Final</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
 
         <!-- UI Libs -->
         <quarkus-qute-server-pages.version>2.0.1.Final</quarkus-qute-server-pages.version>
-        <quarkus-web-bundler.version>999-SNAPSHOT</quarkus-web-bundler.version>
+        <quarkus-web-bundler.version>1.1.1</quarkus-web-bundler.version>
         <importmap.version>1.0.9</importmap.version>
 
         <!-- mvnpm Libs -->
         <lit.version>2.8.0</lit.version>
-        <vaadin.version>24.1.5</vaadin.version>
+        <vaadin.version>24.1.4</vaadin.version>
         <vaadin-usage-statistics.version>2.1.2</vaadin-usage-statistics.version>
         <vaadin-development-mode-detector.version>2.0.6</vaadin-development-mode-detector.version>
         <polymer.version>3.5.1</polymer.version>
