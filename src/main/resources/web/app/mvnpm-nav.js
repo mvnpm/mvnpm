@@ -16,7 +16,7 @@ export class MvnpmNav extends LitElement {
 
     static styles = css`
         a {
-          color: white;
+          color: var(--lumo-primary-text-color);
           padding: 2px;
         }
         a:link, a:visited, a:active { 
@@ -24,6 +24,7 @@ export class MvnpmNav extends LitElement {
         }
         a:hover { 
           text-decoration: dashed; 
+          color:var(--lumo-contrast-60pct);    
         }
     `;
 

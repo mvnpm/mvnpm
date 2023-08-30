@@ -29,8 +29,6 @@ export class MvnpmHome extends LitElement {
             justify-content: center;
             align-items: baseline;
             column-gap: 15px;
-            background: var(--mvnpm-background);
-            --lumo-body-text-color: var(--mvnpm-color);
         }
         .tabpane {
             width: 100%;
@@ -47,32 +45,31 @@ export class MvnpmHome extends LitElement {
         }
         
         .line a{
-            color: rgb(98, 109, 124);
+            color:var(--lumo-contrast-60pct);
         }
         .line a:link{ 
             text-decoration: none; 
-            color: #626d7c;
+            color:var(--lumo-contrast-60pct);
         }
         .line a:visited { 
             text-decoration: none; 
-            color: #626d7c;
+            color:var(--lumo-contrast-60pct);
         }
         .line a:hover { 
             text-decoration: none; 
-            color: var(--mvnpm-background);
+            color:var(--lumo-body-text-color);
         }
         .line a:active { 
             text-decoration: none; 
-            color: #626d7c;
+            color:var(--lumo-contrast-60pct);
         }
         .block {
             display: flex;
             gap: 10px;
         }
         .heading{
-            color: var(--mvnpm-background);
             font-weight: bold;
-            border-bottom: 1px dotted var(--mvnpm-background);
+            border-bottom: 1px dotted var(--lumo-contrast-60pct);
         }
         .use {
             display: flex;
@@ -84,7 +81,7 @@ export class MvnpmHome extends LitElement {
             flex-direction: column;
             padding: 15px;
             gap: 10px;
-            border: 2px solid var(--mvnpm-background);
+            border: 2px solid var(--lumo-contrast-60pct);
             border-radius: 15px;
             width: 50%;
         }
@@ -115,7 +112,7 @@ export class MvnpmHome extends LitElement {
         }
         .nopreview {
             width: 100%;
-            color: lightgray;
+            color: var(--lumo-contrast-60pct);
             font-size: 2rem;
             font-weight: bold;
             text-transform: uppercase;
@@ -123,13 +120,9 @@ export class MvnpmHome extends LitElement {
         }
         .clearButton {
             align-self: end;
-            color: var(--mvnpm-color);
         }
     
-        .progress {
-            --lumo-primary-color: var(--mvnpm-color);
-            background: var(--mvnpm-background);
-        }
+        
     `;
 
     static properties = {
@@ -233,9 +226,9 @@ export class MvnpmHome extends LitElement {
     
     _renderIcon(yes){
         if(yes){
-            return html`<vaadin-icon style="color:green" icon="vaadin:check-circle"></vaadin-icon>`;
+            return html`<vaadin-icon style="color:var(--lumo-success-color)" icon="vaadin:check-circle"></vaadin-icon>`;
         }else{
-            return html`<vaadin-icon style="color:red" icon="vaadin:close-circle"></vaadin-icon>`;
+            return html`<vaadin-icon style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon>`;
         }
     }
     
