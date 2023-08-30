@@ -35,6 +35,9 @@ public class MavenFacade {
     @ConfigProperty(name = "mvnpm.sonatype.authorization")
     Optional<String> authorization;
     
+    @ConfigProperty(name = "mvnpm.sonatype.autorelease")
+    boolean autoRelease;
+    
     @ConfigProperty(name = "mvnpm.sonatype.profileId", defaultValue = "473ee06cf882e")
     String profileId;
     
@@ -82,19 +85,9 @@ public class MavenFacade {
                     String resp = uploadResponse.readEntity(String.class);
                     String repositoryId = resp.substring(resp.lastIndexOf('/') + 1, resp.length()-3);
                     Log.info("Uploaded bundle " + path + " to staging repo [" + repositoryId + "]");
-                    
-                    // Now close
-                    JsonObject data = JsonObject.of("description", "Closed by mvnpm.org", "stagedRepositoryId", repositoryId);
-                    String post = JsonObject.of("data", data).encode();
-                    Log.info("post data = " + post);
-                    Response closeResponse = sonatypeClient.closeUploadBundle(a, profileId, post);
-                    
-                    Log.info("CLOSING STATUS [" + closeResponse.getStatus() + "]");
-                    Log.info("CLOSING DATA   [" + closeResponse.readEntity(String.class) + "]");
-                    
                     return repositoryId;
                 }else{
-                    Log.error("Error uploading bundle " + path + " - status code [" + uploadResponse.getStatus() + "]");
+                    Log.error("Error uploading bundle " + path + " - status [" + uploadResponse.getStatus() + "]");
                 }
             }catch(Throwable t) {
                 Log.error("Error uploading bundle " + path + " - " + t.getMessage());
@@ -102,6 +95,73 @@ public class MavenFacade {
         }
         
         return null;
+    }
+    
+    public RepoStatus status(String repositoryId){
+        if(authorization.isPresent()){
+            String a = "Basic " + authorization.get();
+            try {
+                Response statusResponse = sonatypeClient.uploadBundleStatus(a, repositoryId);
+            
+                if(statusResponse.getStatus()<299){
+                    JsonObject resp = statusResponse.readEntity(JsonObject.class);
+                    String type = resp.getString("type");
+                    return RepoStatus.valueOf(type);        
+                }else{
+                    Log.error("Error checking status for staging repo " + repositoryId + " - status [" + statusResponse.getStatus() + "]");
+                }
+            }catch(Throwable t) {
+                Log.error("Error checking status for staging repo " + repositoryId + " - " + t.getMessage());
+            }
+            return null;
+        }
+        return null;
+    }
+    
+    public boolean close(String repositoryId){
+        if(authorization.isPresent()){
+            String a = "Basic " + authorization.get();
+            try {
+                JsonObject data = JsonObject.of("description", "Closed by mvnpm.org", "stagedRepositoryId", repositoryId);
+                JsonObject closeRequest = JsonObject.of("data", data);
+                Response closeResponse = sonatypeClient.closeUploadBundle(a, profileId, closeRequest);
+            
+                if(closeResponse.getStatus()<299){
+                    String resp = closeResponse.readEntity(String.class);
+                    Log.info("Closed staging repo " + repositoryId + " [" + resp + "]");
+                    return true;
+                }else{
+                    Log.error("Error closing staging repo " + repositoryId + " - status [" + closeResponse.getStatus() + "]");
+                }
+            }catch(Throwable t) {
+                Log.error("Error closing staging repo " + repositoryId + " - " + t.getMessage());
+            }
+            return false;
+        }
+        return true;
+    }
+    
+    public boolean release(String repositoryId){
+        if(authorization.isPresent() && autoRelease){
+            String a = "Basic " + authorization.get();
+            try {
+                JsonObject data = JsonObject.of("description", "Released by mvnpm.org", "stagedRepositoryId", repositoryId);
+                JsonObject promoteRequest = JsonObject.of("data", data);
+                Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, promoteRequest);
+            
+                if(promoteResponse.getStatus()<299){
+                    String resp = promoteResponse.readEntity(String.class);
+                    Log.info("Promote staging repo " + repositoryId + " [" + resp + "]");
+                    return true;
+                }else{
+                    Log.error("Error promoting staging repo " + repositoryId + " - status [" + promoteResponse.getStatus() + "]");
+                }
+            }catch(Throwable t) {
+                Log.error("Error promoting staging repo " + repositoryId + " - " + t.getMessage());
+            }
+            return false;
+        }
+        return true;
     }
     
     public JsonObject getStagingProfileRepos(){

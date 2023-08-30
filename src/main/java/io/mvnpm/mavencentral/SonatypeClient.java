@@ -25,10 +25,20 @@ public interface SonatypeClient {
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
     public Response uploadBundle(@HeaderParam("Authorization") String authorization, byte[] b);
     
+    @GET
+    @Path("/service/local/staging/repository/{stagingRepoId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response uploadBundleStatus(@HeaderParam("Authorization") String authorization, @PathParam("stagingRepoId") String stagingRepoId);
+    
     @POST
     @Path("/service/local/staging/profiles/{profileId}/finish")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response closeUploadBundle(@HeaderParam("Authorization") String authorization, @PathParam("profileId") String profileId, String data);
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response closeUploadBundle(@HeaderParam("Authorization") String authorization, @PathParam("profileId") String profileId, JsonObject closeRequest);
+    
+    @POST   
+    @Path("/service/local/staging/profiles/{profileId}/centralSync")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response releaseToCentral(@HeaderParam("Authorization") String authorization, @PathParam("profileId") String profileId, JsonObject promoteRequest);
     
     @GET
     @Path("/service/local/staging/profiles")
