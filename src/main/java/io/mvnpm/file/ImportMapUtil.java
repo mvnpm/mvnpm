@@ -45,7 +45,7 @@ public class ImportMapUtil {
         
         // TODO: Validate that the folder exist ?
         // Else search for the first "main" / "module" in the tree ?
-        return root;
+        return root + p.version() + Constants.SLASH;
     }
     
     private static String getModule(io.mvnpm.npm.model.Package p){
@@ -76,6 +76,6 @@ public class ImportMapUtil {
     
     private static final String INDEX_JS = "index.js";
     private static final String PACKAGES = "packages";
-    private static final String STATIC_ROOT = "/_static/";
+    private static final String STATIC_ROOT = "/_mvnpm/";
     private static final String PACKAGE = "package";
 }
