@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
+import io.vertx.mutiny.core.eventbus.EventBus;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available, 
@@ -39,6 +40,8 @@ public class ContinuousSyncService {
     FileStore fileStore;
     @Inject
     MavenFacade mavenFacade;
+    @Inject
+    EventBus bus;
     
     private final ConcurrentLinkedQueue<NameVersionType> uploadQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<RepoNameVersionType> statusQueue = new ConcurrentLinkedQueue<>();
@@ -144,15 +147,10 @@ public class ContinuousSyncService {
             RepoNameVersionType repoNameVersionType = releaseQueue.remove();
             boolean released = mavenFacade.release(repoNameVersionType.stagingRepoId());
             if(released){
-                Name releasedArtifact = repoNameVersionType.nameVersionType().name();
-                String version = repoNameVersionType.nameVersionType().version();
-                Log.info("\t!! " + releasedArtifact.mvnGroupId()+":"+releasedArtifact.mvnArtifactId()+":"+version +" released !");
-                // TODO: X
+                bus.publish("artifact-released-to-central", repoNameVersionType);
             }else{
                 // TODO: Try again ?
             }
-            
-            
         }
     }
     
