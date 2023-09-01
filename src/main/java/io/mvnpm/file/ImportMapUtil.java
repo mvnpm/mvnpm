@@ -76,6 +76,6 @@ public class ImportMapUtil {
     
     private static final String INDEX_JS = "index.js";
     private static final String PACKAGES = "packages";
-    private static final String STATIC_ROOT = "/_mvnpm/";
+    private static final String STATIC_ROOT = "/_static/";
     private static final String PACKAGE = "package";
 }

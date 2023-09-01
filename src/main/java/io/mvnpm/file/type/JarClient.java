@@ -85,7 +85,7 @@ public class JarClient {
             // Pom properties entry
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_PROPERTIES, createPomProperties(p));
             
-            // Import map TODO: Chage to new structure
+            // Import map
             writeJarEntry(jarOutput, Location.IMPORTMAP_PATH, ImportMapUtil.createImportMap(p));
             
             // Tar contents
