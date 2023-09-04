@@ -1,8 +1,10 @@
 import { LitElement, html, css} from 'lit';
+import { customElement } from 'lit/decorators.js';
 
 /**
  * This component shows the About screen
  */
+@customElement('mvnpm-about')
 export class MvnpmAbout extends LitElement {
 
     static styles = css`
@@ -107,4 +109,3 @@ export class MvnpmAbout extends LitElement {
     }
     
  }
- customElements.define('mvnpm-about', MvnpmAbout);
