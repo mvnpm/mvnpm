@@ -150,8 +150,6 @@ public class MavenFacade {
                 Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, promoteRequest);
             
                 if(promoteResponse.getStatus()<299){
-                    String resp = promoteResponse.readEntity(String.class);
-                    Log.info("Promote staging repo " + repositoryId + " [" + resp + "]");
                     return true;
                 }else{
                     Log.error("Error promoting staging repo " + repositoryId + " - status [" + promoteResponse.getStatus() + "]");
@@ -177,7 +175,7 @@ public class MavenFacade {
         return null;
     }
     
-    public boolean dropStagingProfileRepo(String stagingRepoId) {
+    public boolean drop(String stagingRepoId) {
         if(authorization.isPresent()){
             String a = "Basic " + authorization.get();
             Response dropResponse = sonatypeClient.dropStagingProfileRepo(a, stagingRepoId);
@@ -186,14 +184,14 @@ public class MavenFacade {
         return false;
     }
 
-    public void dropStagingProfileRepos() {
+    public void dropAll() {
         JsonObject stagingProfileRepos = getStagingProfileRepos();
         
         JsonArray data = stagingProfileRepos.getJsonArray("data");
         data.forEach((t) -> {
             JsonObject repository = (JsonObject)t;
             String repositoryId = repository.getString("repositoryId");
-            dropStagingProfileRepo(repositoryId);
+            drop(repositoryId);
         });
     }
     

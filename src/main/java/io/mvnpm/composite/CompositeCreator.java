@@ -35,7 +35,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -189,7 +188,7 @@ public class CompositeCreator {
 
                  // Add importmap
                 Aggregator a = new Aggregator(importmaps);
-                String aggregatedImportMap = a.aggregateAsJson();
+                String aggregatedImportMap = a.aggregateAsJson(false);
                 writeEntry(mergedJar, "META-INF/importmap.json", aggregatedImportMap);
 
                 // Add pom (in jar and on disk)

@@ -36,7 +36,7 @@ public interface SonatypeClient {
     public Response closeUploadBundle(@HeaderParam("Authorization") String authorization, @PathParam("profileId") String profileId, JsonObject closeRequest);
     
     @POST   
-    @Path("/service/local/staging/profiles/{profileId}/centralSync")
+    @Path("/service/local/staging/profiles/{profileId}/promote")
     @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
     public Response releaseToCentral(@HeaderParam("Authorization") String authorization, @PathParam("profileId") String profileId, JsonObject promoteRequest);
     

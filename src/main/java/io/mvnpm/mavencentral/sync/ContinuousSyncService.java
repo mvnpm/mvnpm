@@ -43,9 +43,12 @@ public class ContinuousSyncService {
     @Inject
     EventBus bus;
     
-    private final ConcurrentLinkedQueue<NameVersionType> uploadQueue = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<RepoNameVersionType> statusQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<NameVersionType> inProgressQueue = new ConcurrentLinkedQueue<>(); // Total process queue 
+    private final ConcurrentLinkedQueue<NameVersionType> uploadQueue = new ConcurrentLinkedQueue<>(); 
+    private final ConcurrentLinkedQueue<RepoNameVersionType> closedQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<RepoNameVersionType> releaseQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<RepoNameVersionType> releasedQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<RepoNameVersionType> dropQueue = new ConcurrentLinkedQueue<>();
     
     private Optional<NameVersionType> uploadInProgress = Optional.empty();
     
@@ -98,7 +101,8 @@ public class ContinuousSyncService {
         NameVersionType itemInQ = new NameVersionType(name, version);
         SyncInfo syncInfo = centralSyncService.getSyncInfo(name.mvnGroupId(), name.mvnArtifactId(), version);
         if(syncInfo.canSync()){ // Check if this is already synced
-            if(!uploadQueue.contains(itemInQ)){ // Already queued
+            if(!inProgressQueue.contains(itemInQ)){ // Already queued
+                inProgressQueue.add(itemInQ);
                 uploadQueue.add(itemInQ);
                 return true;
             }
@@ -115,7 +119,7 @@ public class ContinuousSyncService {
                 try {
                     String repoId = dequeueStagingUploads(nav.name(), nav.version());
                     if(repoId!=null){
-                        statusQueue.add(new RepoNameVersionType(repoId, nav));
+                        closedQueue.add(new RepoNameVersionType(repoId, nav));
                     }
                 }finally {
                     uploadInProgress = Optional.empty();
@@ -129,14 +133,14 @@ public class ContinuousSyncService {
     }
     
     @Scheduled(every="10s")
-    void processStatusQueue() {
-        if(!statusQueue.isEmpty()){
-            RepoNameVersionType repoNameVersionType = statusQueue.remove();
+    void processClosedQueue() {
+        if(!closedQueue.isEmpty()){
+            RepoNameVersionType repoNameVersionType = closedQueue.remove();
             RepoStatus status = mavenFacade.status(repoNameVersionType.stagingRepoId());
             if(status.equals(RepoStatus.closed)){
                 releaseQueue.add(repoNameVersionType);
             }else{
-                statusQueue.add(repoNameVersionType);
+                closedQueue.add(repoNameVersionType);
             }
         }
     }
@@ -147,9 +151,38 @@ public class ContinuousSyncService {
             RepoNameVersionType repoNameVersionType = releaseQueue.remove();
             boolean released = mavenFacade.release(repoNameVersionType.stagingRepoId());
             if(released){
+                releasedQueue.add(repoNameVersionType);
+            }else{
+                // Try again
+                releaseQueue.add(repoNameVersionType);
+            }
+        }
+    }
+    
+    @Scheduled(every="10s")
+    void processReleasedQueue() {
+        if(!releasedQueue.isEmpty()){
+            RepoNameVersionType repoNameVersionType = releasedQueue.remove();
+            RepoStatus status = mavenFacade.status(repoNameVersionType.stagingRepoId());
+            if(status.equals(RepoStatus.released)){
+                dropQueue.add(repoNameVersionType);
                 bus.publish("artifact-released-to-central", repoNameVersionType);
             }else{
-                // TODO: Try again ?
+                releasedQueue.add(repoNameVersionType);
+            }
+        }
+    }
+    
+    @Scheduled(every="10s")
+    void processDropQueue() {
+        if(!dropQueue.isEmpty()){
+            RepoNameVersionType repoNameVersionType = dropQueue.remove();
+            boolean droped = mavenFacade.drop(repoNameVersionType.stagingRepoId());
+            if(droped){
+                inProgressQueue.remove(repoNameVersionType.nameVersionType());
+            }else{
+                // Try again
+                dropQueue.add(repoNameVersionType);                
             }
         }
     }

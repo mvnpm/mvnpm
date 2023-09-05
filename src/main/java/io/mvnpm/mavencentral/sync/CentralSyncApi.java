@@ -15,7 +15,6 @@ import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
 import jakarta.ws.rs.DELETE;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The central sync
@@ -60,7 +59,7 @@ public class CentralSyncApi {
     @DELETE
     @Path("/all")
     public void dropAll(){
-        mavenFacade.dropStagingProfileRepos();
+        mavenFacade.dropAll();
     }
     
     @GET
