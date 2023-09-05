@@ -1,5 +1,6 @@
 import { LitElement, html, css} from 'lit';
-import {Router} from '@vaadin/router';
+import { customElement } from 'lit/decorators.js';
+import { Router } from '@vaadin/router';
 import './mvnpm-home.js';
 import './mvnpm-about.js';
 
@@ -12,6 +13,7 @@ router.setRoutes([
 /**
  * This component shows the navigation
  */
+@customElement('mvnpm-nav')
 export class MvnpmNav extends LitElement {
 
     static styles = css`
@@ -28,15 +30,11 @@ export class MvnpmNav extends LitElement {
         }
     `;
 
-    static properties = {
-      
-    };
 
     render() {
-        var routes = router.getRoutes();
+        const routes = router.getRoutes();
         return html`${routes.map((r) =>
                 html`<a href='${r.path}'>${r.name}<a>`
             )}`;
     }
  }
- customElements.define('mvnpm-nav', MvnpmNav);

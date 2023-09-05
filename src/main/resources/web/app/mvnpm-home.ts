@@ -1,4 +1,5 @@
 import { LitElement, html, css} from 'lit';
+import { customElement, state } from 'lit/decorators.js';
 import '@vaadin/form-layout';
 import '@vaadin/text-field';
 import '@vaadin/combo-box';
@@ -14,6 +15,7 @@ import '@vaadin/progress-bar';
  * This component shows the Home screen
  * 
  */
+@customElement('mvnpm-home')
 export class MvnpmHome extends LitElement {
 
     static styles = css`
@@ -121,25 +123,22 @@ export class MvnpmHome extends LitElement {
         .clearButton {
             align-self: end;
         }
-    
-        
     `;
 
-    static properties = {
-        _coordinates:{state: true},
-        _baseUrl:{state: true},
-        _baseFile:{state: true},
-        _disabled:{state: true},
-        _usePom:{state: true},
-        _useJson:{state: true},
-        _versions:{state: true},
-        _latestVersion:{state: true},
-        _codeViewMode:{state: true},
-        _codeViewSrc:{state: true},
-        _codeViewSelection:{state: true},
-        _loadingIcon:{state:true},
-        _syncInfo:{state:true}
-    };
+    @state() private _coordinates?: object;
+
+    @state() private _baseUrl?: string;
+    @state() private _baseFile?: string;
+    @state() private _disabled = "disabled";
+    @state() private _usePom?: string;
+    @state() private _useJson?: string;
+    @state() private _versions?: string[];
+    @state() private _latestVersion?: string;
+    @state() private _codeViewMode?: string;
+    @state() private _codeViewSrc?: string;
+    @state() private _codeViewSelection = ".pom";
+    @state() private _loadingIcon = "hidden";
+    @state() private _syncInfo?: object;
 
     constructor() {
         super();
@@ -443,4 +442,3 @@ export class MvnpmHome extends LitElement {
         this._loadingIcon = "hidden";
     }
  }
- customElements.define('mvnpm-home', MvnpmHome);
