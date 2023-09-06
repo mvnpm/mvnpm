@@ -2,7 +2,6 @@ package io.mvnpm.mavencentral;
 
 import io.vertx.core.json.JsonObject;
 import jakarta.ws.rs.Consumes;
-import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
@@ -55,10 +54,10 @@ public interface SonatypeClient {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getStagingProfileRepos(@HeaderParam("Authorization") String authorization, @PathParam("profileId") String profileId);
     
-    @DELETE
-    @Path("/service/local/staging/deployByRepositoryId/{stagingRepoId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response dropStagingProfileRepo(@HeaderParam("Authorization") String authorization, @PathParam("stagingRepoId") String stagingRepoId);
+    @POST
+    @Path("/service/local/staging/profiles/{profileId}/finish")
+    @Consumes(MediaType.APPLICATION_JSON) @Produces(MediaType.APPLICATION_JSON)
+    public Response finishReleaseToCentral(@HeaderParam("Authorization") String authorization, @PathParam("profileId") String profileId, JsonObject promoteRequest);
     
 }
 
