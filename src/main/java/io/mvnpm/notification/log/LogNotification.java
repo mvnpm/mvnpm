@@ -1,4 +1,4 @@
-package io.mvnpm.notification;
+package io.mvnpm.notification.log;
 
 import io.mvnpm.maven.RepoNameVersionType;
 import io.quarkus.logging.Log;
@@ -6,8 +6,12 @@ import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 import jakarta.enterprise.context.ApplicationScoped;
 
+/**
+ * Log a notification in the log file
+ * @author Phillip Kruger (phillip.kruger@gmail.com
+ */
 @ApplicationScoped
-public class NotificationService {
+public class LogNotification {
     
     @ConsumeEvent("artifact-released-to-central")
     @Blocking
@@ -16,13 +20,7 @@ public class NotificationService {
                 repoNameVersionType.nameVersionType().name().mvnArtifactId() + ":" +
                 repoNameVersionType.nameVersionType().version() +" released.";
         
-        this.sendMessage(message);
-    }
-    
-    public void sendMessage(String message){
         Log.info(message);
-        // TODO: Here send a mail/tweet/zulip message ?
     }
-
     
 }

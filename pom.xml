@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>2.0.8-SNAPSHOT</version>
+    <version>2.0.9</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -56,12 +56,12 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.2.5.Final</quarkus.platform.version>
+        <quarkus.platform.version>3.3.1</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
 
         <!-- UI Libs -->
-        <quarkus-qute-server-pages.version>2.0.1.Final</quarkus-qute-server-pages.version>
+        <quarkus-qute-server-pages.version>2.1.0.Final</quarkus-qute-server-pages.version>
         <quarkus-web-bundler.version>1.1.2</quarkus-web-bundler.version>
         <importmap.version>1.0.10</importmap.version>
 

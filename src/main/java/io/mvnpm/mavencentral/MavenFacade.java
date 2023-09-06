@@ -177,9 +177,14 @@ public class MavenFacade {
     
     public boolean drop(String stagingRepoId) {
         if(authorization.isPresent()){
-            String a = "Basic " + authorization.get();
-            Response dropResponse = sonatypeClient.dropStagingProfileRepo(a, stagingRepoId);
-            return dropResponse.getStatus()==204;
+            try {
+                String a = "Basic " + authorization.get();
+                Response dropResponse = sonatypeClient.dropStagingProfileRepo(a, stagingRepoId);
+                return dropResponse.getStatus()==204;
+            }catch(Throwable t){
+                Log.error(t.getMessage());
+                return false;
+            }
         }
         return false;
     }
