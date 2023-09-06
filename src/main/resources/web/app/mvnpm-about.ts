@@ -15,11 +15,18 @@ export class MvnpmAbout extends LitElement {
             align-items: center;
             padding-top: 15px;
         }
+        .warn {
+            color: var(--lumo-error-text-color);
+            font-weight: bold;
+            font-family: monospace;
+        }
         .use {
             width: 800px;
             border: 2px solid var(--lumo-contrast-60pct);
             border-radius: 15px;
-            padding: 20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
         }
         .url {
             font-family: monospace;
@@ -93,6 +100,10 @@ export class MvnpmAbout extends LitElement {
                 This will look for the artifact in maven central first, and if not found, will look at mvnpm, that will deliver the artifact and kick of the process 
                 to sync this with maven central.
                 <pre lang="xml" class="use">${this._use}</pre>
+            </p>
+        
+            <p class="warn"> 
+                This project is still a work in progress.
             </p>
         `;
     }
