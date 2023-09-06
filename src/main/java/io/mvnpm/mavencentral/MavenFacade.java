@@ -145,9 +145,7 @@ public class MavenFacade {
         if(authorization.isPresent() && autoRelease){
             String a = "Basic " + authorization.get();
             try {
-                JsonObject data = JsonObject.of("description", "Released by mvnpm.org", "stagedRepositoryId", repositoryId);
-                JsonObject promoteRequest = JsonObject.of("data", data);
-                Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, promoteRequest);
+                Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, toPromoteRequest(repositoryId));
             
                 if(promoteResponse.getStatus()<299){
                     return true;
@@ -175,18 +173,22 @@ public class MavenFacade {
         return null;
     }
     
-    public boolean drop(String stagingRepoId) {
+    public boolean drop(String repositoryId) {
         if(authorization.isPresent()){
             try {
                 String a = "Basic " + authorization.get();
-                Response dropResponse = sonatypeClient.dropStagingProfileRepo(a, stagingRepoId);
-                return dropResponse.getStatus()==204;
+                Response dropResponse = sonatypeClient.finishReleaseToCentral(a, profileId, toPromoteRequest(repositoryId));
+                if(dropResponse.getStatus()<299){
+                    return true;
+                }else{
+                    Log.error("Error dropping staging repo " + repositoryId + " - status [" + dropResponse.getStatus() + "]");
+                }
             }catch(Throwable t){
                 Log.error(t.getMessage());
-                return false;
             }
+            return false;
         }
-        return false;
+        return true;
     }
 
     public void dropAll() {
@@ -200,4 +202,8 @@ public class MavenFacade {
         });
     }
     
+    private JsonObject toPromoteRequest(String repositoryId){
+        JsonObject data = JsonObject.of("description", "Released by mvnpm.org", "stagedRepositoryId", repositoryId);
+        return JsonObject.of("data", data);
+    }
 }
