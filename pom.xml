@@ -147,6 +147,12 @@
             <artifactId>quarkus-scheduler</artifactId>
         </dependency>
 
+        <!-- To send notification emails -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-mailer</artifactId>
+        </dependency>
+
         <!-- To create the importmap -->
         <dependency>
             <groupId>io.mvnpm</groupId>

@@ -85,7 +85,7 @@ export class MvnpmAbout extends LitElement {
             <p>
             When requesting a dependency, it will inspect the registry to see if it exist and if it does, convert of to a maven dependeny.
             </p>
-        
+            <p>Release notifications is available <a href="https://groups.google.com/g/mvnpm-releases" target="_blank">here</a></p>
             <p>
                 To use this in your maven project add the following to your settings.xml (typically <span class="url">/home/your-username/.m2/settings.xml</span>)
             </p>
