@@ -1,4 +1,4 @@
-![logo](https://github.com/mvnpm/mvnpm/assets/6836179/4304d13b-42b0-43b8-ac7b-f121cedb6631)
+![banner](https://github.com/mvnpm/mvnpm/assets/6836179/787a3974-0b9a-4809-a74d-3710c6d08229)
 
 Maven for NPM
 
