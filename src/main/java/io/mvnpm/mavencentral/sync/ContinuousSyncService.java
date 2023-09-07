@@ -177,13 +177,13 @@ public class ContinuousSyncService {
     void processDropQueue() {
         if(!dropQueue.isEmpty()){
             RepoNameVersionType repoNameVersionType = dropQueue.remove();
-            boolean droped = mavenFacade.drop(repoNameVersionType.stagingRepoId());
-            if(droped){
+            //boolean droped = mavenFacade.drop(repoNameVersionType.stagingRepoId());
+            //if(droped){
                 inProgressQueue.remove(repoNameVersionType.nameVersionType());
-            }else{
+            //}else{
                 // Try again
-                dropQueue.add(repoNameVersionType);                
-            }
+            //    dropQueue.add(repoNameVersionType);                
+            //}
         }
     }
     

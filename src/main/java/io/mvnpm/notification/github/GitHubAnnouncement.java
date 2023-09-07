@@ -1,6 +1,8 @@
 package io.mvnpm.notification.github;
 
 import io.mvnpm.maven.RepoNameVersionType;
+import io.mvnpm.notification.Notification;
+import io.mvnpm.notification.NotificationFormatter;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.json.JsonObject;
@@ -33,33 +35,13 @@ public class GitHubAnnouncement {
     public void artifactReleased(RepoNameVersionType repoNameVersionType) {
         if(token.isPresent()){
             
-            String groupId = repoNameVersionType.nameVersionType().name().mvnGroupId();
-            String artifactId = repoNameVersionType.nameVersionType().name().mvnArtifactId();
-            String version = repoNameVersionType.nameVersionType().version();
-            String npmName = repoNameVersionType.nameVersionType().name().npmFullName();
-            String repo = repoNameVersionType.stagingRepoId();
-            
-            String title = groupId + ":" + artifactId + ":" + version;
-            
-            String body = BODY.formatted(groupId, artifactId, version, npmName, repo);
+            Notification notification = NotificationFormatter.getNotificationAsMarkDown(repoNameVersionType); 
             
             String a = "Bearer " + token.get();
-            String query = ANNOUNCE_MUTATION.formatted(repositoryId, categoryId, body, title);
+            String query = ANNOUNCE_MUTATION.formatted(repositoryId, categoryId, notification.body(), notification.title());
             gitHubClient.graphql(a, new JsonObject().put("query", query));
         } 
     }
-    
-    
-    private static final String BODY = """
-                                       mvnpm.org has automatically released the following artifact: 
-                                       Group Id: %s
-                                       Artifact Id: %s
-                                       Version: %s
-                                       
-                                       This represent the NPM Package %s
-                                       
-                                       Release has been done using the %s staging repo
-                                       """;
     
     private static final String ANNOUNCE_MUTATION = """
                             mutation CreateAnnoucement {
