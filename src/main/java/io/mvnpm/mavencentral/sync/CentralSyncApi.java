@@ -1,37 +1,76 @@
 package io.mvnpm.mavencentral.sync;
 
-import io.mvnpm.maven.NameVersionType;
-import io.mvnpm.maven.RepoNameVersionType;
-import io.mvnpm.mavencentral.MavenFacade;
+import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.model.Name;
+import io.mvnpm.npm.model.NameParser;
+import io.mvnpm.npm.model.Project;
+import io.quarkus.logging.Log;
+import io.quarkus.vertx.ConsumeEvent;
+import io.vertx.core.impl.ConcurrentHashSet;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnError;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.server.ServerEndpoint;
+import jakarta.websocket.Session;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
-import io.mvnpm.npm.NpmRegistryFacade;
-import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.NameParser;
-import io.mvnpm.npm.model.Project;
-import jakarta.ws.rs.DELETE;
-import java.util.List;
+import java.util.Set;
 
 /**
- * The central sync
+ * Websocket on the Sync queue
  * @author Phillip Kruger (phillip.kruger@gmail.com)
- * TODO: Add security
+ * 
+ * TODO: Add progress and date
+ * TODO: Add initial state on connection
  */
 @Path("/api/sync")
+@ServerEndpoint("/api/queue/")         
+@ApplicationScoped
 public class CentralSyncApi {
-
-    @Inject
-    ContinuousSyncService continuousSyncService;
+ 
     @Inject
     CentralSyncService centralSyncService;
     @Inject
     NpmRegistryFacade npmRegistryFacade;
-    @Inject
-    MavenFacade mavenFacade;
+    
+    private Set<Session> sessions = new ConcurrentHashSet<>();
+    
+    @OnOpen
+    public void onOpen(Session session) {
+        // Send current
+        sessions.add(session);
+    }
+
+    @OnClose
+    public void onClose(Session session) {
+        sessions.remove(session);
+    }
+
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        throwable.printStackTrace();
+        sessions.remove(session);
+    }
+
+    private void broadcast(CentralSyncItem centralSyncItem) {
+        sessions.forEach(s -> {
+            s.getAsyncRemote().sendObject(centralSyncItem, result ->  {
+                if (result.getException() != null) {
+                    Log.error("Unable to send message: " + result.getException());
+                }
+            });
+        });
+    }
+    
+    @ConsumeEvent("central-sync-item-stage-change")
+    public void uploading(CentralSyncItem centralSyncItem) {
+        broadcast(centralSyncItem);
+    }
     
     @GET
     @Path("/info/{groupId}/{artifactId}")
@@ -43,40 +82,8 @@ public class CentralSyncApi {
         return centralSyncService.getSyncInfo(groupId, artifactId, version);
     }
     
-    @GET
-    @Path("/project/{project : (.+)?}")
-    public void sync(@PathParam("project") String project ) {
-        Name name = NameParser.fromNpmProject(project);
-        continuousSyncService.update(name);
-    }
-    
-    @GET
-    @Path("/all")
-    public void syncAll() {
-        continuousSyncService.checkAll();
-    }
-    
-    @DELETE
-    @Path("/all")
-    public void dropAll(){
-        mavenFacade.dropAll();
-    }
-    
-    @GET
-    @Path("/queue/staging")
-    public List<NameVersionType> getStagingQueue() {
-        return continuousSyncService.getStagingQueue();
-    }
-    
-    @GET
-    @Path("/queue/release")
-    public List<RepoNameVersionType> getReleaseQueue() {
-        return continuousSyncService.getReleaseQueue();
-    }
-    
     private String getLatestVersion(Name fullName){
         Project project = npmRegistryFacade.getProject(fullName.npmFullName());
         return project.distTags().latest();
     }
-    
 }

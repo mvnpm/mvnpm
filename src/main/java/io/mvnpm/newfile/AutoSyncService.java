@@ -30,7 +30,7 @@ public class AutoSyncService {
         if (matcher.matches(fse.filePath().getFileName())) {
             Name name = fse.name();
             String version = fse.version();
-            boolean queued = projectUpdater.addToSyncQueue(name, version);
+            boolean queued = projectUpdater.initializeSync(name, version);
             if(queued){
                 Log.info(name.displayName() + " " + version + " added to the sync queue");
             }

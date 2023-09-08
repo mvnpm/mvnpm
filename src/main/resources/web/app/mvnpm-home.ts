@@ -125,20 +125,32 @@ export class MvnpmHome extends LitElement {
         }
     `;
 
-    @state() private _coordinates?: object;
-
-    @state() private _baseUrl?: string;
-    @state() private _baseFile?: string;
-    @state() private _disabled = "disabled";
-    @state() private _usePom?: string;
-    @state() private _useJson?: string;
-    @state() private _versions?: string[];
-    @state() private _latestVersion?: string;
-    @state() private _codeViewMode?: string;
-    @state() private _codeViewSrc?: string;
-    @state() private _codeViewSelection = ".pom";
-    @state() private _loadingIcon = "hidden";
-    @state() private _syncInfo?: object;
+    @state() 
+    private _coordinates?: object;
+    @state() 
+    private _baseUrl?: string;
+    @state() 
+    private _baseFile?: string;
+    @state() 
+    private _disabled = "disabled";
+    @state() 
+    private _usePom?: string;
+    @state() 
+    private _useJson?: string;
+    @state() 
+    private _versions?: string[];
+    @state() 
+    private _latestVersion?: string;
+    @state() 
+    private _codeViewMode?: string;
+    @state() 
+    private _codeViewSrc?: string;
+    @state() 
+    private _codeViewSelection = ".pom";
+    @state() 
+    private _loadingIcon = "hidden";
+    @state() 
+    private _syncInfo?: object;
 
     constructor() {
         super();

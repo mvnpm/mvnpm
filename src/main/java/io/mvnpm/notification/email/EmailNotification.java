@@ -1,6 +1,6 @@
 package io.mvnpm.notification.email;
 
-import io.mvnpm.maven.RepoNameVersionType;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.notification.Notification;
 import io.mvnpm.notification.NotificationFormatter;
 import io.quarkus.mailer.Mail;
@@ -22,8 +22,8 @@ public class EmailNotification {
     
     @ConsumeEvent("artifact-released-to-central")
     @Blocking
-    public void artifactReleased(RepoNameVersionType repoNameVersionType) {
-        Notification notification = NotificationFormatter.getNotificationAsHTML(repoNameVersionType); 
+    public void artifactReleased(CentralSyncItem centralSyncItem) {
+        Notification notification = NotificationFormatter.getNotificationAsHTML(centralSyncItem); 
         mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
     }
     

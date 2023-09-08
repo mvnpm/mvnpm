@@ -1,6 +1,6 @@
 package io.mvnpm.notification.github;
 
-import io.mvnpm.maven.RepoNameVersionType;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.notification.Notification;
 import io.mvnpm.notification.NotificationFormatter;
 import io.quarkus.vertx.ConsumeEvent;
@@ -32,10 +32,10 @@ public class GitHubAnnouncement {
     
     @ConsumeEvent("artifact-released-to-central")
     @Blocking
-    public void artifactReleased(RepoNameVersionType repoNameVersionType) {
+    public void artifactReleased(CentralSyncItem centralSyncItem) {
         if(token.isPresent()){
             
-            Notification notification = NotificationFormatter.getNotificationAsMarkDown(repoNameVersionType); 
+            Notification notification = NotificationFormatter.getNotificationAsMarkDown(centralSyncItem); 
             
             String a = "Bearer " + token.get();
             String query = ANNOUNCE_MUTATION.formatted(repositoryId, categoryId, notification.body(), notification.title());

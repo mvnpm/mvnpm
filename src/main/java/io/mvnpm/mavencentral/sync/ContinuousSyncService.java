@@ -9,9 +9,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
-import io.mvnpm.maven.NameVersionType;
-import io.mvnpm.maven.RepoNameVersionType;
-import io.mvnpm.mavencentral.MavenFacade;
+import io.mvnpm.mavencentral.SonatypeFacade;
 import io.mvnpm.mavencentral.RepoStatus;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -39,32 +37,39 @@ public class ContinuousSyncService {
     @Inject
     FileStore fileStore;
     @Inject
-    MavenFacade mavenFacade;
+    SonatypeFacade sonatypeFacade;
     @Inject
     EventBus bus;
     
-    private final ConcurrentLinkedQueue<NameVersionType> inProgressQueue = new ConcurrentLinkedQueue<>(); // Total process queue 
-    private final ConcurrentLinkedQueue<NameVersionType> uploadQueue = new ConcurrentLinkedQueue<>(); 
-    private final ConcurrentLinkedQueue<RepoNameVersionType> closedQueue = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<RepoNameVersionType> releaseQueue = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<RepoNameVersionType> releasedQueue = new ConcurrentLinkedQueue<>();
-    private final ConcurrentLinkedQueue<RepoNameVersionType> dropQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<CentralSyncItem> inProgressQueue = new ConcurrentLinkedQueue<>(); // Total process queue 
+    private final ConcurrentLinkedQueue<CentralSyncItem> initQueue = new ConcurrentLinkedQueue<>(); 
+    private final ConcurrentLinkedQueue<CentralSyncItem> closedQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<CentralSyncItem> releaseQueue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<CentralSyncItem> releasedQueue = new ConcurrentLinkedQueue<>();
     
-    private Optional<NameVersionType> uploadInProgress = Optional.empty();
+    private Optional<CentralSyncItem> uploadInProgress = Optional.empty();
     
-    public List<RepoNameVersionType> getReleaseQueue(){
+    public List<CentralSyncItem> getInitQueue(){
+        return new ArrayList<>(initQueue);
+    }
+    
+    public List<CentralSyncItem> getClosedQueue(){
+        return new ArrayList<>(closedQueue);
+    }
+    
+    public List<CentralSyncItem> getReleaseQueue(){
         return new ArrayList<>(releaseQueue);
     }
     
-    public List<NameVersionType> getStagingQueue(){
-        return new ArrayList<>(uploadQueue);
+    public List<CentralSyncItem> getReleasedQueue(){
+        return new ArrayList<>(releasedQueue);
     }
     
     public boolean uploadInProgress(){
         return uploadInProgress.isPresent();
     }
     
-    public NameVersionType getUploadInProgress(){
+    public CentralSyncItem getUploadInProgress(){
         return uploadInProgress.orElse(null);
     }
     
@@ -87,7 +92,7 @@ public class ContinuousSyncService {
             Project project = npmRegistryFacade.getProject(name.npmFullName());
             if(project!=null){
                 String latest = project.distTags().latest();
-                addToSyncQueue(name, latest);
+                initializeSync(name, latest);
             }
         } else {
             Log.warn("TODO: !!!!!!! Handle internal " + name.mvnGroupId() + ":" + name.mvnArtifactId());
@@ -97,13 +102,15 @@ public class ContinuousSyncService {
     /**
      * Sync a certain version of a artifact with central
      */
-    public boolean addToSyncQueue(Name name, String version){
-        NameVersionType itemInQ = new NameVersionType(name, version);
+    public boolean initializeSync(Name name, String version){
+        
+        CentralSyncItem itemInQ = new CentralSyncItem (name, version);
         SyncInfo syncInfo = centralSyncService.getSyncInfo(name.mvnGroupId(), name.mvnArtifactId(), version);
         if(syncInfo.canSync()){ // Check if this is already synced
-            if(!inProgressQueue.contains(itemInQ)){ // Already queued
+            if(!inProgressQueue.contains(itemInQ)){ // Already somewhere in the process
                 inProgressQueue.add(itemInQ);
-                uploadQueue.add(itemInQ);
+                initQueue.add(itemInQ);
+                bus.publish("central-sync-item-stage-change", itemInQ);
                 return true;
             }
         }
@@ -111,15 +118,18 @@ public class ContinuousSyncService {
     }
     
     @Scheduled(every="10s")
-    void processUploadQueue() {
-        if(uploadInProgress.isEmpty()){
-            if(!uploadQueue.isEmpty()){
-                NameVersionType nav = uploadQueue.remove();
-                uploadInProgress = Optional.of(nav);
+    void processInitQueue() {
+        if(uploadInProgress.isEmpty()){ // We upload one at a time
+            if(!initQueue.isEmpty()){
+                CentralSyncItem centralSyncItem = initQueue.remove();
+                uploadInProgress = Optional.of(centralSyncItem);
                 try {
-                    String repoId = dequeueStagingUploads(nav.name(), nav.version());
+                    String repoId = processUpload(centralSyncItem);
                     if(repoId!=null){
-                        closedQueue.add(new RepoNameVersionType(repoId, nav));
+                        centralSyncItem.setStagingRepoId(repoId);
+                        centralSyncItem.setStage(Stage.UPLOADED);
+                        closedQueue.add(centralSyncItem);
+                        bus.publish("central-sync-item-stage-change", centralSyncItem);
                     }
                 }finally {
                     uploadInProgress = Optional.empty();
@@ -128,19 +138,35 @@ public class ContinuousSyncService {
                 Log.debug("Nothing in the queue to sync");
             }
         }else{
-            Log.debug("Sync upload in progress " + uploadInProgress.get().name().displayName() + " " + uploadInProgress.get().version());
+            Log.debug("Sync upload in progress " + uploadInProgress.get().getNameVersionType().name().displayName() + " " + uploadInProgress.get().getNameVersionType().version());
+        }
+    }
+    
+    private String processUpload(CentralSyncItem centralSyncItem){
+        SyncInfo syncInfo = centralSyncService.getSyncInfo(centralSyncItem.getNameVersionType().name().mvnGroupId(), centralSyncItem.getNameVersionType().name().mvnArtifactId(), centralSyncItem.getNameVersionType().version());
+        if(syncInfo.canSync()){
+            // Kick off an update
+            Log.debug("Version [" + centralSyncItem.getNameVersionType().version() + "] of " + centralSyncItem.getNameVersionType().name().npmFullName() + " is NOT in central. Kicking off sync...");
+            centralSyncItem.setStage(Stage.UPLOADING);
+            bus.publish("central-sync-item-stage-change", centralSyncItem);
+            return centralSyncService.sync(centralSyncItem.getNameVersionType().name(), centralSyncItem.getNameVersionType().version());
+        }else {
+            Log.debug("Version [" + centralSyncItem.getNameVersionType().version() + "] of " + centralSyncItem.getNameVersionType().name().npmFullName() + " already synced");
+            return null;
         }
     }
     
     @Scheduled(every="10s")
     void processClosedQueue() {
         if(!closedQueue.isEmpty()){
-            RepoNameVersionType repoNameVersionType = closedQueue.remove();
-            RepoStatus status = mavenFacade.status(repoNameVersionType.stagingRepoId());
+            CentralSyncItem centralSyncItem = closedQueue.remove();
+            RepoStatus status = sonatypeFacade.status(centralSyncItem.getStagingRepoId());
             if(status.equals(RepoStatus.closed)){
-                releaseQueue.add(repoNameVersionType);
+                centralSyncItem.setStage(Stage.CLOSED);
+                releaseQueue.add(centralSyncItem);
+                bus.publish("central-sync-item-stage-change", centralSyncItem);
             }else{
-                closedQueue.add(repoNameVersionType);
+                closedQueue.add(centralSyncItem);
             }
         }
     }
@@ -148,13 +174,15 @@ public class ContinuousSyncService {
     @Scheduled(every="10s")
     void processReleaseQueue() {
         if(!releaseQueue.isEmpty()){
-            RepoNameVersionType repoNameVersionType = releaseQueue.remove();
-            boolean released = mavenFacade.release(repoNameVersionType.stagingRepoId());
+            CentralSyncItem centralSyncItem = releaseQueue.remove();
+            boolean released = sonatypeFacade.release(centralSyncItem.getStagingRepoId());
             if(released){
-                releasedQueue.add(repoNameVersionType);
+                centralSyncItem.setStage(Stage.RELEASING);
+                releasedQueue.add(centralSyncItem);
+                bus.publish("central-sync-item-stage-change", centralSyncItem);
             }else{
                 // Try again
-                releaseQueue.add(repoNameVersionType);
+                releaseQueue.add(centralSyncItem);
             }
         }
     }
@@ -162,45 +190,21 @@ public class ContinuousSyncService {
     @Scheduled(every="10s")
     void processReleasedQueue() {
         if(!releasedQueue.isEmpty()){
-            RepoNameVersionType repoNameVersionType = releasedQueue.remove();
-            RepoStatus status = mavenFacade.status(repoNameVersionType.stagingRepoId());
+            CentralSyncItem centralSyncItem = releasedQueue.remove();
+            RepoStatus status = sonatypeFacade.status(centralSyncItem.getStagingRepoId());
             if(status.equals(RepoStatus.released)){
-                dropQueue.add(repoNameVersionType);
-                bus.publish("artifact-released-to-central", repoNameVersionType);
+                centralSyncItem.setStage(Stage.RELEASED);
+                inProgressQueue.remove(centralSyncItem);
+                bus.publish("artifact-released-to-central", centralSyncItem);
+                bus.publish("central-sync-item-stage-change", centralSyncItem);
             }else{
-                releasedQueue.add(repoNameVersionType);
+                releasedQueue.add(centralSyncItem);
             }
-        }
-    }
-    
-    @Scheduled(every="10s")
-    void processDropQueue() {
-        if(!dropQueue.isEmpty()){
-            RepoNameVersionType repoNameVersionType = dropQueue.remove();
-            //boolean droped = mavenFacade.drop(repoNameVersionType.stagingRepoId());
-            //if(droped){
-                inProgressQueue.remove(repoNameVersionType.nameVersionType());
-            //}else{
-                // Try again
-            //    dropQueue.add(repoNameVersionType);                
-            //}
         }
     }
     
     private boolean isInternal(Name name){
         return name.mvnGroupId().equals("org.mvnpm.at.mvnpm");
-    }
-    
-    private String dequeueStagingUploads(Name name, String version){
-        SyncInfo syncInfo = centralSyncService.getSyncInfo(name.mvnGroupId(), name.mvnArtifactId(), version);
-        if(syncInfo.canSync()){
-            // Kick off an update
-            Log.debug("Version [" + version + "] of " + name.npmFullName() + " is NOT in central. Kicking off sync...");
-            return centralSyncService.sync(name, version);
-        }else {
-            Log.debug("Version [" + version + "] of " + name.npmFullName() + " already synced");
-            return null;
-        }
     }
     
     /**

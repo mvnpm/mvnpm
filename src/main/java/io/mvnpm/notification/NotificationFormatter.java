@@ -1,6 +1,6 @@
 package io.mvnpm.notification;
 
-import io.mvnpm.maven.RepoNameVersionType;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
 
 /**
  * Format a notification message
@@ -12,6 +12,7 @@ public class NotificationFormatter {
     
     private static final String MARKDOWN = """
                                        [mvnpm.org](http://mvnpm.org) has automatically released the following artifact:
+                                           
                                        **Group Id:** `%s`
                                        **Artifact Id:** `%s`
                                        **Version:** %s
@@ -23,6 +24,7 @@ public class NotificationFormatter {
     
     private static final String HTML = """
                                        <a href="http://mvnpm.org">mvnpm.org</a> has automatically released the following artifact: <br/>
+                                       <br/>
                                        <b>Group Id:</b> <code>%s</code><br/>
                                        <b>Artifact Id:</b> <code>%s</code><br/>
                                        <b>Version:</b> %s<br/>
@@ -33,20 +35,20 @@ public class NotificationFormatter {
                                        """;
     
     
-    public static Notification getNotificationAsHTML(RepoNameVersionType repoNameVersionType){
-        return getNotificationAsMarkDown(repoNameVersionType, HTML);
+    public static Notification getNotificationAsHTML(CentralSyncItem centralSyncItem){
+        return getNotificationAsMarkDown(centralSyncItem, HTML);
     }
     
-    public static Notification getNotificationAsMarkDown(RepoNameVersionType repoNameVersionType){
-        return getNotificationAsMarkDown(repoNameVersionType, MARKDOWN);
+    public static Notification getNotificationAsMarkDown(CentralSyncItem centralSyncItem){
+        return getNotificationAsMarkDown(centralSyncItem, MARKDOWN);
     }
     
-    private static Notification getNotificationAsMarkDown(RepoNameVersionType repoNameVersionType, String format){
-        String groupId = repoNameVersionType.nameVersionType().name().mvnGroupId();
-        String artifactId = repoNameVersionType.nameVersionType().name().mvnArtifactId();
-        String version = repoNameVersionType.nameVersionType().version();
-        String npmName = repoNameVersionType.nameVersionType().name().npmFullName();
-        String repo = repoNameVersionType.stagingRepoId();
+    private static Notification getNotificationAsMarkDown(CentralSyncItem centralSyncItem, String format){
+        String groupId = centralSyncItem.getNameVersionType().name().mvnGroupId();
+        String artifactId = centralSyncItem.getNameVersionType().name().mvnArtifactId();
+        String version = centralSyncItem.getNameVersionType().version();
+        String npmName = centralSyncItem.getNameVersionType().name().npmFullName();
+        String repo = centralSyncItem.getStagingRepoId();
 
         String title = groupId + ":" + artifactId + ":" + version;
         String body = format.formatted(groupId, artifactId, version, npmName, repo);

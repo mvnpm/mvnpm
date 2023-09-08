@@ -2,11 +2,13 @@ import { LitElement, html, css} from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
 import './mvnpm-home.js';
+import './mvnpm-progress.js';
 import './mvnpm-about.js';
 
 const router = new Router(document.getElementById('outlet'));
 router.setRoutes([
     {path: '/', component: 'mvnpm-home', name: 'Home'},
+    {path: '/progress', component: 'mvnpm-progress', name: 'Sync progress'},
     {path: '/about', component: 'mvnpm-about', name: 'About'}
 ]);
 
