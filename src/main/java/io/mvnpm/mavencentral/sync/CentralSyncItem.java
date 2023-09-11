@@ -86,9 +86,9 @@ public class CentralSyncItem {
         return Objects.equals(this.nameVersionType, other.nameVersionType);
     }
 
-    
-    
+    @Override
+    public String toString() {
+        return "CentralSyncItem{" + "startTime=" + startTime + ", stageChangeTime=" + stageChangeTime + ", stagingRepoId=" + stagingRepoId + ", stage=" + stage + ", nameVersionType=" + nameVersionType + '}';
+    }
 
-    
-    
 }

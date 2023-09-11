@@ -19,17 +19,15 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
+import java.util.List;
 import java.util.Set;
 
 /**
  * Websocket on the Sync queue
  * @author Phillip Kruger (phillip.kruger@gmail.com)
- * 
- * TODO: Add progress and date
- * TODO: Add initial state on connection
  */
 @Path("/api/sync")
-@ServerEndpoint("/api/queue/")         
+@ServerEndpoint(value = "/api/queue/", encoders = CentralSyncItemEncoder.class, decoders = CentralSyncItemEncoder.class)         
 @ApplicationScoped
 public class CentralSyncApi {
  
@@ -37,6 +35,8 @@ public class CentralSyncApi {
     CentralSyncService centralSyncService;
     @Inject
     NpmRegistryFacade npmRegistryFacade;
+    @Inject
+    ContinuousSyncService continuousSyncService;
     
     private Set<Session> sessions = new ConcurrentHashSet<>();
     
@@ -66,9 +66,8 @@ public class CentralSyncApi {
             });
         });
     }
-    
     @ConsumeEvent("central-sync-item-stage-change")
-    public void uploading(CentralSyncItem centralSyncItem) {
+    public void stateChange(CentralSyncItem centralSyncItem) {
         broadcast(centralSyncItem);
     }
     
@@ -80,6 +79,36 @@ public class CentralSyncApi {
             version = getLatestVersion(name);
         }
         return centralSyncService.getSyncInfo(groupId, artifactId, version);
+    }
+    
+    @GET
+    @Path("/initQueue")
+    public List<CentralSyncItem> getInitQueue(){
+        return continuousSyncService.getInitQueue();
+    }
+    
+    @GET
+    @Path("/uploadingQueue")
+    public List<CentralSyncItem> getUploadingQueue(){
+        return continuousSyncService.getUploadInProgress();
+    }
+    
+    @GET
+    @Path("/uploadedQueue")
+    public List<CentralSyncItem> getUploadedQueue(){
+        return continuousSyncService.getClosedQueue();
+    }
+    
+    @GET
+    @Path("/closedQueue")
+    public List<CentralSyncItem> getClosedQueue(){
+        return continuousSyncService.getReleaseQueue();
+    }
+    
+    @GET
+    @Path("/releasingQueue")
+    public List<CentralSyncItem> getReleasingQueue(){
+        return continuousSyncService.getReleasedQueue();
     }
     
     private String getLatestVersion(Name fullName){

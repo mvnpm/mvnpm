@@ -69,8 +69,8 @@ public class ContinuousSyncService {
         return uploadInProgress.isPresent();
     }
     
-    public CentralSyncItem getUploadInProgress(){
-        return uploadInProgress.orElse(null);
+    public List<CentralSyncItem> getUploadInProgress(){
+        return uploadInProgress.stream().collect(Collectors.toList());
     }
     
     /**
@@ -192,12 +192,12 @@ public class ContinuousSyncService {
         if(!releasedQueue.isEmpty()){
             CentralSyncItem centralSyncItem = releasedQueue.remove();
             RepoStatus status = sonatypeFacade.status(centralSyncItem.getStagingRepoId());
-            if(status.equals(RepoStatus.released)){
+            if(status !=null && status.equals(RepoStatus.released)){
                 centralSyncItem.setStage(Stage.RELEASED);
                 inProgressQueue.remove(centralSyncItem);
                 bus.publish("artifact-released-to-central", centralSyncItem);
                 bus.publish("central-sync-item-stage-change", centralSyncItem);
-            }else{
+            }else if(status !=null){
                 releasedQueue.add(centralSyncItem);
             }
         }
