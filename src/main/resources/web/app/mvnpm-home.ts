@@ -10,6 +10,8 @@ import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
 import '@vaadin/progress-bar';
+import '@vaadin/tabs';
+import '@vaadin/tabsheet';
 
 /**
  * This component shows the Home screen
@@ -25,6 +27,15 @@ export class MvnpmHome extends LitElement {
             flex-direction: column;
             align-items: center;
         }
+        .coordinates-pane {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            column-gap: 15px;
+            box-shadow: 5px 5px 15px -10px #091d1d;
+        }
+
         .coordinates{
             width: 100%;
             display: flex;
@@ -161,8 +172,44 @@ export class MvnpmHome extends LitElement {
     }
 
     render() {
+        return html`
+                ${this._renderCoordinatesPane()}
+                ${this._renderTabPane()}
+                `;
+    }
+    
+    _renderCoordinatesPane(){
+        return html`<div class="coordinates-pane"> 
+            <vaadin-tabsheet>
+                <vaadin-tabs slot="tabs" theme="small">
+                    <vaadin-tab id="npm-tab">npm</vaadin-tab>
+                    <vaadin-tab id="maven-tab">maven</vaadin-tab>
+                </vaadin-tabs>
+
+                <div tab="npm-tab">${this._renderCoordinatesNPM()}</div>
+                <div tab="maven-tab">${this._renderCoordinatesMaven()}</div>
+            </vaadin-tabsheet>
+        </div>`;
+    }
+
+    _renderCoordinatesNPM(){
         return html`<div class="coordinates">
-            <vaadin-text-field label="Group Id" @input="${this._groupIdChanged}" value="${this._coordinates.groupId}" clear-button-visible>
+            <vaadin-text-field label="Package" style="width: 491px"
+                    @focusout="${this._findVersionsAndShowLatest}" 
+                    @keypress="${this._findVersionsAndShowLatest}" 
+                    @input="${this._npmPackageChanged}" 
+                    value="${this._coordinates.npmPackage}" clear-button-visible></vaadin-text-field>
+            ${this._renderVersionForm()}
+            <vaadin-button class="clearButton" theme="secondary" @click="${this._clearCoordinates}">Clear</vaadin-button>
+        </div>
+        <div class="coordinates">
+            <vaadin-progress-bar class="progress" style="visibility: ${this._loadingIcon};" indeterminate></vaadin-progress-bar>
+        </div>`;
+    }
+
+    _renderCoordinatesMaven(){
+        return html`<div class="coordinates">
+            <vaadin-text-field label="Group Id" style="width: 284px" @input="${this._groupIdChanged}" value="${this._coordinates.groupId}" clear-button-visible>
                 <span slot="prefix">org.mvnpm</span>
             </vaadin-text-field>
             <vaadin-text-field label="Artifact Id" 
@@ -175,12 +222,9 @@ export class MvnpmHome extends LitElement {
         </div>
         <div class="coordinates">
             <vaadin-progress-bar class="progress" style="visibility: ${this._loadingIcon};" indeterminate></vaadin-progress-bar>
-        </div>
-        
-        ${this._renderTabPane()}
-        `;
+        </div>`;
     }
-    
+
     _renderVersionForm(){
         return html`<vaadin-combo-box ?disabled=${this._disabled}
             label="Version"
@@ -189,6 +233,7 @@ export class MvnpmHome extends LitElement {
             .items="${this._versions}"
             value="${this._latestVersion}"
             @change="${this._versionChanged}"
+            style="width: 100px"
         ></vaadin-combo-box>`
         
     }
@@ -331,12 +376,15 @@ export class MvnpmHome extends LitElement {
     }
     
     _findVersionsAndShowLatest(e){    
-        if (e.which == 13 || e.which == 0) {
-            this._loadingIcon = "visible";
-            var groupId = this._getGroupId(this._coordinates.groupId.trim());
-            var artifactId = this._coordinates.artifactId.trim();
-
-            if(artifactId) {
+        var artifactId = this._coordinates.artifactId.trim();
+        var npmPackage = this._coordinates.npmPackage.trim();
+        
+        if ((e.which == 13 || e.which == 0)){
+            if(artifactId && artifactId.length>0) {
+            
+                this._loadingIcon = "visible";
+                var groupId = this._getGroupId(this._coordinates.groupId.trim());
+                
                 groupId = groupId.replaceAll('.', '/');
 
                 var metadataUrl = "/maven2/" + groupId + "/" + artifactId + "/maven-metadata.xml";
@@ -345,11 +393,27 @@ export class MvnpmHome extends LitElement {
                     .then(response => response.text())
                     .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
                     .then(metadata => this._inspectMetadata(metadata));
+                
+            }else if(npmPackage && npmPackage.length>0) {
+                // TODO: This should do a search...
+                this._loadingIcon = "visible";
+                npmPackage = npmPackage.replaceAll('@', 'at/');
+
+                var metadataUrl = "/maven2/org/mvnpm/" + npmPackage + "/maven-metadata.xml";
+
+                fetch(metadataUrl)
+                    .then(response => response.text())  
+                    .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
+                    .then(metadata => this._inspectMetadata(metadata));
+
             }
         }
     }
     
     _inspectMetadata(metadata){
+        this._coordinates.groupId = metadata.getElementsByTagName("groupId")[0].childNodes[0].nodeValue.substring(9);
+        this._coordinates.artifactId = metadata.getElementsByTagName("artifactId")[0].childNodes[0].nodeValue;
+        
         var latestTags = metadata.getElementsByTagName("latest");
         var versionTags = metadata.getElementsByTagName("version");
 
@@ -376,7 +440,9 @@ export class MvnpmHome extends LitElement {
                 groupId = "." + groupId;
             }
             groupId = groupId.replace('@', 'at.')
-            groupId = "org.mvnpm" + groupId;
+            if(!groupId.startsWith("org.mvnpm")){
+                groupId = "org.mvnpm" + groupId;
+            }
         }
         return groupId;
     }
@@ -385,7 +451,8 @@ export class MvnpmHome extends LitElement {
         this._coordinates = { 
             groupId: '',
             artifactId: '',
-            version: ''
+            version: '',
+            npmPackage: ''
         };
         this._disabled = "disabled";
         this._baseUrl = null;
@@ -407,6 +474,11 @@ export class MvnpmHome extends LitElement {
         this._disabled = "disabled";
     }
     
+    _npmPackageChanged(e){
+        this._coordinates.npmPackage = e.target.value;
+        this._disabled = "disabled";
+    }
+
     _versionChanged(e){
         this._changeVersion(e.target.value.trim());
     }
