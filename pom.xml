@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>2.0.14-SNAPSHOT</version>
+    <version>2.0.15-SNAPSHOT</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -66,7 +66,7 @@
         <importmap.version>1.0.10</importmap.version>
 
         <!-- mvnpm Libs -->
-        <vaadin.version>24.1.6</vaadin.version>
+        <vaadin.version>24.1.7</vaadin.version>
         <codemirror.version>6.0.1</codemirror.version>
         <lang-javascript.version>6.2.1</lang-javascript.version>
         <lang-xml.version>6.0.2</lang-xml.version>
@@ -247,15 +247,15 @@
     <repositories> 
         
         <repository>
-            <id>mvnpm.org</id>
-            <name>mvnpm</name>
-            <url>https://repo.mvnpm.org/maven2</url>
-        </repository>
-        
-        <repository>
             <id>central</id>
             <name>central</name>
             <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+        
+        <repository>
+            <id>mvnpm.org</id>
+            <name>mvnpm</name>
+            <url>https://repo.mvnpm.org/maven2</url>
         </repository>
         
     </repositories>
@@ -348,7 +348,7 @@
         <profile>
             <id>mvnpm-locked</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <dependencyManagement>
                 <dependencies>
