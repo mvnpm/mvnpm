@@ -13,6 +13,16 @@ import '@vaadin/progress-bar';
 import '@vaadin/tabs';
 import '@vaadin/tabsheet';
 
+interface Coordinates {
+    name: string;
+    version: string;
+}
+
+const DEFAULT_COORDS = {
+    name: '',
+    version: '',
+};
+
 /**
  * This component shows the Home screen
  * 
@@ -31,7 +41,8 @@ export class MvnpmHome extends LitElement {
             width: 100%;
             display: flex;
             justify-content: center;
-            align-items: baseline;
+            align-items: center;
+            flex-direction: column;
             column-gap: 15px;
             box-shadow: 5px 5px 15px -10px #091d1d;
         }
@@ -137,7 +148,7 @@ export class MvnpmHome extends LitElement {
     `;
 
     @state() 
-    private _coordinates?: object;
+    private _coordinates = DEFAULT_COORDS;
     @state() 
     private _baseUrl?: string;
     @state() 
@@ -180,43 +191,17 @@ export class MvnpmHome extends LitElement {
     
     _renderCoordinatesPane(){
         return html`<div class="coordinates-pane"> 
-            <vaadin-tabsheet theme="minimal">
-                <vaadin-tabs slot="tabs" theme="minimal">
-                    <vaadin-tab id="npm-tab">npm</vaadin-tab>
-                    <vaadin-tab id="maven-tab">maven</vaadin-tab>
-                </vaadin-tabs>
-
-                <div tab="npm-tab">${this._renderCoordinatesNPM()}</div>
-                <div tab="maven-tab">${this._renderCoordinatesMaven()}</div>
-            </vaadin-tabsheet>
+            ${this._renderCoordinates()}
         </div>`;
     }
 
-    _renderCoordinatesNPM(){
+    _renderCoordinates(){
         return html`<div class="coordinates">
-            <vaadin-text-field label="Package" style="width: 491px"
+            <vaadin-text-field label="Name (Package or Coords)" style="width: 491px"
                     @focusout="${this._findVersionsAndShowLatest}" 
                     @keypress="${this._findVersionsAndShowLatest}" 
-                    @input="${this._npmPackageChanged}" 
-                    value="${this._coordinates.npmPackage}" clear-button-visible></vaadin-text-field>
-            ${this._renderVersionForm()}
-            <vaadin-button class="clearButton" theme="secondary" @click="${this._clearCoordinates}">Clear</vaadin-button>
-        </div>
-        <div class="coordinates">
-            <vaadin-progress-bar class="progress" style="visibility: ${this._loadingIcon};" indeterminate></vaadin-progress-bar>
-        </div>`;
-    }
-
-    _renderCoordinatesMaven(){
-        return html`<div class="coordinates">
-            <vaadin-text-field label="Group Id" style="width: 284px" @input="${this._groupIdChanged}" value="${this._coordinates.groupId}" clear-button-visible>
-                <span slot="prefix">org.mvnpm</span>
-            </vaadin-text-field>
-            <vaadin-text-field label="Artifact Id" 
-                    @focusout="${this._findVersionsAndShowLatest}" 
-                    @keypress="${this._findVersionsAndShowLatest}" 
-                    @input="${this._artifactIdChanged}" 
-                    value="${this._coordinates.artifactId}" clear-button-visible></vaadin-text-field>
+                    @input="${this._coordinatesNameChanged}" 
+                    value="${this._coordinates.name}" clear-button-visible></vaadin-text-field>
             ${this._renderVersionForm()}
             <vaadin-button class="clearButton" theme="secondary" @click="${this._clearCoordinates}">Clear</vaadin-button>
         </div>
@@ -376,37 +361,32 @@ export class MvnpmHome extends LitElement {
     }
     
     _findVersionsAndShowLatest(e){    
-        var artifactId = this._coordinates.artifactId.trim();
-        var npmPackage = this._coordinates.npmPackage.trim();
+        const name = this._coordinates.name.trim();
         
         if ((e.which == 13 || e.which == 0)){
-            if(artifactId && artifactId.length>0) {
-            
+            let groupPath: string;
+            let artifactPath: string;
+            if(name.match(/^[^:]+:[^:]+$/)) {
                 this._loadingIcon = "visible";
-                var groupId = this._getGroupId(this._coordinates.groupId.trim());
-                
-                groupId = groupId.replaceAll('.', '/');
+                const ga = name.split(":");
+                groupPath = ga[0].trim().replaceAll('.', '/');
+                if(!groupPath.startsWith("org/mvnpm")) {
+                    groupPath = `org/mvnpm/${groupPath}`;
+                }
+                artifactPath = ga[1].trim();
 
-                var metadataUrl = "/maven2/" + groupId + "/" + artifactId + "/maven-metadata.xml";
-
-                fetch(metadataUrl)
-                    .then(response => response.text())
-                    .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
-                    .then(metadata => this._inspectMetadata(metadata));
-                
-            }else if(npmPackage && npmPackage.length>0) {
+            } else {
                 // TODO: This should do a search...
                 this._loadingIcon = "visible";
-                npmPackage = npmPackage.replaceAll('@', 'at/');
-
-                var metadataUrl = "/maven2/org/mvnpm/" + npmPackage + "/maven-metadata.xml";
-
-                fetch(metadataUrl)
-                    .then(response => response.text())  
-                    .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
-                    .then(metadata => this._inspectMetadata(metadata));
-
+                groupPath = "org/mvnpm";
+                artifactPath =  name.replaceAll('@', 'at/');
             }
+
+            const metadataUrl = `/maven2/${groupPath}/${artifactPath}/maven-metadata.xml`;
+            fetch(metadataUrl)
+              .then(response => response.text())
+              .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
+              .then(metadata => this._inspectMetadata(metadata));
         }
     }
     
@@ -446,14 +426,9 @@ export class MvnpmHome extends LitElement {
         }
         return groupId;
     }
-    
+
     _clearCoordinates(){
-        this._coordinates = { 
-            groupId: '',
-            artifactId: '',
-            version: '',
-            npmPackage: ''
-        };
+        this._coordinates = DEFAULT_COORDS;
         this._disabled = "disabled";
         this._baseUrl = null;
         this._baseFile = null;
@@ -465,17 +440,8 @@ export class MvnpmHome extends LitElement {
         this._loadingIcon = "hidden";
     }
     
-    _groupIdChanged(e){
-        this._coordinates.groupId = e.target.value;
-    }
-
-    _artifactIdChanged(e){
-        this._coordinates.artifactId = e.target.value;
-        this._disabled = "disabled";
-    }
-    
-    _npmPackageChanged(e){
-        this._coordinates.npmPackage = e.target.value;
+    _coordinatesNameChanged(e){
+        this._coordinates.name = e.target.value;
         this._disabled = "disabled";
     }
 
