@@ -20,6 +20,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import io.mvnpm.Constants;
 import io.mvnpm.npm.model.Name;
 import java.io.UncheckedIOException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Store for local files.
@@ -47,14 +48,18 @@ public class FileStore {
     }
     
     public byte[] createFile(Name name, String version, Path localFilePath, byte[] content) {
-        
+        byte[] written = createFile(localFilePath, content);
+        touch(name, version, localFilePath);
+        return written;
+    }
+    
+    public byte[] createFile(Path localFilePath, byte[] content) {
         try{
             Files.createDirectories(localFilePath.getParent());
             Files.write(localFilePath, content);
             String sha1 = FileUtil.getSha1(content);
             Path localSha1FilePath = Paths.get(localFilePath.toString() + Constants.DOT_SHA1);
             Files.writeString(localSha1FilePath, sha1);
-            touch(name, version, localFilePath);
             return content;
         } catch (IOException e){
             throw new UncheckedIOException(e);
@@ -66,10 +71,23 @@ public class FileStore {
     }
     
     public byte[] readFile(Path localFileName){
-        try {
-            return Files.readAllBytes(localFileName);
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
+        return readFileInLoop(localFileName, 0);
+    }
+    
+    private byte[] readFileInLoop(Path localFileName, int triedNumber){
+        if(exist(localFileName)){
+            try {
+                return Files.readAllBytes(localFileName);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+        }else{
+            if(triedNumber>5)throw new RuntimeException("Timed out while waiting for " + localFileName);
+            try {
+                // Wait 5 seconds and try again.
+                TimeUnit.SECONDS.sleep(5);
+            } catch (InterruptedException ex) {}
+            return readFileInLoop(localFileName, triedNumber++);
         }
     }
     

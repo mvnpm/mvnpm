@@ -97,7 +97,9 @@ public class FileClient {
             case pom -> {
                 return pomClient.createPom(p, localFilePath);
             }
-            default -> throw new RuntimeException("Unknown type " + type);
+            default -> {
+                return fileStore.readFile(localFilePath);
+            }
         }
     }
     

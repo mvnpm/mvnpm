@@ -82,6 +82,10 @@ public class CompositeCreator {
         throw new RuntimeException("Composite definition for " + artifactId + " does not exist");
     }
     
+    public Path getImportMapPath(Name name, String version){
+        return fileStore.getLocalDirectory(name, version).resolve("importmap.json");
+    }
+    
     private byte[] build(Path pom, String version) {
         try {
             Model model = mavenXpp3Writer.read(Files.newInputStream(pom));
@@ -186,10 +190,12 @@ public class CompositeCreator {
                     }
                 }
 
-                 // Add importmap
+                 // Add importmap (in jar and on disk)
                 Aggregator a = new Aggregator(importmaps);
                 String aggregatedImportMap = a.aggregateAsJson(false);
                 writeEntry(mergedJar, "META-INF/importmap.json", aggregatedImportMap);
+                Path importmapPath = getImportMapPath(outputJarName, model.getVersion());
+                fileStore.createFile(importmapPath, aggregatedImportMap.getBytes());
 
                 // Add pom (in jar and on disk)
                 String jarName = outputJar.toString();
@@ -234,7 +240,8 @@ public class CompositeCreator {
                 FileUtil.createSha1(sourceFile);
                 FileUtil.createAsc(sourceFile);
                 FileUtil.createMd5(sourceFile);
-            }       
+            }
+            
         }
         return Files.readAllBytes(outputJar);
     }
@@ -316,5 +323,5 @@ public class CompositeCreator {
             return new String(bytes);
         }
     }
-
+    
 }

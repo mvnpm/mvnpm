@@ -1,5 +1,6 @@
 package io.mvnpm.maven;
 
+import io.mvnpm.composite.CompositeService;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -31,6 +32,9 @@ public class MavenRepositoryApi {
     @Inject
     MetadataClient metadataClient;
     
+    @Inject
+    CompositeService compositeService;
+    
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
     @Produces(MediaType.APPLICATION_XML)
@@ -61,9 +65,13 @@ public class MavenRepositoryApi {
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}/package.json")
     @Produces(MediaType.APPLICATION_JSON)
-    public Package getPackageJson(@PathParam("gavt") String gavt){
+    public Response getPackageJson(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + "/package.json");
-        return npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version());
+        if(nameVersionType.name().isInternal()){
+            return Response.ok().build(); // TODO: Can we return this in some format ?
+        }else{
+            return Response.ok(npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version())).build();
+        }
     }
     
     @GET
@@ -71,8 +79,13 @@ public class MavenRepositoryApi {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getImportMap(@PathParam("gavt") String gavt){
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + "/importmap.json");
-        Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version());
-        return Response.ok(ImportMapUtil.createImportMap(npmPackage)).build();            
+        if(nameVersionType.name().isInternal()){
+            byte[] importMap = compositeService.getImportMap(nameVersionType.name(), nameVersionType.version());
+            return Response.ok(importMap).build(); 
+        }else{
+            Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version());
+            return Response.ok(ImportMapUtil.createImportMap(npmPackage)).build();            
+        }
     }
     
     @GET
