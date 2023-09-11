@@ -21,20 +21,6 @@ export class MvnpmNav extends LitElement {
     static webSocket;
     static serverUri;
 
-    static styles = css`
-        a {
-          color: var(--lumo-primary-text-color);
-          padding: 2px;
-        }
-        a:link, a:visited, a:active { 
-          text-decoration: none; 
-        }
-        a:hover { 
-          text-decoration: dashed; 
-          color:var(--lumo-contrast-60pct);    
-        }
-    `;
-
     constructor() {
       super();
       if (!MvnpmNav.webSocket) {
@@ -51,9 +37,21 @@ export class MvnpmNav extends LitElement {
 
     render() {
         const routes = router.getRoutes();
-        return html`${routes.map((r) =>
-                html`<a href='${r.path}'>${r.name}<a>`
-            )}`;
+        return html`<vaadin-tabs> 
+                        ${routes.map((r) =>
+                            html`<vaadin-tab>
+                                  <a href="${r.path}">
+                                    <span>${r.name}</span>
+                                  </a>
+                                </vaadin-tab>`
+                        )}
+                        <vaadin-tab>
+                          <a href="https://groups.google.com/g/mvnpm-releases" target="_blank" vaadin-router-ignore><span>Releases</span></a>
+                        </vaadin-tab>
+                        <vaadin-tab>
+                          <a href="https://github.com/mvnpm/mvnpm" target="_blank" vaadin-router-ignore><span>Source</span></a>
+                        </vaadin-tab>
+                    </vaadin-tabs>`;
     }
 
     static connect() {

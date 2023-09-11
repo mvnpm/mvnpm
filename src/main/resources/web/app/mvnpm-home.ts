@@ -180,8 +180,8 @@ export class MvnpmHome extends LitElement {
     
     _renderCoordinatesPane(){
         return html`<div class="coordinates-pane"> 
-            <vaadin-tabsheet>
-                <vaadin-tabs slot="tabs" theme="small">
+            <vaadin-tabsheet theme="minimal">
+                <vaadin-tabs slot="tabs" theme="minimal">
                     <vaadin-tab id="npm-tab">npm</vaadin-tab>
                     <vaadin-tab id="maven-tab">maven</vaadin-tab>
                 </vaadin-tabs>
