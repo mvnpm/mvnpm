@@ -2,7 +2,6 @@ package io.mvnpm.composite;
 
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
-import io.mvnpm.file.FileStoreEvent;
 import io.mvnpm.file.FileType;
 import io.mvnpm.file.FileUtil;
 import io.mvnpm.file.type.JarClient;
@@ -28,9 +27,6 @@ import io.mvnpm.maven.MavenRespositoryService;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.quarkus.logging.Log;
-import io.quarkus.vertx.ConsumeEvent;
-import io.smallrye.common.annotation.Blocking;
-import io.vertx.mutiny.core.eventbus.EventBus;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.io.ByteArrayInputStream;
@@ -66,9 +62,6 @@ public class CompositeCreator {
     JarClient jarClient; 
     
     @Inject
-    EventBus bus;
-    
-    @Inject
     MavenRespositoryService mavenRespositoryService;
             
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
@@ -87,6 +80,10 @@ public class CompositeCreator {
             return build(pom, version);
         }
         throw new RuntimeException("Composite definition for " + artifactId + " does not exist");
+    }
+    
+    public Path getImportMapPath(Name name, String version){
+        return fileStore.getLocalDirectory(name, version).resolve("importmap.json");
     }
     
     private byte[] build(Path pom, String version) {
@@ -197,6 +194,8 @@ public class CompositeCreator {
                 Aggregator a = new Aggregator(importmaps);
                 String aggregatedImportMap = a.aggregateAsJson(false);
                 writeEntry(mergedJar, "META-INF/importmap.json", aggregatedImportMap);
+                Path importmapPath = getImportMapPath(outputJarName, model.getVersion());
+                fileStore.createFile(importmapPath, aggregatedImportMap.getBytes());
 
                 // Add pom (in jar and on disk)
                 String jarName = outputJar.toString();
@@ -243,7 +242,6 @@ public class CompositeCreator {
                 FileUtil.createMd5(sourceFile);
             }
             
-            bus.publish("new-composite-created", new FileStoreEvent(outputJar, outputJarName, model.getVersion()));
         }
         return Files.readAllBytes(outputJar);
     }
@@ -324,14 +322,6 @@ public class CompositeCreator {
             byte[] bytes = baos.toByteArray();
             return new String(bytes);
         }
-    }
-
-    @ConsumeEvent("new-composite-created")
-    @Blocking
-    public void newCompositeCreated(FileStoreEvent fse) {
-        
-        
-        Log.info(">>>>>>>>>>>> " + fse);
     }
     
 }

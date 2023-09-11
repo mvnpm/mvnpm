@@ -48,14 +48,18 @@ public class FileStore {
     }
     
     public byte[] createFile(Name name, String version, Path localFilePath, byte[] content) {
-        
+        byte[] written = createFile(localFilePath, content);
+        touch(name, version, localFilePath);
+        return written;
+    }
+    
+    public byte[] createFile(Path localFilePath, byte[] content) {
         try{
             Files.createDirectories(localFilePath.getParent());
             Files.write(localFilePath, content);
             String sha1 = FileUtil.getSha1(content);
             Path localSha1FilePath = Paths.get(localFilePath.toString() + Constants.DOT_SHA1);
             Files.writeString(localSha1FilePath, sha1);
-            touch(name, version, localFilePath);
             return content;
         } catch (IOException e){
             throw new UncheckedIOException(e);
