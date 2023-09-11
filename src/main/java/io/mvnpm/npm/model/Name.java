@@ -1,6 +1,8 @@
 package io.mvnpm.npm.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.mvnpm.Constants;
+import java.io.File;
 
 /**
  * Represent a Name from both NPM and Maven
@@ -45,4 +47,13 @@ public record Name (
     public String toString() {
         return this.npmFullName;
     }
+    
+    public String mvnGroupIdPath(){
+        return this.mvnGroupId.replaceAll(Constants.ESCAPED_DOT, File.separator);
+    }
+    
+    public boolean isInternal(){
+        return this.mvnGroupId.equals(INTERNAL_NS);
+    }
+    private static final String INTERNAL_NS = "org.mvnpm.at.mvnpm";
 }

@@ -91,10 +91,9 @@ export class MvnpmAbout extends LitElement {
                     <li>Developer's Maven build requests an npm package from Maven Central.</li>
                     <li>Maven Central returns a 404 if the package does not exist.</li>
                     <li>The developer's Maven build continues to the next repository (as configured above) and requests the npm package from mvnpm.</li>
-                    <li>mvnpm requests the NPM Registry for the package (tgz) and converts it to a JAR. It also generates and includes an import map for this package.</li>
+                    <li>mvnpm requests the NPM Registry for the package (tgz) and converts it to a JAR. It also generates and includes an import map and pom for this package.</li>
                     <li>mvnpm returns this JAR to the developer, and the developer can continue with the build.</li>
                     <li>In the background, mvnpm kicks off a process to create all the files needed to release this package to Maven Central. This includes:<br/>
-                        - pom <br/>
                         - source <br/>
                         - javadoc <br/>
                         - signatures for all of the files (sha1, md5, asc) <br/>
@@ -105,8 +104,13 @@ export class MvnpmAbout extends LitElement {
                 </ul>
 
                 mvnpm will also continuously monitor the NPM Registry for any previously synchronized packages. When it detects a new version, a synchronization process will be initiated.
-                <br/>
-                <br/>                
+                <br/>  
+                <h3>You can use this</h3>
+                <ul>
+                    <li>In Quarkus with the <a href="https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html" target="_blank">Quarkus Web Bundler</a></li>
+                    <li>In any Java application with <a href="https://github.com/mvnpm/importmap" target="_blank">importmaps</a> or <a href="https://github.com/mvnpm/esbuild-java" target="_blank">esbuild-java</a></li>
+                    <li>In any Java application like you would have done with <a href="https://www.webjars.org/" target="_blank">webjars</a></li>
+                </ul>            
             </p>
         `;
     }

@@ -14,6 +14,7 @@ import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer;
 import io.mvnpm.Constants;
+import io.mvnpm.composite.CompositeService;
 import io.mvnpm.file.FileUtil;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -33,6 +34,9 @@ public class MetadataClient {
     
     @Inject
     NpmRegistryFacade npmRegistryFacade;
+    
+    @Inject
+    CompositeService compositeService;
     
     @Inject 
     @CacheName("metadata-cache")
@@ -64,6 +68,43 @@ public class MetadataClient {
     }
     
     public Versioning getVersioning(Name name) {
+        if(name.isInternal()){
+            return getInternalVersioning(name);
+        }else{
+            return getNpmVersioning(name);
+        }
+    }
+    
+    private Versioning getInternalVersioning(Name name){
+        Versioning versioning = new Versioning();
+        
+        Map<String, Date> versions = compositeService.getVersions(name);
+        if(versions.isEmpty())throw new RuntimeException("No version found for " + name.displayName());
+        
+        boolean isFirst = true;
+        for(Map.Entry<String, Date> version:versions.entrySet()){
+            if(isFirst){
+                isFirst = false;
+                versioning.setLatest(version.getKey());
+                versioning.setRelease(version.getKey());
+                versioning.setLastUpdatedTimestamp(version.getValue());
+            }
+            
+            try {
+                Version v = Version.fromString(version.getKey());
+                // Ignore pre release
+                if(v.qualifier()==null){
+                    versioning.addVersion(v.toString());
+                }
+            }catch(InvalidVersionException ive){
+                Log.warn("Ignoring version [" + ive.getVersion() + "] for " + name.displayName());
+            }
+        }
+        
+        return versioning;
+    }
+    
+    private Versioning getNpmVersioning(Name name){
         Project project = npmRegistryFacade.getProject(name.npmFullName());
         Versioning versioning = new Versioning();
         String latest = getLatest(project);
