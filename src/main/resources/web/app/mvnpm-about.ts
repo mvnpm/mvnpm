@@ -80,19 +80,33 @@ export class MvnpmAbout extends LitElement {
     render() {
         return html` 
             <p>
-                <b>mvnpm</b> (Maven NPM) is a maven repository facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>
-            </p>
-            <p>
-            When requesting a dependency, it will inspect the registry to see if it exist and if it does, convert of to a maven dependeny.
-            </p>
-            <p>Release notifications is available <a href="https://groups.google.com/g/mvnpm-releases" target="_blank">here</a></p>
-            <p>
-                To use this in your maven project add the following to your settings.xml (typically <span class="url">/home/your-username/.m2/settings.xml</span>)
-            </p>
-            <p>
-                This will look for the artifact in maven central first, and if not found, will look at mvnpm, that will deliver the artifact and kick of the process 
-                to sync this with maven central.
+                <b>mvnpm</b> (Maven NPM) is a maven repository facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a><br/>
+                To use this in your maven project add the following to your settings.xml (typically <span class="url">/home/your-username/.m2/settings.xml</span>)<br/>
                 <pre lang="xml" class="use">${this._use}</pre>
+
+                <h3>How does it work ?</h3>
+                <img src="/static/mvnpm.png"/>
+
+                <ul>
+                    <li>Developer's Maven build requests an npm package from Maven Central.</li>
+                    <li>Maven Central returns a 404 if the package does not exist.</li>
+                    <li>The developer's Maven build continues to the next repository (as configured above) and requests the npm package from mvnpm.</li>
+                    <li>mvnpm requests the NPM Registry for the package (tgz) and converts it to a JAR. It also generates and includes an import map for this package.</li>
+                    <li>mvnpm returns this JAR to the developer, and the developer can continue with the build.</li>
+                    <li>In the background, mvnpm kicks off a process to create all the files needed to release this package to Maven Central. This includes:<br/>
+                        - pom <br/>
+                        - source <br/>
+                        - javadoc <br/>
+                        - signatures for all of the files (sha1, md5, asc) <br/>
+                        - bundling all the above to upload to Central.
+                    </li>
+                    <li>Once the bundle exists, it gets uploaded and released to Maven Central.</li>
+                    <li>This means that by the time the CI/CD pipeline of the developer runs, the package is available in Maven Central.</li>
+                </ul>
+
+                mvnpm will also continuously monitor the NPM Registry for any previously synchronized packages. When it detects a new version, a synchronization process will be initiated.
+                <br/>
+                <br/>                
             </p>
         `;
     }

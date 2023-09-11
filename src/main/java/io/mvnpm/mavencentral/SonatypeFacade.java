@@ -1,7 +1,6 @@
 package io.mvnpm.mavencentral;
 
 import io.quarkus.logging.Log;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.core.Response;
@@ -14,12 +13,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 /**
- * Facade on the Maven Search API
- * TODO: Add caching
+ * Facade on the OSS Sonatype server
+ * TODO: Add caching for search (5 mins or so)
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class MavenFacade {
+public class SonatypeFacade {
   
     private static final String Q_FORMAT = "g:%s AND a:%s AND v:%s";
     private static final String CORE = "gav";
@@ -57,7 +56,7 @@ public class MavenFacade {
             JsonObject response = searchResult.getJsonObject("response");
             if(response!=null){
                 Integer numFound = response.getInteger("numFound");
-                if(numFound!=null && numFound.intValue()>0){
+                if(numFound!=null && numFound>0){
                     return true;
                 }
             }
@@ -118,29 +117,6 @@ public class MavenFacade {
         return null;
     }
     
-    public boolean close(String repositoryId){
-        if(authorization.isPresent()){
-            String a = "Basic " + authorization.get();
-            try {
-                JsonObject data = JsonObject.of("description", "Closed by mvnpm.org", "stagedRepositoryId", repositoryId);
-                JsonObject closeRequest = JsonObject.of("data", data);
-                Response closeResponse = sonatypeClient.closeUploadBundle(a, profileId, closeRequest);
-            
-                if(closeResponse.getStatus()<299){
-                    String resp = closeResponse.readEntity(String.class);
-                    Log.info("Closed staging repo " + repositoryId + " [" + resp + "]");
-                    return true;
-                }else{
-                    Log.error("Error closing staging repo " + repositoryId + " - status [" + closeResponse.getStatus() + "]");
-                }
-            }catch(Throwable t) {
-                Log.error("Error closing staging repo " + repositoryId + " - " + t.getMessage());
-            }
-            return false;
-        }
-        return true;
-    }
-    
     public boolean release(String repositoryId){
         if(authorization.isPresent() && autoRelease){
             String a = "Basic " + authorization.get();
@@ -171,35 +147,6 @@ public class MavenFacade {
             }
         }
         return null;
-    }
-    
-    public boolean drop(String repositoryId) {
-        if(authorization.isPresent()){
-            try {
-                String a = "Basic " + authorization.get();
-                Response dropResponse = sonatypeClient.finishReleaseToCentral(a, profileId, toPromoteRequest(repositoryId));
-                if(dropResponse.getStatus()<299){
-                    return true;
-                }else{
-                    Log.error("Error dropping staging repo " + repositoryId + " - status [" + dropResponse.getStatus() + "]");
-                }
-            }catch(Throwable t){
-                Log.error(t.getMessage());
-            }
-            return false;
-        }
-        return true;
-    }
-
-    public void dropAll() {
-        JsonObject stagingProfileRepos = getStagingProfileRepos();
-        
-        JsonArray data = stagingProfileRepos.getJsonArray("data");
-        data.forEach((t) -> {
-            JsonObject repository = (JsonObject)t;
-            String repositoryId = repository.getString("repositoryId");
-            drop(repositoryId);
-        });
     }
     
     private JsonObject toPromoteRequest(String repositoryId){

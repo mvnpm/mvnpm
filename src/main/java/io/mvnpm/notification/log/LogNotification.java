@@ -1,6 +1,6 @@
 package io.mvnpm.notification.log;
 
-import io.mvnpm.maven.RepoNameVersionType;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
@@ -15,10 +15,10 @@ public class LogNotification {
     
     @ConsumeEvent("artifact-released-to-central")
     @Blocking
-    public void artifactReleased(RepoNameVersionType repoNameVersionType) {
-        String message = repoNameVersionType.nameVersionType().name().mvnGroupId() + ":" + 
-                repoNameVersionType.nameVersionType().name().mvnArtifactId() + ":" +
-                repoNameVersionType.nameVersionType().version() +" released.";
+    public void artifactReleased(CentralSyncItem centralSyncItem) {
+        String message = centralSyncItem.getNameVersionType().name().mvnGroupId() + ":" + 
+                centralSyncItem.getNameVersionType().name().mvnArtifactId() + ":" +
+                centralSyncItem.getNameVersionType().version() +" released.";
         
         Log.info(message);
     }

@@ -1,37 +1,75 @@
 package io.mvnpm.mavencentral.sync;
 
-import io.mvnpm.maven.NameVersionType;
-import io.mvnpm.maven.RepoNameVersionType;
-import io.mvnpm.mavencentral.MavenFacade;
+import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.model.Name;
+import io.mvnpm.npm.model.NameParser;
+import io.mvnpm.npm.model.Project;
+import io.quarkus.logging.Log;
+import io.quarkus.vertx.ConsumeEvent;
+import io.vertx.core.impl.ConcurrentHashSet;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.websocket.OnClose;
+import jakarta.websocket.OnError;
+import jakarta.websocket.OnOpen;
+import jakarta.websocket.server.ServerEndpoint;
+import jakarta.websocket.Session;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
-import io.mvnpm.npm.NpmRegistryFacade;
-import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.NameParser;
-import io.mvnpm.npm.model.Project;
-import jakarta.ws.rs.DELETE;
 import java.util.List;
+import java.util.Set;
 
 /**
- * The central sync
+ * Websocket on the Sync queue
  * @author Phillip Kruger (phillip.kruger@gmail.com)
- * TODO: Add security
  */
 @Path("/api/sync")
+@ServerEndpoint(value = "/api/queue/", encoders = CentralSyncItemEncoder.class, decoders = CentralSyncItemEncoder.class)         
+@ApplicationScoped
 public class CentralSyncApi {
-
-    @Inject
-    ContinuousSyncService continuousSyncService;
+ 
     @Inject
     CentralSyncService centralSyncService;
     @Inject
     NpmRegistryFacade npmRegistryFacade;
     @Inject
-    MavenFacade mavenFacade;
+    ContinuousSyncService continuousSyncService;
+    
+    private Set<Session> sessions = new ConcurrentHashSet<>();
+    
+    @OnOpen
+    public void onOpen(Session session) {
+        // Send current
+        sessions.add(session);
+    }
+
+    @OnClose
+    public void onClose(Session session) {
+        sessions.remove(session);
+    }
+
+    @OnError
+    public void onError(Session session, Throwable throwable) {
+        throwable.printStackTrace();
+        sessions.remove(session);
+    }
+
+    private void broadcast(CentralSyncItem centralSyncItem) {
+        sessions.forEach(s -> {
+            s.getAsyncRemote().sendObject(centralSyncItem, result ->  {
+                if (result.getException() != null) {
+                    Log.error("Unable to send message: " + result.getException());
+                }
+            });
+        });
+    }
+    @ConsumeEvent("central-sync-item-stage-change")
+    public void stateChange(CentralSyncItem centralSyncItem) {
+        broadcast(centralSyncItem);
+    }
     
     @GET
     @Path("/info/{groupId}/{artifactId}")
@@ -44,39 +82,37 @@ public class CentralSyncApi {
     }
     
     @GET
-    @Path("/project/{project : (.+)?}")
-    public void sync(@PathParam("project") String project ) {
-        Name name = NameParser.fromNpmProject(project);
-        continuousSyncService.update(name);
+    @Path("/initQueue")
+    public List<CentralSyncItem> getInitQueue(){
+        return continuousSyncService.getInitQueue();
     }
     
     @GET
-    @Path("/all")
-    public void syncAll() {
-        continuousSyncService.checkAll();
-    }
-    
-    @DELETE
-    @Path("/all")
-    public void dropAll(){
-        mavenFacade.dropAll();
+    @Path("/uploadingQueue")
+    public List<CentralSyncItem> getUploadingQueue(){
+        return continuousSyncService.getUploadInProgress();
     }
     
     @GET
-    @Path("/queue/staging")
-    public List<NameVersionType> getStagingQueue() {
-        return continuousSyncService.getStagingQueue();
+    @Path("/uploadedQueue")
+    public List<CentralSyncItem> getUploadedQueue(){
+        return continuousSyncService.getClosedQueue();
     }
     
     @GET
-    @Path("/queue/release")
-    public List<RepoNameVersionType> getReleaseQueue() {
+    @Path("/closedQueue")
+    public List<CentralSyncItem> getClosedQueue(){
         return continuousSyncService.getReleaseQueue();
+    }
+    
+    @GET
+    @Path("/releasingQueue")
+    public List<CentralSyncItem> getReleasingQueue(){
+        return continuousSyncService.getReleasedQueue();
     }
     
     private String getLatestVersion(Name fullName){
         Project project = npmRegistryFacade.getProject(fullName.npmFullName());
         return project.distTags().latest();
     }
-    
 }

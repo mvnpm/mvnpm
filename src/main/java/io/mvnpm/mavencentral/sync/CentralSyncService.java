@@ -5,12 +5,14 @@ import jakarta.inject.Inject;
 import java.nio.file.Path;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import io.mvnpm.Constants;
-import io.mvnpm.mavencentral.MavenFacade;
+import io.mvnpm.maven.NameVersionType;
+import io.mvnpm.mavencentral.SonatypeFacade;
 import io.mvnpm.npm.model.Name;
+import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * This sync a package with maven central
- * TODO: Add a Q
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
@@ -19,7 +21,7 @@ public class CentralSyncService {
     BundleCreator bundleCreator;
     
     @Inject
-    MavenFacade mavenFacade;
+    SonatypeFacade sonatypeFacade;
     
     @ConfigProperty(name = "mvnpm.local-user-directory")
     String localUserDir;
@@ -39,8 +41,8 @@ public class CentralSyncService {
         if(local){
             return true;
         }
-        // Next try remove
-        boolean remote = mavenFacade.isAvailable(groupId, artifactId, version);
+        // Next try remote
+        boolean remote = sonatypeFacade.isAvailable(groupId, artifactId, version);
         
         if(remote){
             // store cache
@@ -57,19 +59,18 @@ public class CentralSyncService {
     
     public String sync(Name name, String version){
         Path bundlePath = bundleCreator.bundle(name, version);
-        return syncBundle(name, version, bundlePath);
+        return sonatypeFacade.upload(bundlePath);
     }
     
-    private String syncBundle(Name name, String version, Path bundlePath){
-        String repoId = mavenFacade.upload(bundlePath);
-        
-        if(repoId!=null){
-            MetadataService metadataService = new MetadataService(localUserDir, localM2Dir, name.mvnGroupId(), name.mvnArtifactId(), version);
-            metadataService.set(Constants.STAGED_TO_OSS, Constants.TRUE);
-            metadataService.set(Constants.STAGED_REPO_ID, repoId);
-            return repoId;
-        }
-        return null;
+    @ConsumeEvent("artifact-released-to-central")
+    @Blocking
+    public void artifactReleased(CentralSyncItem centralSyncItem) {
+        NameVersionType nameVersionType = centralSyncItem.getNameVersionType();
+        Name name = nameVersionType.name();
+        String version = nameVersionType.version();
+        String repoId = centralSyncItem.getStagingRepoId();
+        MetadataService metadataService = new MetadataService(localUserDir, localM2Dir, name.mvnGroupId(), name.mvnArtifactId(), version);
+        metadataService.set(Constants.STAGED_TO_OSS, Constants.TRUE);
+        metadataService.set(Constants.STAGED_REPO_ID, repoId);
     }
-    
 }

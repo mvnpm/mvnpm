@@ -71,9 +71,7 @@ main {
     overflow-y: scroll;
     
 }
-mvnpm-nav {
-    padding-right: 10px;
-}
+
 footer {
     display: flex;
     flex-direction: row;
