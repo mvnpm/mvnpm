@@ -7,14 +7,33 @@ Maven for NPM
 Add the mvnpm repository:
 
 ```
-    <repositories>
+    <settings>
+    <profiles>
+        <profile>
+            <id>mvnpm</id>
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <name>central</name>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                </repository>
+                <repository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>mvnpm.org</id> 
+                    <name>mvnpm</name>
+                    <url>https://repo.mvnpm.org/maven2</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
 
-        <repository>
-            <id>mvnpm.org</id>
-            <name>mvnpm</name>
-            <url>https://repo.mvnpm.org/maven2</url>
-        </repository>
-    </repositories>
+    <activeProfiles>
+        <activeProfile>mvnpm</activeProfile>
+    </activeProfiles>
+
+</settings>
 ```
 
 see https://maven.apache.org/guides/mini/guide-multiple-repositories.html for more details on multiple repositories
@@ -46,14 +65,3 @@ TODO: Show advance example (with namespaced npm packages)
 ## Use 
 
 TODO ... (import map etc)
-
-## Server install
-
-`export MVNPM_LOCAL_USER_DIRECTORY=/home/pkruger/mvnpm`
-`nohup ./mvnpm-1.0.1-runner > mvnpm.log &`
-
-## TODO
-
-- Consider allowing version in path with link added to no version path
-- dependency bundles ? i.e whole of vaadin ?
-- dependency clashes. See pom
