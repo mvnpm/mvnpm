@@ -17,7 +17,7 @@ export class MvnpmAbout extends LitElement {
         }
         .use {
             width: 800px;
-            border: 2px solid var(--lumo-contrast-60pct);
+            border: 2px solid var(--lumo-contrast-10pct);
             border-radius: 15px;
             padding: 20px;
         }

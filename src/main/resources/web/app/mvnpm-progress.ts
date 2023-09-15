@@ -25,8 +25,8 @@ export class MvnpmProgress extends LitElement {
       align-items: center;
     }
     .uploading {
-      border-right: 1px dashed #FFFFFF;
-      border-left: 1px dashed #FFFFFF;
+      border-right: 2px solid var(--lumo-contrast-10pct);
+      border-left: 2px solid var(--lumo-contrast-10pct);
     }
     .progressBar {
       width: 50%;
@@ -62,19 +62,19 @@ export class MvnpmProgress extends LitElement {
 
         fetch("/api/sync/initQueue")
             .then(response => response.json())
-            .then(initQueue => (this._initQueue = initQueue));
+            .then(initQueue => (this._initQueue = this._addMultipleToQueue(this._initQueue, initQueue, "Waiting...", 1)));
         fetch("/api/sync/uploadingQueue")
             .then(response => response.json())
-            .then(uploadingQueue => (this._uploadingQueue = uploadingQueue));
+            .then(uploadingQueue => (this._uploadingQueue = this._addMultipleToQueue(this._uploadingQueue, uploadingQueue, "Uploading to maven central...", 2)));
         fetch("/api/sync/uploadedQueue")
             .then(response => response.json())
-            .then(uploadedQueue => (this._uploadedQueue = uploadedQueue));
+            .then(uploadedQueue => (this._uploadedQueue = this._addMultipleToQueue(this._uploadedQueue, uploadedQueue, "Uploaded, validating...", 3)));
         fetch("/api/sync/closedQueue")
             .then(response => response.json())
-            .then(closedQueue => (this._closedQueue = closedQueue));
+            .then(closedQueue => (this._closedQueue = this._addMultipleToQueue(this._closedQueue, closedQueue, "Valid, preparing release...", 4)));
         fetch("/api/sync/releasingQueue")
             .then(response => response.json())
-            .then(releasingQueue => (this._releasingQueue = releasingQueue));
+            .then(releasingQueue => (this._releasingQueue = this._addMultipleToQueue(this._releasingQueue, releasingQueue, "Releasing to maven central...", 5)));
 
         document.addEventListener('centralSyncStateChange', this._centralSyncStateChange, false);
     }
@@ -177,6 +177,15 @@ export class MvnpmProgress extends LitElement {
             return [...queue, mle];
         } else {
             return [mle];
+        }
+    }
+
+    private _addMultipleToQueue(queue: any[] | null, items: any[], stagemessage: string, step: number) {
+        let mles = items.map(item => this._toMessageListEntry(item, stagemessage, step));
+        if (queue && queue.length > 0) {
+            return [...queue, ...mles];
+        } else {
+            return mles;
         }
     }
 
