@@ -44,7 +44,6 @@ export class MvnpmHome extends LitElement {
             align-items: center;
             flex-direction: column;
             column-gap: 15px;
-            box-shadow: 5px 5px 15px -10px #091d1d;
         }
 
         .coordinates{
@@ -65,25 +64,25 @@ export class MvnpmHome extends LitElement {
             flex-direction: column;
             gap: 10px;
             width: 20%;
-            padding-right: 5px;
+            padding-right: 10px;
         }
         
-        .line a{
+        a{
             color:var(--lumo-contrast-60pct);
         }
-        .line a:link{ 
+        a:link{ 
             text-decoration: none; 
             color:var(--lumo-contrast-60pct);
         }
-        .line a:visited { 
+        a:visited { 
             text-decoration: none; 
             color:var(--lumo-contrast-60pct);
         }
-        .line a:hover { 
+        a:hover { 
             text-decoration: none; 
             color:var(--lumo-body-text-color);
         }
-        .line a:active { 
+        a:active { 
             text-decoration: none; 
             color:var(--lumo-contrast-60pct);
         }
@@ -93,7 +92,8 @@ export class MvnpmHome extends LitElement {
         }
         .heading{
             font-weight: bold;
-            border-bottom: 1px dotted var(--lumo-contrast-60pct);
+            background-color: var(--lumo-contrast-10pct);
+            padding: 10px;
         }
         .use {
             display: flex;
@@ -105,8 +105,7 @@ export class MvnpmHome extends LitElement {
             flex-direction: column;
             padding: 15px;
             gap: 10px;
-            border: 2px solid var(--lumo-contrast-60pct);
-            border-radius: 15px;
+            border-left: 1px solid var(--lumo-contrast-10pct);
             width: 50%;
         }
         codemirror-viewer {
@@ -145,10 +144,51 @@ export class MvnpmHome extends LitElement {
         .clearButton {
             align-self: end;
         }
+        .info-line {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .info-buttons {
+            display: flex;
+            gap: 20px;
+            font-size: smaller;
+        }
+
+        .badge {
+            background-color: gray;
+            color: white;
+            padding: 2px 4px;
+            text-align: center;
+            border-radius: 5px;
+            font-size: small;
+            height: fit-content;
+        }
+        .dependencies {
+            padding-top: 20px;
+            display: flex;
+            justify-content: space-evenly;
+            width: 100%;
+        }
+        @media (max-width: 1000px) {
+            .dependencies {
+                flex-direction: column;
+            }
+        }
+        .copy {
+            width: 20px;
+            cursor: pointer;
+            align-self: end;
+        }
+        .copy:hover { 
+            color:var(--lumo-success-color);
+        }
     `;
 
     @state() 
     private _coordinates = DEFAULT_COORDS;
+    @state() 
+    private _info = null;
     @state() 
     private _baseUrl?: string;
     @state() 
@@ -227,72 +267,98 @@ export class MvnpmHome extends LitElement {
         if(this._coordinates.version) {
             return html`<vaadin-tabsheet class="tabpane">
                 <vaadin-tabs slot="tabs">
-                    <vaadin-tab id="pom-xml-tab">files</vaadin-tab>
-                    <vaadin-tab id="usage-tab">usage</vaadin-tab>
-                    <vaadin-tab id="sync-tab">sync</vaadin-tab>
+                    <vaadin-tab id="info-tab">info</vaadin-tab>
+                    <vaadin-tab id="files-tab">files</vaadin-tab>
                 </vaadin-tabs>
 
-                <div tab="pom-xml-tab">
-                    ${this._loadPomTab()}
+                <div tab="info-tab">
+                    ${this._loadInfoTab()}
                 </div>
-            
-                <div tab="usage-tab">
-                    ${this._loadUsageTab()}
-                </div>
-            
-                <div tab="sync-tab">
-                    ${this._loadSyncTab()}
+
+                <div tab="files-tab">
+                    ${this._loadFilesTab()}
                 </div>
             
             </vaadin-tabsheet>`;
         }
     }
     
-    _loadSyncTab(){
+    _loadSyncIcon(){
         if(this._syncInfo){
-            return html`<div class="use">
-                    <div class="useBlock">
-                        <span class="heading">Sync info</span>
-                        <div class="sync">
-                            Uploaded to Nexus OSS staging ${this._renderIcon(this._syncInfo.inStaging)}</br>
+            if(this._syncInfo.inCentral){
+                return html`<span><vaadin-icon title="Synced" style="color:var(--lumo-success-color)" icon="vaadin:check-circle"></vaadin-icon> Maven central</span>`;
+            }else if(this._syncInfo.inStaging){
+                return html`<span><vaadin-icon title="Syncing" style="color:var(--lumo-warning-color)" icon="vaadin:progressbar"></vaadin-icon> Maven central</span>`;
+            }else {
+                return html`<span><vaadin-icon title="Not synced" style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon> Maven central</span>`;
+            }
+
+        }
+    }
+    
+    _loadInfoTab(){
+        if(this._info){
+            return html`<div class="info">
+                            <div class="info-line">
+                                <h1>${this._coordinates.name} ${this._coordinates.version}</h1>
+                                <div class="info-buttons">
+                                    ${this._loadSyncIcon()}
+                                    <a href="${this._info.scmUrl}" target="_blank"><vaadin-icon icon="vaadin:code"></vaadin-icon> code</a>
+                                    <a href="${this._info.issueUrl}" target="_blank"><vaadin-icon icon="vaadin:bug-o"></vaadin-icon> issues</a>
+                                    <a href="${this._info.url}" target="_blank"><vaadin-icon icon="vaadin:external-link"></vaadin-icon> page</a>
+                                    <span class="badge">${this._info.licenseName}</span>
+                                </div>
+                            </div>
+                            <div class="info-line">
+                                ${this._info.description}
+                                <div>by <a href="${this._info.organizationUrl}">${this._info.organizationName}</a></div>
+                            </div>
+                            <div class="info-line">
+                                <div class="dependencies">
+                                    <div class="useBlock">
+                                        <span class="heading">Pom dependency</span>
+                                        <pre lang="xml" class="basiccode">${this._usePom}</pre>
+                                        <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
+                                    </div>
+                                    
+                                    <div class="useBlock">
+                                        <span class="heading">Import map</span>
+                                        <pre lang="json" class="basiccode">${this._useJson}</pre>
+                                    </div>
+
+                                    <div class="useBlock">
+                                        <span class="heading">Dependencies</span>
+
+                                        <table class="dependencyTable">
+                                            ${this._info.dependencies.map((dependency) =>
+                                                html`<tr>
+                                                        <td style="cursor: pointer;" @click="${()=>this._viewDependency(dependency)}">${dependency}</td>
+                                                    </tr>`
+                                            )}
+                                        </table>
+                                    </div>
+                                    
+                                </div>
+                            </div>
                         </div>
-                        <div class="sync">    
-                            Available in Maven central ${this._renderIcon(this._syncInfo.inCentral)}</br>
-                        </div>    
-                    </div>
-                </div>
-            `;
+                        `;
         }
     }
     
-    _renderIcon(yes){
-        if(yes){
-            return html`<vaadin-icon style="color:var(--lumo-success-color)" icon="vaadin:check-circle"></vaadin-icon>`;
-        }else{
-            return html`<vaadin-icon style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon>`;
-        }
+    _pomToClipboard(){
+       navigator.clipboard.writeText(this._usePom); 
     }
-    
-    _loadUsageTab(){
-        if(this._usePom){
-            return html`<div class="use">
-                    <div class="useBlock">
-                        <span class="heading">Pom dependency</span>
-                        <pre lang="xml" class="basiccode">${this._usePom}</pre>
-                    </div>
-                    <div class="useBlock">
-                        <span class="heading">Import map</span>
-                        <pre lang="json" class="basiccode">${this._useJson}</pre>
-                    </div>  
-                </div>
-            `;
-        }
+
+    _viewDependency(dependency){
+        const gav = dependency.split(":");
+        this._clearCoordinates()
+        this._coordinates.name = gav[0]+":"+gav[1];
+        this._showGA(this._coordinates.name);
     }
-    
-    _loadPomTab(){
+
+    _loadFilesTab(){
         if(this._baseUrl){
             return html`<div class="fileBrowser">
-                            ${this._renderCodeView()}
                             <div class="fileList">
                                 ${this._renderFileGroup('pom', '.pom', 'file-code')}
                                 ${this._renderFileGroup('jar', '.jar', 'file-zip')}
@@ -300,7 +366,8 @@ export class MvnpmHome extends LitElement {
                                 ${this._renderFileGroup('javadoc', '-javadoc.jar', 'file-zip')}
                                 ${this._renderFileGroup('original', '.tgz', 'file-zip')}
                                 ${this._renderAnyFile('package', '.json','file-text-o')}
-                            </div>    
+                            </div>
+                            ${this._renderCodeView()}    
                         </div>`;
         }
     }
@@ -364,32 +431,36 @@ export class MvnpmHome extends LitElement {
         const name = this._coordinates.name.trim();
         
         if ((e.which == 13 || e.which == 0)){
-            let groupPath: string;
-            let artifactPath: string;
-            if(name.match(/^[^:]+:[^:]+$/)) {
-                this._loadingIcon = "visible";
-                const ga = name.split(":");
-                groupPath = ga[0].trim().replaceAll('.', '/');
-                if(!groupPath.startsWith("org/mvnpm")) {
-                    groupPath = `org/mvnpm/${groupPath}`;
-                }
-                artifactPath = ga[1].trim();
-
-            } else {
-                // TODO: This should do a search...
-                this._loadingIcon = "visible";
-                groupPath = "org/mvnpm";
-                artifactPath =  name.replaceAll('@', 'at/');
-            }
-
-            const metadataUrl = `/maven2/${groupPath}/${artifactPath}/maven-metadata.xml`;
-            fetch(metadataUrl)
-              .then(response => response.text())
-              .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
-              .then(metadata => this._inspectMetadata(metadata));
+            this._showGA(name);    
         }
     }
     
+    _showGA(name){ 
+        let groupPath: string;
+        let artifactPath: string;
+        if(name.match(/^[^:]+:[^:]+$/)) {
+            this._loadingIcon = "visible";
+            const ga = name.split(":");
+            groupPath = ga[0].trim().replaceAll('.', '/');
+            if(!groupPath.startsWith("org/mvnpm")) {
+                groupPath = `org/mvnpm/${groupPath}`;
+            }
+            artifactPath = ga[1].trim();
+
+        } else {
+            // TODO: This should do a search...
+            this._loadingIcon = "visible";
+            groupPath = "org/mvnpm";
+            artifactPath =  name.replaceAll('@', 'at/');
+        }
+
+        const metadataUrl = `/maven2/${groupPath}/${artifactPath}/maven-metadata.xml`;
+        fetch(metadataUrl)
+            .then(response => response.text())
+            .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
+            .then(metadata => this._inspectMetadata(metadata));
+    }
+
     _inspectMetadata(metadata){
         this._coordinates.groupId = metadata.getElementsByTagName("groupId")[0].childNodes[0].nodeValue.substring(9);
         this._coordinates.artifactId = metadata.getElementsByTagName("artifactId")[0].childNodes[0].nodeValue;
@@ -410,8 +481,89 @@ export class MvnpmHome extends LitElement {
         this._changeVersion(this._latestVersion);
         this._disabled = null;
         this._loadingIcon = "hidden";
+
     }
     
+    _inspectModel(projectModel){
+        let model = new Object();
+
+        model.description = this._getElementValue(projectModel, "description");
+        model.url = this._getElementValue(projectModel, "url");
+        model.organizationName = this._getElementX2Value(projectModel, "organization", "name");
+        model.organizationUrl = this._getElementX2Value(projectModel, "organization", "url");
+        model.licenseName = this._getElementX3Value(projectModel, "licenses", "license", "name");
+        model.scmUrl = this._getElementX2Value(projectModel, "scm", "url");
+        model.issueUrl = this._getElementX2Value(projectModel, "issueManagement", "url");
+        
+        let propertiesMap = new Map();
+        let properties = [];
+        let propertiesElement = projectModel.getElementsByTagName("properties");
+        if(propertiesElement && propertiesElement.length>0){
+            properties = propertiesElement[0].children;
+        }
+        
+        for (let i = 0; i < properties.length; i++) {
+            let prop = properties[i];
+            propertiesMap.set(prop.tagName, prop.textContent);
+        }
+
+        model.dependencies = [];
+        let dependenciesElement = projectModel.getElementsByTagName("dependencies");
+        if(dependenciesElement && dependenciesElement.length>0){
+            let dependencies = dependenciesElement[0].getElementsByTagName("dependency");
+        
+            for (let i = 0; i < dependencies.length; i++) {
+                let dependency = dependencies[i];
+                let groupId = dependency.getElementsByTagName("groupId")[0].childNodes[0].nodeValue;
+                let artifactId = dependency.getElementsByTagName("artifactId")[0].childNodes[0].nodeValue;
+                let version = dependency.getElementsByTagName("version")[0].childNodes[0].nodeValue;
+            
+                if(version.startsWith("$")){
+                    version = version.substring(2).slice(0, -1);
+                    version = propertiesMap.get(version);
+                }
+            
+                model.dependencies.push(groupId + ":" + artifactId + ":" + version);
+            }
+        }
+
+        this._info = model;
+
+    }
+
+    _getElementValue(model, elementName){
+        let element = model.getElementsByTagName(elementName);
+        if(element && element.length>0){
+            return element[0].childNodes[0].nodeValue;
+        }
+        return "";
+    }
+
+    _getElementX2Value(model, elementName1, elementName2){
+        let element1 = model.getElementsByTagName(elementName1);
+        if(element1 && element1.length>0){
+            let element2 = element1[0].getElementsByTagName(elementName2);
+            if(element2 && element2.length>0){
+                return element2[0].childNodes[0].nodeValue; 
+            }
+        }
+        return "";
+    }
+
+    _getElementX3Value(model, elementName1, elementName2, elementName3){
+        let element1 = model.getElementsByTagName(elementName1);
+        if(element1 && element1.length>0){
+            let element2 = element1[0].getElementsByTagName(elementName2);
+            if(element2 && element2.length>0){
+                let element3 = element2[0].getElementsByTagName(elementName3);
+                if(element3 && element3.length>0){
+                    return element3[0].childNodes[0].nodeValue; 
+                }
+            }
+        }
+        return "";
+    }
+
     _getGroupId(groupId){
         if(!groupId){
             groupId = "org.mvnpm";
@@ -429,6 +581,7 @@ export class MvnpmHome extends LitElement {
 
     _clearCoordinates(){
         this._coordinates = DEFAULT_COORDS;
+        this._info = null;
         this._disabled = "disabled";
         this._baseUrl = null;
         this._baseFile = null;
@@ -480,6 +633,12 @@ export class MvnpmHome extends LitElement {
         fetch(syncInfoUrl)
             .then(response => response.json())
             .then(response => this._syncInfo = response);
+
+        const pomUrl = `/maven2/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom`;
+            fetch(pomUrl)
+              .then(response => response.text())
+              .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "application/xml"))
+              .then(projectModel => this._inspectModel(projectModel));
     }
     
     _setUseJson(response){
