@@ -170,10 +170,18 @@ export class MvnpmHome extends LitElement {
             justify-content: space-evenly;
             width: 100%;
         }
-        @media (max-width: 800px) {
+        @media (max-width: 1000px) {
             .dependencies {
                 flex-direction: column;
             }
+        }
+        .copy {
+            width: 20px;
+            cursor: pointer;
+            align-self: end;
+        }
+        .copy:hover { 
+            color:var(--lumo-success-color);
         }
     `;
 
@@ -310,6 +318,7 @@ export class MvnpmHome extends LitElement {
                                     <div class="useBlock">
                                         <span class="heading">Pom dependency</span>
                                         <pre lang="xml" class="basiccode">${this._usePom}</pre>
+                                        <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
                                     </div>
                                     
                                     <div class="useBlock">
@@ -334,6 +343,10 @@ export class MvnpmHome extends LitElement {
                         </div>
                         `;
         }
+    }
+    
+    _pomToClipboard(){
+       navigator.clipboard.writeText(this._usePom); 
     }
 
     _viewDependency(dependency){
@@ -376,7 +389,7 @@ export class MvnpmHome extends LitElement {
     _renderAnyFile(fileName, fileExt, icon){
         return html`
             <div class="line">
-                <a @="${this.click_showFile}" data-file="${this._baseUrl + fileName + fileExt}"><vaadin-icon icon="vaadin:${icon}"></vaadin-icon>${fileName + fileExt}</a>
+                <a @click="${this._showFile}" data-file="${this._baseUrl + fileName + fileExt}"><vaadin-icon icon="vaadin:${icon}"></vaadin-icon>${fileName + fileExt}</a>
                 <a href="${this._baseUrl + fileName + fileExt}" target="_blank"><vaadin-icon class="outIcon" icon="vaadin:external-link"></vaadin-icon></a>
             </div>
         `;
