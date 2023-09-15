@@ -237,7 +237,7 @@ export class MvnpmHome extends LitElement {
 
     _renderCoordinates(){
         return html`<div class="coordinates">
-            <vaadin-text-field label="Name (Package or Coords)" style="width: 491px"
+            <vaadin-text-field label="Name (Package or Coordinates)" style="width: 500px"
                     @focusout="${this._findVersionsAndShowLatest}" 
                     @keypress="${this._findVersionsAndShowLatest}" 
                     @input="${this._coordinatesNameChanged}" 
@@ -292,8 +292,8 @@ export class MvnpmHome extends LitElement {
             }else {
                 return html`<span><vaadin-icon title="Not synced" style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon> Maven central</span>`;
             }
-
         }
+        return html`<span><vaadin-icon title="Checking..." style="color:var(--lumo-warning-color)" icon="vaadin:question-circle-o"></vaadin-icon> Maven central</span>`;
     }
     
     _loadInfoTab(){

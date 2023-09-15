@@ -42,9 +42,13 @@ public class SonatypeFacade {
     
     public JsonObject search(String groupId, String artifactId, String version){
         String q = String.format(Q_FORMAT, groupId, artifactId, version);
-        Response searchResponse = searchMavenClient.search(q, CORE, ROWS, WT);
-        if(searchResponse.getStatus()<300){
-            return searchResponse.readEntity(JsonObject.class);
+        try {
+            Response searchResponse = searchMavenClient.search(q, CORE, ROWS, WT);
+            if(searchResponse.getStatus()<300){
+                return searchResponse.readEntity(JsonObject.class);
+            }
+        }catch(Throwable t){
+            Log.error(t.getMessage());
         }
         return null;
     }
