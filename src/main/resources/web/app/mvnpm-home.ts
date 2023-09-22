@@ -534,7 +534,10 @@ export class MvnpmHome extends LitElement {
     _getElementValue(model, elementName){
         let element = model.getElementsByTagName(elementName);
         if(element && element.length>0){
-            return element[0].childNodes[0].nodeValue;
+            let children = element[0].childNodes;
+            if(children && children.length>0){
+                return element[0].childNodes[0].nodeValue;
+            }
         }
         return "";
     }

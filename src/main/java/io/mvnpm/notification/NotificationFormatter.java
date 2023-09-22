@@ -34,16 +34,32 @@ public class NotificationFormatter {
                                        Release has been done using the <code>%s</code> staging repo
                                        """;
     
+    private static final String ERROR = """
+                                       <a href="http://mvnpm.org">mvnpm.org</a> has failed to released the following artifact: <br/>
+                                       <br/>
+                                       <b>Group Id:</b> <code>%s</code><br/>
+                                       <b>Artifact Id:</b> <code>%s</code><br/>
+                                       <b>Version:</b> %s<br/>
+                                       <br/>
+                                       This represent the NPM Package: <code>%s</code><br/>
+                                       <br/>
+                                       Release has been attempted using the <code>%s</code> staging repo
+                                       """;
+    
+    
+    public static Notification getErrorAsHTML(CentralSyncItem centralSyncItem){
+        return getNotificationAsMarkUp(centralSyncItem, ERROR);
+    }
     
     public static Notification getNotificationAsHTML(CentralSyncItem centralSyncItem){
-        return getNotificationAsMarkDown(centralSyncItem, HTML);
+        return getNotificationAsMarkUp(centralSyncItem, HTML);
     }
     
     public static Notification getNotificationAsMarkDown(CentralSyncItem centralSyncItem){
-        return getNotificationAsMarkDown(centralSyncItem, MARKDOWN);
+        return getNotificationAsMarkUp(centralSyncItem, MARKDOWN);
     }
     
-    private static Notification getNotificationAsMarkDown(CentralSyncItem centralSyncItem, String format){
+    private static Notification getNotificationAsMarkUp(CentralSyncItem centralSyncItem, String format){
         String groupId = centralSyncItem.getNameVersionType().name().mvnGroupId();
         String artifactId = centralSyncItem.getNameVersionType().name().mvnArtifactId();
         String version = centralSyncItem.getNameVersionType().version();
