@@ -27,4 +27,11 @@ public class EmailNotification {
         mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
     }
     
+    @ConsumeEvent("error-in-workflow")
+    @Blocking
+    public void error(CentralSyncItem centralSyncItem) {
+        Notification notification = NotificationFormatter.getErrorAsHTML(centralSyncItem); 
+        mailer.send(Mail.withHtml("phillip.kruger@gmail.com", notification.title(), notification.body()));
+    }
+    
 }

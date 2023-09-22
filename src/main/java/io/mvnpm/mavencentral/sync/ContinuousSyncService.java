@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 import io.vertx.mutiny.core.eventbus.EventBus;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available, 
@@ -46,6 +47,8 @@ public class ContinuousSyncService {
     private final ConcurrentLinkedQueue<CentralSyncItem> closedQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<CentralSyncItem> releaseQueue = new ConcurrentLinkedQueue<>();
     private final ConcurrentLinkedQueue<CentralSyncItem> releasedQueue = new ConcurrentLinkedQueue<>();
+    
+    private final ConcurrentHashMap<String,Integer> loopCountMap = new ConcurrentHashMap<>();
     
     private Optional<CentralSyncItem> uploadInProgress = Optional.empty();
     
@@ -161,11 +164,17 @@ public class ContinuousSyncService {
         if(!closedQueue.isEmpty()){
             CentralSyncItem centralSyncItem = closedQueue.remove();
             RepoStatus status = sonatypeFacade.status(centralSyncItem.getStagingRepoId());
-            if(status.equals(RepoStatus.closed)){
+            if(status !=null && status.equals(RepoStatus.closed)){
+                resetLoopCount(centralSyncItem.getStagingRepoId());
                 centralSyncItem.setStage(Stage.CLOSED);
                 releaseQueue.add(centralSyncItem);
                 bus.publish("central-sync-item-stage-change", centralSyncItem);
+            }else if(shouldAbort(centralSyncItem.getStagingRepoId())){
+                // Give up
+                bus.publish("error-in-workflow", centralSyncItem);
             }else{
+                // Try again
+                incrementLoopCount(centralSyncItem.getStagingRepoId());
                 closedQueue.add(centralSyncItem);
             }
         }
@@ -177,11 +186,16 @@ public class ContinuousSyncService {
             CentralSyncItem centralSyncItem = releaseQueue.remove();
             boolean released = sonatypeFacade.release(centralSyncItem.getStagingRepoId());
             if(released){
+                resetLoopCount(centralSyncItem.getStagingRepoId());
                 centralSyncItem.setStage(Stage.RELEASING);
                 releasedQueue.add(centralSyncItem);
                 bus.publish("central-sync-item-stage-change", centralSyncItem);
+            }else if(shouldAbort(centralSyncItem.getStagingRepoId())){
+                // Give up
+                bus.publish("error-in-workflow", centralSyncItem);
             }else{
                 // Try again
+                incrementLoopCount(centralSyncItem.getStagingRepoId());
                 releaseQueue.add(centralSyncItem);
             }
         }
@@ -192,15 +206,47 @@ public class ContinuousSyncService {
         if(!releasedQueue.isEmpty()){
             CentralSyncItem centralSyncItem = releasedQueue.remove();
             RepoStatus status = sonatypeFacade.status(centralSyncItem.getStagingRepoId());
-            if(status !=null && status.equals(RepoStatus.released)){
+            if(status!=null && status.equals(RepoStatus.released)){
+                resetLoopCount(centralSyncItem.getStagingRepoId());
                 centralSyncItem.setStage(Stage.RELEASED);
                 inProgressQueue.remove(centralSyncItem);
                 bus.publish("artifact-released-to-central", centralSyncItem);
                 bus.publish("central-sync-item-stage-change", centralSyncItem);
-            }else if(status !=null){
+            }else if(shouldAbort(centralSyncItem.getStagingRepoId())){
+                // Give up
+                bus.publish("error-in-workflow", centralSyncItem);    
+            }else{
+                // Try again
+                incrementLoopCount(centralSyncItem.getStagingRepoId());
                 releasedQueue.add(centralSyncItem);
             }
         }
+    }
+    
+    private void resetLoopCount(String repoId){
+        if(loopCountMap.containsKey(repoId)){
+            loopCountMap.remove(repoId);
+        }
+    }
+    
+    private void incrementLoopCount(String repoId){
+        if(loopCountMap.containsKey(repoId)){
+            int count = loopCountMap.get(repoId)+1;
+            loopCountMap.replace(repoId, count);
+        }else{
+            loopCountMap.put(repoId, 1);
+        }
+    }
+    
+    private boolean shouldAbort(String repoId){
+        if(loopCountMap.containsKey(repoId)){
+            int count = loopCountMap.get(repoId);
+            if(count > 20){ // Make this configurable
+                loopCountMap.remove(repoId);
+                return true;
+            }
+        }
+        return false;
     }
     
     private boolean isInternal(Name name){

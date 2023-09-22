@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>2.0.17-SNAPSHOT</version>
+    <version>2.0.18-SNAPSHOT</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -56,7 +56,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.3.3</quarkus.platform.version>
+        <quarkus.platform.version>3.4.1</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.0.0</surefire-plugin.version>
 
@@ -64,15 +64,6 @@
         <quarkus-qute-server-pages.version>2.1.0.Final</quarkus-qute-server-pages.version>
         <quarkus-web-bundler.version>1.1.3</quarkus-web-bundler.version>
         <importmap.version>1.0.10</importmap.version>
-
-        <!-- mvnpm Libs -->
-        <vaadin.version>24.1.7</vaadin.version>
-        <codemirror.version>6.0.1</codemirror.version>
-        <lang-javascript.version>6.2.1</lang-javascript.version>
-        <lang-xml.version>6.0.2</lang-xml.version>
-        <lang-json.version>6.0.1</lang-json.version>
-        <legacy-modes.version>6.3.3</legacy-modes.version>
-        
     </properties>
     
     <dependencyManagement>
@@ -181,6 +172,7 @@
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>lit</artifactId>
+            <version>2.8.0</version>
             <scope>runtime</scope>
         </dependency>
         
@@ -188,6 +180,7 @@
         <dependency>
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>router</artifactId>
+            <version>1.7.5</version>
             <scope>runtime</scope>
         </dependency>
         
@@ -195,7 +188,7 @@
         <dependency>
             <groupId>org.mvnpm.at.mvnpm</groupId>
             <artifactId>vaadin-webcomponents</artifactId>
-            <version>${vaadin.version}</version>
+            <version>24.1.9</version>
             <scope>runtime</scope>
         </dependency>
         
@@ -203,31 +196,31 @@
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>codemirror</artifactId>
-            <version>${codemirror.version}</version>
+            <version>6.0.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-javascript</artifactId>
-            <version>${lang-javascript.version}</version>
+            <version>6.2.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-xml</artifactId>
-            <version>${lang-xml.version}</version>
+            <version>6.0.2</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-json</artifactId>
-            <version>${lang-json.version}</version>
+            <version>6.0.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>legacy-modes</artifactId>
-            <version>${legacy-modes.version}</version>
+            <version>6.3.3</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -298,18 +291,6 @@
                         </configuration>
                     </execution>
                 </executions>
-            </plugin>
-            
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions</artifactId>
-                <version>2.16.0</version>
-                <configuration>
-<!--                    <includesList>
-                        org.mvnpm:*, org.mvnpm.*:*
-                    </includesList>-->
-                    <changeRecorderFormat>xml</changeRecorderFormat>
-                </configuration>
             </plugin>
             
         </plugins>
@@ -393,7 +374,7 @@
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>autocomplete</artifactId>
-                        <version>6.9.0</version>
+                        <version>6.9.1</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
@@ -405,19 +386,19 @@
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>language</artifactId>
-                        <version>6.9.0</version>
+                        <version>6.9.1</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>lint</artifactId>
-                        <version>6.4.1</version>
+                        <version>6.4.2</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>search</artifactId>
-                        <version>6.5.2</version>
+                        <version>6.5.4</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
@@ -429,7 +410,7 @@
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>view</artifactId>
-                        <version>6.18.0</version>
+                        <version>6.20.0</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
@@ -467,7 +448,7 @@
                     <dependency>
                         <groupId>org.mvnpm.at.lezer</groupId>
                         <artifactId>common</artifactId>
-                        <version>1.0.4</version>
+                        <version>1.1.0</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>

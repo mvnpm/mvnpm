@@ -65,7 +65,12 @@ public class PomClient {
             model.setVersion(p.version());
             model.setPackaging(JAR);
             model.setName(p.name().displayName());
-            model.setDescription(p.description());
+            if(p.description()==null || p.description().isEmpty()){
+                model.setDescription(p.name().displayName());
+            }else{
+                model.setDescription(p.description());
+            }
+            
             model.setLicenses(toLicenses(p.license()));
             model.setScm(toScm(p.repository()));
             model.setUrl(toUrl(model, p.homepage()));
