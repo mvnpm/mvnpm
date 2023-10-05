@@ -7,8 +7,9 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import io.mvnpm.npm.NpmRegistryFacade;
-import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.SearchResults;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Some info on the Project
@@ -23,8 +24,14 @@ public class ProjectInfoApi {
     
     @GET
     @Path("/project/{project : (.+)?}")
-    public Project projectInfo(@PathParam("project") String project ) {
-        return npmRegistryFacade.getProject(project);
+    public Response projectInfo(@PathParam("project") String project ) {
+        try {
+            return Response.ok(npmRegistryFacade.getProject(project)).build();
+        } catch (WebApplicationException wae){
+            return wae.getResponse();
+        } catch(Throwable t){
+            return Response.serverError().header("reason", t.getMessage()).build();
+        }
     }
     
     @GET

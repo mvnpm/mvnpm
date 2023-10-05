@@ -15,6 +15,7 @@ import io.mvnpm.file.metadata.MetadataClient;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.Package;
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * The maven repository endpoint
@@ -39,9 +40,15 @@ public class MavenRepositoryApi {
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
     @Produces(MediaType.APPLICATION_XML)
     public Response getMavenMetadata(@PathParam("ga") String ga){
-        Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-        MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
-        return Response.ok(mah.data()).build();
+        try {
+            Name name = UrlPathParser.parseMavenMetaDataXml(ga);
+            MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
+            return Response.ok(mah.data()).build();
+        } catch(WebApplicationException wae){
+            return wae.getResponse();
+        } catch(Throwable t){
+            return Response.serverError().header("reason", t.getMessage()).build();
+        }
     }
     
     @GET

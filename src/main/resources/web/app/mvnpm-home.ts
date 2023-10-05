@@ -12,6 +12,7 @@ import '@vaadin/icons';
 import '@vaadin/progress-bar';
 import '@vaadin/tabs';
 import '@vaadin/tabsheet';
+import { Notification } from '@vaadin/notification';
 
 interface Coordinates {
     name: string;
@@ -436,29 +437,46 @@ export class MvnpmHome extends LitElement {
     }
     
     _showGA(name){ 
-        let groupPath: string;
-        let artifactPath: string;
-        if(name.match(/^[^:]+:[^:]+$/)) {
-            this._loadingIcon = "visible";
-            const ga = name.split(":");
-            groupPath = ga[0].trim().replaceAll('.', '/');
-            if(!groupPath.startsWith("org/mvnpm")) {
-                groupPath = `org/mvnpm/${groupPath}`;
+        if(name && name.length>0){
+            let groupPath: string;
+            let artifactPath: string;
+            if(name.match(/^[^:]+:[^:]+$/)) {
+                this._loadingIcon = "visible";
+                const ga = name.split(":");
+                groupPath = ga[0].trim().replaceAll('.', '/');
+                if(!groupPath.startsWith("org/mvnpm")) {
+                    groupPath = `org/mvnpm/${groupPath}`;
+                }
+                artifactPath = ga[1].trim();
+
+            } else {
+                // TODO: This should do a search...
+                this._loadingIcon = "visible";
+                groupPath = "org/mvnpm";
+                artifactPath =  name.replaceAll('@', 'at/');
             }
-            artifactPath = ga[1].trim();
 
-        } else {
-            // TODO: This should do a search...
-            this._loadingIcon = "visible";
-            groupPath = "org/mvnpm";
-            artifactPath =  name.replaceAll('@', 'at/');
+            const metadataUrl = `/maven2/${groupPath}/${artifactPath}/maven-metadata.xml`;
+            fetch(metadataUrl)
+                .then((response) => {
+                    this._stopLoading();
+                    if(response.ok){
+                        return response.text();
+                    }else if(response.status === 404){
+                        const notification = Notification.show(groupPath + '/' + artifactPath + ' not found', {
+                            position: 'top-center',
+                            duration: 5000,
+                        });
+                    }else{
+                        const notification = Notification.show('Error: ' + response.status + ' - ' + response.statusText, {
+                            position: 'top-center',
+                            duration: 5000,
+                        });
+                    }
+                })
+                .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
+                .then(metadata => this._inspectMetadata(metadata));
         }
-
-        const metadataUrl = `/maven2/${groupPath}/${artifactPath}/maven-metadata.xml`;
-        fetch(metadataUrl)
-            .then(response => response.text())
-            .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
-            .then(metadata => this._inspectMetadata(metadata));
     }
 
     _inspectMetadata(metadata){
@@ -479,11 +497,13 @@ export class MvnpmHome extends LitElement {
         this._versions = Array.from(s).reverse();
         
         this._changeVersion(this._latestVersion);
-        this._disabled = null;
-        this._loadingIcon = "hidden";
-
     }
     
+    _stopLoading(){
+        this._disabled = null;
+        this._loadingIcon = "hidden";
+    }
+
     _inspectModel(projectModel){
         let model = new Object();
 
