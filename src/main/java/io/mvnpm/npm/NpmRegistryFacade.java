@@ -5,6 +5,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.SearchResults;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 /**
@@ -24,8 +25,7 @@ public class NpmRegistryFacade {
         if(response.getStatus()<300){
             return response.readEntity(Project.class);
         }else{
-            // TODO: Retry ?
-            throw new RuntimeException("Error while fetching project information from NPM [" + project + "] " + response.getStatusInfo());
+            throw new WebApplicationException(response);
         }
     }
     
@@ -35,8 +35,7 @@ public class NpmRegistryFacade {
         if(response.getStatus()<300){
             return response.readEntity(io.mvnpm.npm.model.Package.class);
         }else{
-            // TODO: Retry ?
-            throw new RuntimeException("Error while fetching package information from NPM [" + project + ":" + version + "] " + response.getStatusInfo());
+            throw new WebApplicationException(response);
         }
     }
 
@@ -46,8 +45,7 @@ public class NpmRegistryFacade {
         if(response.getStatus()<300){
             return response.readEntity(SearchResults.class);
         }else{
-            // TODO: Retry ?
-            throw new RuntimeException("Error while searching package information from NPM [" + term + "] " + response.getStatusInfo());
+            throw new WebApplicationException(response);
         }
     }
     
