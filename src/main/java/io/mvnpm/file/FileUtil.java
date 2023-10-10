@@ -9,14 +9,15 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
 import io.mvnpm.Constants;
 
 public class FileUtil {
 
-    private FileUtil(){
-        
+    private FileUtil() {
+
     }
-    
+
     public static String getSha1(byte[] value) {
         try {
             MessageDigest md = MessageDigest.getInstance(Constants.SHA1);
@@ -30,15 +31,15 @@ public class FileUtil {
             throw new IllegalStateException(e);
         }
     }
-    
-    public static void createSha1(Path outputPath){
+
+    public static void createSha1(Path outputPath) {
         try {
             byte[] content = Files.readAllBytes(outputPath);
 
             String sha1 = FileUtil.getSha1(content);
             String localSha1FileName = outputPath.toString() + Constants.DOT_SHA1;
             Path f = Paths.get(localSha1FileName);
-            if(!Files.exists(f)){
+            if (!Files.exists(f)) {
                 synchronized (f) {
                     Files.writeString(f, sha1);
                 }
@@ -47,7 +48,7 @@ public class FileUtil {
             throw new IllegalStateException(ex);
         }
     }
-    
+
     public static String getMd5(byte[] value) {
         try {
             MessageDigest md = MessageDigest.getInstance(Constants.MD5);
@@ -57,7 +58,7 @@ public class FileUtil {
             throw new IllegalStateException(e);
         }
     }
-    
+
     public static void createMd5(Path outputPath) {
         try {
             byte[] content = Files.readAllBytes(outputPath);
@@ -65,7 +66,7 @@ public class FileUtil {
             String md5 = FileUtil.getMd5(content);
             String localMd5FileName = outputPath.toString() + Constants.DOT_MD5;
             Path f = Paths.get(localMd5FileName);
-            if(!Files.exists(f)){
+            if (!Files.exists(f)) {
                 synchronized (f) {
                     Files.writeString(f, md5);
                 }
@@ -74,11 +75,11 @@ public class FileUtil {
             throw new IllegalStateException(ex);
         }
     }
-    
+
     public static void createAsc(Path localFilePath) {
         String outputFile = localFilePath.toString() + Constants.DOT_ASC;
         Path f = Paths.get(outputFile);
-        if(!Files.exists(f)){
+        if (!Files.exists(f)) {
             try {
                 synchronized (f) {
                     Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFilePath.toString());
@@ -92,6 +93,6 @@ public class FileUtil {
             }
         }
     }
-    
+
     private static final String GPG_COMMAND = "gpg -ab ";
 }

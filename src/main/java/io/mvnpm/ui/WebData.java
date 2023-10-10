@@ -1,11 +1,11 @@
 package io.mvnpm.ui;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import java.util.Calendar;
+
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.util.Calendar;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @Singleton
 @Named("web")

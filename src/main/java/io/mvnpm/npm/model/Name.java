@@ -1,25 +1,30 @@
 package io.mvnpm.npm.model;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.mvnpm.Constants;
 import java.io.File;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import io.mvnpm.Constants;
 
 /**
  * Represent a Name from both NPM and Maven
+ *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @JsonDeserialize(using = NameDeserializer.class)
-public record Name (
-    String npmFullName,
-    String npmNamespace, 
-    String npmName, 
-    String mvnGroupId, 
-    String mvnArtifactId,
-    String mvnPath,
-    String displayName){
-    
-    public Name(String npmFullName, String npmNamespace, String npmName, String mvnGroupId, String mvnArtifactId, String mvnPath, String displayName) {
-        if(npmNamespace == null && npmName == null && mvnGroupId == null && mvnArtifactId == null && mvnPath == null && displayName == null){
+public record Name(
+        String npmFullName,
+        String npmNamespace,
+        String npmName,
+        String mvnGroupId,
+        String mvnArtifactId,
+        String mvnPath,
+        String displayName) {
+
+    public Name(String npmFullName, String npmNamespace, String npmName, String mvnGroupId, String mvnArtifactId,
+            String mvnPath, String displayName) {
+        if (npmNamespace == null && npmName == null && mvnGroupId == null && mvnArtifactId == null && mvnPath == null
+                && displayName == null) {
             Name parsed = NameParser.fromNpmProject(npmFullName);
             this.npmFullName = parsed.npmFullName();
             this.npmNamespace = parsed.npmNamespace();
@@ -28,7 +33,7 @@ public record Name (
             this.mvnArtifactId = parsed.mvnArtifactId();
             this.mvnPath = parsed.mvnPath();
             this.displayName = parsed.displayName();
-        }else{
+        } else {
             this.npmFullName = npmFullName;
             this.npmNamespace = npmNamespace;
             this.npmName = npmName;
@@ -36,24 +41,25 @@ public record Name (
             this.mvnArtifactId = mvnArtifactId;
             this.mvnPath = mvnPath;
             this.displayName = displayName;
-        }   
+        }
     }
-    
+
     public Name(String npmFullName) {
         this(npmFullName, null, null, null, null, null, null);
     }
-    
+
     @Override
     public String toString() {
         return this.npmFullName;
     }
-    
-    public String mvnGroupIdPath(){
+
+    public String mvnGroupIdPath() {
         return this.mvnGroupId.replaceAll(Constants.ESCAPED_DOT, File.separator);
     }
-    
-    public boolean isInternal(){
+
+    public boolean isInternal() {
         return this.mvnGroupId.equals(INTERNAL_NS);
     }
+
     private static final String INTERNAL_NS = "org.mvnpm.at.mvnpm";
 }

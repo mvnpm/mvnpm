@@ -1,21 +1,22 @@
 package io.mvnpm;
 
+import java.net.URL;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
 import com.microsoft.playwright.BrowserContext;
 import com.microsoft.playwright.ElementHandle;
-import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Response;
+
 import io.quarkiverse.playwright.InjectPlaywright;
 import io.quarkiverse.playwright.WithPlaywright;
 import io.quarkus.test.common.http.TestHTTPResource;
 import io.quarkus.test.junit.QuarkusTest;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-
-import java.net.URL;
 
 @QuarkusTest
-@WithPlaywright(debug = true)
+@WithPlaywright
 public class UITest {
 
     @InjectPlaywright
@@ -43,7 +44,8 @@ public class UITest {
         coordinatesInputEl.fill("lit");
         coordinatesInputEl.press("Enter");
         final ElementHandle depEl = page.waitForSelector("#pom-dependency-code");
-        Assertions.assertTrue(depEl.innerText().contains("<artifactId>lit</artifactId>"), "contains <artifactId>lit</artifactId>");
+        Assertions.assertTrue(depEl.innerText().contains("<artifactId>lit</artifactId>"),
+                "contains <artifactId>lit</artifactId>");
 
     }
 

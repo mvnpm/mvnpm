@@ -1,33 +1,36 @@
 package io.mvnpm.file.type;
 
-import java.net.URL;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import io.mvnpm.file.FileStore;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Path;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+
+import io.mvnpm.file.FileStore;
 
 /**
  * Downloads or stream the tar files from npm
+ *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
- * 
- * TODO: Error handling (when version / package does not exist)
- * TODO: Add metrics / analytics / eventing ?
+ *
+ *         TODO: Error handling (when version / package does not exist)
+ *         TODO: Add metrics / analytics / eventing ?
  */
 @ApplicationScoped
 public class TgzClient {
 
-    @Inject 
+    @Inject
     FileStore fileStore;
-    
-    public byte[] fetchRemote(io.mvnpm.npm.model.Package p, Path localFileName){
+
+    public byte[] fetchRemote(io.mvnpm.npm.model.Package p, Path localFileName) {
         URL tarball = p.dist().tarball();
-        
+
         try {
             byte[] downloadFile = downloadFile(tarball);
             return fileStore.createFile(p, localFileName, downloadFile);
@@ -35,7 +38,7 @@ public class TgzClient {
             throw new RuntimeException("Error download tar from NPM " + tarball + " [" + ex.getMessage() + "]");
         }
     }
-    
+
     private byte[] downloadFile(URL url) throws FileNotFoundException {
         try {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -58,7 +61,7 @@ public class TgzClient {
             } finally {
                 connection.disconnect();
             }
-        }catch(IOException e){
+        } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }

@@ -1,9 +1,10 @@
 package io.mvnpm.mavencentral.sync;
 
-import io.mvnpm.maven.NameVersionType;
-import io.mvnpm.npm.model.Name;
 import java.time.LocalDateTime;
 import java.util.Objects;
+
+import io.mvnpm.maven.NameVersionType;
+import io.mvnpm.npm.model.Name;
 
 public class CentralSyncItem {
     private LocalDateTime startTime;
@@ -12,17 +13,17 @@ public class CentralSyncItem {
     private Stage stage;
     private NameVersionType nameVersionType;
 
-    public CentralSyncItem(){
-        
+    public CentralSyncItem() {
+
     }
-    
+
     public CentralSyncItem(Name name, String version) {
         this.nameVersionType = new NameVersionType(name, version);
         this.startTime = LocalDateTime.now();
         this.stage = Stage.INIT;
         this.stageChangeTime = LocalDateTime.now();
     }
-    
+
     public LocalDateTime getStartTime() {
         return startTime;
     }
@@ -88,7 +89,8 @@ public class CentralSyncItem {
 
     @Override
     public String toString() {
-        return "CentralSyncItem{" + "startTime=" + startTime + ", stageChangeTime=" + stageChangeTime + ", stagingRepoId=" + stagingRepoId + ", stage=" + stage + ", nameVersionType=" + nameVersionType + '}';
+        return "CentralSyncItem{" + "startTime=" + startTime + ", stageChangeTime=" + stageChangeTime + ", stagingRepoId="
+                + stagingRepoId + ", stage=" + stage + ", nameVersionType=" + nameVersionType + '}';
     }
 
 }
