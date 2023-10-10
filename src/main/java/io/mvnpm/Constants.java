@@ -31,6 +31,7 @@ public interface Constants {
     public static final String HYPHEN = "-";
     public static final String TILDE = "~";
     public static final String CARET = "^";
+    public static final String ESCAPED_CARET = "\\^";
     public static final String SLASH = "/";
     public static final String EMPTY = "";
     public static final String SHA1 = "sha1";

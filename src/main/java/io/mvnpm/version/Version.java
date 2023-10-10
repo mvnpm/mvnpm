@@ -15,6 +15,7 @@ public record Version(Integer major,
     private static final String DEFAULT_QUALIFIER = null;//"alpha00000000";
 
     public static Version fromString(String version) {
+        version = version.trim();
         try {
             String numberPart = version;
             String qualifier = null;

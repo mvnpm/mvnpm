@@ -7,9 +7,11 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestResponse;
 
 import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.SearchResults;
 
 /**
@@ -26,13 +28,13 @@ public class ProjectInfoApi {
 
     @GET
     @Path("/project/{project : (.+)?}")
-    public Response projectInfo(@PathParam("project") String project) {
+    public RestResponse<Project> projectInfo(@PathParam("project") String project) {
         try {
-            return Response.ok(npmRegistryFacade.getProject(project)).build();
+            return RestResponse.ok(npmRegistryFacade.getProject(project));
         } catch (WebApplicationException wae) {
-            return wae.getResponse();
+            return RestResponse.status(wae.getResponse().getStatus(), wae.getResponse().getStatusInfo().getReasonPhrase());
         } catch (Throwable t) {
-            return Response.serverError().header("reason", t.getMessage()).build();
+            return RestResponse.status(500, t.getMessage());
         }
     }
 
