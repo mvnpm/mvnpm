@@ -238,7 +238,7 @@ export class MvnpmHome extends LitElement {
 
     _renderCoordinates(){
         return html`<div class="coordinates">
-            <vaadin-text-field label="Name (Package or Coordinates)" style="width: 500px"
+            <vaadin-text-field id="coordinates-field" label="Name (Package or Coordinates)" style="width: 500px"
                     @focusout="${this._findVersionsAndShowLatest}" 
                     @keypress="${this._findVersionsAndShowLatest}" 
                     @input="${this._coordinatesNameChanged}" 
@@ -318,13 +318,13 @@ export class MvnpmHome extends LitElement {
                                 <div class="dependencies">
                                     <div class="useBlock">
                                         <span class="heading">Pom dependency</span>
-                                        <pre lang="xml" class="basiccode">${this._usePom}</pre>
+                                        <pre lang="xml" class="basiccode" id="pom-dependency-code">${this._usePom}</pre>
                                         <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
                                     </div>
                                     
                                     <div class="useBlock">
                                         <span class="heading">Import map</span>
-                                        <pre lang="json" class="basiccode">${this._useJson}</pre>
+                                        <pre lang="json" class="basiccode" id="import-map-code">${this._useJson}</pre>
                                     </div>
 
                                     <div class="useBlock">

@@ -10,17 +10,18 @@ import jakarta.ws.rs.ext.Provider;
 
 /**
  * Make sure the route pages can reload
+ *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @Provider
 public class NotFoundExeptionMapper implements ExceptionMapper<NotFoundException> {
-    
+
     @Context
     HttpHeaders headers;
-    
+
     @Context
     UriInfo uriInfo;
-    
+
     @Override
     public Response toResponse(NotFoundException exception) {
         return Response.status(404).entity(exception.getMessage()).build();

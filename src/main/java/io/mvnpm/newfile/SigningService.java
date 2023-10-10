@@ -1,15 +1,16 @@
 package io.mvnpm.newfile;
 
-import io.quarkus.logging.Log;
-import io.quarkus.vertx.ConsumeEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import io.mvnpm.file.FileStoreEvent;
 import io.mvnpm.file.FileUtil;
+import io.quarkus.logging.Log;
+import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 
 /**
  * Sign newly created file
+ *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped

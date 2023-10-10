@@ -1,53 +1,57 @@
 package io.mvnpm.npm;
 
-import io.quarkus.cache.CacheResult;
 import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.rest.client.inject.RestClient;
-import io.mvnpm.npm.model.Project;
-import io.mvnpm.npm.model.SearchResults;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
+import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.SearchResults;
+import io.quarkus.cache.CacheResult;
+
 /**
- * Facade on the NPM Registry. 
+ * Facade on the NPM Registry.
  * Adds caching
+ *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
 public class NpmRegistryFacade {
-  
-    @RestClient 
+
+    @RestClient
     NpmRegistryClient npmRegistryClient;
-    
+
     @CacheResult(cacheName = "npm-project-cache")
-    public Project getProject(String project){
+    public Project getProject(String project) {
         Response response = npmRegistryClient.getProject(project);
-        if(response.getStatus()<300){
+        if (response.getStatus() < 300) {
             return response.readEntity(Project.class);
-        }else{
+        } else {
             throw new WebApplicationException(response);
         }
     }
-    
+
     @CacheResult(cacheName = "npm-package-cache")
-    public io.mvnpm.npm.model.Package getPackage(String project, String version){
+    public io.mvnpm.npm.model.Package getPackage(String project, String version) {
         Response response = npmRegistryClient.getPackage(project, version);
-        if(response.getStatus()<300){
+        if (response.getStatus() < 300) {
             return response.readEntity(io.mvnpm.npm.model.Package.class);
-        }else{
+        } else {
             throw new WebApplicationException(response);
         }
     }
 
     public SearchResults search(String term, int page) {
-        if(page<0) page = 1;
+        if (page < 0)
+            page = 1;
         Response response = npmRegistryClient.search(term, ITEMS_PER_PAGE, page - 1, 1.0, 0.0, 0.0);
-        if(response.getStatus()<300){
+        if (response.getStatus() < 300) {
             return response.readEntity(SearchResults.class);
-        }else{
+        } else {
             throw new WebApplicationException(response);
         }
     }
-    
+
     private static final int ITEMS_PER_PAGE = 50; // TODO: Move to config ?
 }
