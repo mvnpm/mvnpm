@@ -6,6 +6,7 @@ import static io.mvnpm.Constants.CLOSE_ROUND;
 import static io.mvnpm.Constants.COMMA;
 import static io.mvnpm.Constants.EMPTY;
 import static io.mvnpm.Constants.EQUAL_TO;
+import static io.mvnpm.Constants.ESCAPED_CARET;
 import static io.mvnpm.Constants.EX;
 import static io.mvnpm.Constants.GREATER_THAN;
 import static io.mvnpm.Constants.GREATER_THAN_OR_EQUAL_TO;
@@ -84,11 +85,13 @@ public class VersionConverter {
 
         // Tilde range
         if (version.startsWith(TILDE)) {
+            version = cleanTildeVersion(version);
             return convertTilde(version);
         }
 
         // Caret range
         if (version.startsWith(CARET)) {
+            version = cleanCaretVersion(version);
             return convertCaret(version);
         }
 
@@ -102,6 +105,7 @@ public class VersionConverter {
 
         // Operator range
         if (version.startsWith(LESS_THAN) || version.startsWith(GREATER_THAN)) {
+            version = cleanOperatorVersion(version);
             return convertOperator(version);
         }
 
@@ -275,4 +279,41 @@ public class VersionConverter {
         }
         return version;
     }
+
+    private static String cleanOperatorVersion(String version) {
+        if (version.contains(LESS_THAN_OR_EQUAL_TO + " ")) {
+            version = version.replaceAll(LESS_THAN_OR_EQUAL_TO + " ", LESS_THAN_OR_EQUAL_TO);
+            return cleanOperatorVersion(version);
+        }
+        if (version.contains(LESS_THAN + " ")) {
+            version = version.replaceAll(LESS_THAN + " ", LESS_THAN);
+            return cleanOperatorVersion(version);
+        }
+        if (version.contains(GREATER_THAN_OR_EQUAL_TO + " ")) {
+            version = version.replaceAll(GREATER_THAN_OR_EQUAL_TO + " ", GREATER_THAN_OR_EQUAL_TO);
+            return cleanOperatorVersion(version);
+        }
+        if (version.contains(GREATER_THAN + " ")) {
+            version = version.replaceAll(GREATER_THAN + " ", GREATER_THAN);
+            return cleanOperatorVersion(version);
+        }
+        return version;
+    }
+
+    private static String cleanTildeVersion(String version) {
+        if (version.contains(TILDE + " ")) {
+            version = version.replaceAll(TILDE + " ", TILDE);
+            return cleanTildeVersion(version);
+        }
+        return version;
+    }
+
+    private static String cleanCaretVersion(String version) {
+        if (version.contains(CARET + " ")) {
+            version = version.replaceAll(ESCAPED_CARET + " ", CARET);
+            return cleanCaretVersion(version);
+        }
+        return version;
+    }
+
 }
