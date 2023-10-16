@@ -46,8 +46,9 @@ public class VersionConverter {
 
     public static String convert(String versionString) {
         try {
-            if (null == versionString)
+            if (null == versionString || versionString.startsWith("git:/") || versionString.startsWith("git+http")) { // We do not support git repos as version. Maybe something we can add later
                 versionString = EMPTY;
+            }
 
             versionString = versionString.trim();
             String[] orSet;
@@ -238,7 +239,8 @@ public class VersionConverter {
         } else if (s.startsWith(GREATER_THAN)) {
             return OPEN_ROUND + Version.fromString(s.substring(1));
         } else {
-            throw new InvalidVersionException(s);
+            // Equal. If no operator is specified, then equality is assumed, so this operator is optional, but MAY be included.
+            return cleanVersion(s);
         }
     }
 
@@ -248,7 +250,8 @@ public class VersionConverter {
         } else if (s.startsWith(LESS_THAN)) {
             return Version.fromString(s.substring(1)) + CLOSE_ROUND;
         } else {
-            throw new InvalidVersionException(s);
+            // Equal. If no operator is specified, then equality is assumed, so this operator is optional, but MAY be included.
+            return cleanVersion(s);
         }
     }
 

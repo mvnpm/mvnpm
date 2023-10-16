@@ -28,17 +28,23 @@ public class NpmRegistryFacade {
         if (response.getStatus() < 300) {
             return response.readEntity(Project.class);
         } else {
-            throw new WebApplicationException(response);
+            throw new WebApplicationException("Error while getting Project for [" + project + "]", response);
         }
     }
 
     @CacheResult(cacheName = "npm-package-cache")
     public io.mvnpm.npm.model.Package getPackage(String project, String version) {
+        if (null == version || version.startsWith("git:/") || version.startsWith("git+http")) {
+            // We do not support git repos as version. Maybe something we can add later
+            version = "*";
+        }
+
         Response response = npmRegistryClient.getPackage(project, version);
         if (response.getStatus() < 300) {
             return response.readEntity(io.mvnpm.npm.model.Package.class);
         } else {
-            throw new WebApplicationException(response);
+            throw new WebApplicationException("Error while getting Package for [" + project + "] version [" + version + "]",
+                    response);
         }
     }
 
