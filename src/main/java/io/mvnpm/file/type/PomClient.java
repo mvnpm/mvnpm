@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -118,13 +117,22 @@ public class PomClient {
         }
     }
 
-    private List<License> toLicenses(String license) {
-        if (license != null && !license.isEmpty()) {
-            License l = new License();
-            l.setName(license);
-            return List.of(l);
+    private List<License> toLicenses(io.mvnpm.npm.model.License license) {
+        License l = new License();
+
+        if (license != null) {
+            if (license.type() != null) {
+                l.setName(license.type());
+            }
+            if (license.url() != null) {
+                l.setUrl(license.url().toString());
+            }
         }
-        return Collections.EMPTY_LIST;
+
+        if (l.getName() == null && l.getUrl() == null) {
+            l.setName("none");
+        }
+        return List.of(l);
     }
 
     private Organization toOrganization(io.mvnpm.npm.model.Package p) {
@@ -168,22 +176,32 @@ public class PomClient {
             s.setConnection(conn);
             s.setDeveloperConnection(conn);
             return s;
+        } else {
+            Scm s = new Scm();
+            s.setUrl("https://github.com/mvnpm/mvnpm.git");
+            s.setConnection("https://github.com/mvnpm/mvnpm.git");
+            s.setDeveloperConnection("https://github.com/mvnpm/mvnpm.git");
+            return s;
         }
-        return null;
+
     }
 
     private List<Developer> toDevelopers(List<Maintainer> maintainers) {
+        List<Developer> ds = new ArrayList<>();
         if (maintainers != null && !maintainers.isEmpty()) {
-            List<Developer> ds = new ArrayList<>();
             for (Maintainer m : maintainers) {
                 Developer d = new Developer();
                 d.setEmail(m.email());
                 d.setName(m.name());
                 ds.add(d);
             }
-            return ds;
         }
-        return Collections.EMPTY_LIST;
+        if (ds.isEmpty()) {
+            Developer d = new Developer();
+            d.setName("unknown");
+            ds.add(d);
+        }
+        return ds;
     }
 
     private List<Dependency> toDependencies(Map<Name, String> dependencies) {

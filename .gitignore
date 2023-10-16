@@ -41,3 +41,4 @@ nbactions.xml
 # Local environment
 .env
 /dev.sh
+/local.sh
