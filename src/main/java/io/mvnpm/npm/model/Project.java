@@ -12,7 +12,7 @@ public record Project(
         String description,
         @JsonProperty("dist-tags") DistTags distTags,
         URL homepage,
-        String license,
+        @JsonDeserialize(using = LicenseDeserializer.class) License license,
         @JsonDeserialize(using = VersionDeserializer.class) Set<String> versions,
         Map<String, String> time) {
 }
