@@ -184,6 +184,23 @@ export class MvnpmHome extends LitElement {
         .copy:hover { 
             color:var(--lumo-success-color);
         }
+
+        .gaveventlogconsole {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding-left: 20px;
+            padding-right: 20px;
+            background: black;
+            font-family: 'Courier New', monospace;
+            font-size: small;
+            filter: brightness(0.85);
+            }
+        .gaveventlogline {
+            display: flex;
+            flex-direction: row;
+            gap: 10px;
+        }
     `;
 
     @state() 
@@ -214,6 +231,9 @@ export class MvnpmHome extends LitElement {
     private _loadingIcon = "hidden";
     @state() 
     private _syncInfo?: object;
+    @state() 
+    private _gavEventLog?: object;
+    
 
     constructor() {
         super();
@@ -221,6 +241,7 @@ export class MvnpmHome extends LitElement {
         this._disabled = "disabled";
         this._codeViewSelection = ".pom";
         this._syncInfo = null;
+        this._gavEventLog = null;
     }
 
     render() {
@@ -270,6 +291,7 @@ export class MvnpmHome extends LitElement {
                 <vaadin-tabs slot="tabs">
                     <vaadin-tab id="info-tab">info</vaadin-tab>
                     <vaadin-tab id="files-tab">files</vaadin-tab>
+                    <vaadin-tab id="event-log-tab">event log</vaadin-tab>
                 </vaadin-tabs>
 
                 <div tab="info-tab">
@@ -279,11 +301,25 @@ export class MvnpmHome extends LitElement {
                 <div tab="files-tab">
                     ${this._loadFilesTab()}
                 </div>
-            
+
+                <div tab="event-log-tab">
+                    ${this._loadEventLogTab()}
+                </div>
+
             </vaadin-tabsheet>`;
         }
     }
     
+    _showNpmjsLink(){
+        if(this._syncInfo){
+            var npmUrl = "https://www.npmjs.com/package/" + this._syncInfo.name.npmFullName + "/v/" + this._syncInfo.version;
+
+            return html`<a href="${npmUrl}" target="_blank">
+                            <vaadin-icon title="${this._syncInfo.name.npmFullName}" icon="vaadin:tag"></vaadin-icon> npm registry
+                        </a>`;
+        }
+    }
+
     _loadSyncIcon(){
         if(this._syncInfo){
             if(this._syncInfo.inCentral){
@@ -304,6 +340,7 @@ export class MvnpmHome extends LitElement {
                                 <h1>${this._coordinates.name} ${this._coordinates.version}</h1>
                                 <div class="info-buttons">
                                     ${this._loadSyncIcon()}
+                                    ${this._showNpmjsLink()}
                                     <a href="${this._info.scmUrl}" target="_blank"><vaadin-icon icon="vaadin:code"></vaadin-icon> code</a>
                                     <a href="${this._info.issueUrl}" target="_blank"><vaadin-icon icon="vaadin:bug-o"></vaadin-icon> issues</a>
                                     <a href="${this._info.url}" target="_blank"><vaadin-icon icon="vaadin:external-link"></vaadin-icon> page</a>
@@ -373,6 +410,40 @@ export class MvnpmHome extends LitElement {
         }
     }
     
+    _loadEventLogTab(){
+        if(this._gavEventLog){
+            return html`<div class="gaveventlogconsole">
+            ${this._renderGavEventLog()}
+          </div>`;
+        }
+    }
+
+    private _renderGavEventLog() {
+        if (this._gavEventLog && this._gavEventLog.length > 0) {
+            return html`
+                ${this._gavEventLog.map((entry) => {
+                    return html`${this._renderGavEventLogLine(entry)}`
+                })}
+              `;
+        } else {
+            return html`<p>Nothing in the event log</p>`;
+        }
+    }
+
+    private _renderGavEventLogLine(entry){
+        let formattedTime = entry.time.substring(0, entry.time.indexOf(".")).replace('T',' ');
+        
+        return html`<div class="gaveventlogline">
+                        <span style="color: grey">${formattedTime}</span>
+                        <span style="color: lightblue">${entry.groupId}</span>
+                        <span style="color: lightyellow">${entry.artifactId}</span>
+                        <span style="color: lightpink">${entry.version}</span>
+                        <span style="color: lightgrey">[${entry.stage}]</span>
+                        <span style="color: ${entry.color}">${entry.message}</span>
+                    </div>`;
+    }
+
+
     _renderFileGroup(heading,fileExt, icon){
         return html`
             <span class="heading">${heading}</span>
@@ -640,7 +711,11 @@ export class MvnpmHome extends LitElement {
         groupId = groupId.replaceAll('/', '.');
         this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
         var syncInfoUrl = "/api/sync/info/" + groupId + "/" + artifactId + "?version=" + version;
-        
+        var eventLogUrl = `/api/eventlog/gav/${groupId}/${artifactId}/${version}`;
+        fetch(eventLogUrl)
+            .then(response => response.json())
+            .then(response => this._gavEventLog = response);
+
         groupId = groupId.replaceAll('.', '/');
         var importMapUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/importmap.json";
 

@@ -112,7 +112,7 @@ public class ContinuousSyncService {
     public boolean initializeSync(Name name, String version) {
 
         CentralSyncItem itemInQ = new CentralSyncItem(name, version);
-        SyncInfo syncInfo = centralSyncService.getSyncInfo(name.mvnGroupId(), name.mvnArtifactId(), version);
+        SyncInfo syncInfo = centralSyncService.getSyncInfo(name, version);
         if (syncInfo.canSync()) { // Check if this is already synced
             if (!inProgressQueue.contains(itemInQ)) { // Already somewhere in the process
                 inProgressQueue.add(itemInQ);
@@ -152,8 +152,8 @@ public class ContinuousSyncService {
     }
 
     private String processUpload(CentralSyncItem centralSyncItem) {
-        SyncInfo syncInfo = centralSyncService.getSyncInfo(centralSyncItem.getNameVersionType().name().mvnGroupId(),
-                centralSyncItem.getNameVersionType().name().mvnArtifactId(), centralSyncItem.getNameVersionType().version());
+        SyncInfo syncInfo = centralSyncService.getSyncInfo(centralSyncItem.getNameVersionType().name(),
+                centralSyncItem.getNameVersionType().version());
         if (syncInfo.canSync()) {
             // Kick off an update
             Log.debug("Version [" + centralSyncItem.getNameVersionType().version() + "] of "

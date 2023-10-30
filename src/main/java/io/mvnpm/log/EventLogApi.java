@@ -13,6 +13,7 @@ import jakarta.websocket.server.ServerEndpoint;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 
 import io.mvnpm.mavencentral.sync.*;
@@ -32,7 +33,7 @@ import io.vertx.core.impl.ConcurrentHashSet;
 @ApplicationScoped
 public class EventLogApi {
 
-    private Set<Session> sessions = new ConcurrentHashSet<>();
+    private final Set<Session> sessions = new ConcurrentHashSet<>();
 
     @OnOpen
     public void onOpen(Session session) {
@@ -93,4 +94,10 @@ public class EventLogApi {
         return EventLogEntry.findAll(Sort.by("time")).range(0, limit).list();
     }
 
+    @GET
+    @Path("/gav/{groupId}/{artifactId}/{version}")
+    public List<EventLogEntry> getGavLog(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+            @PathParam("version") String version) {
+        return EventLogEntry.findByGav(groupId, artifactId, version);
+    }
 }
