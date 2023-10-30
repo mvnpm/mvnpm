@@ -63,7 +63,7 @@ public class CentralSyncService {
 
     public String sync(Name name, String version) {
         Path bundlePath = bundleCreator.bundle(name, version);
-        return sonatypeFacade.upload(bundlePath);
+        return sonatypeFacade.upload(name, version, bundlePath);
     }
 
     @ConsumeEvent("artifact-released-to-central")

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.mvnpm</groupId>
     <artifactId>mvnpm</artifactId>
-    <version>2.0.25-SNAPSHOT</version>
+    <version>2.0.25</version>
     
     <name>mvnpm</name>
     <description>Maven on NPM</description>
@@ -56,9 +56,9 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.4.3</quarkus.platform.version>
+        <quarkus.platform.version>3.5.0</quarkus.platform.version>
         <skipITs>true</skipITs>
-        <surefire-plugin.version>3.0.0</surefire-plugin.version>
+        <surefire-plugin.version>3.1.2</surefire-plugin.version>
         <formatter.plugin.version>2.23.0</formatter.plugin.version>
         <impsort.plugin.version>1.9.0</impsort.plugin.version>
         <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
@@ -146,6 +146,16 @@
             <artifactId>quarkus-mailer</artifactId>
         </dependency>
 
+        <!-- To save to the db -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-hibernate-orm-panache</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-jdbc-postgresql</artifactId>
+        </dependency>
+
         <!-- To create the importmap -->
         <dependency>
             <groupId>io.mvnpm</groupId>
@@ -171,11 +181,10 @@
         </dependency>
 
         <!-- UI (from mvnpm) -->
-        <!-- Lit -->
+        <!-- Vaadin Web components -->
         <dependency>
-            <groupId>org.mvnpm</groupId>
-            <artifactId>lit</artifactId>
-            <version>3.0.0</version>
+            <groupId>org.mvnpm.at.mvnpm</groupId>
+            <artifactId>vaadin-webcomponents</artifactId>
             <scope>runtime</scope>
         </dependency>
         
@@ -183,15 +192,6 @@
         <dependency>
             <groupId>org.mvnpm.at.vaadin</groupId>
             <artifactId>router</artifactId>
-            <version>1.7.5</version>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <!-- Vaadin Web components -->
-        <dependency>
-            <groupId>org.mvnpm.at.mvnpm</groupId>
-            <artifactId>vaadin-webcomponents</artifactId>
-            <version>24.1.10</version>
             <scope>runtime</scope>
         </dependency>
         
@@ -199,31 +199,26 @@
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>codemirror</artifactId>
-            <version>6.0.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-javascript</artifactId>
-            <version>6.2.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-xml</artifactId>
-            <version>6.0.2</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-json</artifactId>
-            <version>6.0.1</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>legacy-modes</artifactId>
-            <version>6.3.3</version>
             <scope>runtime</scope>
         </dependency>
 
@@ -244,6 +239,140 @@
             <version>0.0.1</version>
             <scope>test</scope>
         </dependency>
+        
+        
+        
+        
+        
+        
+        
+        <dependency>
+    <groupId>org.mvnpm.at.hpcc-js</groupId>
+    <artifactId>wasm</artifactId>
+    <version>2.14.1</version>
+    <scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>yargs</artifactId>
+	<version>17.7.2</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>cliui</artifactId>
+	<version>8.0.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>escalade</artifactId>
+	<version>3.1.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>get-caller-file</artifactId>
+	<version>2.0.5</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>require-directory</artifactId>
+	<version>2.1.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>string-width</artifactId>
+	<version>4.2.3</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>y18n</artifactId>
+	<version>5.0.8</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>yargs-parser</artifactId>
+	<version>21.1.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>strip-ansi</artifactId>
+	<version>6.0.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>wrap-ansi</artifactId>
+	<version>7.0.0</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>emoji-regex</artifactId>
+	<version>8.0.0</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>is-fullwidth-code-point</artifactId>
+	<version>3.0.0</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>ansi-regex</artifactId>
+	<version>5.0.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>ansi-styles</artifactId>
+	<version>4.3.0</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>strip-ansi</artifactId>
+	<version>6.0.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>color-convert</artifactId>
+	<version>2.0.1</version>
+	<scope>runtime</scope>
+</dependency>
+
+<dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>color-name</artifactId>
+	<version>1.1.4</version>
+	<scope>runtime</scope>
+</dependency>
+
     </dependencies>
 
     <build>
@@ -364,37 +493,77 @@
             <id>mvnpm-locked</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>native</name>
+                </property>
             </activation>
             <dependencyManagement>
                 <dependencies>
-                     <!--Lit--> 
+                    <!-- Vaadin Web components -->
+                    <dependency>
+                        <groupId>org.mvnpm.at.mvnpm</groupId>
+                        <artifactId>vaadin-webcomponents</artifactId>
+                        <version>24.2.1</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                    
+                    <!-- Vaadin router -->
+                    <dependency>
+                        <groupId>org.mvnpm.at.vaadin</groupId>
+                        <artifactId>router</artifactId>
+                        <version>1.7.5</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.mvnpm</groupId>
+                        <artifactId>path-to-regexp</artifactId>
+                        <version>2.4.0</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                    
+                    <!--Lit--> 
+                    <dependency>
+                        <groupId>org.mvnpm</groupId>
+                        <artifactId>lit</artifactId>
+                        <version>2.8.0</version>
+                        <scope>runtime</scope>
+                    </dependency>
                     <dependency>
                         <groupId>org.mvnpm.at.lit</groupId>
                         <artifactId>reactive-element</artifactId>
-                        <version>2.0.0</version>
+                        <version>1.6.3</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
                         <groupId>org.mvnpm</groupId>
                         <artifactId>lit-element</artifactId>
-                        <version>4.0.0</version>
+                        <version>3.3.3</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
                         <groupId>org.mvnpm</groupId>
                         <artifactId>lit-html</artifactId>
-                        <version>3.0.0</version>
+                        <version>2.8.0</version>
                         <scope>runtime</scope>
                     </dependency>
-
+                    <dependency>
+                        <groupId>org.mvnpm.at.lit-labs</groupId>
+                        <artifactId>ssr-dom-shim</artifactId>
+                        <version>1.1.2</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.mvnpm.at.types</groupId>
+                        <artifactId>trusted-types</artifactId>
+                        <version>2.0.5</version>
+                        <scope>runtime</scope>
+                    </dependency>
                     <dependency>
                         <groupId>org.mvnpm.at.webcomponents</groupId>
                         <artifactId>shadycss</artifactId>
                         <version>1.11.2</version>
                         <scope>runtime</scope>
                     </dependency>
-
-                     <!--Vaadin--> 
                     <dependency>
                         <groupId>org.mvnpm.at.open-wc</groupId>
                         <artifactId>dedupe-mixin</artifactId>
@@ -407,6 +576,7 @@
                         <version>3.5.1</version>
                         <scope>runtime</scope>
                     </dependency>
+                    <!-- Vaadin -->
                     <dependency>
                         <groupId>org.mvnpm.at.vaadin</groupId>
                         <artifactId>vaadin-usage-statistics</artifactId>
@@ -420,11 +590,23 @@
                         <scope>runtime</scope>
                     </dependency>
                     
-                     <!--Codemirror--> 
+                    <!--Codemirror-->
+                    <dependency>
+                        <groupId>org.mvnpm</groupId>
+                        <artifactId>codemirror</artifactId>
+                        <version>6.0.1</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.mvnpm.at.codemirror</groupId>
+                        <artifactId>legacy-modes</artifactId>
+                        <version>6.3.3</version>
+                        <scope>runtime</scope>
+                    </dependency> 
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>autocomplete</artifactId>
-                        <version>6.9.1</version>
+                        <version>6.10.2</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
@@ -436,7 +618,7 @@
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>language</artifactId>
-                        <version>6.9.1</version>
+                        <version>6.9.2</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
@@ -454,13 +636,13 @@
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>state</artifactId>
-                        <version>6.2.1</version>
+                        <version>6.3.1</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
                         <groupId>org.mvnpm.at.codemirror</groupId>
                         <artifactId>view</artifactId>
-                        <version>6.21.2</version>
+                        <version>6.21.4</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
@@ -484,7 +666,7 @@
                     <dependency>
                         <groupId>org.mvnpm.at.lezer</groupId>
                         <artifactId>lr</artifactId>
-                        <version>1.3.10</version>
+                        <version>1.3.13</version>
                         <scope>runtime</scope>
                     </dependency>
                     <dependency>
@@ -494,7 +676,13 @@
                         <scope>runtime</scope>
                     </dependency>
                     
-                     <!--CodeMirror Javascript--> 
+                     <!--CodeMirror Javascript-->
+                     <dependency>
+                        <groupId>org.mvnpm.at.codemirror</groupId>
+                        <artifactId>lang-javascript</artifactId>
+                        <version>6.2.1</version>
+                        <scope>runtime</scope>
+                    </dependency> 
                     <dependency>
                         <groupId>org.mvnpm.at.lezer</groupId>
                         <artifactId>common</artifactId>
@@ -504,11 +692,17 @@
                     <dependency>
                         <groupId>org.mvnpm.at.lezer</groupId>
                         <artifactId>javascript</artifactId>
-                        <version>1.4.7</version>
+                        <version>1.4.8</version>
                         <scope>runtime</scope>
                     </dependency>
                     
-                     <!--CodeMirror XML--> 
+                     <!--CodeMirror XML-->
+                     <dependency>
+                        <groupId>org.mvnpm.at.codemirror</groupId>
+                        <artifactId>lang-xml</artifactId>
+                        <version>6.0.2</version>
+                        <scope>runtime</scope>
+                    </dependency>
                     <dependency>
                         <groupId>org.mvnpm.at.lezer</groupId>
                         <artifactId>xml</artifactId>
@@ -516,7 +710,13 @@
                         <scope>runtime</scope>
                     </dependency>
                     
-                     <!--CodeMirror Json--> 
+                     <!--CodeMirror Json-->
+                     <dependency>
+                        <groupId>org.mvnpm.at.codemirror</groupId>
+                        <artifactId>lang-json</artifactId>
+                        <version>6.0.1</version>
+                        <scope>runtime</scope>
+                    </dependency> 
                     <dependency>
                         <groupId>org.mvnpm.at.lezer</groupId>
                         <artifactId>json</artifactId>

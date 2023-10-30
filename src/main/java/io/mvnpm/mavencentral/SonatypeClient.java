@@ -34,13 +34,6 @@ public interface SonatypeClient {
             @PathParam("stagingRepoId") String stagingRepoId);
 
     @POST
-    @Path("/service/local/staging/profiles/{profileId}/finish")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response closeUploadBundle(@HeaderParam("Authorization") String authorization,
-            @PathParam("profileId") String profileId, JsonObject closeRequest);
-
-    @POST
     @Path("/service/local/staging/profiles/{profileId}/promote")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -48,27 +41,9 @@ public interface SonatypeClient {
             @PathParam("profileId") String profileId, JsonObject promoteRequest);
 
     @GET
-    @Path("/service/local/staging/profiles")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getStagingProfiles(@HeaderParam("Authorization") String authorization);
-
-    @GET
-    @Path("/service/local/staging/profiles/{profileId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getStagingProfile(@HeaderParam("Authorization") String authorization,
-            @PathParam("profileId") String profileId);
-
-    @GET
     @Path("/service/local/staging/profile_repositories/{profileId}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getStagingProfileRepos(@HeaderParam("Authorization") String authorization,
             @PathParam("profileId") String profileId);
-
-    @POST
-    @Path("/service/local/staging/profiles/{profileId}/finish")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response finishReleaseToCentral(@HeaderParam("Authorization") String authorization,
-            @PathParam("profileId") String profileId, JsonObject promoteRequest);
 
 }

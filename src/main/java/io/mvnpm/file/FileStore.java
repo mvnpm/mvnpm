@@ -86,7 +86,7 @@ public class FileStore {
                 throw new UncheckedIOException(ex);
             }
         } else {
-            if (triedNumber > 5)
+            if (triedNumber > 10)
                 throw new RuntimeException("Timed out while waiting for " + localFileName);
             try {
                 // Wait 5 seconds and try again.

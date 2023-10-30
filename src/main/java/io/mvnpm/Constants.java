@@ -5,6 +5,7 @@ public interface Constants {
     public static final String OR = "||";
     public static final String OR_ESCAPED = "\\|\\|";
     public static final String SPACE = " ";
+    public static final String SPACE_URL_ENCODED = "%20";
     public static final String ZERO = "0";
     public static final String DOT = ".";
     public static final String COMMA = ",";
@@ -84,4 +85,5 @@ public interface Constants {
     public static final String STAGED_TO_OSS = "staged-to-oss";
     public static final String STAGED_REPO_ID = "staged-repo-id";
     public static final String TRUE = "true";
+
 }
