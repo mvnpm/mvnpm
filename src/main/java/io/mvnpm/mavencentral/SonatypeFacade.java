@@ -16,13 +16,13 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.mvnpm.Constants;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.npm.model.Name;
+import io.quarkus.cache.CacheResult;
 import io.quarkus.logging.Log;
 import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.json.JsonObject;
 
 /**
  * Facade on the OSS Sonatype server
- * TODO: Add caching for search (5 mins or so)
  *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
@@ -56,6 +56,7 @@ public class SonatypeFacade {
     String searchMavenUrl;
 
     @Blocking
+    @CacheResult(cacheName = "maven-search-cache")
     public JsonObject search(String groupId, String artifactId, String version) {
         String q = String.format(Q_FORMAT, groupId, artifactId, version);
         try {

@@ -5,6 +5,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
 /**
@@ -17,6 +18,7 @@ public interface SearchMavenClient {
 
     @GET
     @Path("/solrsearch/select")
+    @Retry(maxRetries = 3)
     public Response search(@QueryParam("q") String q,
             @QueryParam("core") String core,
             @QueryParam("rows") String rows,

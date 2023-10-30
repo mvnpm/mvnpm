@@ -85,7 +85,7 @@ public class CentralSyncApi {
         if (version.equalsIgnoreCase("latest")) {
             version = getLatestVersion(name);
         }
-        return centralSyncService.getSyncInfo(groupId, artifactId, version);
+        return centralSyncService.getSyncInfo(name, version);
     }
 
     @GET

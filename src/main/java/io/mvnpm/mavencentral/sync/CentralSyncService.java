@@ -32,10 +32,10 @@ public class CentralSyncService {
     @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = ".m2")
     String localM2Dir;
 
-    public SyncInfo getSyncInfo(String groupId, String artifactId, String version) {
-        boolean checkCentral = isAvailable(groupId, artifactId, version);
-        boolean checkStaging = isStaged(groupId, artifactId, version);
-        return new SyncInfo(checkCentral, checkStaging);
+    public SyncInfo getSyncInfo(Name name, String version) {
+        boolean checkCentral = isAvailable(name.mvnGroupId(), name.mvnArtifactId(), version);
+        boolean checkStaging = isStaged(name.mvnGroupId(), name.mvnArtifactId(), version);
+        return new SyncInfo(name, version, checkCentral, checkStaging);
     }
 
     public boolean isAvailable(String groupId, String artifactId, String version) {
