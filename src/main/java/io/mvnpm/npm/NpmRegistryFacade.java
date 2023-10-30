@@ -9,6 +9,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.SearchResults;
 import io.quarkus.cache.CacheResult;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * Facade on the NPM Registry.
@@ -23,6 +24,7 @@ public class NpmRegistryFacade {
     NpmRegistryClient npmRegistryClient;
 
     @CacheResult(cacheName = "npm-project-cache")
+    @Blocking
     public Project getProject(String project) {
         Response response = npmRegistryClient.getProject(project);
         if (response.getStatus() < 300) {
@@ -33,6 +35,7 @@ public class NpmRegistryFacade {
     }
 
     @CacheResult(cacheName = "npm-package-cache")
+    @Blocking
     public io.mvnpm.npm.model.Package getPackage(String project, String version) {
         if (null == version || version.startsWith("git:/") || version.startsWith("git+http")) {
             // We do not support git repos as version. Maybe something we can add later
@@ -48,6 +51,7 @@ public class NpmRegistryFacade {
         }
     }
 
+    @Blocking
     public SearchResults search(String term, int page) {
         if (page < 0)
             page = 1;

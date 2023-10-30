@@ -124,7 +124,8 @@ public class ContinuousSyncService {
         return false;
     }
 
-    @Scheduled(every = "10s")
+    @Scheduled(every = "20s")
+    @Blocking
     void processInitQueue() {
         if (uploadInProgress.isEmpty()) { // We upload one at a time
             if (!initQueue.isEmpty()) {
@@ -168,11 +169,13 @@ public class ContinuousSyncService {
         }
     }
 
-    @Scheduled(every = "10s")
+    @Scheduled(every = "40s")
+    @Blocking
     void processClosedQueue() {
         if (!closedQueue.isEmpty()) {
             CentralSyncItem centralSyncItem = closedQueue.remove();
-            RepoStatus status = sonatypeFacade.status(centralSyncItem.getStagingRepoId());
+            RepoStatus status = sonatypeFacade.status(centralSyncItem.getNameVersionType().name(),
+                    centralSyncItem.getNameVersionType().version(), centralSyncItem.getStagingRepoId());
             if (status != null && status.equals(RepoStatus.closed)) {
                 resetLoopCount(centralSyncItem.getStagingRepoId());
                 centralSyncItem.setStage(Stage.CLOSED);
@@ -189,11 +192,13 @@ public class ContinuousSyncService {
         }
     }
 
-    @Scheduled(every = "10s")
+    @Scheduled(every = "40s")
+    @Blocking
     void processReleaseQueue() {
         if (!releaseQueue.isEmpty()) {
             CentralSyncItem centralSyncItem = releaseQueue.remove();
-            boolean released = sonatypeFacade.release(centralSyncItem.getStagingRepoId());
+            boolean released = sonatypeFacade.release(centralSyncItem.getNameVersionType().name(),
+                    centralSyncItem.getNameVersionType().version(), centralSyncItem.getStagingRepoId());
             if (released) {
                 resetLoopCount(centralSyncItem.getStagingRepoId());
                 centralSyncItem.setStage(Stage.RELEASING);
@@ -210,11 +215,13 @@ public class ContinuousSyncService {
         }
     }
 
-    @Scheduled(every = "10s")
+    @Scheduled(every = "40s")
+    @Blocking
     void processReleasedQueue() {
         if (!releasedQueue.isEmpty()) {
             CentralSyncItem centralSyncItem = releasedQueue.remove();
-            RepoStatus status = sonatypeFacade.status(centralSyncItem.getStagingRepoId());
+            RepoStatus status = sonatypeFacade.status(centralSyncItem.getNameVersionType().name(),
+                    centralSyncItem.getNameVersionType().version(), centralSyncItem.getStagingRepoId());
             if (status != null && status.equals(RepoStatus.released)) {
                 resetLoopCount(centralSyncItem.getStagingRepoId());
                 centralSyncItem.setStage(Stage.RELEASED);
@@ -250,7 +257,7 @@ public class ContinuousSyncService {
     private boolean shouldAbort(String repoId) {
         if (loopCountMap.containsKey(repoId)) {
             int count = loopCountMap.get(repoId);
-            if (count > 20) { // Make this configurable
+            if (count > 50) { // Make this configurable
                 loopCountMap.remove(repoId);
                 return true;
             }

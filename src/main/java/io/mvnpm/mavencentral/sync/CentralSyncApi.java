@@ -22,6 +22,7 @@ import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.impl.ConcurrentHashSet;
 
 /**
@@ -71,6 +72,7 @@ public class CentralSyncApi {
     }
 
     @ConsumeEvent("central-sync-item-stage-change")
+    @Blocking
     public void stateChange(CentralSyncItem centralSyncItem) {
         broadcast(centralSyncItem);
     }

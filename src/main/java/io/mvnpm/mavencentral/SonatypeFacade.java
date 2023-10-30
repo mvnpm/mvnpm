@@ -7,12 +7,17 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import io.mvnpm.Constants;
+import io.mvnpm.error.ErrorHandlingService;
+import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
+import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -29,6 +34,9 @@ public class SonatypeFacade {
     private static final String ROWS = "1";
     private static final String WT = "json";
 
+    @Inject
+    ErrorHandlingService errorHandlingService;
+
     @RestClient
     SearchMavenClient searchMavenClient;
 
@@ -44,6 +52,10 @@ public class SonatypeFacade {
     @ConfigProperty(name = "mvnpm.sonatype.profileId", defaultValue = "473ee06cf882e")
     String profileId;
 
+    @ConfigProperty(name = "quarkus.rest-client.search-maven.url")
+    String searchMavenUrl;
+
+    @Blocking
     public JsonObject search(String groupId, String artifactId, String version) {
         String q = String.format(Q_FORMAT, groupId, artifactId, version);
         try {
@@ -52,7 +64,9 @@ public class SonatypeFacade {
                 return searchResponse.readEntity(JsonObject.class);
             }
         } catch (Throwable t) {
-            Log.error(t.getMessage());
+            String u = searchMavenUrl + "/solrsearch/select?q=" + q.replaceAll(Constants.SPACE, Constants.SPACE_URL_ENCODED)
+                    + "&core=gav&rows=1&wt=json";
+            errorHandlingService.handle(groupId, artifactId, version, "Error while searching maven central [" + u + "]", t);
         }
         return null;
     }
@@ -73,7 +87,8 @@ public class SonatypeFacade {
         return false;
     }
 
-    public String upload(Path path) {
+    @Blocking
+    public String upload(Name name, String version, Path path) {
         Log.debug("====== mvnpm: Nexus Uploader ======");
         Log.debug("\tUploading " + path + "...");
         byte[] b;
@@ -94,58 +109,63 @@ public class SonatypeFacade {
                     Log.info("Uploaded bundle " + path + " to staging repo [" + repositoryId + "]");
                     return repositoryId;
                 } else {
-                    Log.error("Error uploading bundle " + path + " - status [" + uploadResponse.getStatus() + "]");
+                    errorHandlingService.handle(name, version,
+                            "Error uploading bundle " + path + " - status [" + uploadResponse.getStatus() + "]");
                 }
             } catch (Throwable t) {
-                Log.error("Error uploading bundle " + path + " - " + t.getMessage());
+                errorHandlingService.handle(name, version, "Error uploading bundle " + path, t);
             }
         }
 
         return null;
     }
 
-    public RepoStatus status(String repositoryId) {
+    @Blocking
+    public RepoStatus status(Name name, String version, String repositoryId) {
         if (authorization.isPresent()) {
             String a = "Basic " + authorization.get();
             try {
                 Response statusResponse = sonatypeClient.uploadBundleStatus(a, repositoryId);
 
-                if (statusResponse.getStatus() < 299) {
+                if (statusResponse.getStatus() < 300) {
                     JsonObject resp = statusResponse.readEntity(JsonObject.class);
                     String type = resp.getString("type");
                     return RepoStatus.valueOf(type);
                 } else {
-                    Log.error("Error checking status for staging repo " + repositoryId + " - status ["
-                            + statusResponse.getStatus() + "]");
+                    errorHandlingService.handle(name, version,
+                            "Error checking status for staging repo " + repositoryId + " - status ["
+                                    + statusResponse.getStatus() + "]");
                 }
             } catch (Throwable t) {
-                Log.error("Error checking status for staging repo " + repositoryId + " - " + t.getMessage());
+                errorHandlingService.handle(name, version, "Error checking status for staging repo " + repositoryId, t);
             }
             return null;
         }
         return null;
     }
 
-    public boolean release(String repositoryId) {
+    @Blocking
+    public boolean release(Name name, String version, String repositoryId) {
         if (authorization.isPresent() && autoRelease) {
             String a = "Basic " + authorization.get();
             try {
                 Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, toPromoteRequest(repositoryId));
 
-                if (promoteResponse.getStatus() < 299) {
+                if (promoteResponse.getStatus() < 300) {
                     return true;
                 } else {
-                    Log.error(
+                    errorHandlingService.handle(name, version,
                             "Error promoting staging repo " + repositoryId + " - status [" + promoteResponse.getStatus() + "]");
                 }
             } catch (Throwable t) {
-                Log.error("Error promoting staging repo " + repositoryId + " - " + t.getMessage());
+                errorHandlingService.handle(name, version, "Error promoting staging repo " + repositoryId, t);
             }
             return false;
         }
         return true;
     }
 
+    @Blocking
     public JsonObject getStagingProfileRepos() {
         if (authorization.isPresent()) {
             String a = "Basic " + authorization.get();

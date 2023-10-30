@@ -27,6 +27,7 @@ import io.mvnpm.file.FileStoreEvent;
 import io.mvnpm.file.FileUtil;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * Create source jar file from tgz
@@ -39,6 +40,7 @@ public class SourceService {
     private final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.tgz");
 
     @ConsumeEvent("new-file-created")
+    @Blocking
     public void consumeNewFileCreatedEvent(FileStoreEvent fse) {
         if (matcher.matches(fse.filePath().getFileName())) {
             Path tgzFile = fse.filePath();

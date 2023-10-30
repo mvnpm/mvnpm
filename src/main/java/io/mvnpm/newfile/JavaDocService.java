@@ -14,6 +14,7 @@ import io.mvnpm.file.FileUtil;
 import io.mvnpm.file.type.JarClient;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * Create a dummy javadoc file
@@ -29,6 +30,7 @@ public class JavaDocService {
     JarClient jarClient;
 
     @ConsumeEvent("new-file-created")
+    @Blocking
     public void newFileCreated(FileStoreEvent fse) {
         if (matcher.matches(fse.filePath().getFileName())) {
             Path jarFile = fse.filePath();
