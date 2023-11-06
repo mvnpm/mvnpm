@@ -77,7 +77,7 @@ public class ContinuousSyncService {
                 Log.error("Could not do update for [" + name + "] - " + wae.getMessage());
             }
         } else {
-            Log.warn("TODO: !!!!!!! Handle internal " + name.mvnGroupId + ":" + name.mvnArtifactId);
+            // TODO: Handle internal compositions !
         }
     }
 
@@ -231,7 +231,7 @@ public class ContinuousSyncService {
     }
 
     private boolean isInternal(Name name) {
-        return name.mvnGroupId.equals("org.mvnpm.at.mvnpm") || 
+        return name.mvnGroupId.equals("org.mvnpm.at.mvnpm") ||
                 (name.mvnGroupId.equals("org.mvnpm.locked") && name.mvnArtifactId.equals("lit")) || // Failed attempt at hardcoding versions
                 (name.mvnGroupId.equals("org.mvnpm.locked.at.vaadin") && name.mvnArtifactId.equals("router")) || // Failed attempt at hardcoding versions
                 (name.mvnGroupId.equals("org.mvnpm") && name.mvnArtifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave

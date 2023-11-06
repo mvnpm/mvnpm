@@ -195,7 +195,7 @@ public class SonatypeFacade {
     @Blocking
     public boolean release(Name name, String version, String repositoryId) throws PromotionException {
         if (authorization.isPresent()) {
-            if(autoRelease){
+            if (autoRelease) {
                 String a = "Basic " + authorization.get();
 
                 Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, toPromoteRequest(repositoryId));
@@ -204,9 +204,9 @@ public class SonatypeFacade {
                     return true;
                 } else {
                     throw new PromotionException(
-                        "HTTP Response status " + promoteResponse.getStatus() + "] for repo " + repositoryId);
+                            "HTTP Response status " + promoteResponse.getStatus() + "] for repo " + repositoryId);
                 }
-            }else {
+            } else {
                 return true;
             }
         } else {
