@@ -1,10 +1,13 @@
 package io.mvnpm.npm;
 
+import java.time.temporal.ChronoUnit;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.faulttolerance.Retry;
+import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.mvnpm.npm.model.Project;
@@ -25,6 +28,7 @@ public class NpmRegistryFacade {
     NpmRegistryClient npmRegistryClient;
 
     @CacheResult(cacheName = "npm-project-cache")
+    @Timeout(unit = ChronoUnit.SECONDS, value = 10)
     @Retry(maxRetries = 3)
     @Blocking
     public Project getProject(String project) {

@@ -193,21 +193,19 @@ public class SonatypeFacade {
     }
 
     @Blocking
-    public boolean release(Name name, String version, String repositoryId) throws PromotionException {
+    public void release(Name name, String version, String repositoryId) throws PromotionException {
         if (authorization.isPresent()) {
             if (autoRelease) {
                 String a = "Basic " + authorization.get();
 
                 Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, toPromoteRequest(repositoryId));
 
-                if (promoteResponse.getStatus() < 300) {
-                    return true;
-                } else {
+                if (promoteResponse.getStatus() >= 300) {
+                    JsonObject error = promoteResponse.readEntity(JsonObject.class);
+                    Log.error(error.toString());
                     throw new PromotionException(
                             "HTTP Response status " + promoteResponse.getStatus() + "] for repo " + repositoryId);
                 }
-            } else {
-                return true;
             }
         } else {
             throw new UnauthorizedException("Authorization not present for " + repositoryId);
