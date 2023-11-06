@@ -7,6 +7,7 @@ import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.WebApplicationException;
 
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.file.FileStore;
@@ -66,10 +67,14 @@ public class ContinuousSyncService {
         Log.debug("\tChecking " + name.npmFullName);
         if (!isInternal(name)) {
             // Get latest in NPM TODO: Later make this per patch release...
-            Project project = npmRegistryFacade.getProject(name.npmFullName);
-            if (project != null) {
-                String latest = project.distTags().latest();
-                initializeSync(name, latest);
+            try {
+                Project project = npmRegistryFacade.getProject(name.npmFullName);
+                if (project != null) {
+                    String latest = project.distTags().latest();
+                    initializeSync(name, latest);
+                }
+            } catch (WebApplicationException wae) {
+                Log.error("Could not do update for [" + name + "] - " + wae.getMessage());
             }
         } else {
             Log.warn("TODO: !!!!!!! Handle internal " + name.mvnGroupId + ":" + name.mvnArtifactId);
@@ -226,7 +231,10 @@ public class ContinuousSyncService {
     }
 
     private boolean isInternal(Name name) {
-        return name.mvnGroupId.equals("org.mvnpm.at.mvnpm");
+        return name.mvnGroupId.equals("org.mvnpm.at.mvnpm") || 
+                (name.mvnGroupId.equals("org.mvnpm.locked") && name.mvnArtifactId.equals("lit")) || // Failed attempt at hardcoding versions
+                (name.mvnGroupId.equals("org.mvnpm.locked.at.vaadin") && name.mvnArtifactId.equals("router")) || // Failed attempt at hardcoding versions
+                (name.mvnGroupId.equals("org.mvnpm") && name.mvnArtifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
     }
 
     /**
