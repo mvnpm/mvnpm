@@ -64,8 +64,8 @@ public class MetadataClient {
 
     private Metadata getMetadata(Name name) {
         Metadata metadata = new Metadata();
-        metadata.setGroupId(name.mvnGroupId());
-        metadata.setArtifactId(name.mvnArtifactId());
+        metadata.setGroupId(name.mvnGroupId);
+        metadata.setArtifactId(name.mvnArtifactId);
         metadata.setVersioning(getVersioning(name));
         return metadata;
 
@@ -84,7 +84,7 @@ public class MetadataClient {
 
         Map<String, Date> versions = compositeService.getVersions(name);
         if (versions.isEmpty())
-            throw new RuntimeException("No version found for " + name.displayName());
+            throw new RuntimeException("No version found for " + name.displayName);
 
         boolean isFirst = true;
         for (Map.Entry<String, Date> version : versions.entrySet()) {
@@ -102,7 +102,7 @@ public class MetadataClient {
                     versioning.addVersion(v.toString());
                 }
             } catch (InvalidVersionException ive) {
-                Log.warn("Ignoring version [" + ive.getVersion() + "] for " + name.displayName());
+                Log.warn("Ignoring version [" + ive.getVersion() + "] for " + name.displayName);
             }
         }
 
@@ -110,7 +110,7 @@ public class MetadataClient {
     }
 
     private Versioning getNpmVersioning(Name name) {
-        Project project = npmRegistryFacade.getProject(name.npmFullName());
+        Project project = npmRegistryFacade.getProject(name.npmFullName);
         Versioning versioning = new Versioning();
         String latest = getLatest(project);
         versioning.setLatest(latest);
@@ -126,7 +126,7 @@ public class MetadataClient {
                     }
                 }
             } catch (InvalidVersionException ive) {
-                Log.warn("Ignoring version [" + ive.getVersion() + "] for " + name.displayName());
+                Log.warn("Ignoring version [" + ive.getVersion() + "] for " + name.displayName);
             }
         }
 

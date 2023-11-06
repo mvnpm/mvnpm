@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.mvnpm.npm.model.Project;
@@ -24,6 +25,7 @@ public class NpmRegistryFacade {
     NpmRegistryClient npmRegistryClient;
 
     @CacheResult(cacheName = "npm-project-cache")
+    @Retry(maxRetries = 3)
     @Blocking
     public Project getProject(String project) {
         Response response = npmRegistryClient.getProject(project);

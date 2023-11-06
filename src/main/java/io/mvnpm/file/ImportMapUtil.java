@@ -20,8 +20,8 @@ public class ImportMapUtil {
         String module = getModule(p);
         Map<String, String> v = new HashMap<>();
 
-        v.put(p.name().npmFullName(), root + module);
-        v.put(p.name().npmFullName() + Constants.SLASH, root + getModuleRoot(module));
+        v.put(p.name().npmFullName, root + module);
+        v.put(p.name().npmFullName + Constants.SLASH, root + getModuleRoot(module));
 
         Imports imports = new Imports(v);
 
@@ -31,7 +31,7 @@ public class ImportMapUtil {
     }
 
     public static String getImportMapRoot(io.mvnpm.npm.model.Package p) {
-        String root = STATIC_ROOT + p.name().npmName();
+        String root = STATIC_ROOT + p.name().npmName;
         if (p.repository() != null && p.repository().directory() != null && !p.repository().directory().isEmpty()) {
             String d = p.repository().directory();
             if (d.startsWith(PACKAGES + Constants.SLASH)) {

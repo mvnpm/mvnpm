@@ -6,6 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import io.mvnpm.log.EventLogEntry;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.Stage;
 import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
@@ -23,16 +24,20 @@ public class ErrorHandlingService {
     @Inject
     EventBus bus;
 
+    public void handle(CentralSyncItem centralSyncItem, Throwable t) {
+        handle(centralSyncItem.name, centralSyncItem.version, t);
+    }
+
     public void handle(Name name, String version, Throwable t) {
-        handle(name.mvnGroupId(), name.mvnArtifactId(), version, t);
+        handle(name.mvnGroupId, name.mvnArtifactId, version, t);
     }
 
     public void handle(Name name, String version, String message) {
-        handle(name.mvnGroupId(), name.mvnArtifactId(), version, message, new RuntimeException(""));
+        handle(name.mvnGroupId, name.mvnArtifactId, version, message, new RuntimeException(""));
     }
 
     public void handle(Name name, String version, String message, Throwable t) {
-        handle(name.mvnGroupId(), name.mvnArtifactId(), version, message, t);
+        handle(name.mvnGroupId, name.mvnArtifactId, version, message, t);
     }
 
     public void handle(String groupId, String artifactId, String version, Throwable t) {

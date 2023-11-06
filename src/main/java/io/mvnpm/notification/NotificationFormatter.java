@@ -61,11 +61,11 @@ public class NotificationFormatter {
     }
 
     private static Notification getNotificationAsMarkUp(CentralSyncItem centralSyncItem, String format) {
-        String groupId = centralSyncItem.getNameVersionType().name().mvnGroupId();
-        String artifactId = centralSyncItem.getNameVersionType().name().mvnArtifactId();
-        String version = centralSyncItem.getNameVersionType().version();
-        String npmName = centralSyncItem.getNameVersionType().name().npmFullName();
-        String repo = centralSyncItem.getStagingRepoId();
+        String groupId = centralSyncItem.name.mvnGroupId;
+        String artifactId = centralSyncItem.name.mvnArtifactId;
+        String version = centralSyncItem.version;
+        String npmName = centralSyncItem.name.npmFullName;
+        String repo = centralSyncItem.stagingRepoId;
 
         String title = groupId + ":" + artifactId + ":" + version;
         String body = format.formatted(groupId, artifactId, version, npmName, repo);

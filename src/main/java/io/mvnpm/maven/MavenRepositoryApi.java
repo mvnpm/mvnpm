@@ -79,7 +79,7 @@ public class MavenRepositoryApi {
         if (nameVersionType.name().isInternal()) {
             return Response.ok().build(); // TODO: Can we return this in some format ?
         } else {
-            return Response.ok(npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version()))
+            return Response.ok(npmRegistryFacade.getPackage(nameVersionType.name().npmFullName, nameVersionType.version()))
                     .build();
         }
     }
@@ -93,7 +93,7 @@ public class MavenRepositoryApi {
             byte[] importMap = compositeService.getImportMap(nameVersionType.name(), nameVersionType.version());
             return Response.ok(importMap).build();
         } else {
-            Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName(), nameVersionType.version());
+            Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName, nameVersionType.version());
             return Response.ok(ImportMapUtil.createImportMap(npmPackage)).build();
         }
     }

@@ -81,7 +81,7 @@ public class JarClient {
                 JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(byteOutput)) {
 
             // Pom details
-            String pomXmlDir = POM_ROOT + p.name().mvnGroupId() + Constants.SLASH + p.name().mvnArtifactId() + Constants.SLASH;
+            String pomXmlDir = POM_ROOT + p.name().mvnGroupId + Constants.SLASH + p.name().mvnArtifactId + Constants.SLASH;
 
             // Pom xml entry
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_XML, pomBytes);
@@ -150,8 +150,8 @@ public class JarClient {
     private byte[] createPomProperties(io.mvnpm.npm.model.Package p) throws IOException {
         Properties properties = new Properties();
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            properties.setProperty(Constants.GROUP_ID, p.name().mvnGroupId());
-            properties.setProperty(Constants.ARTIFACT_ID, p.name().mvnArtifactId());
+            properties.setProperty(Constants.GROUP_ID, p.name().mvnGroupId);
+            properties.setProperty(Constants.ARTIFACT_ID, p.name().mvnArtifactId);
             properties.setProperty(Constants.VERSION, p.version());
             properties.store(baos, POM_DOT_PROPERTIES_COMMENT);
             return baos.toByteArray();
