@@ -7,5 +7,6 @@ public enum Stage {
     UPLOADED,
     CLOSED,
     RELEASING,
-    RELEASED
+    RELEASED,
+    ERROR
 }

@@ -13,7 +13,6 @@ import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.mavencentral.PromotionException;
 import io.mvnpm.mavencentral.RepoStatus;
 import io.mvnpm.mavencentral.SonatypeFacade;
-import io.mvnpm.mavencentral.StatusCheckException;
 import io.mvnpm.mavencentral.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -144,7 +143,13 @@ public class ContinuousSyncService {
                 } catch (UnauthorizedException unauthorizedException) {
                     errorHandlingService.handle(centralSyncItem, unauthorizedException);
                 } catch (Throwable throwable) {
+                    centralSyncItem.increaseUploadAttempt();
                     errorHandlingService.handle(centralSyncItem, throwable);
+                    if (centralSyncItem.uploadAttempts < 10) {
+                        centralSyncItem = stageService.changeStage(centralSyncItem, Stage.INIT);
+                    } else {
+                        centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
+                    }
                 }
             }
         } else if (centralSyncItem.stage.equals(Stage.CLOSED)) {
@@ -160,7 +165,13 @@ public class ContinuousSyncService {
             } catch (UnauthorizedException unauthorizedException) {
                 errorHandlingService.handle(centralSyncItem, unauthorizedException);
             } catch (Throwable throwable) {
+                centralSyncItem.increasePromotionAttempt();
                 errorHandlingService.handle(centralSyncItem, throwable);
+                if (centralSyncItem.promotionAttempts < 10) {
+                    centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
+                } else {
+                    centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
+                }
             }
         }
     }
@@ -217,11 +228,13 @@ public class ContinuousSyncService {
                     uploadedItem = stageService.changeStage(uploadedItem, Stage.UPLOADED);
                     // TODO: Check for error ?
                 } else if (status.equals(RepoStatus.closed)) {
-                    uploadedItem = stageService.changeStage(uploadedItem, Stage.CLOSED);
+                    if (!uploadedItem.stage.equals(Stage.RELEASING) && !uploadedItem.stage.equals(Stage.RELEASED)) {
+                        uploadedItem = stageService.changeStage(uploadedItem, Stage.CLOSED);
+                    }
                 } else if (status.equals(RepoStatus.released)) {
                     uploadedItem = stageService.changeStage(uploadedItem, Stage.RELEASED);
                 }
-            } catch (StatusCheckException exception) {
+            } catch (Throwable exception) {
                 errorHandlingService.handle(uploadedItem, exception);
                 uploadedItem = stageService.changeStage(uploadedItem, uploadedItem.stage);
             }
