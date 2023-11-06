@@ -14,6 +14,7 @@ import java.nio.file.PathMatcher;
 import java.util.zip.GZIPInputStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
@@ -23,8 +24,8 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 import io.mvnpm.Constants;
+import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileStoreEvent;
-import io.mvnpm.file.FileUtil;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
@@ -39,6 +40,9 @@ public class SourceService {
 
     private final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.tgz");
 
+    @Inject
+    FileStore fileStore;
+
     @ConsumeEvent("new-file-created")
     @Blocking
     public void consumeNewFileCreatedEvent(FileStoreEvent fse) {
@@ -48,10 +52,7 @@ public class SourceService {
             Path sourceFile = Path.of(tgzFile.toString().replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR));
             boolean ok = createJar(tgzFile, sourceFile);
             if (ok) {
-                FileUtil.createSha1(sourceFile);
-                // TODO: Rather fire event again ?
-                FileUtil.createMd5(sourceFile);
-                FileUtil.createAsc(sourceFile);
+                fileStore.touch(fse.name(), fse.version(), sourceFile);
             }
             Log.debug("source created " + fse.filePath() + "[" + ok + "]");
         }

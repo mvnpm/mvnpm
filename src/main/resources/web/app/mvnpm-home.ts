@@ -230,7 +230,7 @@ export class MvnpmHome extends LitElement {
     @state() 
     private _loadingIcon = "hidden";
     @state() 
-    private _syncInfo?: object;
+    private _centralSyncItem?: object;
     @state() 
     private _gavEventLog?: object;
     
@@ -240,7 +240,7 @@ export class MvnpmHome extends LitElement {
         this._clearCoordinates();
         this._disabled = "disabled";
         this._codeViewSelection = ".pom";
-        this._syncInfo = null;
+        this._centralSyncItem = null;
         this._gavEventLog = null;
     }
 
@@ -311,23 +311,23 @@ export class MvnpmHome extends LitElement {
     }
     
     _showNpmjsLink(){
-        if(this._syncInfo){
-            var npmUrl = "https://www.npmjs.com/package/" + this._syncInfo.name.npmFullName + "/v/" + this._syncInfo.version;
+        if(this._centralSyncItem){
+            var npmUrl = "https://www.npmjs.com/package/" + this._centralSyncItem.name.npmFullName + "/v/" + this._centralSyncItem.version;
 
             return html`<a href="${npmUrl}" target="_blank">
-                            <vaadin-icon title="${this._syncInfo.name.npmFullName}" icon="vaadin:tag"></vaadin-icon> npm registry
+                            <vaadin-icon title="${this._centralSyncItem.name.npmFullName}" icon="vaadin:tag"></vaadin-icon> npm registry
                         </a>`;
         }
     }
 
     _loadSyncIcon(){
-        if(this._syncInfo){
-            if(this._syncInfo.inCentral){
-                return html`<span><vaadin-icon title="Synced" style="color:var(--lumo-success-color)" icon="vaadin:check-circle"></vaadin-icon> Maven central</span>`;
-            }else if(this._syncInfo.inStaging){
-                return html`<span><vaadin-icon title="Syncing" style="color:var(--lumo-warning-color)" icon="vaadin:progressbar"></vaadin-icon> Maven central</span>`;
+        if(this._centralSyncItem){
+            if(this._centralSyncItem.stage === "RELEASED"){
+                return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-success-color)" icon="vaadin:check-circle"></vaadin-icon> Maven central</span>`;
+            }else if(this._centralSyncItem.inProgress){
+                return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-warning-color)" icon="vaadin:progressbar"></vaadin-icon> Maven central</span>`;
             }else {
-                return html`<span><vaadin-icon title="Not synced" style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon> Maven central</span>`;
+                return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon> Maven central</span>`;
             }
         }
         return html`<span><vaadin-icon title="Checking..." style="color:var(--lumo-warning-color)" icon="vaadin:question-circle-o"></vaadin-icon> Maven central</span>`;
@@ -710,7 +710,7 @@ export class MvnpmHome extends LitElement {
         
         groupId = groupId.replaceAll('/', '.');
         this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
-        var syncInfoUrl = "/api/sync/info/" + groupId + "/" + artifactId + "?version=" + version;
+        var getCentralSyncItemUrl = "/api/sync/info/" + groupId + "/" + artifactId + "?version=" + version;
         var eventLogUrl = `/api/eventlog/gav/${groupId}/${artifactId}/${version}`;
         fetch(eventLogUrl)
             .then(response => response.json())
@@ -728,9 +728,9 @@ export class MvnpmHome extends LitElement {
         
         this._changeCodeView(this._baseUrl + this._baseFile + this._codeViewSelection);
         
-        fetch(syncInfoUrl)
+        fetch(getCentralSyncItemUrl)
             .then(response => response.json())
-            .then(response => this._syncInfo = response);
+            .then(response => this._centralSyncItem = response);
 
         const pomUrl = `/maven2/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom`;
             fetch(pomUrl)

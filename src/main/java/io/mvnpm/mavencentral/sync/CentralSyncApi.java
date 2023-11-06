@@ -42,7 +42,7 @@ public class CentralSyncApi {
     @Inject
     ContinuousSyncService continuousSyncService;
 
-    private Set<Session> sessions = new ConcurrentHashSet<>();
+    private final Set<Session> sessions = new ConcurrentHashSet<>();
 
     @OnOpen
     public void onOpen(Session session) {
@@ -79,47 +79,57 @@ public class CentralSyncApi {
 
     @GET
     @Path("/info/{groupId}/{artifactId}")
-    public SyncInfo syncInfo(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+    public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
         if (version.equalsIgnoreCase("latest")) {
             version = getLatestVersion(name);
         }
-        return centralSyncService.getSyncInfo(name, version);
+
+        CentralSyncItem stored = CentralSyncItem.findByGAV(groupId, artifactId, version);
+        if (stored != null)
+            return stored;
+        return new CentralSyncItem(name, version);
     }
 
     @GET
     @Path("/initQueue")
     public List<CentralSyncItem> getInitQueue() {
-        return continuousSyncService.getInitQueue();
+        return CentralSyncItem.findByStage(Stage.INIT);
     }
 
     @GET
     @Path("/uploadingQueue")
     public List<CentralSyncItem> getUploadingQueue() {
-        return continuousSyncService.getUploadInProgress();
+        return CentralSyncItem.findByStage(Stage.UPLOADING);
     }
 
     @GET
     @Path("/uploadedQueue")
     public List<CentralSyncItem> getUploadedQueue() {
-        return continuousSyncService.getClosedQueue();
+        return CentralSyncItem.findByStage(Stage.UPLOADED);
     }
 
     @GET
     @Path("/closedQueue")
     public List<CentralSyncItem> getClosedQueue() {
-        return continuousSyncService.getReleaseQueue();
+        return CentralSyncItem.findByStage(Stage.CLOSED);
     }
 
     @GET
     @Path("/releasingQueue")
     public List<CentralSyncItem> getReleasingQueue() {
-        return continuousSyncService.getReleasedQueue();
+        return CentralSyncItem.findByStage(Stage.RELEASING);
+    }
+
+    @GET
+    @Path("/releasedQueue")
+    public List<CentralSyncItem> getReleasedQueue() {
+        return CentralSyncItem.findByStage(Stage.RELEASED);
     }
 
     private String getLatestVersion(Name fullName) {
-        Project project = npmRegistryFacade.getProject(fullName.npmFullName());
+        Project project = npmRegistryFacade.getProject(fullName.npmFullName);
         return project.distTags().latest();
     }
 }

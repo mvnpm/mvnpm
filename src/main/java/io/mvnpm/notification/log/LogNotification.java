@@ -18,9 +18,9 @@ public class LogNotification {
     @ConsumeEvent("artifact-released-to-central")
     @Blocking
     public void artifactReleased(CentralSyncItem centralSyncItem) {
-        String message = centralSyncItem.getNameVersionType().name().mvnGroupId() + ":" +
-                centralSyncItem.getNameVersionType().name().mvnArtifactId() + ":" +
-                centralSyncItem.getNameVersionType().version() + " released.";
+        String message = centralSyncItem.name.mvnGroupId + ":" +
+                centralSyncItem.name.mvnArtifactId + ":" +
+                centralSyncItem.version + " released.";
 
         Log.info(message);
     }

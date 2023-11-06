@@ -1,96 +1,94 @@
 package io.mvnpm.mavencentral.sync;
 
+import static io.quarkus.hibernate.orm.panache.PanacheEntityBase.find;
+
 import java.time.LocalDateTime;
-import java.util.Objects;
+import java.util.Arrays;
+import java.util.List;
 
-import io.mvnpm.maven.NameVersionType;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+
 import io.mvnpm.npm.model.Name;
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.logging.Log;
 
-public class CentralSyncItem {
-    private LocalDateTime startTime;
-    private LocalDateTime stageChangeTime;
-    private String stagingRepoId;
-    private Stage stage;
-    private NameVersionType nameVersionType;
+@Entity
+@NamedQueries({
+        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime"),
+        @NamedQuery(name = "CentralSyncItem.findUploadedButNotReleased", query = "from CentralSyncItem where stage IN ?1 order by stageChangeTime")
+})
+public class CentralSyncItem extends PanacheEntity {
+    public LocalDateTime startTime;
+    public LocalDateTime stageChangeTime;
+    public String stagingRepoId;
+    public Stage stage;
+    @ManyToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH })
+    public Name name;
+    public String version;
+    public int uploadAttempts = 0;
+    public int promotionAttempts = 0;
 
     public CentralSyncItem() {
 
     }
 
     public CentralSyncItem(Name name, String version) {
-        this.nameVersionType = new NameVersionType(name, version);
+        this.name = name;
+        this.version = version;
         this.startTime = LocalDateTime.now();
-        this.stage = Stage.INIT;
+        this.stage = Stage.NONE;
         this.stageChangeTime = LocalDateTime.now();
     }
 
-    public LocalDateTime getStartTime() {
-        return startTime;
+    public static List<CentralSyncItem> findByStage(Stage stage) {
+        return find("#CentralSyncItem.findByStage", stage).list();
     }
 
-    public void setStartTime(LocalDateTime startTime) {
-        this.startTime = startTime;
+    public static List<CentralSyncItem> findNotReleased() {
+        List<Stage> uploadedButNotReleased = Arrays.asList(Stage.UPLOADED, Stage.CLOSED, Stage.RELEASING);
+        return find("#CentralSyncItem.findUploadedButNotReleased", uploadedButNotReleased).list();
     }
 
-    public LocalDateTime getStageChangeTime() {
-        return stageChangeTime;
-    }
-
-    public void setStageChangeTime(LocalDateTime stageChangeTime) {
-        this.stageChangeTime = stageChangeTime;
-    }
-
-    public Stage getStage() {
-        return stage;
-    }
-
-    public void setStage(Stage stage) {
-        this.stage = stage;
-        this.stageChangeTime = LocalDateTime.now();
-    }
-
-    public NameVersionType getNameVersionType() {
-        return nameVersionType;
-    }
-
-    public void setNameVersionType(NameVersionType nameVersionType) {
-        this.nameVersionType = nameVersionType;
-    }
-
-    public String getStagingRepoId() {
-        return stagingRepoId;
-    }
-
-    public void setStagingRepoId(String stagingRepoId) {
-        this.stagingRepoId = stagingRepoId;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 61 * hash + Objects.hashCode(this.nameVersionType);
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
+    public static CentralSyncItem findByGAV(String groupId, String artifactId, String version) {
+        Name name = Name.find("mvnGroupId = ?1 and mvnArtifactId = ?2", groupId, artifactId).firstResult();
+        if (name == null)
+            return null;
+        List<CentralSyncItem> list = CentralSyncItem.find("name = ?1 and version = ?2", name, version).list();
+        if (list == null || list.isEmpty())
+            return null;
+        if (list.size() > 1) {
+            // TODO: Clean up, find latest and delete others ?
+            Log.error("Multiple GAV entries found for [" + groupId + ":" + artifactId + ":" + version + "]");
+            return null;
         }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final CentralSyncItem other = (CentralSyncItem) obj;
-        return Objects.equals(this.nameVersionType, other.nameVersionType);
+        return list.get(0);
+    }
+
+    public boolean isInProgress() {
+        return this.stage.equals(Stage.CLOSED)
+                || this.stage.equals(Stage.RELEASING)
+                || this.stage.equals(Stage.UPLOADED)
+                || this.stage.equals(Stage.UPLOADING);
+    }
+
+    public boolean alreadyRealeased() {
+        return this.stage.equals(Stage.RELEASED);
+    }
+
+    public void increaseUploadAttempt() {
+        this.uploadAttempts = this.uploadAttempts + 1;
+    }
+
+    public void increasePromotionAttempt() {
+        this.promotionAttempts = this.promotionAttempts + 1;
     }
 
     @Override
     public String toString() {
-        return "CentralSyncItem{" + "startTime=" + startTime + ", stageChangeTime=" + stageChangeTime + ", stagingRepoId="
-                + stagingRepoId + ", stage=" + stage + ", nameVersionType=" + nameVersionType + '}';
+        return name.mvnGroupId + ":" + name.mvnArtifactId + ":" + version + " [" + stage + "]";
     }
-
 }

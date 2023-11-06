@@ -52,7 +52,7 @@ public class BundleCreator {
         Map<Path, byte[]> files = getFiles(jarFile, name, version);
 
         Path parent = fileStore.getLocalDirectory(name, version);
-        String bundlelocation = name.mvnArtifactId() + Constants.HYPHEN + version + "-bundle.jar";
+        String bundlelocation = name.mvnArtifactId + Constants.HYPHEN + version + "-bundle.jar";
         Path bundlePath = parent.resolve(bundlelocation);
 
         Log.debug("\tBuilding bundle " + bundlePath + "...");
@@ -80,7 +80,7 @@ public class BundleCreator {
         // Files that needs to be in the bundle
         try {
             Path parent = fileStore.getLocalDirectory(name, version);
-            String base = name.mvnArtifactId() + Constants.HYPHEN + version;
+            String base = name.mvnArtifactId + Constants.HYPHEN + version;
             Path jarFileName = parent.resolve(base + Constants.DOT_JAR);
             List<Path> fileNames = getFileNamesInBundle(parent, base);
             Map<Path, byte[]> files = new HashMap<>();

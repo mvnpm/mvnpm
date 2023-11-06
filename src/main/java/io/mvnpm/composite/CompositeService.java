@@ -29,7 +29,7 @@ public class CompositeService {
     FileStore fileStore;
 
     public byte[] getFile(Name fullName, String version, FileType type) {
-        compositeCreator.buildComposite(fullName.mvnArtifactId(), version);
+        compositeCreator.buildComposite(fullName.mvnArtifactId, version);
         Path localFilePath = fileStore.getLocalFullPath(type, fullName, version, Optional.empty());
         return fileStore.readFile(localFilePath);
     }
@@ -53,14 +53,14 @@ public class CompositeService {
 
     public Map<String, Date> getVersions(Name name) {
         try {
-            Path groupRoute = fileStore.getGroupRoot(name.mvnGroupIdPath()).resolve(name.mvnArtifactId());
+            Path groupRoute = fileStore.getGroupRoot(name.mvnGroupIdPath()).resolve(name.mvnArtifactId);
             List<Path> versionDirs = Files.walk(groupRoute)
                     .filter(Files::isDirectory)
                     .collect(Collectors.toList());
             Map<String, Date> nameTimeMap = new HashMap<>();
             for (Path versionDir : versionDirs) {
                 String v = versionDir.getFileName().toString();
-                if (!v.equalsIgnoreCase(name.mvnArtifactId())) {
+                if (!v.equalsIgnoreCase(name.mvnArtifactId)) {
                     BasicFileAttributes attr = Files.readAttributes(versionDir, BasicFileAttributes.class);
                     Date lastModified = Date.from(attr.lastModifiedTime().toInstant());
                     nameTimeMap.put(versionDir.getFileName().toString(), lastModified);
