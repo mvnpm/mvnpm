@@ -10,7 +10,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
 import io.mvnpm.error.ErrorHandlingService;
-import io.mvnpm.file.FileStore;
 import io.mvnpm.mavencentral.PromotionException;
 import io.mvnpm.mavencentral.RepoStatus;
 import io.mvnpm.mavencentral.SonatypeFacade;
@@ -40,8 +39,6 @@ public class ContinuousSyncService {
     NpmRegistryFacade npmRegistryFacade;
     @Inject
     CentralSyncService centralSyncService;
-    @Inject
-    FileStore fileStore;
     @Inject
     SonatypeFacade sonatypeFacade;
     @Inject
@@ -152,8 +149,9 @@ public class ContinuousSyncService {
             }
         } else if (centralSyncItem.stage.equals(Stage.CLOSED)) {
             try {
-                boolean released = sonatypeFacade.release(centralSyncItem.name,
+                sonatypeFacade.release(centralSyncItem.name,
                         centralSyncItem.version, centralSyncItem.stagingRepoId);
+                stageService.changeStage(centralSyncItem, Stage.RELEASING);
             } catch (PromotionException exception) {
                 centralSyncItem.increasePromotionAttempt();
                 errorHandlingService.handle(centralSyncItem, exception);
