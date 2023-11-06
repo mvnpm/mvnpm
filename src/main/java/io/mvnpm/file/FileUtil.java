@@ -7,8 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import io.mvnpm.Constants;
 
@@ -76,22 +75,32 @@ public class FileUtil {
         }
     }
 
-    public static void createAsc(Path localFilePath) {
+    public static boolean createAsc(Path localFilePath) {
         String outputFile = localFilePath.toString() + Constants.DOT_ASC;
         Path f = Paths.get(outputFile);
-        if (!Files.exists(f)) {
-            try {
-                synchronized (f) {
+        synchronized (f) {
+            if (!Files.exists(f)) {
+                try {
                     Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFilePath.toString());
-                    ProcessHandle processHandle = process.toHandle();
+                    // Set a timeout of 10 seconds
+                    long timeout = 10;
+                    boolean processFinished = process.waitFor(timeout, TimeUnit.SECONDS);
 
-                    CompletableFuture<ProcessHandle> onProcessExit = processHandle.onExit();
-                    onProcessExit.get();
+                    if (!processFinished) {
+                        process.destroy(); // If the process doesn't finish, we can destroy it
+                        return false;
+                    } else {
+                        // Process finished within the timeout
+                        int exitCode = process.exitValue();
+                        process.destroy();
+                        return true;
+                    }
+                } catch (InterruptedException | IOException ex) {
+                    throw new IllegalStateException(ex);
                 }
-            } catch (InterruptedException | ExecutionException | IOException ex) {
-                throw new IllegalStateException(ex);
             }
         }
+        return true;
     }
 
     private static final String GPG_COMMAND = "gpg -ab ";

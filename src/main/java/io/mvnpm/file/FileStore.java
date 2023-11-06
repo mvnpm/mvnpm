@@ -61,9 +61,6 @@ public class FileStore {
         try {
             Files.createDirectories(localFilePath.getParent());
             Files.write(localFilePath, content);
-            String sha1 = FileUtil.getSha1(content);
-            Path localSha1FilePath = Paths.get(localFilePath.toString() + Constants.DOT_SHA1);
-            Files.writeString(localSha1FilePath, sha1);
             return content;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -119,8 +116,8 @@ public class FileStore {
     }
 
     public Path getLocalDirectory(Name name, String version) {
-        return getGroupRoot(name.mvnPath()).resolve(
-                Paths.get(name.mvnArtifactId(), version));
+        return getGroupRoot(name.mvnPath).resolve(
+                Paths.get(name.mvnArtifactId, version));
     }
 
     public Path getLocalSha1FullPath(FileType type, io.mvnpm.npm.model.Package p) {
@@ -149,7 +146,7 @@ public class FileStore {
     }
 
     public Path getLocalFullPath(FileType type, Name name, String version, Optional<String> dotSigned) {
-        return getLocalDirectory(name, version).resolve(getLocalFileName(type, name.mvnArtifactId(), version, dotSigned));
+        return getLocalDirectory(name, version).resolve(getLocalFileName(type, name.mvnArtifactId, version, dotSigned));
     }
 
     public Path getLocalFullPath(FileType type, String groupId, String artifactId, String version) {
@@ -161,7 +158,7 @@ public class FileStore {
     }
 
     public String getLocalFileName(FileType type, io.mvnpm.npm.model.Package p, Optional<String> dotSigned) {
-        return getLocalFileName(type, p.name().mvnArtifactId(), p.version(), dotSigned);
+        return getLocalFileName(type, p.name().mvnArtifactId, p.version(), dotSigned);
     }
 
     public String getLocalFileName(FileType type, String artifactId, String version, Optional<String> dotSigned) {

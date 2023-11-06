@@ -22,5 +22,6 @@ public interface SearchMavenClient {
     public Response search(@QueryParam("q") String q,
             @QueryParam("core") String core,
             @QueryParam("rows") String rows,
-            @QueryParam("wt") String wt);
+            @QueryParam("wt") String wt,
+            @QueryParam("start") String start);
 }

@@ -14,13 +14,15 @@ import io.smallrye.common.annotation.Blocking;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class SigningService {
+public class AscService {
 
     @ConsumeEvent("new-file-created")
     @Blocking
     public void newFileCreated(FileStoreEvent fse) {
-        FileUtil.createAsc(fse.filePath());
-        FileUtil.createMd5(fse.filePath());
+        boolean success = FileUtil.createAsc(fse.filePath());
+        if (!success) {
+            Log.warn("file signed " + fse.filePath() + ".asc [failed] trying again");
+        }
         Log.debug("file signed " + fse.filePath() + " [ok]");
     }
 }

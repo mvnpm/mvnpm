@@ -35,7 +35,7 @@ public class MavenRespositoryService {
         } else if (fullName.isInternal()) {
             return compositeService.getFile(fullName, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
             return fileClient.getFileContents(type, npmPackage);
         }
     }
@@ -47,7 +47,7 @@ public class MavenRespositoryService {
         } else if (fullName.isInternal()) {
             return compositeService.getFileSha1(fullName, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
             return fileClient.getFileSha1(type, npmPackage);
         }
     }
@@ -59,7 +59,7 @@ public class MavenRespositoryService {
         } else if (fullName.isInternal()) {
             return compositeService.getFileMd5(fullName, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
             return fileClient.getFileMd5(type, npmPackage);
         }
     }
@@ -71,13 +71,13 @@ public class MavenRespositoryService {
         } else if (fullName.isInternal()) {
             return compositeService.getFileAsc(fullName, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName(), version);
+            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
             return fileClient.getFileAsc(type, npmPackage);
         }
     }
 
     private String getLatestVersion(Name fullName) {
-        Project project = npmRegistryFacade.getProject(fullName.npmFullName());
+        Project project = npmRegistryFacade.getProject(fullName.npmFullName);
         return project.distTags().latest();
     }
 }

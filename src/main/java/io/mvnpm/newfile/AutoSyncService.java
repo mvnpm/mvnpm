@@ -24,17 +24,21 @@ public class AutoSyncService {
     @Inject
     ContinuousSyncService projectUpdater;
 
-    private final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.jar");
+    private final PathMatcher jarmatcher = FileSystems.getDefault().getPathMatcher("glob:*.jar");
+    private final PathMatcher javadocMatcher = FileSystems.getDefault().getPathMatcher("glob:*-javadoc.jar");
+    private final PathMatcher sourceMatcher = FileSystems.getDefault().getPathMatcher("glob:*-sources.jar");
 
     @ConsumeEvent("new-file-created")
     @Blocking
     public void newFileCreated(FileStoreEvent fse) {
-        if (matcher.matches(fse.filePath().getFileName())) {
+        if (jarmatcher.matches(fse.filePath().getFileName())
+                && !javadocMatcher.matches(fse.filePath().getFileName())
+                && !sourceMatcher.matches(fse.filePath().getFileName())) {
             Name name = fse.name();
             String version = fse.version();
             boolean queued = projectUpdater.initializeSync(name, version);
             if (queued) {
-                Log.info(name.displayName() + " " + version + " added to the sync queue");
+                Log.info(name.displayName + " " + version + " added to the sync queue");
             }
         }
     }

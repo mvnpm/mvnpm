@@ -64,13 +64,13 @@ public class PomClient {
             Model model = new Model();
 
             model.setModelVersion(MODEL_VERSION);
-            model.setGroupId(p.name().mvnGroupId());
-            model.setArtifactId(p.name().mvnArtifactId());
+            model.setGroupId(p.name().mvnGroupId);
+            model.setArtifactId(p.name().mvnArtifactId);
             model.setVersion(p.version());
             model.setPackaging(JAR);
-            model.setName(p.name().displayName());
+            model.setName(p.name().displayName);
             if (p.description() == null || p.description().isEmpty()) {
-                model.setDescription(p.name().displayName());
+                model.setDescription(p.name().displayName);
             } else {
                 model.setDescription(p.description());
             }
@@ -140,7 +140,7 @@ public class PomClient {
         if (p.author() != null) {
             o.setName(p.author().name());
         } else {
-            o.setName(p.name().displayName());
+            o.setName(p.name().displayName);
         }
         if (p.homepage() != null) {
             o.setUrl(p.homepage().toString());
@@ -220,8 +220,8 @@ public class PomClient {
 
     private Dependency toDependency(Name name, String version) {
         Dependency d = new Dependency();
-        d.setGroupId(name.mvnGroupId());
-        d.setArtifactId(name.mvnArtifactId());
+        d.setGroupId(name.mvnGroupId);
+        d.setArtifactId(name.mvnArtifactId);
         d.setVersion(toVersion(name, version));
         return d;
     }
@@ -231,7 +231,7 @@ public class PomClient {
 
         // This is an open ended range. Let's get the latest for a bottom boundary
         if (trimVersion.equals(OPEN_BLOCK + COMMA + CLOSE_ROUND)) {
-            Project project = npmRegistryFacade.getProject(name.npmFullName());
+            Project project = npmRegistryFacade.getProject(name.npmFullName);
             return OPEN_BLOCK + project.distTags().latest() + COMMA + CLOSE_ROUND;
         }
         // TODO: Make other ranges more effient too ?

@@ -192,7 +192,7 @@ export class MvnpmProgress extends LitElement {
     private _removeFromQueue(queue: any[] | null, item: any) {
         if (queue && queue.length > 0) {
             var index = queue.findIndex(mle => {
-                return mle.time == item.nameVersionType.name.mvnGroupId && mle.userName == item.nameVersionType.name.mvnArtifactId + " " + item.nameVersionType.version;
+                return mle.time == item.name.mvnGroupId && mle.userName == item.name.mvnArtifactId + " " + item.version;
             });
             queue.splice(index, 1);
         }
@@ -207,8 +207,8 @@ export class MvnpmProgress extends LitElement {
     private _toMessageListEntry(item: any, stagemessage: string, step: number) {
         return {
             text: stagemessage,
-            time: item.nameVersionType.name.mvnGroupId,
-            userName: item.nameVersionType.name.mvnArtifactId + " " + item.nameVersionType.version,
+            time: item.name.mvnGroupId,
+            userName: item.name.mvnArtifactId + " " + item.version,
             userColorIndex: step
         };
     }

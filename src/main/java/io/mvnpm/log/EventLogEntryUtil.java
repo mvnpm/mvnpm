@@ -17,7 +17,7 @@ public class EventLogEntryUtil {
 
     public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem) {
         return EventLogEntryUtil.toEventLogEntry(centralSyncItem,
-                EventLogEntryUtil.generateMessage(centralSyncItem.getStage()));
+                EventLogEntryUtil.generateMessage(centralSyncItem.stage));
     }
 
     public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem, String message) {
@@ -27,12 +27,12 @@ public class EventLogEntryUtil {
     public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem, String message, String color) {
         EventLogEntry eventLogEntry = new EventLogEntry();
 
-        eventLogEntry.groupId = centralSyncItem.getNameVersionType().name().mvnGroupId();
-        eventLogEntry.artifactId = centralSyncItem.getNameVersionType().name().mvnArtifactId();
-        eventLogEntry.version = centralSyncItem.getNameVersionType().version();
-        eventLogEntry.stage = centralSyncItem.getStage();
+        eventLogEntry.groupId = centralSyncItem.name.mvnGroupId;
+        eventLogEntry.artifactId = centralSyncItem.name.mvnArtifactId;
+        eventLogEntry.version = centralSyncItem.version;
+        eventLogEntry.stage = centralSyncItem.stage;
         eventLogEntry.message = message;
-        eventLogEntry.time = centralSyncItem.getStageChangeTime();
+        eventLogEntry.time = centralSyncItem.stageChangeTime;
         eventLogEntry.color = color;
         return eventLogEntry;
     }
@@ -42,7 +42,7 @@ public class EventLogEntryUtil {
             case INIT -> "Syncing initialized";
             case UPLOADING -> "Uploading to OSS sonatype";
             case UPLOADED -> "Uploaded to OSS sonatype, now validating";
-            case CLOSED -> "Validated, now closing";
+            case CLOSED -> "Closed and validated. Will be auto releasing soon";
             case RELEASING -> "Closed, now releasing to Maven central";
             case RELEASED -> "Released to Maven central";
             default -> stage.name().toLowerCase();
