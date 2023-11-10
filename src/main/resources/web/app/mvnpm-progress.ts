@@ -24,12 +24,31 @@ export class MvnpmProgress extends LitElement {
       padding-right: 20px;
       align-items: center;
     }
+    .maven-central {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+        width: 100%;
+        height: 100%;
+        padding-left: 20px;
+        padding-right: 20px;
+        align-items: center;
+        overflow-y: scroll;
+    }
+    .maven-central-message-box {
+        width: 100%;
+        overflow-y: unset;
+    }
     .uploading {
       border-right: 2px solid var(--lumo-contrast-10pct);
       border-left: 2px solid var(--lumo-contrast-10pct);
     }
     .progressBar {
       width: 50%;
+    }
+    vaadin-message-list {
+        width: 100%;
     }
   `;
 
@@ -60,19 +79,19 @@ export class MvnpmProgress extends LitElement {
     connectedCallback() {
         super.connectedCallback();
 
-        fetch("/api/sync/initQueue")
+        fetch("/api/sync/item/INIT")
             .then(response => response.json())
             .then(initQueue => (this._initQueue = this._addMultipleToQueue(this._initQueue, initQueue, "Waiting...", 1)));
-        fetch("/api/sync/uploadingQueue")
+        fetch("/api/sync/item/UPLOADING")
             .then(response => response.json())
             .then(uploadingQueue => (this._uploadingQueue = this._addMultipleToQueue(this._uploadingQueue, uploadingQueue, "Uploading to maven central...", 2)));
-        fetch("/api/sync/uploadedQueue")
+        fetch("/api/sync/item/UPLOADED")
             .then(response => response.json())
             .then(uploadedQueue => (this._uploadedQueue = this._addMultipleToQueue(this._uploadedQueue, uploadedQueue, "Uploaded, validating...", 3)));
-        fetch("/api/sync/closedQueue")
+        fetch("/api/sync/item/CLOSED")
             .then(response => response.json())
             .then(closedQueue => (this._closedQueue = this._addMultipleToQueue(this._closedQueue, closedQueue, "Valid, preparing release...", 4)));
-        fetch("/api/sync/releasingQueue")
+        fetch("/api/sync/item/RELEASING")
             .then(response => response.json())
             .then(releasingQueue => (this._releasingQueue = this._addMultipleToQueue(this._releasingQueue, releasingQueue, "Releasing to maven central...", 5)));
 
@@ -86,6 +105,7 @@ export class MvnpmProgress extends LitElement {
 
     private _receiveStateChange(centralSyncItem: any) {
         if (centralSyncItem.stage === "INIT") {
+            this._uploadingQueue = this._removeFromQueue(this._uploadingQueue, centralSyncItem);
             this._initQueue = this._addToQueue(this._initQueue, centralSyncItem, "Waiting...", 1);
         } else if (centralSyncItem.stage === "UPLOADING") {
             this._initQueue = this._removeFromQueue(this._initQueue, centralSyncItem);
@@ -132,42 +152,43 @@ export class MvnpmProgress extends LitElement {
     private _renderUploading() {
         if (this._uploadingQueue && this._uploadingQueue.length > 0) {
             return html`
-        <vaadin-progress-bar class="progressBar" indeterminate></vaadin-progress-bar>
-        <vaadin-message-list .items="${this._uploadingQueue}"></vaadin-message-list>
-      `;
+                <vaadin-progress-bar class="progressBar" indeterminate></vaadin-progress-bar>
+                <vaadin-message-list .items="${this._uploadingQueue}"></vaadin-message-list>
+            `;
         }
     }
 
     private _renderMavenCentral() {
-        return html`
+        return html`<div class="maven-central">
       ${this._renderUploaded()}
       ${this._renderClosed()}
       ${this._renderReleasing()}
       ${this._renderReleased()}
+      </div>
     `;
     }
 
     private _renderUploaded() {
         if (this._uploadedQueue && this._uploadedQueue.length > 0) {
-            return html`<vaadin-message-list .items="${this._uploadedQueue}"></vaadin-message-list>`;
+            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._uploadedQueue}"></vaadin-message-list>`;
         }
     }
 
     private _renderClosed() {
         if (this._closedQueue && this._closedQueue.length > 0) {
-            return html`<vaadin-message-list .items="${this._closedQueue}"></vaadin-message-list>`;
+            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._closedQueue}"></vaadin-message-list>`;
         }
     }
 
     private _renderReleasing() {
         if (this._releasingQueue && this._releasingQueue.length > 0) {
-            return html`<vaadin-message-list .items="${this._releasingQueue}"></vaadin-message-list>`;
+            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._releasingQueue}"></vaadin-message-list>`;
         }
     }
 
     private _renderReleased() {
         if (this._releasedQueue && this._releasedQueue.length > 0) {
-            return html`<vaadin-message-list .items="${this._releasedQueue}"></vaadin-message-list>`;
+            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._releasedQueue}"></vaadin-message-list>`;
         }
     }
 
@@ -206,7 +227,7 @@ export class MvnpmProgress extends LitElement {
 
     private _toMessageListEntry(item: any, stagemessage: string, step: number) {
         return {
-            text: stagemessage,
+            text: stagemessage + " (" + item.uploadAttempts + ")" ,
             time: item.name.mvnGroupId,
             userName: item.name.mvnArtifactId + " " + item.version,
             userColorIndex: step

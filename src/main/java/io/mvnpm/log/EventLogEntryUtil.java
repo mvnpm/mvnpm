@@ -8,7 +8,6 @@ import static io.mvnpm.mavencentral.sync.Stage.UPLOADED;
 import static io.mvnpm.mavencentral.sync.Stage.UPLOADING;
 
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.Stage;
 
 public class EventLogEntryUtil {
 
@@ -17,7 +16,7 @@ public class EventLogEntryUtil {
 
     public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem) {
         return EventLogEntryUtil.toEventLogEntry(centralSyncItem,
-                EventLogEntryUtil.generateMessage(centralSyncItem.stage));
+                EventLogEntryUtil.generateMessage(centralSyncItem));
     }
 
     public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem, String message) {
@@ -37,15 +36,17 @@ public class EventLogEntryUtil {
         return eventLogEntry;
     }
 
-    private static String generateMessage(Stage stage) {
-        return switch (stage) {
+    private static String generateMessage(CentralSyncItem centralSyncItem) {
+        return switch (centralSyncItem.stage) {
             case INIT -> "Syncing initialized";
-            case UPLOADING -> "Uploading to OSS sonatype";
-            case UPLOADED -> "Uploaded to OSS sonatype, now validating";
-            case CLOSED -> "Closed and validated. Will be auto releasing soon";
-            case RELEASING -> "Closed, now releasing to Maven central";
+            case UPLOADING -> "Uploading to OSS sonatype (" + centralSyncItem.uploadAttempts + ")";
+            case UPLOADED -> "Uploaded to OSS sonatype, now validating (" + centralSyncItem.promotionAttempts + ")";
+            case CLOSED -> "Closed and validated. Will be auto releasing soon (" + centralSyncItem.promotionAttempts + ")";
+            case RELEASING -> "Closed, now releasing to Maven central (" + centralSyncItem.promotionAttempts + ")";
             case RELEASED -> "Released to Maven central";
-            default -> stage.name().toLowerCase();
+            case ERROR -> "Error in workflow after " + centralSyncItem.uploadAttempts + " upload and "
+                    + centralSyncItem.promotionAttempts + " promotion attempts";
+            default -> centralSyncItem.stage.name().toLowerCase();
         };
 
     }

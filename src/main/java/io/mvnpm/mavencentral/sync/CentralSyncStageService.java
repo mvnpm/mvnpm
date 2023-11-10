@@ -1,7 +1,6 @@
 package io.mvnpm.mavencentral.sync;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -34,18 +33,7 @@ public class CentralSyncStageService {
     }
 
     @Transactional
-    public void changeStages(List<CentralSyncItem> centralSyncItems, Stage stage) {
-        for (CentralSyncItem centralSyncItem : centralSyncItems) {
-            if (!centralSyncItem.stage.equals(stage)) {
-                centralSyncItem = merge(centralSyncItem);
-                centralSyncItem.stage = stage;
-                centralSyncItem.stageChangeTime = LocalDateTime.now();
-                centralSyncItem.persist();
-            }
-        }
-    }
-
-    private CentralSyncItem merge(CentralSyncItem centralSyncItem) {
+    public CentralSyncItem merge(CentralSyncItem centralSyncItem) {
         if (centralSyncItem.isPersistent()) {
             return centralSyncItem;
         }

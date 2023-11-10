@@ -57,23 +57,32 @@ public class BundleCreator {
 
         Log.debug("\tBuilding bundle " + bundlePath + "...");
 
-        File bundleFile = bundlePath.toFile();
-        try (FileOutputStream fos = new FileOutputStream(bundleFile);
-                BufferedOutputStream bos = new BufferedOutputStream(fos);
-                ZipOutputStream zos = new ZipOutputStream(bos)) {
+        if (!fileExist(bundlePath)) {
+            File bundleFile = bundlePath.toFile();
+            try (FileOutputStream fos = new FileOutputStream(bundleFile);
+                    BufferedOutputStream bos = new BufferedOutputStream(fos);
+                    ZipOutputStream zos = new ZipOutputStream(bos)) {
 
-            for (Map.Entry<Path, byte[]> file : files.entrySet()) {
-                Path path = file.getKey();
-                ZipEntry zipEntry = new ZipEntry(path.getFileName().toString());
-                zos.putNextEntry(zipEntry);
-                zos.write(file.getValue());
-                zos.closeEntry();
+                for (Map.Entry<Path, byte[]> file : files.entrySet()) {
+                    Path path = file.getKey();
+                    ZipEntry zipEntry = new ZipEntry(path.getFileName().toString());
+                    zos.putNextEntry(zipEntry);
+                    zos.write(file.getValue());
+                    zos.closeEntry();
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
-
         return bundlePath;
+    }
+
+    private boolean fileExist(Path bundlePath) {
+        try {
+            return Files.exists(bundlePath) && Files.size(bundlePath) > 0;
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     private Map<Path, byte[]> getFiles(byte[] jarFile, Name name, String version) {

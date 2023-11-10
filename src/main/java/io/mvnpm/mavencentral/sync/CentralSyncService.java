@@ -40,7 +40,7 @@ public class CentralSyncService {
             csi = stageService.changeStage(csi, Stage.RELEASED);
             return false;
         }
-        if (csi.isInProgress()) {
+        if (csi.isInProgress() || csi.isInError()) {
             return false;
         }
         // Next try remote (might have been synced before we stored

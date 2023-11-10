@@ -41,6 +41,8 @@ public class CentralSyncApi {
     NpmRegistryFacade npmRegistryFacade;
     @Inject
     ContinuousSyncService continuousSyncService;
+    @Inject
+    CentralSyncStageService centralSyncStageService;
 
     private final Set<Session> sessions = new ConcurrentHashSet<>();
 
@@ -89,43 +91,66 @@ public class CentralSyncApi {
         CentralSyncItem stored = CentralSyncItem.findByGAV(groupId, artifactId, version);
         if (stored != null)
             return stored;
-        return new CentralSyncItem(name, version);
+
+        // Check the status
+        CentralSyncItem csi = new CentralSyncItem(name, version);
+        if (centralSyncService.isInMavenCentralRemoteCheck(csi)) {
+            csi.stage = Stage.RELEASED;
+            centralSyncStageService.merge(csi);
+        }
+        return csi;
     }
 
     @GET
-    @Path("/initQueue")
-    public List<CentralSyncItem> getInitQueue() {
-        return CentralSyncItem.findByStage(Stage.INIT);
+    @Path("/request/{groupId}/{artifactId}")
+    public CentralSyncItem requestFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+            @DefaultValue("latest") @QueryParam("version") String version) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        if (version.equalsIgnoreCase("latest")) {
+            version = getLatestVersion(name);
+        }
+
+        CentralSyncItem stored = CentralSyncItem.findByGAV(groupId, artifactId, version);
+        if (stored != null && (stored.isInProgress() || stored.stage.equals(Stage.INIT)))
+            return stored;
+
+        // Check the remote status
+        CentralSyncItem csi = new CentralSyncItem(name, version);
+        if (centralSyncService.isInMavenCentralRemoteCheck(csi)) {
+            csi.stage = Stage.RELEASED;
+            centralSyncStageService.merge(csi);
+            return csi;
+        }
+
+        // Else kick off sync
+        // TODO: We need to resolve version ranges before we can do this.
+        //        Set<Map.Entry<Name, String>> deps = null;
+        //        try {
+        //            Package npmPackage = npmRegistryFacade.getPackage(name.npmFullName, version);
+        //            deps = npmPackage.dependencies().entrySet();
+        //        }catch (WebApplicationException wae){
+        //            Log.error("Could not kick off sync of dependencendies " + wae.getMessage());
+        //        }
+        continuousSyncService.initializeSync(name, version);
+        // Also request sync for dependencies.
+        //        if(deps!=null){
+        //            for (Map.Entry<Name, String> dep : deps) {
+        //                requestFullSync(dep.getKey().mvnGroupId, dep.getKey().mvnArtifactId, dep.getValue());
+        //            }
+        //        }
+        return CentralSyncItem.findByGAV(groupId, artifactId, version);
     }
 
     @GET
-    @Path("/uploadingQueue")
-    public List<CentralSyncItem> getUploadingQueue() {
-        return CentralSyncItem.findByStage(Stage.UPLOADING);
+    @Path("/item/{stage}")
+    public List<CentralSyncItem> getItems(@PathParam("stage") Stage stage) {
+        return CentralSyncItem.findByStage(stage);
     }
 
     @GET
-    @Path("/uploadedQueue")
-    public List<CentralSyncItem> getUploadedQueue() {
-        return CentralSyncItem.findByStage(Stage.UPLOADED);
-    }
-
-    @GET
-    @Path("/closedQueue")
-    public List<CentralSyncItem> getClosedQueue() {
-        return CentralSyncItem.findByStage(Stage.CLOSED);
-    }
-
-    @GET
-    @Path("/releasingQueue")
-    public List<CentralSyncItem> getReleasingQueue() {
-        return CentralSyncItem.findByStage(Stage.RELEASING);
-    }
-
-    @GET
-    @Path("/releasedQueue")
-    public List<CentralSyncItem> getReleasedQueue() {
-        return CentralSyncItem.findByStage(Stage.RELEASED);
+    @Path("/items")
+    public List<CentralSyncItem> getItems() {
+        return CentralSyncItem.findAll().list();
     }
 
     private String getLatestVersion(Name fullName) {

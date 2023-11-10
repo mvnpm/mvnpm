@@ -63,6 +63,10 @@ public class Name extends PanacheEntity {
         return this.npmFullName;
     }
 
+    public String toGavString(String version) {
+        return this.mvnGroupId + ":" + this.mvnArtifactId + ":" + version;
+    }
+
     public String mvnGroupIdPath() {
         return this.mvnGroupId.replaceAll(Constants.ESCAPED_DOT, File.separator);
     }
