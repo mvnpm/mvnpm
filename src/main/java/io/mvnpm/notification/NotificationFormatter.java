@@ -1,6 +1,8 @@
 package io.mvnpm.notification;
 
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.npm.model.Name;
+import io.mvnpm.npm.model.NameParser;
 
 /**
  * Format a notification message
@@ -61,10 +63,11 @@ public class NotificationFormatter {
     }
 
     private static Notification getNotificationAsMarkUp(CentralSyncItem centralSyncItem, String format) {
-        String groupId = centralSyncItem.name.mvnGroupId;
-        String artifactId = centralSyncItem.name.mvnArtifactId;
+        Name name = NameParser.fromMavenGA(centralSyncItem.groupId, centralSyncItem.artifactId);
+        String groupId = name.mvnGroupId;
+        String artifactId = name.mvnArtifactId;
         String version = centralSyncItem.version;
-        String npmName = centralSyncItem.name.npmFullName;
+        String npmName = name.npmFullName;
         String repo = centralSyncItem.stagingRepoId;
 
         String title = groupId + ":" + artifactId + ":" + version;

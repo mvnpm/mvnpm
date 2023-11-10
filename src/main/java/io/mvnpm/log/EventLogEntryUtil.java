@@ -26,8 +26,8 @@ public class EventLogEntryUtil {
     public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem, String message, String color) {
         EventLogEntry eventLogEntry = new EventLogEntry();
 
-        eventLogEntry.groupId = centralSyncItem.name.mvnGroupId;
-        eventLogEntry.artifactId = centralSyncItem.name.mvnArtifactId;
+        eventLogEntry.groupId = centralSyncItem.groupId;
+        eventLogEntry.artifactId = centralSyncItem.artifactId;
         eventLogEntry.version = centralSyncItem.version;
         eventLogEntry.stage = centralSyncItem.stage;
         eventLogEntry.message = message;

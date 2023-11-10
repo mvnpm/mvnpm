@@ -312,10 +312,10 @@ export class MvnpmHome extends LitElement {
     
     _showNpmjsLink(){
         if(this._centralSyncItem){
-            var npmUrl = "https://www.npmjs.com/package/" + this._centralSyncItem.name.npmFullName + "/v/" + this._centralSyncItem.version;
-
+            var npmUrl = "/api/info/npm/" + this._centralSyncItem.groupId + "/" + this._centralSyncItem.artifactId + "?version=" + this._centralSyncItem.version;
+            
             return html`<a href="${npmUrl}" target="_blank">
-                            <vaadin-icon title="${this._centralSyncItem.name.npmFullName}" icon="vaadin:tag"></vaadin-icon> npm registry
+                            <vaadin-icon title="Go to NPM registry page" icon="vaadin:tag"></vaadin-icon> npm registry
                         </a>`;
         }
     }
@@ -334,7 +334,7 @@ export class MvnpmHome extends LitElement {
     }
     
     _requestFullSync(){
-        var fullSyncRequest = "/api/sync/request/" + this._centralSyncItem.name.mvnGroupId + "/" + this._centralSyncItem.name.mvnArtifactId + "?version=" + this._centralSyncItem.version;
+        var fullSyncRequest = "/api/sync/request/" + this._centralSyncItem.groupId + "/" + this._centralSyncItem.artifactId + "?version=" + this._centralSyncItem.version;
         
         fetch(fullSyncRequest)
             .then(response => response.json())

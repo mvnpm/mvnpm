@@ -1,5 +1,8 @@
 package io.mvnpm;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
@@ -7,10 +10,13 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import org.jboss.resteasy.reactive.RestResponse;
 
 import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.model.Name;
+import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.SearchResults;
 
@@ -50,4 +56,24 @@ public class ProjectInfoApi {
     public SearchResults search(@PathParam("term") String term, @QueryParam("page") @DefaultValue("1") int page) {
         return npmRegistryFacade.search(term, page);
     }
+
+    @GET
+    @Path("/npm/{groupId}/{artifactId}")
+    public Response toNpmRegistry(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+            @DefaultValue("latest") @QueryParam("version") String version) {
+
+        try {
+            Name name = NameParser.fromMavenGA(groupId, artifactId);
+            String url = "https://www.npmjs.com/package/" + name.npmFullName;
+
+            if (version != null && !version.isBlank() && !version.equals("latest")) {
+                url = url + "/v/" + version;
+            }
+            URI externalUri = new URI(url);
+            return Response.seeOther(externalUri).build();
+        } catch (URISyntaxException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
 }

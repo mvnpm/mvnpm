@@ -1,5 +1,9 @@
 package io.mvnpm.file;
 
+import static io.mvnpm.file.FileType.jar;
+import static io.mvnpm.file.FileType.pom;
+import static io.mvnpm.file.FileType.tgz;
+
 import java.io.FileNotFoundException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -11,8 +15,9 @@ import jakarta.inject.Inject;
 import io.mvnpm.file.type.JarClient;
 import io.mvnpm.file.type.PomClient;
 import io.mvnpm.file.type.TgzClient;
+import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
-import io.vertx.mutiny.core.Vertx;
 
 /**
  * Get the jar or tgz from either local file system or from it's origin
@@ -21,9 +26,6 @@ import io.vertx.mutiny.core.Vertx;
  */
 @ApplicationScoped
 public class FileClient {
-
-    @Inject
-    Vertx vertx;
 
     @Inject
     TgzClient tgzClient;
@@ -37,46 +39,49 @@ public class FileClient {
     @Inject
     FileStore fileStore;
 
-    public byte[] getFileContents(FileType type, io.mvnpm.npm.model.Package p) {
-        Path localFilePath = fileStore.getLocalFullPath(type, p);
-        return fetch(type, p, localFilePath);
+    @Inject
+    NpmRegistryFacade npmRegistryFacade;
+
+    public byte[] getFileContents(FileType type, Name name, String version) {
+        Path localFilePath = fileStore.getLocalFullPath(type, name, version);
+        return fetch(type, name, version, localFilePath);
     }
 
-    public byte[] getFileSha1(FileType type, io.mvnpm.npm.model.Package p) {
-        Path localFilePath = fileStore.getLocalSha1FullPath(type, p);
-        return fetchSha1(type, p, localFilePath);
+    public byte[] getFileSha1(FileType type, Name name, String version) {
+        Path localFilePath = fileStore.getLocalSha1FullPath(type, name, version);
+        return fetchSha1(type, name, version, localFilePath);
     }
 
-    public byte[] getFileMd5(FileType type, io.mvnpm.npm.model.Package p) {
-        Path localFilePath = fileStore.getLocalMd5FullPath(type, p);
+    public byte[] getFileMd5(FileType type, Name name, String version) {
+        Path localFilePath = fileStore.getLocalMd5FullPath(type, name, version);
         return fetchLocal(localFilePath);
     }
 
-    public byte[] getFileAsc(FileType type, io.mvnpm.npm.model.Package p) {
-        Path localFilePath = fileStore.getLocalAscFullPath(type, p);
+    public byte[] getFileAsc(FileType type, Name name, String version) {
+        Path localFilePath = fileStore.getLocalAscFullPath(type, name, version);
         return fetchLocal(localFilePath);
     }
 
-    private byte[] fetch(FileType type, io.mvnpm.npm.model.Package p, Path localFilePath) {
+    private byte[] fetch(FileType type, Name name, String version, Path localFilePath) {
         boolean local = Files.exists(localFilePath);
         if (local) {
             Log.debug("Serving locally [" + localFilePath + "]");
             return fileStore.readFile(localFilePath);
         } else {
             Log.debug("Serving remotely [" + localFilePath + "]");
-            return fetchRemote(type, p, localFilePath);
+            return fetchRemote(type, name, version, localFilePath);
         }
     }
 
-    private byte[] fetchSha1(FileType type, io.mvnpm.npm.model.Package p, Path localFilePath) {
+    private byte[] fetchSha1(FileType type, Name name, String version, Path localFilePath) {
         boolean local = Files.exists(localFilePath);
         if (local) {
             Log.debug("Serving locally [" + localFilePath + "]");
             return fileStore.readFile(localFilePath);
         } else {
             Log.debug("Fetching remotely [" + localFilePath + "]");
-            Path localFullFilePath = fileStore.getLocalFullPath(type, p);
-            return fetchRemote(type, p, localFullFilePath);
+            Path localFullFilePath = fileStore.getLocalFullPath(type, name, version);
+            return fetchRemote(type, name, version, localFullFilePath);
         }
     }
 
@@ -89,7 +94,8 @@ public class FileClient {
         }
     }
 
-    private byte[] fetchRemote(FileType type, io.mvnpm.npm.model.Package p, Path localFilePath) {
+    private byte[] fetchRemote(FileType type, Name name, String version, Path localFilePath) {
+        io.mvnpm.npm.model.Package p = npmRegistryFacade.getPackage(name.npmFullName, version);
         switch (type) {
             case tgz -> {
                 return tgzClient.fetchRemote(p, localFilePath);

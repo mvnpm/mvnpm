@@ -22,7 +22,7 @@ import io.smallrye.common.annotation.Blocking;
 public class AutoSyncService {
 
     @Inject
-    ContinuousSyncService projectUpdater;
+    ContinuousSyncService continuousSyncService;
 
     private final PathMatcher jarmatcher = FileSystems.getDefault().getPathMatcher("glob:*.jar");
     private final PathMatcher javadocMatcher = FileSystems.getDefault().getPathMatcher("glob:*-javadoc.jar");
@@ -36,7 +36,7 @@ public class AutoSyncService {
                 && !sourceMatcher.matches(fse.filePath().getFileName())) {
             Name name = fse.name();
             String version = fse.version();
-            boolean queued = projectUpdater.initializeSync(name, version);
+            boolean queued = continuousSyncService.initializeSync(name, version);
             if (queued) {
                 Log.info(name.displayName + " " + version + " added to the sync queue");
             }

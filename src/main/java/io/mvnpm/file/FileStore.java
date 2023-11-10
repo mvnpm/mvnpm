@@ -47,6 +47,7 @@ public class FileStore {
         return findArtifactRoots(mvnpmRoot);
     }
 
+    @Deprecated
     public byte[] createFile(io.mvnpm.npm.model.Package p, Path localFileName, byte[] content) {
         return createFile(p.name(), p.version(), localFileName, content);
     }
@@ -120,27 +121,54 @@ public class FileStore {
                 Paths.get(name.mvnArtifactId, version));
     }
 
+    @Deprecated
     public Path getLocalSha1FullPath(FileType type, io.mvnpm.npm.model.Package p) {
         return getLocalFullPath(type, p, Optional.of(Constants.DOT_SHA1));
     }
 
+    public Path getLocalSha1FullPath(FileType type, Name name, String version) {
+        return getLocalFullPath(type, name, version, Optional.of(Constants.DOT_SHA1));
+    }
+
+    @Deprecated
     public Path getLocalMd5FullPath(FileType type, io.mvnpm.npm.model.Package p) {
         return getLocalFullPath(type, p, Optional.of(Constants.DOT_MD5));
     }
 
+    public Path getLocalMd5FullPath(FileType type, Name name, String version) {
+        return getLocalFullPath(type, name, version, Optional.of(Constants.DOT_MD5));
+    }
+
+    @Deprecated
     public Path getLocalAscFullPath(FileType type, io.mvnpm.npm.model.Package p) {
         return getLocalFullPath(type, p, Optional.of(Constants.DOT_ASC));
     }
 
+    public Path getLocalAscFullPath(FileType type, Name name, String version) {
+        return getLocalFullPath(type, name, version, Optional.of(Constants.DOT_ASC));
+    }
+
+    @Deprecated
     public boolean exists(FileType type, io.mvnpm.npm.model.Package p) {
         Path localFileName = getLocalFullPath(type, p);
         return Files.exists(localFileName);
     }
 
+    public boolean exists(FileType type, Name name, String version) {
+        Path localFileName = getLocalFullPath(type, name, version);
+        return Files.exists(localFileName);
+    }
+
+    @Deprecated
     public Path getLocalFullPath(FileType type, io.mvnpm.npm.model.Package p) {
         return getLocalFullPath(type, p, Optional.empty());
     }
 
+    public Path getLocalFullPath(FileType type, Name name, String version) {
+        return getLocalFullPath(type, name, version, Optional.empty());
+    }
+
+    @Deprecated
     public Path getLocalFullPath(FileType type, io.mvnpm.npm.model.Package p, Optional<String> dotSigned) {
         return getLocalDirectory(p.name(), p.version()).resolve(getLocalFileName(type, p, dotSigned));
     }
@@ -157,8 +185,13 @@ public class FileStore {
         return getLocalDirectory(groupId, artifactId, version).resolve(getLocalFileName(type, artifactId, version, dotSigned));
     }
 
+    @Deprecated
     public String getLocalFileName(FileType type, io.mvnpm.npm.model.Package p, Optional<String> dotSigned) {
         return getLocalFileName(type, p.name().mvnArtifactId, p.version(), dotSigned);
+    }
+
+    public String getLocalFileName(FileType type, Name name, String version, Optional<String> dotSigned) {
+        return getLocalFileName(type, name.mvnArtifactId, version, dotSigned);
     }
 
     public String getLocalFileName(FileType type, String artifactId, String version, Optional<String> dotSigned) {
@@ -167,6 +200,10 @@ public class FileStore {
 
     public String getLocalSha1FileName(FileType type, io.mvnpm.npm.model.Package p) {
         return getLocalFileName(type, p, Optional.of(Constants.DOT_SHA1));
+    }
+
+    public String getLocalSha1FileName(FileType type, Name name, String version) {
+        return getLocalFileName(type, name, version, Optional.of(Constants.DOT_SHA1));
     }
 
     private List<Path> findArtifactRoots(Path directoryPath) {

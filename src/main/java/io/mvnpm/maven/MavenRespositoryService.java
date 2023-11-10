@@ -9,6 +9,7 @@ import io.mvnpm.file.FileClient;
 import io.mvnpm.file.FileType;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
+import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
 
 /**
@@ -28,51 +29,67 @@ public class MavenRespositoryService {
     @Inject
     FileClient fileClient;
 
-    public byte[] getFile(Name fullName, String version, FileType type) {
+    public byte[] getFile(String groupId, String artifactId, String version, FileType type) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        return getFile(name, version, type);
+    }
+
+    public byte[] getFile(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
-            String latestVersion = getLatestVersion(fullName);
-            return getFile(fullName, latestVersion, type);
-        } else if (fullName.isInternal()) {
-            return compositeService.getFile(fullName, version, type);
+            String latestVersion = getLatestVersion(name);
+            return getFile(name, latestVersion, type);
+        } else if (name.isInternal()) {
+            return compositeService.getFile(name, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
-            return fileClient.getFileContents(type, npmPackage);
+            return fileClient.getFileContents(type, name, version);
         }
     }
 
-    public byte[] getSha1(Name fullName, String version, FileType type) {
+    public byte[] getSha1(String groupId, String artifactId, String version, FileType type) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        return getSha1(name, version, type);
+    }
+
+    public byte[] getSha1(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
-            String latestVersion = getLatestVersion(fullName);
-            return getSha1(fullName, latestVersion, type);
-        } else if (fullName.isInternal()) {
-            return compositeService.getFileSha1(fullName, version, type);
+            String latestVersion = getLatestVersion(name);
+            return getSha1(name, latestVersion, type);
+        } else if (name.isInternal()) {
+            return compositeService.getFileSha1(name, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
-            return fileClient.getFileSha1(type, npmPackage);
+            return fileClient.getFileSha1(type, name, version);
         }
     }
 
-    public byte[] getMd5(Name fullName, String version, FileType type) {
+    public byte[] getMd5(String groupId, String artifactId, String version, FileType type) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        return getMd5(name, version, type);
+    }
+
+    public byte[] getMd5(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
-            String latestVersion = getLatestVersion(fullName);
-            return getMd5(fullName, latestVersion, type);
-        } else if (fullName.isInternal()) {
-            return compositeService.getFileMd5(fullName, version, type);
+            String latestVersion = getLatestVersion(name);
+            return getMd5(name, latestVersion, type);
+        } else if (name.isInternal()) {
+            return compositeService.getFileMd5(name, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
-            return fileClient.getFileMd5(type, npmPackage);
+            return fileClient.getFileMd5(type, name, version);
         }
     }
 
-    public byte[] getAsc(Name fullName, String version, FileType type) {
+    public byte[] getAsc(String groupId, String artifactId, String version, FileType type) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        return getAsc(name, version, type);
+    }
+
+    public byte[] getAsc(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
-            String latestVersion = getLatestVersion(fullName);
-            return getAsc(fullName, latestVersion, type);
-        } else if (fullName.isInternal()) {
-            return compositeService.getFileAsc(fullName, version, type);
+            String latestVersion = getLatestVersion(name);
+            return getAsc(name, latestVersion, type);
+        } else if (name.isInternal()) {
+            return compositeService.getFileAsc(name, version, type);
         } else {
-            io.mvnpm.npm.model.Package npmPackage = npmRegistryFacade.getPackage(fullName.npmFullName, version);
-            return fileClient.getFileAsc(type, npmPackage);
+            return fileClient.getFileAsc(type, name, version);
         }
     }
 

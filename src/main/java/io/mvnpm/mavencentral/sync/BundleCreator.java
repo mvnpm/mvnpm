@@ -22,7 +22,6 @@ import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
 import io.mvnpm.maven.MavenRespositoryService;
-import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
 
 /**
@@ -39,20 +38,20 @@ public class BundleCreator {
     @Inject
     MavenRespositoryService mavenRespositoryService;
 
-    public Path bundle(Name name, String version) {
+    public Path bundle(String groupId, String artifactId, String version) {
         Log.debug("====== mvnpm: Nexus Bundler ======");
         // First get the jar, as the jar will create the pom, and
         // other files are being created once the pom and jar is downloaded
-        byte[] jarFile = mavenRespositoryService.getFile(name, version, FileType.jar);
+        byte[] jarFile = mavenRespositoryService.getFile(groupId, artifactId, version, FileType.jar);
         Log.debug("\tbundle: Got initial Jar file");
-        return buildBundle(jarFile, name, version);
+        return buildBundle(jarFile, groupId, artifactId, version);
     }
 
-    private Path buildBundle(byte[] jarFile, Name name, String version) {
-        Map<Path, byte[]> files = getFiles(jarFile, name, version);
+    private Path buildBundle(byte[] jarFile, String groupId, String artifactId, String version) {
+        Map<Path, byte[]> files = getFiles(jarFile, groupId, artifactId, version);
 
-        Path parent = fileStore.getLocalDirectory(name, version);
-        String bundlelocation = name.mvnArtifactId + Constants.HYPHEN + version + "-bundle.jar";
+        Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
+        String bundlelocation = artifactId + Constants.HYPHEN + version + "-bundle.jar";
         Path bundlePath = parent.resolve(bundlelocation);
 
         Log.debug("\tBuilding bundle " + bundlePath + "...");
@@ -85,11 +84,11 @@ public class BundleCreator {
         }
     }
 
-    private Map<Path, byte[]> getFiles(byte[] jarFile, Name name, String version) {
+    private Map<Path, byte[]> getFiles(byte[] jarFile, String groupId, String artifactId, String version) {
         // Files that needs to be in the bundle
         try {
-            Path parent = fileStore.getLocalDirectory(name, version);
-            String base = name.mvnArtifactId + Constants.HYPHEN + version;
+            Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
+            String base = artifactId + Constants.HYPHEN + version;
             Path jarFileName = parent.resolve(base + Constants.DOT_JAR);
             List<Path> fileNames = getFileNamesInBundle(parent, base);
             Map<Path, byte[]> files = new HashMap<>();

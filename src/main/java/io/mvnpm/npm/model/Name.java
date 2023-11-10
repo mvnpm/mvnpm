@@ -2,12 +2,9 @@ package io.mvnpm.npm.model;
 
 import java.io.File;
 
-import jakarta.persistence.Entity;
-
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import io.mvnpm.Constants;
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 /**
  * Represent a Name from both NPM and Maven
@@ -15,8 +12,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @JsonDeserialize(using = NameDeserializer.class)
-@Entity
-public class Name extends PanacheEntity {
+public class Name {
 
     public String npmFullName;
     public String npmNamespace;

@@ -15,7 +15,7 @@ import io.vertx.mutiny.core.eventbus.EventBus;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class CentralSyncStageService {
+public class CentralSyncItemService {
 
     @Inject
     EventBus bus;
@@ -38,6 +38,23 @@ public class CentralSyncStageService {
             return centralSyncItem;
         }
         return Panache.getEntityManager().merge(centralSyncItem);
+    }
+
+    @Transactional
+    public CentralSyncItem findOrCreate(String groupId, String artifactId, String version) {
+        return findOrCreate(new Gav(groupId, artifactId, version));
+    }
+
+    @Transactional
+    public CentralSyncItem findOrCreate(Gav gav) {
+        CentralSyncItem existing = CentralSyncItem.findById(gav);
+        if (existing != null)
+            return existing;
+
+        CentralSyncItem newCentralSyncItem = new CentralSyncItem(gav.getGroupId(), gav.getArtifactId(), gav.getVersion());
+        newCentralSyncItem.persist();
+
+        return newCentralSyncItem;
     }
 
 }

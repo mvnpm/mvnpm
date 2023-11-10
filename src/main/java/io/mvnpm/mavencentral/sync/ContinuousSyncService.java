@@ -50,7 +50,7 @@ public class ContinuousSyncService {
     @Inject
     ErrorHandlingService errorHandlingService;
     @Inject
-    CentralSyncStageService stageService;
+    CentralSyncItemService centralSyncItemService;
     @Inject
     EventLogApi eventLogApi;
 
@@ -58,26 +58,19 @@ public class ContinuousSyncService {
      * Check for version updates, and if a new version is out, do a sync
      */
     public void update(String groupId, String artifactId) {
-        Name name = NameParser.fromMavenGA(groupId, artifactId);
-        update(name);
-    }
-
-    /**
-     * Check for version updates, and if a new version is out, do a sync
-     */
-    public void update(Name name) {
         Log.debug("====== mvnpm: Continuous Updater ======");
-        Log.debug("\tChecking " + name.npmFullName);
-        if (!isInternal(name)) {
+        Log.debug("\tChecking " + groupId + ":" + artifactId);
+        if (!isInternal(groupId, artifactId)) {
             // Get latest in NPM TODO: Later make this per patch release...
             try {
+                Name name = NameParser.fromMavenGA(groupId, artifactId);
                 Project project = npmRegistryFacade.getProject(name.npmFullName);
                 if (project != null) {
                     String latest = project.distTags().latest();
                     initializeSync(name, latest);
                 }
             } catch (WebApplicationException wae) {
-                Log.error("Could not do update for [" + name + "] - " + wae.getMessage());
+                Log.error("Could not do update for [" + groupId + ":" + artifactId + "] - " + wae.getMessage());
             }
         } else {
             // TODO: Handle internal compositions !
@@ -88,14 +81,17 @@ public class ContinuousSyncService {
      * Sync a certain version of a artifact with central
      */
     public boolean initializeSync(Name name, String version) {
-        CentralSyncItem itemToSync = CentralSyncItem.findByGAV(name.mvnGroupId, name.mvnArtifactId, version);
+        return initializeSync(name.mvnGroupId, name.mvnArtifactId, version);
+    }
 
-        if (itemToSync == null) {
-            itemToSync = new CentralSyncItem(name, version);
-        }
+    /**
+     * Sync a certain version of a artifact with central
+     */
+    public boolean initializeSync(String groupId, String artifactId, String version) {
+        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version);
 
         if (centralSyncService.canProcessSync(itemToSync)) { // Check if this is already synced or in progess
-            itemToSync = stageService.changeStage(itemToSync, Stage.INIT);
+            itemToSync = centralSyncItemService.changeStage(itemToSync, Stage.INIT);
             return true;
         }
         return false;
@@ -115,9 +111,9 @@ public class ContinuousSyncService {
                 if (centralSyncService.canProcessSync(itemToBeUploaded)) {
                     // Kick off an update
                     Log.debug("Version [" + itemToBeUploaded.version + "] of "
-                            + itemToBeUploaded.name.npmFullName + " is NOT in central. Kicking off sync...");
+                            + itemToBeUploaded.toGavString() + " is NOT in central. Kicking off sync...");
                     itemToBeUploaded.increaseUploadAttempt();
-                    itemToBeUploaded = stageService.changeStage(itemToBeUploaded, Stage.UPLOADING);
+                    itemToBeUploaded = centralSyncItemService.changeStage(itemToBeUploaded, Stage.UPLOADING);
                 }
             } else {
                 Log.debug("Nothing in the queue to sync");
@@ -148,15 +144,15 @@ public class ContinuousSyncService {
                             CentralSyncItem uploadedItem = uploadedToSonatypeMap.get(repoId);
                             RepoStatus status = statusEntry.getValue();
                             if (status.equals(RepoStatus.open)) {
-                                uploadedItem = stageService.changeStage(uploadedItem, Stage.UPLOADED);
+                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.UPLOADED);
                             } else if (status.equals(RepoStatus.closed)) {
                                 if (!uploadedItem.stage.equals(Stage.RELEASING)) {
-                                    uploadedItem = stageService.changeStage(uploadedItem, Stage.CLOSED);
+                                    uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.CLOSED);
                                 }
                             } else if (status.equals(RepoStatus.released)) {
-                                uploadedItem = stageService.changeStage(uploadedItem, Stage.RELEASED);
+                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.RELEASED);
                             } else if (status.equals(RepoStatus.error)) {
-                                uploadedItem = stageService.changeStage(uploadedItem, Stage.ERROR);
+                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.ERROR);
                             }
                         }
                     }
@@ -191,10 +187,9 @@ public class ContinuousSyncService {
     private void processNextUpload(CentralSyncItem centralSyncItem) {
         if (!centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
             try {
-                String repoId = centralSyncService.sync(centralSyncItem.name,
-                        centralSyncItem.version);
+                String repoId = centralSyncService.sync(centralSyncItem);
                 centralSyncItem.stagingRepoId = repoId;
-                centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
+                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
             } catch (UploadFailedException exception) {
                 exception.printStackTrace();
                 retryUpload(centralSyncItem, exception);
@@ -211,9 +206,8 @@ public class ContinuousSyncService {
     private void processRelease(CentralSyncItem centralSyncItem) {
         try {
             centralSyncItem.increasePromotionAttempt();
-            sonatypeFacade.release(centralSyncItem.name,
-                    centralSyncItem.version, centralSyncItem.stagingRepoId);
-            stageService.changeStage(centralSyncItem, Stage.RELEASING);
+            sonatypeFacade.release(centralSyncItem);
+            centralSyncItemService.changeStage(centralSyncItem, Stage.RELEASING);
         } catch (PromotionException exception) {
             retryPromotion(centralSyncItem, exception);
         } catch (UnauthorizedException unauthorizedException) {
@@ -225,21 +219,21 @@ public class ContinuousSyncService {
 
     private void retryUpload(CentralSyncItem centralSyncItem, Throwable t) {
         if (centralSyncItem.uploadAttempts < 10) {
-            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.INIT);
+            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
         } else {
             t.printStackTrace();
             errorHandlingService.handle(centralSyncItem, t);
-            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
+            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
         }
     }
 
     private void retryPromotion(CentralSyncItem centralSyncItem, Throwable t) {
         if (centralSyncItem.promotionAttempts < 10) {
-            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
+            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
         } else {
             t.printStackTrace();
             errorHandlingService.handle(centralSyncItem, t);
-            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
+            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
         }
     }
 
@@ -257,7 +251,7 @@ public class ContinuousSyncService {
         for (CentralSyncItem centralSyncItem : uploading) {
             centralSyncItem.increaseUploadAttempt();
             Log.info("Resetting upload for " + centralSyncItem + " after restart");
-            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.INIT);
+            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
         }
     }
 
@@ -266,15 +260,15 @@ public class ContinuousSyncService {
         for (CentralSyncItem centralSyncItem : closed) {
             centralSyncItem.increasePromotionAttempt();
             Log.info("Resetting promotion for " + centralSyncItem + " after restart");
-            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
+            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
         }
     }
 
-    private boolean isInternal(Name name) {
-        return name.mvnGroupId.equals("org.mvnpm.at.mvnpm") ||
-                (name.mvnGroupId.equals("org.mvnpm.locked") && name.mvnArtifactId.equals("lit")) || // Failed attempt at hardcoding versions
-                (name.mvnGroupId.equals("org.mvnpm.locked.at.vaadin") && name.mvnArtifactId.equals("router")) || // Failed attempt at hardcoding versions
-                (name.mvnGroupId.equals("org.mvnpm") && name.mvnArtifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
+    private boolean isInternal(String groupId, String artifactId) {
+        return groupId.equals("org.mvnpm.at.mvnpm") ||
+                (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit")) || // Failed attempt at hardcoding versions
+                (groupId.equals("org.mvnpm.locked.at.vaadin") && artifactId.equals("router")) || // Failed attempt at hardcoding versions
+                (groupId.equals("org.mvnpm") && artifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
     }
 
     /**
@@ -285,11 +279,11 @@ public class ContinuousSyncService {
     public void checkAll() {
         try {
             Log.debug("Starting full update check...");
-            List<Name> all = Name.findAll().list();
+            List<CentralSyncItem> distinct = CentralSyncItem.findDistinctGA();
 
-            if (all != null && !all.isEmpty()) {
-                for (Name name : all) {
-                    update(name);
+            if (distinct != null && !distinct.isEmpty()) {
+                for (CentralSyncItem centralSyncItem : distinct) {
+                    update(centralSyncItem.groupId, centralSyncItem.artifactId);
                 }
             }
         } catch (Throwable t) {
