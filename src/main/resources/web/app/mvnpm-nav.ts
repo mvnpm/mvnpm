@@ -2,16 +2,18 @@ import { LitElement, html, css} from 'lit';
 import { customElement } from 'lit/decorators.js';
 import { Router } from '@vaadin/router';
 import './mvnpm-home.js';
-import './mvnpm-event-log.js';
-import './mvnpm-progress.js';
+import './mvnpm-releases.js';
+import './mvnpm-live.js';
 import './mvnpm-about.js';
+
 
 const router = new Router(document.getElementById('outlet'));
 router.setRoutes([
     {path: '/', component: 'mvnpm-home', name: 'Home'},
-    {path: '/event-log', component: 'mvnpm-event-log', name: 'Event Log'},
-    {path: '/progress', component: 'mvnpm-progress', name: 'Sync'},
-    {path: '/about', component: 'mvnpm-about', name: 'About'}
+    {path: '/releases', component: 'mvnpm-releases', name: 'Releases'},
+    {path: '/live', component: 'mvnpm-live', name: 'Live'},
+    {path: '/about', component: 'mvnpm-about', name: 'About'},
+    
 ]);
 
 /**
@@ -60,9 +62,6 @@ export class MvnpmNav extends LitElement {
                                   </a>
                                 </vaadin-tab>`
                         )}
-                        <vaadin-tab>
-                          <a href="https://groups.google.com/g/mvnpm-releases" target="_blank" vaadin-router-ignore><span>Releases</span></a>
-                        </vaadin-tab>
                         <vaadin-tab>
                           <a href="https://github.com/mvnpm/mvnpm" target="_blank" vaadin-router-ignore><span>Source</span></a>
                         </vaadin-tab>

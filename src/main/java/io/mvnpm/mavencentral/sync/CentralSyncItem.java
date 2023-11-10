@@ -18,7 +18,7 @@ import io.quarkus.logging.Log;
 
 @Entity
 @NamedQueries({
-        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime"),
+        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime LIMIT 999"),
         @NamedQuery(name = "CentralSyncItem.findUploadedButNotReleased", query = "from CentralSyncItem where stage IN ?1 order by stageChangeTime")
 })
 public class CentralSyncItem extends PanacheEntity {
@@ -73,6 +73,10 @@ public class CentralSyncItem extends PanacheEntity {
                 || this.stage.equals(Stage.RELEASING)
                 || this.stage.equals(Stage.UPLOADED)
                 || this.stage.equals(Stage.UPLOADING);
+    }
+
+    public boolean isInError() {
+        return this.stage.equals(Stage.ERROR);
     }
 
     public boolean alreadyRealeased() {

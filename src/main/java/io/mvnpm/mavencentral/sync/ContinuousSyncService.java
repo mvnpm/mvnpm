@@ -2,7 +2,10 @@ package io.mvnpm.mavencentral.sync;
 
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -10,9 +13,11 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
 import io.mvnpm.error.ErrorHandlingService;
+import io.mvnpm.log.EventLogApi;
 import io.mvnpm.mavencentral.PromotionException;
 import io.mvnpm.mavencentral.RepoStatus;
 import io.mvnpm.mavencentral.SonatypeFacade;
+import io.mvnpm.mavencentral.StatusCheckException;
 import io.mvnpm.mavencentral.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -46,6 +51,8 @@ public class ContinuousSyncService {
     ErrorHandlingService errorHandlingService;
     @Inject
     CentralSyncStageService stageService;
+    @Inject
+    EventLogApi eventLogApi;
 
     /**
      * Check for version updates, and if a new version is out, do a sync
@@ -109,6 +116,7 @@ public class ContinuousSyncService {
                     // Kick off an update
                     Log.debug("Version [" + itemToBeUploaded.version + "] of "
                             + itemToBeUploaded.name.npmFullName + " is NOT in central. Kicking off sync...");
+                    itemToBeUploaded.increaseUploadAttempt();
                     itemToBeUploaded = stageService.changeStage(itemToBeUploaded, Stage.UPLOADING);
                 }
             } else {
@@ -125,78 +133,127 @@ public class ContinuousSyncService {
         return uploadingCount != 0;
     }
 
+    @Scheduled(every = "60s", concurrentExecution = SKIP)
+    @Blocking
+    void processSonatypeStatuses() {
+        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findNotReleased();
+        if (!uploadedToSonatype.isEmpty()) {
+            Map<String, CentralSyncItem> uploadedToSonatypeMap = mapByRepoId(uploadedToSonatype);
+            if (!uploadedToSonatypeMap.isEmpty()) {
+                try {
+                    Set<Map.Entry<String, RepoStatus>> statuses = sonatypeFacade.statuses().entrySet();
+                    for (Map.Entry<String, RepoStatus> statusEntry : statuses) {
+                        String repoId = statusEntry.getKey();
+                        if (uploadedToSonatypeMap.containsKey(repoId)) {
+                            CentralSyncItem uploadedItem = uploadedToSonatypeMap.get(repoId);
+                            RepoStatus status = statusEntry.getValue();
+                            if (status.equals(RepoStatus.open)) {
+                                uploadedItem = stageService.changeStage(uploadedItem, Stage.UPLOADED);
+                            } else if (status.equals(RepoStatus.closed)) {
+                                if (!uploadedItem.stage.equals(Stage.RELEASING)) {
+                                    uploadedItem = stageService.changeStage(uploadedItem, Stage.CLOSED);
+                                }
+                            } else if (status.equals(RepoStatus.released)) {
+                                uploadedItem = stageService.changeStage(uploadedItem, Stage.RELEASED);
+                            } else if (status.equals(RepoStatus.error)) {
+                                uploadedItem = stageService.changeStage(uploadedItem, Stage.ERROR);
+                            }
+                        }
+                    }
+                } catch (Throwable exception) {
+                    // TODO ?
+                    exception.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private Map<String, CentralSyncItem> mapByRepoId(List<CentralSyncItem> uploadedToSonatype) {
+        Map<String, CentralSyncItem> mapByRepoId = new HashMap<>();
+        for (CentralSyncItem csi : uploadedToSonatype) {
+            if (csi.stagingRepoId != null && !csi.stagingRepoId.isEmpty()) {
+                mapByRepoId.put(csi.stagingRepoId, csi);
+            }
+        }
+        return mapByRepoId;
+    }
+
     @ConsumeEvent("central-sync-item-stage-change")
     @Blocking
-    public void processNextUpload(CentralSyncItem centralSyncItem) {
+    public void processNextAction(CentralSyncItem centralSyncItem) {
         if (centralSyncItem.stage.equals(Stage.UPLOADING)) {
-            if (!centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
-                try {
-                    String repoId = centralSyncService.sync(centralSyncItem.name,
-                            centralSyncItem.version);
-                    centralSyncItem.stagingRepoId = repoId;
-                    centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
-                } catch (UploadFailedException exception) {
-                    centralSyncItem.increaseUploadAttempt();
-                    errorHandlingService.handle(centralSyncItem, exception);
-                    // Retry
-                    centralSyncItem = stageService.changeStage(centralSyncItem, Stage.INIT);
-                } catch (UnauthorizedException unauthorizedException) {
-                    errorHandlingService.handle(centralSyncItem, unauthorizedException);
-                } catch (Throwable throwable) {
-                    centralSyncItem.increaseUploadAttempt();
-                    errorHandlingService.handle(centralSyncItem, throwable);
-                    if (centralSyncItem.uploadAttempts < 10) {
-                        centralSyncItem = stageService.changeStage(centralSyncItem, Stage.INIT);
-                    } else {
-                        centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
-                    }
-                }
-            }
+            processNextUpload(centralSyncItem);
         } else if (centralSyncItem.stage.equals(Stage.CLOSED)) {
+            processRelease(centralSyncItem);
+        }
+    }
+
+    private void processNextUpload(CentralSyncItem centralSyncItem) {
+        if (!centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
             try {
-                sonatypeFacade.release(centralSyncItem.name,
-                        centralSyncItem.version, centralSyncItem.stagingRepoId);
-                stageService.changeStage(centralSyncItem, Stage.RELEASING);
-            } catch (PromotionException exception) {
-                centralSyncItem.increasePromotionAttempt();
-                errorHandlingService.handle(centralSyncItem, exception);
-                // Retry
+                String repoId = centralSyncService.sync(centralSyncItem.name,
+                        centralSyncItem.version);
+                centralSyncItem.stagingRepoId = repoId;
                 centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
+            } catch (UploadFailedException exception) {
+                exception.printStackTrace();
+                retryUpload(centralSyncItem, exception);
             } catch (UnauthorizedException unauthorizedException) {
+                unauthorizedException.printStackTrace();
                 errorHandlingService.handle(centralSyncItem, unauthorizedException);
             } catch (Throwable throwable) {
-                centralSyncItem.increasePromotionAttempt();
-                errorHandlingService.handle(centralSyncItem, throwable);
-                if (centralSyncItem.promotionAttempts < 10) {
-                    centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
-                } else {
-                    centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
-                }
+                throwable.printStackTrace();
+                retryUpload(centralSyncItem, throwable);
             }
         }
     }
 
-    void onStart(@Observes StartupEvent ev) {
-
-        // Check if the database is empty, and if so, populate from central. TODO: Make this configurable ?
-        List<Name> all = Name.findAll().list();
-        if (all == null || all.isEmpty()) {
-            initDatabase();
-        } else {
-            // Reset upload if the server restarts
-            resetUpload();
-            // Reset promotion if the server restarts
-            resetPromotion();
+    private void processRelease(CentralSyncItem centralSyncItem) {
+        try {
+            centralSyncItem.increasePromotionAttempt();
+            sonatypeFacade.release(centralSyncItem.name,
+                    centralSyncItem.version, centralSyncItem.stagingRepoId);
+            stageService.changeStage(centralSyncItem, Stage.RELEASING);
+        } catch (PromotionException exception) {
+            retryPromotion(centralSyncItem, exception);
+        } catch (UnauthorizedException unauthorizedException) {
+            errorHandlingService.handle(centralSyncItem, unauthorizedException);
+        } catch (Throwable throwable) {
+            retryPromotion(centralSyncItem, throwable);
         }
     }
 
-    private void initDatabase() {
-        List<CentralSyncItem> allResult = sonatypeFacade.findAllInCentral();
-        stageService.changeStages(allResult, Stage.RELEASED);
+    private void retryUpload(CentralSyncItem centralSyncItem, Throwable t) {
+        if (centralSyncItem.uploadAttempts < 10) {
+            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.INIT);
+        } else {
+            t.printStackTrace();
+            errorHandlingService.handle(centralSyncItem, t);
+            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
+        }
+    }
+
+    private void retryPromotion(CentralSyncItem centralSyncItem, Throwable t) {
+        if (centralSyncItem.promotionAttempts < 10) {
+            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
+        } else {
+            t.printStackTrace();
+            errorHandlingService.handle(centralSyncItem, t);
+            centralSyncItem = stageService.changeStage(centralSyncItem, Stage.ERROR);
+        }
+    }
+
+    void onStart(@Observes StartupEvent ev) throws StatusCheckException {
+        // Reset upload if the server restarts
+        resetUpload();
+        // Reset promotion if the server restarts
+        resetPromotion();
+
+        eventLogApi.clearLog();
     }
 
     private void resetUpload() {
-        List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADED);
+        List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADING);
         for (CentralSyncItem centralSyncItem : uploading) {
             centralSyncItem.increaseUploadAttempt();
             Log.info("Resetting upload for " + centralSyncItem + " after restart");
@@ -210,34 +267,6 @@ public class ContinuousSyncService {
             centralSyncItem.increasePromotionAttempt();
             Log.info("Resetting promotion for " + centralSyncItem + " after restart");
             centralSyncItem = stageService.changeStage(centralSyncItem, Stage.UPLOADED);
-        }
-    }
-
-    @Scheduled(every = "60s", concurrentExecution = SKIP)
-    @Blocking
-    void processSonatypeStatus() {
-        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findNotReleased();
-
-        if (!uploadedToSonatype.isEmpty()) {
-            CentralSyncItem uploadedItem = uploadedToSonatype.get(0);
-            try {
-                RepoStatus status = sonatypeFacade.status(uploadedItem.name,
-                        uploadedItem.version, uploadedItem.stagingRepoId);
-
-                if (status.equals(RepoStatus.open)) {
-                    uploadedItem = stageService.changeStage(uploadedItem, Stage.UPLOADED);
-                    // TODO: Check for error ?
-                } else if (status.equals(RepoStatus.closed)) {
-                    if (!uploadedItem.stage.equals(Stage.RELEASING) && !uploadedItem.stage.equals(Stage.RELEASED)) {
-                        uploadedItem = stageService.changeStage(uploadedItem, Stage.CLOSED);
-                    }
-                } else if (status.equals(RepoStatus.released)) {
-                    uploadedItem = stageService.changeStage(uploadedItem, Stage.RELEASED);
-                }
-            } catch (Throwable exception) {
-                errorHandlingService.handle(uploadedItem, exception);
-                uploadedItem = stageService.changeStage(uploadedItem, uploadedItem.stage);
-            }
         }
     }
 

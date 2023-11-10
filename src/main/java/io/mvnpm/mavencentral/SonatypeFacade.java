@@ -1,10 +1,11 @@
 package io.mvnpm.mavencentral;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -14,7 +15,6 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-import io.mvnpm.Constants;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.npm.model.Name;
@@ -34,17 +34,8 @@ import io.vertx.core.json.JsonObject;
 @ApplicationScoped
 public class SonatypeFacade {
 
-    private static final String Q_FORMAT = "g:%s AND a:%s AND v:%s";
-    private static final String CORE = "gav";
-    private static final String ROWS = "1";
-    private static final String WT = "json";
-    private static final String ZERO = "0";
-
     @Inject
     ErrorHandlingService errorHandlingService;
-
-    @RestClient
-    SearchMavenClient searchMavenClient;
 
     @RestClient
     SonatypeClient sonatypeClient;
@@ -58,85 +49,48 @@ public class SonatypeFacade {
     @ConfigProperty(name = "mvnpm.sonatype.profileId", defaultValue = "473ee06cf882e")
     String profileId;
 
-    @ConfigProperty(name = "quarkus.rest-client.search-maven.url")
-    String searchMavenUrl;
-
     @Blocking
     @CacheResult(cacheName = "maven-search-cache")
     public CentralSyncItem search(String groupId, String artifactId, String version) {
-        String q = String.format(Q_FORMAT, groupId, artifactId, version);
         try {
-            Response searchResponse = searchMavenClient.search(q, CORE, ROWS, WT, ZERO);
-            if (searchResponse.getStatus() < 300) {
-                JsonObject pageJson = searchResponse.readEntity(JsonObject.class);
-                List<CentralSyncItem> list = toCentralSyncItemList(pageJson);
+            if (authorization.isPresent()) {
+                String a = "Basic " + authorization.get();
+                Response searchResponse = sonatypeClient.search(a, groupId, artifactId, version);
+                if (searchResponse.getStatus() < 300) {
+                    JsonObject pageJson = searchResponse.readEntity(JsonObject.class);
+                    List<CentralSyncItem> list = toCentralSyncItemList(pageJson);
 
-                if (!list.isEmpty()) {
-                    return list.get(0);
+                    if (!list.isEmpty()) {
+                        return list.get(0);
+                    }
                 }
+            } else {
+                throw new UnauthorizedException(
+                        "Authorization not present for search " + groupId + ":" + artifactId + ":" + version);
             }
         } catch (Throwable t) {
-            String u = searchMavenUrl + "/solrsearch/select?q=" + q.replaceAll(Constants.SPACE, Constants.SPACE_URL_ENCODED)
-                    + "&core=gav&rows=1&wt=json";
-            errorHandlingService.handle(groupId, artifactId, version, "Error while searching maven central [" + u + "]", t);
+            errorHandlingService.handle(groupId, artifactId, version,
+                    "Error while searching maven central [" + groupId + ":" + artifactId + ":" + version + "]", t);
         }
         return null;
-    }
-
-    @Blocking
-    public List<CentralSyncItem> findAllInCentral() {
-        List<CentralSyncItem> items = new ArrayList<>();
-        return page(items);
-    }
-
-    private List<CentralSyncItem> page(List<CentralSyncItem> items) {
-        Response page = searchMavenClient.search("org.mvnpm", "", "200", WT, String.valueOf(items.size())); // 200 is the max.
-
-        if (page.getStatus() < 300) {
-            JsonObject pageJson = page.readEntity(JsonObject.class);
-            int size = numFound(pageJson);
-            items.addAll(toCentralSyncItemList(pageJson));
-
-            if (items.size() >= size) {
-                return items;
-            } else {
-                return page(items);
-            }
-        }
-        // retry
-        return page(items);
-    }
-
-    private int numFound(JsonObject pageJson) {
-        if (pageJson != null) {
-            JsonObject response = pageJson.getJsonObject("response");
-            if (response != null) {
-                Integer numFound = response.getInteger("numFound");
-                if (numFound != null && numFound > 0) {
-                    return numFound;
-                }
-            }
-        }
-        return 0;
     }
 
     private List<CentralSyncItem> toCentralSyncItemList(JsonObject pageJson) {
         List<CentralSyncItem> items = new ArrayList<>();
         if (pageJson != null) {
-            JsonObject response = pageJson.getJsonObject("response");
-            if (response != null) {
+            JsonArray data = pageJson.getJsonArray("data");
+            if (data != null && !data.isEmpty()) {
 
-                JsonArray docs = response.getJsonArray("docs");
-                if (docs != null && !docs.isEmpty()) {
-
-                    docs.forEach(i -> {
-                        JsonObject item = (JsonObject) i;
-                        String groupId = item.getString("g");
-                        String artifactId = item.getString("a");
-                        String version = item.getString("latestVersion");
+                for (int i = 0; i < data.size(); i++) {
+                    JsonObject item = data.getJsonObject(i);
+                    String latestReleaseRepositoryId = item.getString("latestReleaseRepositoryId");
+                    if (latestReleaseRepositoryId.equals("releases")) {
+                        String groupId = item.getString("groupId");
+                        String artifactId = item.getString("artifactId");
+                        String version = item.getString("version");
                         Name name = NameParser.fromMavenGA(groupId, artifactId);
                         items.add(new CentralSyncItem(name, version));
-                    });
+                    }
                 }
             }
         }
@@ -145,70 +99,122 @@ public class SonatypeFacade {
 
     @Blocking
     public String upload(Name name, String version, Path path) throws UploadFailedException {
-        Log.debug("====== mvnpm: Nexus Uploader ======");
-        Log.debug("\tUploading " + path + "...");
-        byte[] b;
         try {
-            b = Files.readAllBytes(path);
-        } catch (IOException ex) {
-            throw new UploadFailedException(ex);
-        }
+            Log.debug("\tUploading " + path + "...");
+            byte[] b = Files.readAllBytes(path);
+            if (authorization.isPresent()) {
+                String a = "Basic " + authorization.get();
 
-        if (authorization.isPresent()) {
-            String a = "Basic " + authorization.get();
+                Response uploadResponse = sonatypeClient.uploadBundle(a, b);
 
-            Response uploadResponse = sonatypeClient.uploadBundle(a, b);
-
-            if (uploadResponse.getStatus() == 201) {
-                String resp = uploadResponse.readEntity(String.class);
-                String repositoryId = resp.substring(resp.lastIndexOf('/') + 1, resp.length() - 3);
-                Log.info("Uploaded bundle " + path + " to staging repo [" + repositoryId + "]");
-                return repositoryId;
+                if (uploadResponse.getStatus() == 201) {
+                    String resp = uploadResponse.readEntity(String.class);
+                    String repositoryId = resp.substring(resp.lastIndexOf('/') + 1, resp.length() - 3);
+                    Log.info("Uploaded bundle " + path + " to staging repo [" + repositoryId + "]");
+                    return repositoryId;
+                } else {
+                    throw new UploadFailedException("HTTP Response status [" + uploadResponse.getStatus() + "] for " + path);
+                }
             } else {
-                throw new UploadFailedException("HTTP Response status " + uploadResponse.getStatus() + "] for " + path);
+                throw new UnauthorizedException("Authorization not present for " + path);
             }
-        } else {
-            throw new UnauthorizedException("Authorization not present for " + path);
+        } catch (Throwable ex) {
+            throw new UploadFailedException("Upload for " + path + " failed", ex);
+        }
+    }
+
+    @Blocking
+    public Map<String, RepoStatus> statuses() throws StatusCheckException {
+        try {
+            if (authorization.isPresent()) {
+                String a = "Basic " + authorization.get();
+
+                Response statusesResponse = sonatypeClient.uploadBundleStatuses(a);
+
+                if (statusesResponse.getStatus() < 300) {
+                    Map<String, RepoStatus> repostatuses = new HashMap<>();
+                    JsonObject resp = statusesResponse.readEntity(JsonObject.class);
+                    JsonArray data = resp.getJsonArray("data");
+                    data.forEach((t) -> {
+                        JsonObject repo = (JsonObject) t;
+                        String profileName = repo.getString("profileName");
+                        if (profileName.equals("org.mvnpm")) {
+                            String repositoryId = repo.getString("repositoryId");
+                            String type = repo.getString("type");
+                            RepoStatus repoStatus = RepoStatus.valueOf(type);
+                            int notifications = resp.getInteger("notifications", 0);
+                            if (repoStatus.equals(RepoStatus.open) && notifications > 0) {
+                                repoStatus = RepoStatus.error;
+                            }
+                            repostatuses.put(repositoryId, repoStatus);
+                        }
+
+                    });
+                    return repostatuses;
+                } else {
+                    throw new StatusCheckException(
+                            "HTTP Response status " + statusesResponse.getStatus() + "] for all repos");
+                }
+            } else {
+                throw new UnauthorizedException(
+                        "Authorization not present for checking status in all repos");
+            }
+        } catch (Throwable ex) {
+            throw new StatusCheckException("Status check for all repos failed", ex);
         }
     }
 
     @Blocking
     public RepoStatus status(Name name, String version, String repositoryId) throws StatusCheckException {
-        if (authorization.isPresent()) {
-            String a = "Basic " + authorization.get();
+        try {
+            if (authorization.isPresent()) {
+                String a = "Basic " + authorization.get();
 
-            Response statusResponse = sonatypeClient.uploadBundleStatus(a, repositoryId);
+                Response statusResponse = sonatypeClient.uploadBundleStatus(a, repositoryId);
 
-            if (statusResponse.getStatus() < 300) {
-                JsonObject resp = statusResponse.readEntity(JsonObject.class);
-                String type = resp.getString("type");
-                return RepoStatus.valueOf(type);
+                if (statusResponse.getStatus() < 300) {
+                    JsonObject resp = statusResponse.readEntity(JsonObject.class);
+                    String type = resp.getString("type");
+                    RepoStatus repoStatus = RepoStatus.valueOf(type);
+                    int notifications = resp.getInteger("notifications", 0);
+                    if (repoStatus.equals(RepoStatus.open) && notifications > 0) {
+                        repoStatus = RepoStatus.error;
+                    }
+                    return repoStatus;
+                } else {
+                    throw new StatusCheckException(
+                            "HTTP Response status " + statusResponse.getStatus() + "] for repo " + repositoryId);
+                }
             } else {
-                throw new StatusCheckException(
-                        "HTTP Response status " + statusResponse.getStatus() + "] for repo " + repositoryId);
+                throw new UnauthorizedException(
+                        "Authorization not present for " + name.toGavString(version) + " [" + repositoryId + "]");
             }
-        } else {
-            throw new UnauthorizedException("Authorization not present for " + repositoryId);
+        } catch (Throwable ex) {
+            throw new StatusCheckException("Status check for " + name.toGavString(version) + " failed", ex);
         }
     }
 
     @Blocking
     public void release(Name name, String version, String repositoryId) throws PromotionException {
-        if (authorization.isPresent()) {
-            if (autoRelease) {
-                String a = "Basic " + authorization.get();
+        try {
+            if (authorization.isPresent()) {
+                if (autoRelease) {
+                    String a = "Basic " + authorization.get();
 
-                Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, toPromoteRequest(repositoryId));
+                    Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, toPromoteRequest(repositoryId));
 
-                if (promoteResponse.getStatus() >= 300) {
-                    JsonObject error = promoteResponse.readEntity(JsonObject.class);
-                    Log.error(error.toString());
-                    throw new PromotionException(
-                            "HTTP Response status " + promoteResponse.getStatus() + "] for repo " + repositoryId);
+                    if (promoteResponse.getStatus() >= 300) {
+                        JsonObject error = promoteResponse.readEntity(JsonObject.class);
+                        Log.error(error.toString());
+                        throw new PromotionException(
+                                "HTTP Response status " + promoteResponse.getStatus() + "] for repo " + repositoryId);
+                    }
                 }
+            } else {
+                throw new UnauthorizedException("Authorization not present for " + repositoryId);
             }
-        } else {
-            throw new UnauthorizedException("Authorization not present for " + repositoryId);
+        } catch (Throwable ex) {
+            throw new PromotionException("Release request for  " + name.toGavString(version) + " failed", ex);
         }
     }
 

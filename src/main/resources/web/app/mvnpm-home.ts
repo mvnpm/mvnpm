@@ -324,15 +324,23 @@ export class MvnpmHome extends LitElement {
         if(this._centralSyncItem){
             if(this._centralSyncItem.stage === "RELEASED"){
                 return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-success-color)" icon="vaadin:check-circle"></vaadin-icon> Maven central</span>`;
-            }else if(this._centralSyncItem.inProgress){
+            }else if(this._centralSyncItem.inProgress || this._centralSyncItem.stage === "INIT"){
                 return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-warning-color)" icon="vaadin:progressbar"></vaadin-icon> Maven central</span>`;
             }else {
-                return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon> Maven central</span>`;
+                return html`<span style="cursor: pointer;" @click="${this._requestFullSync}"><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-error-color)" icon="vaadin:close-circle"></vaadin-icon> Maven central</span>`;
             }
         }
         return html`<span><vaadin-icon title="Checking..." style="color:var(--lumo-warning-color)" icon="vaadin:question-circle-o"></vaadin-icon> Maven central</span>`;
     }
     
+    _requestFullSync(){
+        var fullSyncRequest = "/api/sync/request/" + this._centralSyncItem.name.mvnGroupId + "/" + this._centralSyncItem.name.mvnArtifactId + "?version=" + this._centralSyncItem.version;
+        
+        fetch(fullSyncRequest)
+            .then(response => response.json())
+            .then(response => this._centralSyncItem = response);
+    }
+
     _loadInfoTab(){
         if(this._info){
             return html`<div class="info">

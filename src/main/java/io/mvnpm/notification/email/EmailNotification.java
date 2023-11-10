@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.mavencentral.sync.Stage;
 import io.mvnpm.notification.Notification;
 import io.mvnpm.notification.NotificationFormatter;
 import io.quarkus.mailer.Mail;
@@ -22,18 +23,12 @@ public class EmailNotification {
     @Inject
     Mailer mailer;
 
-    @ConsumeEvent("artifact-released-to-central")
+    @ConsumeEvent("central-sync-item-stage-change")
     @Blocking
     public void artifactReleased(CentralSyncItem centralSyncItem) {
-        Notification notification = NotificationFormatter.getNotificationAsHTML(centralSyncItem);
-        mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
+        if (centralSyncItem.stage.equals(Stage.RELEASED)) {
+            Notification notification = NotificationFormatter.getNotificationAsHTML(centralSyncItem);
+            mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
+        }
     }
-
-    @ConsumeEvent("error-in-workflow")
-    @Blocking
-    public void error(CentralSyncItem centralSyncItem) {
-        Notification notification = NotificationFormatter.getErrorAsHTML(centralSyncItem);
-        mailer.send(Mail.withHtml("phillip.kruger@gmail.com", notification.title(), notification.body()));
-    }
-
 }

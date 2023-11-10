@@ -16,7 +16,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 
-import io.mvnpm.mavencentral.sync.*;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.vertx.ConsumeEvent;
@@ -67,16 +67,7 @@ public class EventLogApi {
     @Transactional
     public void stateChange(CentralSyncItem centralSyncItem) {
         EventLogEntry eventLogEntry = EventLogEntryUtil.toEventLogEntry(centralSyncItem);
-        eventLogEntry.persistAndFlush();
-        broadcast(eventLogEntry);
-    }
-
-    @ConsumeEvent("error-in-workflow")
-    @Blocking
-    @Transactional
-    public void error(CentralSyncItem centralSyncItem) {
-        EventLogEntry eventLogEntry = EventLogEntryUtil.toEventLogEntry(centralSyncItem, "error in workflow", "red");
-        eventLogEntry.persistAndFlush();
+        eventLogEntry.persist();
         broadcast(eventLogEntry);
     }
 
@@ -84,13 +75,13 @@ public class EventLogApi {
     @Blocking
     @Transactional
     public void exception(EventLogEntry eventLogEntry) {
-        eventLogEntry.persistAndFlush();
+        eventLogEntry.persist();
         broadcast(eventLogEntry);
     }
 
     @GET
     @Path("/top")
-    public List<EventLogEntry> getTop(@QueryParam("limit") @DefaultValue("2000") int limit) {
+    public List<EventLogEntry> getTop(@QueryParam("limit") @DefaultValue("999") int limit) {
         return EventLogEntry.findAll(Sort.by("time")).range(0, limit).list();
     }
 
@@ -99,5 +90,10 @@ public class EventLogApi {
     public List<EventLogEntry> getGavLog(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @PathParam("version") String version) {
         return EventLogEntry.findByGav(groupId, artifactId, version);
+    }
+
+    @Transactional
+    public void clearLog() {
+        EventLogEntry.deleteAll();
     }
 }
