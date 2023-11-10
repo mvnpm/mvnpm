@@ -42,7 +42,7 @@ public class CentralSyncApi {
     @Inject
     ContinuousSyncService continuousSyncService;
     @Inject
-    CentralSyncStageService centralSyncStageService;
+    CentralSyncItemService centralSyncItemService;
 
     private final Set<Session> sessions = new ConcurrentHashSet<>();
 
@@ -83,43 +83,41 @@ public class CentralSyncApi {
     @Path("/info/{groupId}/{artifactId}")
     public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
-        Name name = NameParser.fromMavenGA(groupId, artifactId);
+
         if (version.equalsIgnoreCase("latest")) {
-            version = getLatestVersion(name);
+            version = getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem stored = CentralSyncItem.findByGAV(groupId, artifactId, version);
-        if (stored != null)
-            return stored;
+        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
 
         // Check the status
-        CentralSyncItem csi = new CentralSyncItem(name, version);
-        if (centralSyncService.isInMavenCentralRemoteCheck(csi)) {
-            csi.stage = Stage.RELEASED;
-            centralSyncStageService.merge(csi);
+        if (!centralSyncItem.alreadyRealeased() && centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
+            centralSyncItem.stage = Stage.RELEASED;
+            centralSyncItemService.merge(centralSyncItem);
         }
-        return csi;
+        return centralSyncItem;
     }
 
     @GET
     @Path("/request/{groupId}/{artifactId}")
     public CentralSyncItem requestFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
-        Name name = NameParser.fromMavenGA(groupId, artifactId);
+
         if (version.equalsIgnoreCase("latest")) {
-            version = getLatestVersion(name);
+            version = getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem stored = CentralSyncItem.findByGAV(groupId, artifactId, version);
-        if (stored != null && (stored.isInProgress() || stored.stage.equals(Stage.INIT)))
-            return stored;
+        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+
+        // Already being synced
+        if (centralSyncItem.isInProgress() || centralSyncItem.stage.equals(Stage.INIT))
+            return centralSyncItem;
 
         // Check the remote status
-        CentralSyncItem csi = new CentralSyncItem(name, version);
-        if (centralSyncService.isInMavenCentralRemoteCheck(csi)) {
-            csi.stage = Stage.RELEASED;
-            centralSyncStageService.merge(csi);
-            return csi;
+        if (!centralSyncItem.alreadyRealeased() && centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
+            centralSyncItem.stage = Stage.RELEASED;
+            centralSyncItemService.merge(centralSyncItem);
+            return centralSyncItem;
         }
 
         // Else kick off sync
@@ -131,14 +129,14 @@ public class CentralSyncApi {
         //        }catch (WebApplicationException wae){
         //            Log.error("Could not kick off sync of dependencendies " + wae.getMessage());
         //        }
-        continuousSyncService.initializeSync(name, version);
+        continuousSyncService.initializeSync(groupId, artifactId, version);
         // Also request sync for dependencies.
         //        if(deps!=null){
         //            for (Map.Entry<Name, String> dep : deps) {
         //                requestFullSync(dep.getKey().mvnGroupId, dep.getKey().mvnArtifactId, dep.getValue());
         //            }
         //        }
-        return CentralSyncItem.findByGAV(groupId, artifactId, version);
+        return centralSyncItemService.findOrCreate(groupId, artifactId, version);
     }
 
     @GET
@@ -151,6 +149,11 @@ public class CentralSyncApi {
     @Path("/items")
     public List<CentralSyncItem> getItems() {
         return CentralSyncItem.findAll().list();
+    }
+
+    private String getLatestVersion(String groupId, String artifactId) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        return getLatestVersion(name);
     }
 
     private String getLatestVersion(Name fullName) {

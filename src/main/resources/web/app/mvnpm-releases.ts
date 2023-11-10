@@ -63,8 +63,8 @@ export class MvnpmReleases extends LitElement {
     private _renderItemTable() {
         if (this._itemList && this._itemList.length > 0) {
             return html`<vaadin-grid .items="${this._itemList}">
-                <vaadin-grid-sort-column header="Group Id" path="name.mvnGroupId"></vaadin-grid-sort-column>
-                <vaadin-grid-sort-column header="Artifact Id" path="name.mvnArtifactId"></vaadin-grid-sort-column>
+                <vaadin-grid-sort-column header="Group Id" path="groupId"></vaadin-grid-sort-column>
+                <vaadin-grid-sort-column header="Artifact Id" path="artifactId"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Version" path="version"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Last modified" path="stageChangeTime"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Staging Repo Id" path="stagingRepoId"></vaadin-grid-sort-column>
@@ -84,6 +84,4 @@ export class MvnpmReleases extends LitElement {
             .then(response => response.json())
             .then(response => this._itemList = response);
     }
-
-
 }

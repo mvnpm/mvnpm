@@ -17,8 +17,8 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.mavencentral.sync.CentralSyncItemService;
 import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.NameParser;
 import io.quarkus.cache.CacheResult;
 import io.quarkus.logging.Log;
 import io.quarkus.security.UnauthorizedException;
@@ -39,6 +39,9 @@ public class SonatypeFacade {
 
     @RestClient
     SonatypeClient sonatypeClient;
+
+    @Inject
+    CentralSyncItemService centralSyncItemService;
 
     @ConfigProperty(name = "mvnpm.sonatype.authorization")
     Optional<String> authorization;
@@ -88,8 +91,7 @@ public class SonatypeFacade {
                         String groupId = item.getString("groupId");
                         String artifactId = item.getString("artifactId");
                         String version = item.getString("version");
-                        Name name = NameParser.fromMavenGA(groupId, artifactId);
-                        items.add(new CentralSyncItem(name, version));
+                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version));
                     }
                 }
             }
@@ -98,7 +100,7 @@ public class SonatypeFacade {
     }
 
     @Blocking
-    public String upload(Name name, String version, Path path) throws UploadFailedException {
+    public String upload(Path path) throws UploadFailedException {
         try {
             Log.debug("\tUploading " + path + "...");
             byte[] b = Files.readAllBytes(path);
@@ -195,26 +197,27 @@ public class SonatypeFacade {
     }
 
     @Blocking
-    public void release(Name name, String version, String repositoryId) throws PromotionException {
+    public void release(CentralSyncItem centralSyncItem) throws PromotionException {
         try {
             if (authorization.isPresent()) {
                 if (autoRelease) {
                     String a = "Basic " + authorization.get();
 
-                    Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId, toPromoteRequest(repositoryId));
+                    Response promoteResponse = sonatypeClient.releaseToCentral(a, profileId,
+                            toPromoteRequest(centralSyncItem.stagingRepoId));
 
                     if (promoteResponse.getStatus() >= 300) {
                         JsonObject error = promoteResponse.readEntity(JsonObject.class);
                         Log.error(error.toString());
                         throw new PromotionException(
-                                "HTTP Response status " + promoteResponse.getStatus() + "] for repo " + repositoryId);
+                                "HTTP Response status " + promoteResponse.getStatus() + "] for item " + centralSyncItem);
                     }
                 }
             } else {
-                throw new UnauthorizedException("Authorization not present for " + repositoryId);
+                throw new UnauthorizedException("Authorization not present for " + centralSyncItem);
             }
         } catch (Throwable ex) {
-            throw new PromotionException("Release request for  " + name.toGavString(version) + " failed", ex);
+            throw new PromotionException("Release request for  " + centralSyncItem + " failed", ex);
         }
     }
 

@@ -20,10 +20,7 @@ public class LogNotification {
     @Blocking
     public void artifactReleased(CentralSyncItem centralSyncItem) {
         if (centralSyncItem.stage.equals(Stage.RELEASED)) {
-            String message = centralSyncItem.name.mvnGroupId + ":" +
-                    centralSyncItem.name.mvnArtifactId + ":" +
-                    centralSyncItem.version + " released.";
-
+            String message = centralSyncItem.toGavString() + " released.";
             Log.info(message);
         }
     }
