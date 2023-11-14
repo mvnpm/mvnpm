@@ -1,603 +1,372 @@
-<?xml version="1.0"?>
-<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>io.mvnpm</groupId>
-    <artifactId>mvnpm</artifactId>
-    <version>3.0.9-SNAPSHOT</version>
-    
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>io.mvnpm</groupId>
+  <artifactId>mvnpm</artifactId>
+  <version>3.0.9-SNAPSHOT</version>
+  <name>mvnpm</name>
+  <description>Maven on NPM</description>
+  <url>https://mvnpm.org/</url>
+  <organization>
     <name>mvnpm</name>
-    <description>Maven on NPM</description>
-    <url>https://mvnpm.org/</url>
-    <organization>
-        <name>mvnpm</name>
-        <url>https://mvnpm.io/</url>
-    </organization>
-    <licenses>
-        <license>
-            <name>Apache-2.0</name>
-        </license>
-    </licenses>
-    <developers>
-        <developer>
-            <name>Phillip Kruger</name>
-            <email>phillip.kruger@gmail.com</email>
-            <url>https://www.phillip-kruger.com</url>
-            <organization>Red Hat</organization>
-            <organizationUrl>https://www.redhat.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Andy Damevin</name>
-            <email>ia3andy@gmail.com</email>
-            <organization>Red Hat</organization>
-            <organizationUrl>https://www.redhat.com</organizationUrl>
-        </developer>
-        <developer>
-            <name>Erik Jan de Wit</name>
-            <email>erikjan.dewit@gmail.com</email>
-            <url>http://blog.nerdin.ch</url>
-            <organization>Red Hat</organization>
-            <organizationUrl>https://www.redhat.com</organizationUrl>
-        </developer>
-    </developers>
-    <scm>
-        <connection>https://github.com/mvnpm/mvnpm</connection>
-        <developerConnection>https://github.com/mvnpm/mvnpm.git</developerConnection>
-        <url>https://github.com/mvnpm/mvnpm.git</url>
-    </scm>
-    <issueManagement>
-        <url>https://github.com/mvnpm/mvnpm/issues</url>
-    </issueManagement>
-    
-    <properties>
-        <compiler-plugin.version>3.11.0</compiler-plugin.version>
-        <maven.compiler.release>17</maven.compiler.release>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-        <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-        <quarkus.platform.version>3.5.1</quarkus.platform.version>
-        <skipITs>true</skipITs>
-        <surefire-plugin.version>3.1.2</surefire-plugin.version>
-        <formatter.plugin.version>2.23.0</formatter.plugin.version>
-        <impsort.plugin.version>1.9.0</impsort.plugin.version>
-        <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
-
-        <!-- UI Libs -->
-        <quarkus-qute-server-pages.version>2.1.0.Final</quarkus-qute-server-pages.version>
-        <quarkus-web-bundler.version>1.1.4</quarkus-web-bundler.version>
-        <importmap.version>1.0.10</importmap.version>
-    </properties>
-    
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>${quarkus.platform.artifact-id}</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    
+    <url>https://mvnpm.io/</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Apache-2.0</name>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Phillip Kruger</name>
+      <email>phillip.kruger@gmail.com</email>
+      <url>https://www.phillip-kruger.com</url>
+      <organization>Red Hat</organization>
+      <organizationUrl>https://www.redhat.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Andy Damevin</name>
+      <email>ia3andy@gmail.com</email>
+      <organization>Red Hat</organization>
+      <organizationUrl>https://www.redhat.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>Erik Jan de Wit</name>
+      <email>erikjan.dewit@gmail.com</email>
+      <url>http://blog.nerdin.ch</url>
+      <organization>Red Hat</organization>
+      <organizationUrl>https://www.redhat.com</organizationUrl>
+    </developer>
+  </developers>
+  <scm>
+    <connection>https://github.com/mvnpm/mvnpm</connection>
+    <developerConnection>https://github.com/mvnpm/mvnpm.git</developerConnection>
+    <url>https://github.com/mvnpm/mvnpm.git</url>
+  </scm>
+  <issueManagement>
+    <url>https://github.com/mvnpm/mvnpm/issues</url>
+  </issueManagement>
+  <properties>
+    <compiler-plugin.version>3.11.0</compiler-plugin.version>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+    <quarkus.platform.version>3.5.1</quarkus.platform.version>
+    <skipITs>true</skipITs>
+    <surefire-plugin.version>3.1.2</surefire-plugin.version>
+    <formatter.plugin.version>2.23.0</formatter.plugin.version>
+    <impsort.plugin.version>1.9.0</impsort.plugin.version>
+    <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
+    <!-- UI Libs -->
+    <quarkus-qute-server-pages.version>2.1.0.Final</quarkus-qute-server-pages.version>
+    <quarkus-web-bundler.version>1.1.4</quarkus-web-bundler.version>
+    <importmap.version>1.0.10</importmap.version>
+  </properties>
+  <dependencyManagement>
     <dependencies>
-        <!-- To serve the maven files -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-reactive</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
-        </dependency>
-        
-        <!-- To create the pom.xml -->
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-model</artifactId>
-        </dependency>
-        
-        <!-- To compare maven versions -->
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-artifact</artifactId>
-        </dependency>
-        
-        <!-- To create the metadata.xml -->
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-repository-metadata</artifactId>
-        </dependency>
-        
-        <!-- To cache the metadata -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-cache</artifactId>
-        </dependency>
-        
-        <!-- To read the tar -->
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-        </dependency>
-
-        <!-- To fetch the info from npm -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-rest-client-reactive-jackson</artifactId>
-        </dependency>
-        
-        <!-- To schedule an update check -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-scheduler</artifactId>
-        </dependency>
-
-        <!-- To stream the queue -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-websockets</artifactId>
-        </dependency>
-
-        <!-- To send notification emails -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-mailer</artifactId>
-        </dependency>
-
-        <!-- To retry -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
-        </dependency>
-
-        <!-- To save to the db -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-hibernate-orm-panache</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-jdbc-postgresql</artifactId>
-        </dependency>
-
-        <!-- To create the importmap -->
-        <dependency>
-            <groupId>io.mvnpm</groupId>
-            <artifactId>importmap</artifactId>
-            <version>${importmap.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-arc</artifactId>
-        </dependency>
-           
-        <!-- UI Qute and Web Bundler -->
-        <dependency>
-            <groupId>io.quarkiverse.quteserverpages</groupId>
-            <artifactId>quarkus-qute-server-pages</artifactId>
-            <version>${quarkus-qute-server-pages.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkiverse.web-bundler</groupId>
-            <artifactId>quarkus-web-bundler</artifactId>
-            <version>${quarkus-web-bundler.version}</version>
-        </dependency>
-
-        <!-- UI (from mvnpm) -->
-        <!-- Vaadin Web components -->
-        <dependency>
-            <groupId>org.mvnpm.at.mvnpm</groupId>
-            <artifactId>vaadin-webcomponents</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <!-- Router -->
-        <dependency>
-            <groupId>org.mvnpm.at.vaadin</groupId>
-            <artifactId>router</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <!-- Codemirror -->
-        <dependency>
-            <groupId>org.mvnpm</groupId>
-            <artifactId>codemirror</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.codemirror</groupId>
-            <artifactId>lang-javascript</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.codemirror</groupId>
-            <artifactId>lang-xml</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.codemirror</groupId>
-            <artifactId>lang-json</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mvnpm.at.codemirror</groupId>
-            <artifactId>legacy-modes</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <!-- Testing -->
-        <dependency>
-            <groupId>io.quarkus</groupId>
-            <artifactId>quarkus-junit5</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.rest-assured</groupId>
-            <artifactId>rest-assured</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.quarkiverse.playwright</groupId>
-            <artifactId>quarkus-playwright</artifactId>
-            <version>0.0.1</version>
-            <scope>test</scope>
-        </dependency>
+      <dependency>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>${quarkus.platform.artifact-id}</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>${quarkus.platform.group-id}</groupId>
-                <artifactId>quarkus-maven-plugin</artifactId>
-                <version>${quarkus.platform.version}</version>
-                <extensions>true</extensions>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>build</goal>
-                            <goal>generate-code</goal>
-                            <goal>generate-code-tests</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>${compiler-plugin.version}</version>
-                <configuration>
-                    <compilerArgs>
-                        <arg>-parameters</arg>
-                    </compilerArgs>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
-                <configuration>
-                    <systemPropertyVariables>
-                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                        <maven.home>${maven.home}</maven.home>
-                    </systemPropertyVariables>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-failsafe-plugin</artifactId>
-                <version>${surefire-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                        <configuration>
-                            <systemPropertyVariables>
-                                <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
-                                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
-                                <maven.home>${maven.home}</maven.home>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>net.revelc.code.formatter</groupId>
-                <artifactId>formatter-maven-plugin</artifactId>
-                <version>${formatter.plugin.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>io.quarkus</groupId>
-                        <artifactId>quarkus-ide-config</artifactId>
-                        <version>${quarkus.ide-config.version}</version>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <configFile>eclipse-format.xml</configFile>
-                    <lineEnding>LF</lineEnding>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>process-sources</phase>
-                        <goals>
-                            <goal>format</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>net.revelc.code</groupId>
-                <artifactId>impsort-maven-plugin</artifactId>
-                <version>${impsort.plugin.version}</version>
-                <configuration>
-                    <groups>java.,javax.,jakarta.,org.,com.</groups>
-                    <staticGroups>*</staticGroups>
-                    <removeUnused>true</removeUnused>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>sort-imports</id>
-                        <goals>
-                            <goal>sort</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-    <profiles>
-        <profile>
-            <id>native</id>
-            <activation>
-                <property>
-                    <name>native</name>
-                </property>
-            </activation>
-            <properties>
-                <skipITs>false</skipITs>
-                <quarkus.package.type>native</quarkus.package.type>
-                <quarkus.native.additional-build-args>-H:ReflectionConfigurationFiles=reflection-config.json</quarkus.native.additional-build-args>
-            </properties>
-        </profile>
-        
-        <profile>
-            <id>mvnpm-locked</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-                <property>
-                    <name>native</name>
-                </property>
-            </activation>
-            <dependencyManagement>
-                <dependencies>
-                    <!-- Vaadin Web components -->
-                    <dependency>
-                        <groupId>org.mvnpm.at.mvnpm</groupId>
-                        <artifactId>vaadin-webcomponents</artifactId>
-                        <version>24.2.1</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    
-                    <!-- Vaadin router -->
-                    <dependency>
-                        <groupId>org.mvnpm.at.vaadin</groupId>
-                        <artifactId>router</artifactId>
-                        <version>1.7.5</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>path-to-regexp</artifactId>
-                        <version>2.4.0</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    
-                    <!--Lit--> 
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>lit</artifactId>
-                        <version>2.8.0</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.lit</groupId>
-                        <artifactId>reactive-element</artifactId>
-                        <version>1.6.3</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>lit-element</artifactId>
-                        <version>3.3.3</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>lit-html</artifactId>
-                        <version>2.8.0</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.lit-labs</groupId>
-                        <artifactId>ssr-dom-shim</artifactId>
-                        <version>1.1.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.types</groupId>
-                        <artifactId>trusted-types</artifactId>
-                        <version>2.0.5</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.webcomponents</groupId>
-                        <artifactId>shadycss</artifactId>
-                        <version>1.11.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.open-wc</groupId>
-                        <artifactId>dedupe-mixin</artifactId>
-                        <version>1.4.0</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.polymer</groupId>
-                        <artifactId>polymer</artifactId>
-                        <version>3.5.1</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <!-- Vaadin -->
-                    <dependency>
-                        <groupId>org.mvnpm.at.vaadin</groupId>
-                        <artifactId>vaadin-usage-statistics</artifactId>
-                        <version>2.1.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.vaadin</groupId>
-                        <artifactId>vaadin-development-mode-detector</artifactId>
-                        <version>2.0.6</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    
-                    <!--Codemirror-->
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>codemirror</artifactId>
-                        <version>6.0.1</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>legacy-modes</artifactId>
-                        <version>6.3.3</version>
-                        <scope>runtime</scope>
-                    </dependency> 
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>autocomplete</artifactId>
-                        <version>6.10.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>commands</artifactId>
-                        <version>6.3.0</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>language</artifactId>
-                        <version>6.9.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>lint</artifactId>
-                        <version>6.4.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>search</artifactId>
-                        <version>6.5.4</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>state</artifactId>
-                        <version>6.3.1</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>view</artifactId>
-                        <version>6.21.4</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>style-mod</artifactId>
-                        <version>4.1.0</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>w3c-keyname</artifactId>
-                        <version>2.2.8</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.lezer</groupId>
-                        <artifactId>highlight</artifactId>
-                        <version>1.1.6</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.lezer</groupId>
-                        <artifactId>lr</artifactId>
-                        <version>1.3.13</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm</groupId>
-                        <artifactId>crelt</artifactId>
-                        <version>1.0.6</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    
-                     <!--CodeMirror Javascript-->
-                     <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>lang-javascript</artifactId>
-                        <version>6.2.1</version>
-                        <scope>runtime</scope>
-                    </dependency> 
-                    <dependency>
-                        <groupId>org.mvnpm.at.lezer</groupId>
-                        <artifactId>common</artifactId>
-                        <version>1.1.0</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.lezer</groupId>
-                        <artifactId>javascript</artifactId>
-                        <version>1.4.8</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    
-                     <!--CodeMirror XML-->
-                     <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>lang-xml</artifactId>
-                        <version>6.0.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.mvnpm.at.lezer</groupId>
-                        <artifactId>xml</artifactId>
-                        <version>1.0.2</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    
-                     <!--CodeMirror Json-->
-                     <dependency>
-                        <groupId>org.mvnpm.at.codemirror</groupId>
-                        <artifactId>lang-json</artifactId>
-                        <version>6.0.1</version>
-                        <scope>runtime</scope>
-                    </dependency> 
-                    <dependency>
-                        <groupId>org.mvnpm.at.lezer</groupId>
-                        <artifactId>json</artifactId>
-                        <version>1.0.1</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                    
-                </dependencies>
-            </dependencyManagement>
-          </profile>
-    </profiles>
+  </dependencyManagement>
+  <dependencies>
+    <!-- To serve the maven files -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy-reactive</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+    </dependency>
+    <!-- To create the pom.xml -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-model</artifactId>
+    </dependency>
+    <!-- To compare maven versions -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-artifact</artifactId>
+    </dependency>
+    <!-- To create the metadata.xml -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-repository-metadata</artifactId>
+    </dependency>
+    <!-- To cache the metadata -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
+    </dependency>
+    <!-- To read the tar -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+    </dependency>
+    <!-- To fetch the info from npm -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-client-reactive-jackson</artifactId>
+    </dependency>
+    <!-- To schedule an update check -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-scheduler</artifactId>
+    </dependency>
+    <!-- To stream the queue -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-websockets</artifactId>
+    </dependency>
+    <!-- To send notification emails -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-mailer</artifactId>
+    </dependency>
+    <!-- To retry -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+    </dependency>
+    <!-- To save to the db -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-orm-panache</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-jdbc-postgresql</artifactId>
+    </dependency>
+    <!-- To create the importmap -->
+    <dependency>
+      <groupId>io.mvnpm</groupId>
+      <artifactId>importmap</artifactId>
+      <version>${importmap.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-arc</artifactId>
+    </dependency>
+    <!-- UI Qute and Web Bundler -->
+    <dependency>
+      <groupId>io.quarkiverse.quteserverpages</groupId>
+      <artifactId>quarkus-qute-server-pages</artifactId>
+      <version>${quarkus-qute-server-pages.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.web-bundler</groupId>
+      <artifactId>quarkus-web-bundler</artifactId>
+      <version>${quarkus-web-bundler.version}</version>
+    </dependency>
+    <!-- UI (from mvnpm) -->
+    <!-- Vaadin Web components -->
+    <dependency>
+      <groupId>org.mvnpm.at.mvnpm</groupId>
+      <artifactId>vaadin-webcomponents</artifactId>
+      <scope>runtime</scope>
+      <version>24.2.1</version>
+    </dependency>
+    <!-- Router -->
+    <dependency>
+      <groupId>org.mvnpm.at.vaadin</groupId>
+      <artifactId>router</artifactId>
+      <scope>runtime</scope>
+      <version>1.7.5</version>
+    </dependency>
+    <!-- Codemirror -->
+    <dependency>
+      <groupId>org.mvnpm</groupId>
+      <artifactId>codemirror</artifactId>
+      <version>6.0.1</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mvnpm.at.codemirror</groupId>
+      <artifactId>lang-javascript</artifactId>
+      <scope>runtime</scope>
+      <version>6.2.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mvnpm.at.codemirror</groupId>
+      <artifactId>lang-xml</artifactId>
+      <scope>runtime</scope>
+      <version>6.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mvnpm.at.codemirror</groupId>
+      <artifactId>lang-json</artifactId>
+      <scope>runtime</scope>
+      <version>6.0.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mvnpm.at.codemirror</groupId>
+      <artifactId>legacy-modes</artifactId>
+      <scope>runtime</scope>
+      <version>6.3.3</version>
+    </dependency>
+    <!-- Testing -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.playwright</groupId>
+      <artifactId>quarkus-playwright</artifactId>
+      <version>0.0.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>${quarkus.platform.group-id}</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+              <goal>generate-code</goal>
+              <goal>generate-code-tests</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${compiler-plugin.version}</version>
+        <configuration>
+          <compilerArgs>
+            <arg>-parameters</arg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
+        <configuration>
+          <systemPropertyVariables>
+            <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+            <maven.home>${maven.home}</maven.home>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>${surefire-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <systemPropertyVariables>
+                <native.image.path>${project.build.directory}/${project.build.finalName}-runner</native.image.path>
+                <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                <maven.home>${maven.home}</maven.home>
+              </systemPropertyVariables>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>net.revelc.code.formatter</groupId>
+        <artifactId>formatter-maven-plugin</artifactId>
+        <version>${formatter.plugin.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-ide-config</artifactId>
+            <version>${quarkus.ide-config.version}</version>
+          </dependency>
+        </dependencies>
+        <configuration>
+          <configFile>eclipse-format.xml</configFile>
+          <lineEnding>LF</lineEnding>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>format</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>net.revelc.code</groupId>
+        <artifactId>impsort-maven-plugin</artifactId>
+        <version>${impsort.plugin.version}</version>
+        <configuration>
+          <groups>java.,javax.,jakarta.,org.,com.</groups>
+          <staticGroups>*</staticGroups>
+          <removeUnused>true</removeUnused>
+        </configuration>
+        <executions>
+          <execution>
+            <id>sort-imports</id>
+            <goals>
+              <goal>sort</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+  <profiles>
+    <profile>
+      <id>native</id>
+      <activation>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+      <properties>
+        <skipITs>false</skipITs>
+        <quarkus.package.type>native</quarkus.package.type>
+        <quarkus.native.additional-build-args>-H:ReflectionConfigurationFiles=reflection-config.json</quarkus.native.additional-build-args>
+      </properties>
+    </profile>
+    <profile>
+      <id>mvnpm-locked</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>native</name>
+        </property>
+      </activation>
+    </profile>
+    <profile>
+      <id>locker</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <groupId>io.mvnpm</groupId>
+            <artifactId>mvnpm-locker</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>
+    </profile>
+  </profiles>
 </project>
