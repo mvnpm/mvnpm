@@ -6,6 +6,10 @@ import './mvnpm-releases.js';
 import './mvnpm-live.js';
 import './mvnpm-about.js';
 
+const indicator = document.querySelectorAll('.js-loading-indicator');
+if (indicator.length > 0) {
+  indicator[0].remove();
+}
 
 const router = new Router(document.getElementById('outlet'));
 router.setRoutes([
