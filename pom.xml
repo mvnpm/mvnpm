@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm</artifactId>
-  <version>3.0.9-SNAPSHOT</version>
+  <version>3.0.10-SNAPSHOT</version>
   <name>mvnpm</name>
   <description>Maven on NPM</description>
   <url>https://mvnpm.org/</url>
@@ -61,7 +61,7 @@
     <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
     <!-- UI Libs -->
     <quarkus-qute-server-pages.version>2.1.0.Final</quarkus-qute-server-pages.version>
-    <quarkus-web-bundler.version>1.1.4</quarkus-web-bundler.version>
+    <quarkus-web-bundler.version>1.1.5</quarkus-web-bundler.version>
     <importmap.version>1.0.10</importmap.version>
   </properties>
   <dependencyManagement>
