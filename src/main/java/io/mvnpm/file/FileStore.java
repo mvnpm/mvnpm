@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -47,17 +46,6 @@ public class FileStore {
         return findArtifactRoots(mvnpmRoot);
     }
 
-    @Deprecated
-    public byte[] createFile(io.mvnpm.npm.model.Package p, Path localFileName, byte[] content) {
-        return createFile(p.name(), p.version(), localFileName, content);
-    }
-
-    public byte[] createFile(Name name, String version, Path localFilePath, byte[] content) {
-        byte[] written = createFile(localFilePath, content);
-        touch(name, version, localFilePath);
-        return written;
-    }
-
     public byte[] createFile(Path localFilePath, byte[] content) {
         try {
             Files.createDirectories(localFilePath.getParent());
@@ -70,29 +58,6 @@ public class FileStore {
 
     public void touch(Name name, String version, Path localFilePath) {
         bus.publish("new-file-created", new FileStoreEvent(localFilePath, name, version));
-    }
-
-    public byte[] readFile(Path localFileName) {
-        return readFileInLoop(localFileName, 0);
-    }
-
-    private byte[] readFileInLoop(Path localFileName, int triedNumber) {
-        if (exist(localFileName)) {
-            try {
-                return Files.readAllBytes(localFileName);
-            } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-            }
-        } else {
-            if (triedNumber > 10)
-                throw new RuntimeException("Timed out while waiting for " + localFileName);
-            try {
-                // Wait 5 seconds and try again.
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException ex) {
-            }
-            return readFileInLoop(localFileName, triedNumber++);
-        }
     }
 
     public boolean exist(Path localFileName) {
@@ -116,42 +81,38 @@ public class FileStore {
                 groupId);
     }
 
+    public Path getArtifactRoot(Name name) {
+        return getGroupRoot(name.mvnPath).resolve(
+                Paths.get(name.mvnArtifactId));
+    }
+
+    public Path getLocalMetadataXmlFullPath(Name name) {
+        return getArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML);
+    }
+
+    public Path getLocalMetadataXmlSha1FullPath(Name name) {
+        return getArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML + Constants.DOT_SHA1);
+    }
+
+    public Path getLocalMetadataXmlMd5FullPath(Name name) {
+        return getArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML + Constants.DOT_MD5);
+    }
+
     public Path getLocalDirectory(Name name, String version) {
         return getGroupRoot(name.mvnPath).resolve(
                 Paths.get(name.mvnArtifactId, version));
-    }
-
-    @Deprecated
-    public Path getLocalSha1FullPath(FileType type, io.mvnpm.npm.model.Package p) {
-        return getLocalFullPath(type, p, Optional.of(Constants.DOT_SHA1));
     }
 
     public Path getLocalSha1FullPath(FileType type, Name name, String version) {
         return getLocalFullPath(type, name, version, Optional.of(Constants.DOT_SHA1));
     }
 
-    @Deprecated
-    public Path getLocalMd5FullPath(FileType type, io.mvnpm.npm.model.Package p) {
-        return getLocalFullPath(type, p, Optional.of(Constants.DOT_MD5));
-    }
-
     public Path getLocalMd5FullPath(FileType type, Name name, String version) {
         return getLocalFullPath(type, name, version, Optional.of(Constants.DOT_MD5));
     }
 
-    @Deprecated
-    public Path getLocalAscFullPath(FileType type, io.mvnpm.npm.model.Package p) {
-        return getLocalFullPath(type, p, Optional.of(Constants.DOT_ASC));
-    }
-
     public Path getLocalAscFullPath(FileType type, Name name, String version) {
         return getLocalFullPath(type, name, version, Optional.of(Constants.DOT_ASC));
-    }
-
-    @Deprecated
-    public boolean exists(FileType type, io.mvnpm.npm.model.Package p) {
-        Path localFileName = getLocalFullPath(type, p);
-        return Files.exists(localFileName);
     }
 
     public boolean exists(FileType type, Name name, String version) {
@@ -159,18 +120,8 @@ public class FileStore {
         return Files.exists(localFileName);
     }
 
-    @Deprecated
-    public Path getLocalFullPath(FileType type, io.mvnpm.npm.model.Package p) {
-        return getLocalFullPath(type, p, Optional.empty());
-    }
-
     public Path getLocalFullPath(FileType type, Name name, String version) {
         return getLocalFullPath(type, name, version, Optional.empty());
-    }
-
-    @Deprecated
-    public Path getLocalFullPath(FileType type, io.mvnpm.npm.model.Package p, Optional<String> dotSigned) {
-        return getLocalDirectory(p.name(), p.version()).resolve(getLocalFileName(type, p, dotSigned));
     }
 
     public Path getLocalFullPath(FileType type, Name name, String version, Optional<String> dotSigned) {
@@ -185,21 +136,12 @@ public class FileStore {
         return getLocalDirectory(groupId, artifactId, version).resolve(getLocalFileName(type, artifactId, version, dotSigned));
     }
 
-    @Deprecated
-    public String getLocalFileName(FileType type, io.mvnpm.npm.model.Package p, Optional<String> dotSigned) {
-        return getLocalFileName(type, p.name().mvnArtifactId, p.version(), dotSigned);
-    }
-
     public String getLocalFileName(FileType type, Name name, String version, Optional<String> dotSigned) {
         return getLocalFileName(type, name.mvnArtifactId, version, dotSigned);
     }
 
     public String getLocalFileName(FileType type, String artifactId, String version, Optional<String> dotSigned) {
         return artifactId + Constants.HYPHEN + version + type.getPostString() + dotSigned.orElse(Constants.EMPTY);
-    }
-
-    public String getLocalSha1FileName(FileType type, io.mvnpm.npm.model.Package p) {
-        return getLocalFileName(type, p, Optional.of(Constants.DOT_SHA1));
     }
 
     public String getLocalSha1FileName(FileType type, Name name, String version) {

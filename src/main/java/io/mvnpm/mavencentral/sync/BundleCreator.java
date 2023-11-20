@@ -2,16 +2,14 @@ package io.mvnpm.mavencentral.sync;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -21,6 +19,7 @@ import jakarta.inject.Inject;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
+import io.mvnpm.file.FileUtil;
 import io.mvnpm.maven.MavenRespositoryService;
 import io.quarkus.logging.Log;
 
@@ -42,13 +41,13 @@ public class BundleCreator {
         Log.debug("====== mvnpm: Nexus Bundler ======");
         // First get the jar, as the jar will create the pom, and
         // other files are being created once the pom and jar is downloaded
-        byte[] jarFile = mavenRespositoryService.getFile(groupId, artifactId, version, FileType.jar);
+        mavenRespositoryService.getPath(groupId, artifactId, version, FileType.jar);
         Log.debug("\tbundle: Got initial Jar file");
-        return buildBundle(jarFile, groupId, artifactId, version);
+        return buildBundle(groupId, artifactId, version);
     }
 
-    private Path buildBundle(byte[] jarFile, String groupId, String artifactId, String version) {
-        Map<Path, byte[]> files = getFiles(jarFile, groupId, artifactId, version);
+    private Path buildBundle(String groupId, String artifactId, String version) {
+        List<Path> files = getFiles(groupId, artifactId, version);
 
         Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
         String bundlelocation = artifactId + Constants.HYPHEN + version + "-bundle.jar";
@@ -62,11 +61,18 @@ public class BundleCreator {
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     ZipOutputStream zos = new ZipOutputStream(bos)) {
 
-                for (Map.Entry<Path, byte[]> file : files.entrySet()) {
-                    Path path = file.getKey();
+                for (Path path : files) {
                     ZipEntry zipEntry = new ZipEntry(path.getFileName().toString());
                     zos.putNextEntry(zipEntry);
-                    zos.write(file.getValue());
+                    try (InputStream fileInputStream = Files.newInputStream(path)) {
+                        int bytesRead;
+                        byte[] buffer = new byte[4096];
+                        while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                            zos.write(buffer, 0, bytesRead);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException("Error streaming file content", e);
+                    }
                     zos.closeEntry();
                 }
             } catch (IOException e) {
@@ -84,43 +90,27 @@ public class BundleCreator {
         }
     }
 
-    private Map<Path, byte[]> getFiles(byte[] jarFile, String groupId, String artifactId, String version) {
+    private List<Path> getFiles(String groupId, String artifactId, String version) {
         // Files that needs to be in the bundle
         try {
             Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
             String base = artifactId + Constants.HYPHEN + version;
-            Path jarFileName = parent.resolve(base + Constants.DOT_JAR);
             List<Path> fileNames = getFileNamesInBundle(parent, base);
-            Map<Path, byte[]> files = new HashMap<>();
+            List<String> notReady = new ArrayList<>();
             for (Path fileName : fileNames) {
-                if (fileName.equals(jarFileName)) {
-                    files.put(fileName, jarFile);
-                    Log.debug("\tbundle: " + fileName + " [already]");
-                } else {
-                    byte[] content = waitForContent(fileName, 0);
-                    files.put(fileName, content);
-                    Log.debug("\tbundle: " + fileName + " [ok]");
+                boolean ready = FileUtil.isReadyForUse(fileName);
+                Log.debug("\tbundle: " + fileName + " [" + ready + "]");
+                if (!ready) {
+                    notReady.add(fileName.toString());
                 }
             }
-            return files;
+
+            if (notReady.isEmpty())
+                return fileNames;
+
+            throw new RuntimeException("Files " + notReady + " not ready to bundle. Gave up after multiple attempts");
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
-        }
-    }
-
-    private byte[] waitForContent(Path fileName, int tryCount) throws IOException {
-        if (Files.exists(fileName)) {
-            return Files.readAllBytes(fileName);
-        } else {
-            if (tryCount > 9)
-                throw new FileNotFoundException(fileName.toString());
-            try {
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException ex) {
-                Log.error(ex);
-            }
-            tryCount = tryCount + 1;
-            return waitForContent(fileName, tryCount);
         }
     }
 

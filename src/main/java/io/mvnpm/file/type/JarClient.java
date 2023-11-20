@@ -1,9 +1,9 @@
 package io.mvnpm.file.type;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -26,6 +26,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
+import io.mvnpm.file.FileUtil;
 import io.mvnpm.file.ImportMapUtil;
 import io.mvnpm.importmap.Location;
 import io.mvnpm.maven.MavenRespositoryService;
@@ -69,22 +70,22 @@ public class JarClient {
         jarOutput.closeArchiveEntry();
     }
 
-    public byte[] createJar(io.mvnpm.npm.model.Package p, Path localFilePath) {
-        byte[] pomBytes = mavenRespositoryService.getFile(p.name(), p.version(), FileType.pom);
-        byte[] tgzBytes = mavenRespositoryService.getFile(p.name(), p.version(), FileType.tgz);
-        return jarInput(p, localFilePath, pomBytes, tgzBytes);
+    public void createAndSaveJar(io.mvnpm.npm.model.Package p, Path localFilePath) {
+        Path pomPath = mavenRespositoryService.getPath(p.name(), p.version(), FileType.pom);
+        Path tgzPath = mavenRespositoryService.getPath(p.name(), p.version(), FileType.tgz);
+        jarInput(p, localFilePath, pomPath, tgzPath);
     }
 
-    private byte[] jarInput(io.mvnpm.npm.model.Package p, Path localFilePath, byte[] pomBytes, byte[] tgzBytes) {
-
-        try (ByteArrayOutputStream byteOutput = new ByteArrayOutputStream();
-                JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(byteOutput)) {
+    private void jarInput(io.mvnpm.npm.model.Package p, Path localFilePath, Path pomPath, Path tgzPath) {
+        FileUtil.createDirectories(localFilePath);
+        try (OutputStream fileOutput = Files.newOutputStream(localFilePath);
+                JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
 
             // Pom details
             String pomXmlDir = POM_ROOT + p.name().mvnGroupId + Constants.SLASH + p.name().mvnArtifactId + Constants.SLASH;
 
             // Pom xml entry
-            writeJarEntry(jarOutput, pomXmlDir + POM_DOT_XML, pomBytes);
+            writeJarEntry(jarOutput, pomXmlDir + POM_DOT_XML, pomPath);
 
             // Pom properties entry
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_PROPERTIES, createPomProperties(p));
@@ -93,22 +94,21 @@ public class JarClient {
             writeJarEntry(jarOutput, Location.IMPORTMAP_PATH, ImportMapUtil.createImportMap(p));
 
             // Tar contents
-            tgzToJar(p, tgzBytes, jarOutput);
+            tgzToJar(p, tgzPath, jarOutput);
 
             jarOutput.finish();
 
-            byte[] jarFileContents = byteOutput.toByteArray();
-
-            return fileStore.createFile(p, localFilePath, jarFileContents);
+            fileStore.touch(p.name(), p.version(), localFilePath);
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private void tgzToJar(io.mvnpm.npm.model.Package p, byte[] tgzBytes, JarArchiveOutputStream jarOutput) throws IOException {
-        try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(tgzBytes);
-                GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(byteArrayInputStream);
+    private void tgzToJar(io.mvnpm.npm.model.Package p, Path tgzPath, JarArchiveOutputStream jarOutput) throws IOException {
+
+        try (InputStream tgzInputStream = Files.newInputStream(tgzPath);
+                GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(tgzInputStream);
                 TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream);) {
 
             for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry(); entry != null; entry = tarArchiveInputStream
@@ -156,6 +156,22 @@ public class JarClient {
             properties.store(baos, POM_DOT_PROPERTIES_COMMENT);
             return baos.toByteArray();
         }
+    }
+
+    private void writeJarEntry(JarArchiveOutputStream jarOutput, String filename, Path path) throws IOException {
+        JarArchiveEntry entry = new JarArchiveEntry(filename);
+        entry.setSize(Files.size(path));
+        jarOutput.putArchiveEntry(entry);
+        try (InputStream fileInputStream = Files.newInputStream(path)) {
+            int bytesRead;
+            byte[] buffer = new byte[4096];
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                jarOutput.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error jarring file content for " + path, e);
+        }
+        jarOutput.closeArchiveEntry();
     }
 
     private void writeJarEntry(JarArchiveOutputStream jarOutput, String filename, byte[] filecontents) throws IOException {

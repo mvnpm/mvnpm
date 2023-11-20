@@ -86,4 +86,5 @@ public interface Constants {
     public static final String STAGED_REPO_ID = "staged-repo-id";
     public static final String TRUE = "true";
 
+    public static final String MAVEN_METADATA_XML = "maven-metadata.xml";
 }

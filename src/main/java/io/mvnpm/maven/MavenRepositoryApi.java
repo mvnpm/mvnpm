@@ -8,11 +8,12 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import io.mvnpm.composite.CompositeService;
 import io.mvnpm.file.FileType;
+import io.mvnpm.file.FileUtil;
 import io.mvnpm.file.ImportMapUtil;
-import io.mvnpm.file.metadata.MetadataAndHash;
 import io.mvnpm.file.metadata.MetadataClient;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -42,10 +43,10 @@ public class MavenRepositoryApi {
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
     @Produces(MediaType.APPLICATION_XML)
     public Response getMavenMetadata(@PathParam("ga") String ga) {
+        Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         try {
-            Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-            MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
-            return Response.ok(mah.data()).build();
+            StreamingOutput streamingOutput = metadataClient.getMetadataXml(name);
+            return Response.ok(streamingOutput).build();
         } catch (WebApplicationException wae) {
             return wae.getResponse();
         } catch (Throwable t) {
@@ -58,8 +59,8 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataSha1(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-        MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
-        return Response.ok(mah.sha1()).build();
+        StreamingOutput streamingOutput = metadataClient.getMetadataSha1(name);
+        return Response.ok(streamingOutput).build();
     }
 
     @GET
@@ -67,8 +68,8 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataMd5(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-        MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
-        return Response.ok(mah.md5()).build();
+        StreamingOutput streamingOutput = metadataClient.getMetadataMd5(name);
+        return Response.ok(streamingOutput).build();
     }
 
     @GET
@@ -90,8 +91,8 @@ public class MavenRepositoryApi {
     public Response getImportMap(@PathParam("gavt") String gavt) {
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + "/importmap.json");
         if (nameVersionType.name().isInternal()) {
-            byte[] importMap = compositeService.getImportMap(nameVersionType.name(), nameVersionType.version());
-            return Response.ok(importMap).build();
+            return Response.ok(streamPath(compositeService.getImportMap(nameVersionType.name(), nameVersionType.version())))
+                    .build();
         } else {
             Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName, nameVersionType.version());
             return Response.ok(ImportMapUtil.createImportMap(npmPackage)).build();
@@ -259,22 +260,23 @@ public class MavenRepositoryApi {
     }
 
     private Response toResponse(Name fullName, String version, FileType type) {
-        byte[] file = mavenRespositoryService.getFile(fullName, version, type);
-        return Response.ok(file).build();
+        return streamPath(mavenRespositoryService.getPath(fullName, version, type));
     }
 
     private Response toSha1Response(Name fullName, String version, FileType type) {
-        byte[] file = mavenRespositoryService.getSha1(fullName, version, type);
-        return Response.ok(file).build();
+        return streamPath(mavenRespositoryService.getSha1(fullName, version, type));
     }
 
     private Response toMd5Response(Name fullName, String version, FileType type) {
-        byte[] file = mavenRespositoryService.getMd5(fullName, version, type);
-        return Response.ok(file).build();
+        return streamPath(mavenRespositoryService.getMd5(fullName, version, type));
     }
 
     private Response toAscResponse(Name fullName, String version, FileType type) {
-        byte[] file = mavenRespositoryService.getAsc(fullName, version, type);
-        return Response.ok(file).build();
+        return streamPath(mavenRespositoryService.getAsc(fullName, version, type));
+    }
+
+    private Response streamPath(java.nio.file.Path path) {
+        StreamingOutput streamingOutput = FileUtil.toStreamingOutput(path);
+        return Response.ok(streamingOutput).build();
     }
 }

@@ -1,6 +1,5 @@
 package io.mvnpm.mavencentral;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -103,11 +102,11 @@ public class SonatypeFacade {
     public String upload(Path path) throws UploadFailedException {
         try {
             Log.debug("\tUploading " + path + "...");
-            byte[] b = Files.readAllBytes(path);
+
             if (authorization.isPresent()) {
                 String a = "Basic " + authorization.get();
-
-                Response uploadResponse = sonatypeClient.uploadBundle(a, b);
+                //byte[] b = Files.readAllBytes(path);
+                Response uploadResponse = sonatypeClient.uploadBundle(a, path);
 
                 if (uploadResponse.getStatus() == 201) {
                     String resp = uploadResponse.readEntity(String.class);

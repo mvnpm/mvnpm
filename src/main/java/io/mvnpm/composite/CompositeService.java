@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
 import io.mvnpm.npm.model.Name;
@@ -28,27 +29,21 @@ public class CompositeService {
     @Inject
     FileStore fileStore;
 
-    public byte[] getFile(Name fullName, String version, FileType type) {
+    public Path getPath(Name fullName, String version, FileType type) {
         compositeCreator.buildComposite(fullName.mvnArtifactId, version);
-        Path localFilePath = fileStore.getLocalFullPath(type, fullName, version, Optional.empty());
-        return fileStore.readFile(localFilePath);
+        return fileStore.getLocalFullPath(type, fullName, version, Optional.empty());
     }
 
-    public byte[] getFileSha1(Name fullName, String version, FileType type) {
-        return getSignedFile(fullName, version, type, "sha1");
+    public Path getSha1Path(Name fullName, String version, FileType type) {
+        return fileStore.getLocalFullPath(type, fullName, version, Optional.of(Constants.DOT_SHA1));
     }
 
-    public byte[] getFileMd5(Name fullName, String version, FileType type) {
-        return getSignedFile(fullName, version, type, "md5");
+    public Path getMd5Path(Name fullName, String version, FileType type) {
+        return fileStore.getLocalFullPath(type, fullName, version, Optional.of(Constants.DOT_MD5));
     }
 
-    public byte[] getFileAsc(Name fullName, String version, FileType type) {
-        return getSignedFile(fullName, version, type, "asc");
-    }
-
-    private byte[] getSignedFile(Name fullName, String version, FileType type, String signedType) {
-        Path localFilePath = fileStore.getLocalFullPath(type, fullName, version, Optional.of("." + signedType));
-        return fileStore.readFile(localFilePath);
+    public Path getAscPath(Name fullName, String version, FileType type) {
+        return fileStore.getLocalFullPath(type, fullName, version, Optional.of(Constants.DOT_ASC));
     }
 
     public Map<String, Date> getVersions(Name name) {
@@ -73,8 +68,7 @@ public class CompositeService {
 
     }
 
-    public byte[] getImportMap(Name name, String version) {
-        Path importmapPath = compositeCreator.getImportMapPath(name, version);
-        return fileStore.readFile(importmapPath);
+    public Path getImportMap(Name name, String version) {
+        return compositeCreator.getImportMapPath(name, version);
     }
 }

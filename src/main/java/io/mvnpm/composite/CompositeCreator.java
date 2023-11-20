@@ -1,8 +1,8 @@
 package io.mvnpm.composite;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -79,27 +79,28 @@ public class CompositeCreator {
     }
 
     @Blocking
-    public byte[] buildComposite(String artifactId, String version) {
+    public void buildComposite(String artifactId, String version) {
         Path compositesFolder = Paths.get(compositesDirectory);
         Path pom = compositesFolder.resolve(artifactId + ".xml");
         if (Files.exists(pom)) {
-            return build(pom, version);
+            build(pom, version);
+        } else {
+            throw new RuntimeException("Composite definition for " + artifactId + " does not exist");
         }
-        throw new RuntimeException("Composite definition for " + artifactId + " does not exist");
     }
 
     public Path getImportMapPath(Name name, String version) {
         return fileStore.getLocalDirectory(name, version).resolve("importmap.json");
     }
 
-    private byte[] build(Path pom, String version) {
-        try {
-            Model model = mavenXpp3Writer.read(Files.newInputStream(pom));
+    private void build(Path pom, String version) {
+        try (InputStream inputStream = Files.newInputStream(pom)) {
+            Model model = mavenXpp3Writer.read(inputStream);
             if (version != null) {
                 model.setVersion(version);
             }
             List<Dependency> dependencies = resolveDependencies(model);
-            return merge(model, dependencies);
+            merge(model, dependencies);
         } catch (XmlPullParserException ex) {
             throw new RuntimeException("Invalid pom xml for " + pom);
         } catch (IOException ex) {
@@ -152,7 +153,7 @@ public class CompositeCreator {
         }
     }
 
-    private byte[] merge(Model model, List<Dependency> dependencies) throws IOException, XmlPullParserException {
+    private void merge(Model model, List<Dependency> dependencies) throws IOException, XmlPullParserException {
 
         Path outputJar = fileStore.getLocalFullPath(FileType.jar, model.getGroupId(), model.getArtifactId(),
                 model.getVersion());
@@ -174,9 +175,10 @@ public class CompositeCreator {
                 Map<String, License> newLicences = new HashMap<>();
                 for (Dependency dependency : dependencies) {
                     Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                    byte[] jarContent = mavenRespositoryService.getFile(jarName, dependency.getVersion(), FileType.jar);
+                    Path jarPath = mavenRespositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
 
-                    try (JarInputStream inputJar = new JarInputStream(new ByteArrayInputStream(jarContent))) {
+                    try (InputStream inputStream = Files.newInputStream(jarPath);
+                            JarInputStream inputJar = new JarInputStream(inputStream)) {
                         // Add all entries from the input JAR to the merged JAR
                         JarEntry entry;
                         while ((entry = inputJar.getNextJarEntry()) != null) {
@@ -213,12 +215,13 @@ public class CompositeCreator {
                 pom.setDevelopers(List.copyOf(newDevelopers.values()));
                 pom.setLicenses(List.copyOf(newLicences.values()));
                 MavenXpp3Writer mxw = new MavenXpp3Writer();
-                try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                    mxw.write(baos, pom);
-                    String pomXml = new String(baos.toByteArray());
+
+                FileUtil.createDirectories(outputPom);
+                try (OutputStream outputStream = Files.newOutputStream(outputPom)) {
+                    mxw.write(outputStream, pom);
                     writeEntry(mergedJar, "META-INF/maven/" + pom.getGroupId() + "/" + pom.getArtifactId() + "/pom.xml",
-                            pomXml);
-                    fileStore.createFile(outputJarName, model.getVersion(), outputPom, baos.toByteArray());
+                            outputPom);
+                    fileStore.touch(outputJarName, model.getVersion(), outputPom);
                 }
 
                 // Add pom.properties
@@ -236,10 +239,7 @@ public class CompositeCreator {
                 Log.info(pom.getGroupId() + ":" + pom.getArtifactId() + ":" + pom.getVersion() + " created");
             }
             // Also create the Sha1
-            byte[] content = Files.readAllBytes(outputJar);
-            String sha1 = FileUtil.getSha1(content);
-            Path localSha1FilePath = Paths.get(outputJar.toString() + Constants.DOT_SHA1);
-            Files.writeString(localSha1FilePath, sha1);
+            FileUtil.createSha1(outputJar);
 
             // Also kick off all other files creation
             fileStore.touch(outputJarName, model.getVersion(), outputJar);
@@ -251,9 +251,7 @@ public class CompositeCreator {
                 FileUtil.createAsc(sourceFile);
                 FileUtil.createMd5(sourceFile);
             }
-
         }
-        return Files.readAllBytes(outputJar);
     }
 
     private void updatePom(JarInputStream inputJar,
@@ -304,11 +302,26 @@ public class CompositeCreator {
         mergedJar.closeEntry();
     }
 
+    private void writeEntry(JarOutputStream mergedJar, String name, Path path) throws IOException {
+        JarEntry entry = new JarEntry(name);
+        mergedJar.putNextEntry(entry);
+        try (InputStream fileInputStream = Files.newInputStream(path)) {
+            int bytesRead;
+            byte[] buffer = new byte[4096];
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                mergedJar.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error jarring file content for " + path, e);
+        }
+        mergedJar.closeEntry();
+    }
+
     private void writeEntry(JarInputStream inputJar, JarOutputStream mergedJar, JarEntry entry) throws IOException {
         mergedJar.putNextEntry(entry);
 
         // Read the content of the entry and write it to the merged JAR
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[4096];
         int bytesRead;
         while ((bytesRead = inputJar.read(buffer)) != -1) {
             mergedJar.write(buffer, 0, bytesRead);
@@ -324,7 +337,7 @@ public class CompositeCreator {
     private String getEntryContent(JarInputStream inputJar) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             // Read the content of the entry and write it to a String
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[4096];
             int bytesRead;
             while ((bytesRead = inputJar.read(buffer)) != -1) {
                 baos.write(buffer, 0, bytesRead);

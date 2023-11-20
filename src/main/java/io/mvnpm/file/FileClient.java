@@ -5,7 +5,6 @@ import static io.mvnpm.file.FileType.pom;
 import static io.mvnpm.file.FileType.tgz;
 
 import java.io.FileNotFoundException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -42,74 +41,62 @@ public class FileClient {
     @Inject
     NpmRegistryFacade npmRegistryFacade;
 
-    public byte[] getFileContents(FileType type, Name name, String version) {
+    public Path getFilePath(FileType type, Name name, String version) {
         Path localFilePath = fileStore.getLocalFullPath(type, name, version);
-        return fetch(type, name, version, localFilePath);
+        return localOrFetchRemote(type, name, version, localFilePath);
     }
 
-    public byte[] getFileSha1(FileType type, Name name, String version) {
+    public Path getFileSha1(FileType type, Name name, String version) {
         Path localFilePath = fileStore.getLocalSha1FullPath(type, name, version);
-        return fetchSha1(type, name, version, localFilePath);
+        return fetchLocalWhenReady(localFilePath);
     }
 
-    public byte[] getFileMd5(FileType type, Name name, String version) {
+    public Path getFileMd5(FileType type, Name name, String version) {
         Path localFilePath = fileStore.getLocalMd5FullPath(type, name, version);
-        return fetchLocal(localFilePath);
+        return fetchLocalWhenReady(localFilePath);
     }
 
-    public byte[] getFileAsc(FileType type, Name name, String version) {
+    public Path getFileAsc(FileType type, Name name, String version) {
         Path localFilePath = fileStore.getLocalAscFullPath(type, name, version);
-        return fetchLocal(localFilePath);
+        return fetchLocalWhenReady(localFilePath);
     }
 
-    private byte[] fetch(FileType type, Name name, String version, Path localFilePath) {
+    private Path localOrFetchRemote(FileType type, Name name, String version, Path localFilePath) {
+
         boolean local = Files.exists(localFilePath);
         if (local) {
             Log.debug("Serving locally [" + localFilePath + "]");
-            return fileStore.readFile(localFilePath);
+            return fetchLocalWhenReady(localFilePath);
         } else {
             Log.debug("Serving remotely [" + localFilePath + "]");
-            return fetchRemote(type, name, version, localFilePath);
+            return fetchRemoteAndStore(type, name, version, localFilePath);
         }
     }
 
-    private byte[] fetchSha1(FileType type, Name name, String version, Path localFilePath) {
-        boolean local = Files.exists(localFilePath);
-        if (local) {
-            Log.debug("Serving locally [" + localFilePath + "]");
-            return fileStore.readFile(localFilePath);
-        } else {
-            Log.debug("Fetching remotely [" + localFilePath + "]");
-            Path localFullFilePath = fileStore.getLocalFullPath(type, name, version);
-            return fetchRemote(type, name, version, localFullFilePath);
+    private Path fetchLocalWhenReady(Path localFilePath) {
+        try {
+            boolean readyForUse = FileUtil.isReadyForUse(localFilePath);
+            if (readyForUse)
+                return localFilePath;
+            throw new RuntimeException(localFilePath.toString() + " not ready for use");
+        } catch (FileNotFoundException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
-    private byte[] fetchLocal(Path localFilePath) {
-        if (Files.exists(localFilePath)) {
-            Log.debug("Serving locally [" + localFilePath + "]");
-            return fileStore.readFile(localFilePath);
-        } else {
-            throw new UncheckedIOException(new FileNotFoundException(localFilePath.toString()));
-        }
-    }
-
-    private byte[] fetchRemote(FileType type, Name name, String version, Path localFilePath) {
+    private Path fetchRemoteAndStore(FileType type, Name name, String version, Path localFilePath) {
         io.mvnpm.npm.model.Package p = npmRegistryFacade.getPackage(name.npmFullName, version);
         switch (type) {
             case tgz -> {
-                return tgzClient.fetchRemote(p, localFilePath);
+                tgzClient.fetchRemoteAndSave(p, localFilePath);
             }
             case jar -> {
-                return jarClient.createJar(p, localFilePath);
+                jarClient.createAndSaveJar(p, localFilePath);
             }
             case pom -> {
-                return pomClient.createPom(p, localFilePath);
-            }
-            default -> {
-                return fileStore.readFile(localFilePath);
+                pomClient.createAndSavePom(p, localFilePath);
             }
         }
+        return fetchLocalWhenReady(localFilePath);
     }
-
 }
