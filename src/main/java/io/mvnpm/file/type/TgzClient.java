@@ -1,18 +1,20 @@
 package io.mvnpm.file.type;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import io.mvnpm.file.FileStore;
+import io.mvnpm.file.FileUtil;
 
 /**
  * Downloads or stream the tar files from npm
@@ -28,18 +30,18 @@ public class TgzClient {
     @Inject
     FileStore fileStore;
 
-    public byte[] fetchRemote(io.mvnpm.npm.model.Package p, Path localFileName) {
+    public void fetchRemoteAndSave(io.mvnpm.npm.model.Package p, Path localFileName) {
         URL tarball = p.dist().tarball();
-
         try {
-            byte[] downloadFile = downloadFile(tarball);
-            return fileStore.createFile(p.name(), p.version(), localFileName, downloadFile);
-        } catch (FileNotFoundException ex) {
+            FileUtil.createDirectories(localFileName);
+            downloadFileTo(tarball, localFileName);
+            fileStore.touch(p.name(), p.version(), localFileName);
+        } catch (IOException ex) {
             throw new RuntimeException("Error download tar from NPM " + tarball + " [" + ex.getMessage() + "]");
         }
     }
 
-    private byte[] downloadFile(URL url) throws FileNotFoundException {
+    private void downloadFileTo(URL url, Path localFileName) throws FileNotFoundException {
         try {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -48,16 +50,16 @@ public class TgzClient {
                 throw new FileNotFoundException("Status: " + responseCode);
             }
 
-            try (InputStream in = connection.getInputStream()) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[1024];
+            try (InputStream in = connection.getInputStream();
+                    OutputStream out = Files.newOutputStream(localFileName)) {
+
+                byte[] buffer = new byte[4096];
                 int bytesRead;
 
                 while ((bytesRead = in.read(buffer)) != -1) {
-                    baos.write(buffer, 0, bytesRead);
+                    out.write(buffer, 0, bytesRead);
                 }
 
-                return baos.toByteArray();
             } finally {
                 connection.disconnect();
             }

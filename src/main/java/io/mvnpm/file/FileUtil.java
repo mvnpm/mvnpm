@@ -1,21 +1,90 @@
 package io.mvnpm.file;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.math.BigInteger;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.ws.rs.core.StreamingOutput;
+
 import io.mvnpm.Constants;
+import io.quarkus.logging.Log;
 
 public class FileUtil {
 
     private FileUtil() {
 
+    }
+
+    public static void createDirectories(Path localFilePath) {
+        try {
+            Files.createDirectories(localFilePath.getParent());
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    public static StreamingOutput toStreamingOutput(Path localFilePath) {
+        return outputStream -> {
+            try (InputStream fileInputStream = Files.newInputStream(localFilePath)) {
+                int bytesRead;
+                byte[] buffer = new byte[4096];
+                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+            } catch (IOException e) {
+                throw new UncheckedIOException("Error streaming file content", e);
+            }
+        };
+    }
+
+    public static boolean isReadyForUse(Path fileName) throws FileNotFoundException {
+        return FileUtil.isReadyForUse(fileName, 0);
+    }
+
+    /**
+     * Check if a file exist and it's not being written to
+     *
+     * @param fileName
+     * @param tryCount
+     * @return
+     */
+    private static boolean isReadyForUse(Path fileName, int tryCount) throws FileNotFoundException {
+        boolean isReady = Files.exists(fileName) && !FileUtil.isFileBeingWritten(fileName);
+        if (isReady)
+            return true;
+        if (tryCount > 9)
+            throw new FileNotFoundException(fileName.toString());
+        try {
+            TimeUnit.SECONDS.sleep(3);
+        } catch (InterruptedException ex) {
+            Log.error(ex);
+        }
+        tryCount = tryCount + 1;
+        return isReadyForUse(fileName, tryCount);
+    }
+
+    private static boolean isFileBeingWritten(Path filePath) {
+        try (FileChannel fileChannel = FileChannel.open(filePath, StandardOpenOption.WRITE)) {
+            // Try to acquire a lock on the entire file.
+            FileLock fileLock = fileChannel.tryLock();
+            // If the lock is null, then the file is being written by another process.
+            return fileLock == null;
+        } catch (java.nio.channels.OverlappingFileLockException lockException) {
+            return true;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static Path createSha1(Path forFile) {

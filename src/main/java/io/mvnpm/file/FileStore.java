@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -47,12 +46,6 @@ public class FileStore {
         return findArtifactRoots(mvnpmRoot);
     }
 
-    public byte[] createFile(Name name, String version, Path localFilePath, byte[] content) {
-        byte[] written = createFile(localFilePath, content);
-        touch(name, version, localFilePath);
-        return written;
-    }
-
     public byte[] createFile(Path localFilePath, byte[] content) {
         try {
             Files.createDirectories(localFilePath.getParent());
@@ -65,29 +58,6 @@ public class FileStore {
 
     public void touch(Name name, String version, Path localFilePath) {
         bus.publish("new-file-created", new FileStoreEvent(localFilePath, name, version));
-    }
-
-    public byte[] readFile(Path localFileName) {
-        return readFileInLoop(localFileName, 0);
-    }
-
-    private byte[] readFileInLoop(Path localFileName, int triedNumber) {
-        if (exist(localFileName)) {
-            try {
-                return Files.readAllBytes(localFileName);
-            } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-            }
-        } else {
-            if (triedNumber > 10)
-                throw new RuntimeException("Timed out while waiting for " + localFileName);
-            try {
-                // Wait 5 seconds and try again.
-                TimeUnit.SECONDS.sleep(5);
-            } catch (InterruptedException ex) {
-            }
-            return readFileInLoop(localFileName, triedNumber++);
-        }
     }
 
     public boolean exist(Path localFileName) {

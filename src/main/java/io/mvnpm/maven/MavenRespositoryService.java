@@ -1,5 +1,7 @@
 package io.mvnpm.maven;
 
+import java.nio.file.Path;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -29,65 +31,65 @@ public class MavenRespositoryService {
     @Inject
     FileClient fileClient;
 
-    public byte[] getFile(String groupId, String artifactId, String version, FileType type) {
+    public Path getPath(String groupId, String artifactId, String version, FileType type) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
-        return getFile(name, version, type);
+        return getPath(name, version, type);
     }
 
-    public byte[] getFile(Name name, String version, FileType type) {
+    public Path getPath(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
             String latestVersion = getLatestVersion(name);
-            return getFile(name, latestVersion, type);
+            return getPath(name, latestVersion, type);
         } else if (name.isInternal()) {
-            return compositeService.getFile(name, version, type);
+            return compositeService.getPath(name, version, type);
         } else {
-            return fileClient.getFileContents(type, name, version);
+            return fileClient.getFilePath(type, name, version);
         }
     }
 
-    public byte[] getSha1(String groupId, String artifactId, String version, FileType type) {
+    public Path getSha1(String groupId, String artifactId, String version, FileType type) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
         return getSha1(name, version, type);
     }
 
-    public byte[] getSha1(Name name, String version, FileType type) {
+    public Path getSha1(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
             String latestVersion = getLatestVersion(name);
             return getSha1(name, latestVersion, type);
         } else if (name.isInternal()) {
-            return compositeService.getFileSha1(name, version, type);
+            return compositeService.getSha1Path(name, version, type);
         } else {
             return fileClient.getFileSha1(type, name, version);
         }
     }
 
-    public byte[] getMd5(String groupId, String artifactId, String version, FileType type) {
+    public Path getMd5(String groupId, String artifactId, String version, FileType type) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
         return getMd5(name, version, type);
     }
 
-    public byte[] getMd5(Name name, String version, FileType type) {
+    public Path getMd5(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
             String latestVersion = getLatestVersion(name);
             return getMd5(name, latestVersion, type);
         } else if (name.isInternal()) {
-            return compositeService.getFileMd5(name, version, type);
+            return compositeService.getMd5Path(name, version, type);
         } else {
             return fileClient.getFileMd5(type, name, version);
         }
     }
 
-    public byte[] getAsc(String groupId, String artifactId, String version, FileType type) {
+    public Path getAsc(String groupId, String artifactId, String version, FileType type) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
         return getAsc(name, version, type);
     }
 
-    public byte[] getAsc(Name name, String version, FileType type) {
+    public Path getAsc(Name name, String version, FileType type) {
         if (version.equalsIgnoreCase(Constants.LATEST)) {
             String latestVersion = getLatestVersion(name);
             return getAsc(name, latestVersion, type);
         } else if (name.isInternal()) {
-            return compositeService.getFileAsc(name, version, type);
+            return compositeService.getAscPath(name, version, type);
         } else {
             return fileClient.getFileAsc(type, name, version);
         }

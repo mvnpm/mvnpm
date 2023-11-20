@@ -1,7 +1,6 @@
 package io.mvnpm.file.metadata;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -70,7 +69,7 @@ public class MetadataClient {
             }
         }
 
-        return toStreamingOutputStream(localFilePath);
+        return FileUtil.toStreamingOutput(localFilePath);
     }
 
     public StreamingOutput getMetadataSha1(Name name) {
@@ -83,7 +82,7 @@ public class MetadataClient {
             Path localFilePath = fileStore.getLocalMetadataXmlFullPath(name);
             FileUtil.createSha1(localFilePath);
         }
-        return toStreamingOutputStream(localSha1Path);
+        return FileUtil.toStreamingOutput(localSha1Path);
     }
 
     public StreamingOutput getMetadataMd5(Name name) {
@@ -95,7 +94,7 @@ public class MetadataClient {
             Path localFilePath = fileStore.getLocalMetadataXmlFullPath(name);
             FileUtil.createMd5(localFilePath);
         }
-        return toStreamingOutputStream(localMd5Path);
+        return FileUtil.toStreamingOutput(localMd5Path);
     }
 
     private Metadata getMetadata(Name name) {
@@ -201,20 +200,6 @@ public class MetadataClient {
                 throw new UncheckedIOException(ex);
             }
         }
-    }
-
-    private StreamingOutput toStreamingOutputStream(Path localFilePath) {
-        return outputStream -> {
-            try (InputStream fileInputStream = Files.newInputStream(localFilePath)) {
-                int bytesRead;
-                byte[] buffer = new byte[4096];
-                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                    outputStream.write(buffer, 0, bytesRead);
-                }
-            } catch (IOException e) {
-                throw new UncheckedIOException("Error streaming file content", e);
-            }
-        };
     }
 
     private boolean isOlderThanTimeout(Path p) {

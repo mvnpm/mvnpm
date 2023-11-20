@@ -4,9 +4,11 @@ import static io.mvnpm.Constants.CLOSE_ROUND;
 import static io.mvnpm.Constants.COMMA;
 import static io.mvnpm.Constants.OPEN_BLOCK;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +29,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
+import io.mvnpm.file.FileUtil;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Bugs;
 import io.mvnpm.npm.model.Maintainer;
@@ -51,55 +54,56 @@ public class PomClient {
 
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
 
-    public byte[] createPom(io.mvnpm.npm.model.Package p, Path localFilePath) {
-        byte[] contents = writePomToBytes(p);
-        return fileCreator.createFile(p.name(), p.version(), localFilePath, contents);
+    public void createAndSavePom(io.mvnpm.npm.model.Package p, Path localFilePath) {
+        writePomToFileSystem(p, localFilePath);
+        fileCreator.touch(p.name(), p.version(), localFilePath);
     }
 
-    private byte[] writePomToBytes(io.mvnpm.npm.model.Package p) {
+    private void writePomToFileSystem(io.mvnpm.npm.model.Package p, Path localFilePath) {
 
         List<Dependency> deps = toDependencies(p.dependencies());
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            Model model = new Model();
+        Model model = new Model();
 
-            model.setModelVersion(MODEL_VERSION);
-            model.setGroupId(p.name().mvnGroupId);
-            model.setArtifactId(p.name().mvnArtifactId);
-            model.setVersion(p.version());
-            model.setPackaging(JAR);
-            model.setName(p.name().displayName);
-            if (p.description() == null || p.description().isEmpty()) {
-                model.setDescription(p.name().displayName);
-            } else {
-                model.setDescription(p.description());
+        model.setModelVersion(MODEL_VERSION);
+        model.setGroupId(p.name().mvnGroupId);
+        model.setArtifactId(p.name().mvnArtifactId);
+        model.setVersion(p.version());
+        model.setPackaging(JAR);
+        model.setName(p.name().displayName);
+        if (p.description() == null || p.description().isEmpty()) {
+            model.setDescription(p.name().displayName);
+        } else {
+            model.setDescription(p.description());
+        }
+
+        model.setLicenses(toLicenses(p.license()));
+        model.setScm(toScm(p.repository()));
+        model.setUrl(toUrl(model, p.homepage()));
+        model.setOrganization(toOrganization(p));
+
+        model.setIssueManagement(toIssueManagement(p.bugs()));
+        model.setDevelopers(toDevelopers(p.maintainers()));
+        if (!deps.isEmpty()) {
+            Properties properties = new Properties();
+
+            for (Dependency dep : deps) {
+                String version = dep.getVersion();
+                String propertyKey = dep.getGroupId() + Constants.HYPHEN + dep.getArtifactId() + Constants.DOT
+                        + Constants.VERSION;
+                properties.put(propertyKey, version);
+                dep.setVersion(Constants.DOLLAR + Constants.OPEN_CURLY + propertyKey + Constants.CLOSE_CURLY);
             }
 
-            model.setLicenses(toLicenses(p.license()));
-            model.setScm(toScm(p.repository()));
-            model.setUrl(toUrl(model, p.homepage()));
-            model.setOrganization(toOrganization(p));
+            model.setProperties(properties);
+            model.setDependencies(deps);
+        }
 
-            model.setIssueManagement(toIssueManagement(p.bugs()));
-            model.setDevelopers(toDevelopers(p.maintainers()));
-            if (!deps.isEmpty()) {
-                Properties properties = new Properties();
-
-                for (Dependency dep : deps) {
-                    String version = dep.getVersion();
-                    String propertyKey = dep.getGroupId() + Constants.HYPHEN + dep.getArtifactId() + Constants.DOT
-                            + Constants.VERSION;
-                    properties.put(propertyKey, version);
-                    dep.setVersion(Constants.DOLLAR + Constants.OPEN_CURLY + propertyKey + Constants.CLOSE_CURLY);
-                }
-
-                model.setProperties(properties);
-                model.setDependencies(deps);
-            }
-            mavenXpp3Writer.write(baos, model);
-            return baos.toByteArray();
+        FileUtil.createDirectories(localFilePath);
+        try (OutputStream out = Files.newOutputStream(localFilePath)) {
+            mavenXpp3Writer.write(out, model);
         } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            throw new UncheckedIOException(ex);
         }
     }
 

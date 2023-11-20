@@ -2,19 +2,14 @@ package io.mvnpm.mavencentral.sync;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -24,6 +19,7 @@ import jakarta.inject.Inject;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
+import io.mvnpm.file.FileUtil;
 import io.mvnpm.maven.MavenRespositoryService;
 import io.quarkus.logging.Log;
 
@@ -45,7 +41,7 @@ public class BundleCreator {
         Log.debug("====== mvnpm: Nexus Bundler ======");
         // First get the jar, as the jar will create the pom, and
         // other files are being created once the pom and jar is downloaded
-        mavenRespositoryService.getFile(groupId, artifactId, version, FileType.jar);
+        mavenRespositoryService.getPath(groupId, artifactId, version, FileType.jar);
         Log.debug("\tbundle: Got initial Jar file");
         return buildBundle(groupId, artifactId, version);
     }
@@ -102,7 +98,7 @@ public class BundleCreator {
             List<Path> fileNames = getFileNamesInBundle(parent, base);
             List<String> notReady = new ArrayList<>();
             for (Path fileName : fileNames) {
-                boolean ready = fileAndContentReady(fileName, 0);
+                boolean ready = FileUtil.isReadyForUse(fileName);
                 Log.debug("\tbundle: " + fileName + " [" + ready + "]");
                 if (!ready) {
                     notReady.add(fileName.toString());
@@ -115,39 +111,6 @@ public class BundleCreator {
             throw new RuntimeException("Files " + notReady + " not ready to bundle. Gave up after multiple attempts");
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
-        }
-    }
-
-    /**
-     * Check if a file exist and it's not being written to
-     *
-     * @param fileName
-     * @param tryCount
-     * @return
-     */
-    private boolean fileAndContentReady(Path fileName, int tryCount) throws FileNotFoundException {
-        boolean isReady = Files.exists(fileName) && !isFileBeingWritten(fileName);
-        if (isReady)
-            return true;
-        if (tryCount > 9)
-            throw new FileNotFoundException(fileName.toString());
-        try {
-            TimeUnit.SECONDS.sleep(3);
-        } catch (InterruptedException ex) {
-            Log.error(ex);
-        }
-        tryCount = tryCount + 1;
-        return fileAndContentReady(fileName, tryCount);
-    }
-
-    private boolean isFileBeingWritten(Path filePath) {
-        try (FileChannel fileChannel = FileChannel.open(filePath, StandardOpenOption.WRITE)) {
-            // Try to acquire a lock on the entire file.
-            FileLock fileLock = fileChannel.tryLock();
-            // If the lock is null, then the file is being written by another process.
-            return fileLock == null;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
     }
 
