@@ -8,11 +8,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import io.mvnpm.composite.CompositeService;
 import io.mvnpm.file.FileType;
 import io.mvnpm.file.ImportMapUtil;
-import io.mvnpm.file.metadata.MetadataAndHash;
 import io.mvnpm.file.metadata.MetadataClient;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -42,10 +42,10 @@ public class MavenRepositoryApi {
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
     @Produces(MediaType.APPLICATION_XML)
     public Response getMavenMetadata(@PathParam("ga") String ga) {
+        Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         try {
-            Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-            MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
-            return Response.ok(mah.data()).build();
+            StreamingOutput streamingOutput = metadataClient.getMetadataXml(name);
+            return Response.ok(streamingOutput).build();
         } catch (WebApplicationException wae) {
             return wae.getResponse();
         } catch (Throwable t) {
@@ -58,8 +58,8 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataSha1(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-        MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
-        return Response.ok(mah.sha1()).build();
+        StreamingOutput streamingOutput = metadataClient.getMetadataSha1(name);
+        return Response.ok(streamingOutput).build();
     }
 
     @GET
@@ -67,8 +67,8 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataMd5(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-        MetadataAndHash mah = metadataClient.getMetadataAndHash(name);
-        return Response.ok(mah.md5()).build();
+        StreamingOutput streamingOutput = metadataClient.getMetadataMd5(name);
+        return Response.ok(streamingOutput).build();
     }
 
     @GET

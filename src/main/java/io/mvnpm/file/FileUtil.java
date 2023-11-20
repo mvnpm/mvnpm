@@ -1,6 +1,7 @@
 package io.mvnpm.file;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,61 +18,67 @@ public class FileUtil {
 
     }
 
-    public static String getSha1(byte[] value) {
-        try {
-            MessageDigest md = MessageDigest.getInstance(Constants.SHA1);
-            byte[] digest = md.digest(value);
-            StringBuilder sb = new StringBuilder(40);
-            for (int i = 0; i < digest.length; ++i) {
-                sb.append(Integer.toHexString((digest[i] & 0xFF) | 0x100).substring(1, 3));
-            }
-            return sb.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
-    }
+    public static Path createSha1(Path forFile) {
+        String localSha1FileName = forFile.toString() + Constants.DOT_SHA1;
+        Path localSha1File = Paths.get(localSha1FileName);
+        try (InputStream inputStream = Files.newInputStream(forFile)) {
+            String sha1 = FileUtil.getSha1(inputStream);
 
-    public static void createSha1(Path outputPath) {
-        try {
-            byte[] content = Files.readAllBytes(outputPath);
-
-            String sha1 = FileUtil.getSha1(content);
-            String localSha1FileName = outputPath.toString() + Constants.DOT_SHA1;
-            Path f = Paths.get(localSha1FileName);
-            if (!Files.exists(f)) {
-                synchronized (f) {
-                    Files.writeString(f, sha1);
+            if (!Files.exists(localSha1File)) {
+                synchronized (localSha1File) {
+                    Files.writeString(localSha1File, sha1);
                 }
             }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
+        return localSha1File;
     }
 
-    public static String getMd5(byte[] value) {
+    private static String getSha1(java.io.InputStream inputStream) {
+        try {
+            MessageDigest md = MessageDigest.getInstance(Constants.SHA1);
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                md.update(buffer, 0, bytesRead);
+            }
+            byte[] digest = md.digest();
+
+            StringBuilder result = new StringBuilder();
+            for (byte b : digest) {
+                result.append(String.format("%02x", b));
+            }
+            return result.toString();
+        } catch (NoSuchAlgorithmException | IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static Path createMd5(Path forFile) {
+        String localMd5FileName = forFile.toString() + Constants.DOT_MD5;
+        Path localMd5File = Paths.get(localMd5FileName);
+        try {
+            byte[] content = Files.readAllBytes(forFile);
+            String md5 = FileUtil.getMd5(content);
+            if (!Files.exists(localMd5File)) {
+                synchronized (localMd5File) {
+                    Files.writeString(localMd5File, md5);
+                }
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(ex);
+        }
+        return localMd5File;
+    }
+
+    private static String getMd5(byte[] value) {
         try {
             MessageDigest md = MessageDigest.getInstance(Constants.MD5);
             byte[] digest = md.digest(value);
             return new BigInteger(1, digest).toString(16);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
-        }
-    }
-
-    public static void createMd5(Path outputPath) {
-        try {
-            byte[] content = Files.readAllBytes(outputPath);
-
-            String md5 = FileUtil.getMd5(content);
-            String localMd5FileName = outputPath.toString() + Constants.DOT_MD5;
-            Path f = Paths.get(localMd5FileName);
-            if (!Files.exists(f)) {
-                synchronized (f) {
-                    Files.writeString(f, md5);
-                }
-            }
-        } catch (IOException ex) {
-            throw new IllegalStateException(ex);
         }
     }
 

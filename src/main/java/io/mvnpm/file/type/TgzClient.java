@@ -33,7 +33,7 @@ public class TgzClient {
 
         try {
             byte[] downloadFile = downloadFile(tarball);
-            return fileStore.createFile(p, localFileName, downloadFile);
+            return fileStore.createFile(p.name(), p.version(), localFileName, downloadFile);
         } catch (FileNotFoundException ex) {
             throw new RuntimeException("Error download tar from NPM " + tarball + " [" + ex.getMessage() + "]");
         }

@@ -236,10 +236,7 @@ public class CompositeCreator {
                 Log.info(pom.getGroupId() + ":" + pom.getArtifactId() + ":" + pom.getVersion() + " created");
             }
             // Also create the Sha1
-            byte[] content = Files.readAllBytes(outputJar);
-            String sha1 = FileUtil.getSha1(content);
-            Path localSha1FilePath = Paths.get(outputJar.toString() + Constants.DOT_SHA1);
-            Files.writeString(localSha1FilePath, sha1);
+            FileUtil.createSha1(outputJar);
 
             // Also kick off all other files creation
             fileStore.touch(outputJarName, model.getVersion(), outputJar);

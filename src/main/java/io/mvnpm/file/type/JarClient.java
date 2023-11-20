@@ -99,7 +99,7 @@ public class JarClient {
 
             byte[] jarFileContents = byteOutput.toByteArray();
 
-            return fileStore.createFile(p, localFilePath, jarFileContents);
+            return fileStore.createFile(p.name(), p.version(), localFilePath, jarFileContents);
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);

@@ -360,8 +360,8 @@
         <dependencies>
           <dependency>
             <groupId>io.mvnpm</groupId>
-            <artifactId>mvnpm-locker</artifactId>
-            <version>${project.version}</version>
+            <artifactId>locker-maven-plugin</artifactId>
+            <version>0.0.4</version>
             <type>pom</type>
             <scope>import</scope>
           </dependency>

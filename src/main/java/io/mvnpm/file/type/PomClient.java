@@ -53,7 +53,7 @@ public class PomClient {
 
     public byte[] createPom(io.mvnpm.npm.model.Package p, Path localFilePath) {
         byte[] contents = writePomToBytes(p);
-        return fileCreator.createFile(p, localFilePath, contents);
+        return fileCreator.createFile(p.name(), p.version(), localFilePath, contents);
     }
 
     private byte[] writePomToBytes(io.mvnpm.npm.model.Package p) {
