@@ -33,8 +33,6 @@ import io.mvnpm.npm.model.Project;
 import io.mvnpm.version.InvalidVersionException;
 import io.mvnpm.version.Version;
 import io.quarkus.logging.Log;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Creates a maven-metadata.xml from the NPM Project
@@ -194,9 +192,9 @@ public class MetadataClient {
         return p.distTags().latest();
     }
 
-    private void createDir(Path localFilePath){
+    private void createDir(Path localFilePath) {
         Path parentDir = localFilePath.getParent();
-        if (!Files.exists(parentDir)){
+        if (!Files.exists(parentDir)) {
             try {
                 Files.createDirectories(parentDir);
             } catch (IOException ex) {
@@ -204,7 +202,7 @@ public class MetadataClient {
             }
         }
     }
-    
+
     private StreamingOutput toStreamingOutputStream(Path localFilePath) {
         return outputStream -> {
             try (InputStream fileInputStream = Files.newInputStream(localFilePath)) {

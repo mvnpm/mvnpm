@@ -37,14 +37,7 @@ public class FileUtil {
 
     private static String getSha1(java.io.InputStream inputStream) {
         try {
-            MessageDigest md = MessageDigest.getInstance(Constants.SHA1);
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = inputStream.read(buffer)) != -1) {
-                md.update(buffer, 0, bytesRead);
-            }
-            byte[] digest = md.digest();
-
+            byte[] digest = FileUtil.getMessageDigest(inputStream, Constants.SHA1);
             StringBuilder result = new StringBuilder();
             for (byte b : digest) {
                 result.append(String.format("%02x", b));
@@ -58,9 +51,9 @@ public class FileUtil {
     public static Path createMd5(Path forFile) {
         String localMd5FileName = forFile.toString() + Constants.DOT_MD5;
         Path localMd5File = Paths.get(localMd5FileName);
-        try {
-            byte[] content = Files.readAllBytes(forFile);
-            String md5 = FileUtil.getMd5(content);
+        try (InputStream inputStream = Files.newInputStream(forFile)) {
+            String md5 = FileUtil.getMd5(inputStream);
+
             if (!Files.exists(localMd5File)) {
                 synchronized (localMd5File) {
                     Files.writeString(localMd5File, md5);
@@ -72,12 +65,11 @@ public class FileUtil {
         return localMd5File;
     }
 
-    private static String getMd5(byte[] value) {
+    private static String getMd5(java.io.InputStream inputStream) {
         try {
-            MessageDigest md = MessageDigest.getInstance(Constants.MD5);
-            byte[] digest = md.digest(value);
+            byte[] digest = FileUtil.getMessageDigest(inputStream, Constants.MD5);
             return new BigInteger(1, digest).toString(16);
-        } catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException | IOException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -108,6 +100,18 @@ public class FileUtil {
             }
         }
         return true;
+    }
+
+    private static byte[] getMessageDigest(InputStream inputStream, String algorithm)
+            throws NoSuchAlgorithmException, IOException {
+        MessageDigest md = MessageDigest.getInstance(algorithm);
+        byte[] buffer = new byte[4096];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            md.update(buffer, 0, bytesRead);
+        }
+
+        return md.digest();
     }
 
     private static final String GPG_COMMAND = "gpg -ab ";
