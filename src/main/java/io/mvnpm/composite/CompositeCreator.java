@@ -79,11 +79,11 @@ public class CompositeCreator {
     }
 
     @Blocking
-    public byte[] buildComposite(String artifactId, String version) {
+    public void buildComposite(String artifactId, String version) {
         Path compositesFolder = Paths.get(compositesDirectory);
         Path pom = compositesFolder.resolve(artifactId + ".xml");
         if (Files.exists(pom)) {
-            return build(pom, version);
+            build(pom, version);
         }
         throw new RuntimeException("Composite definition for " + artifactId + " does not exist");
     }
@@ -92,14 +92,14 @@ public class CompositeCreator {
         return fileStore.getLocalDirectory(name, version).resolve("importmap.json");
     }
 
-    private byte[] build(Path pom, String version) {
+    private void build(Path pom, String version) {
         try {
             Model model = mavenXpp3Writer.read(Files.newInputStream(pom));
             if (version != null) {
                 model.setVersion(version);
             }
             List<Dependency> dependencies = resolveDependencies(model);
-            return merge(model, dependencies);
+            merge(model, dependencies);
         } catch (XmlPullParserException ex) {
             throw new RuntimeException("Invalid pom xml for " + pom);
         } catch (IOException ex) {
@@ -152,7 +152,7 @@ public class CompositeCreator {
         }
     }
 
-    private byte[] merge(Model model, List<Dependency> dependencies) throws IOException, XmlPullParserException {
+    private void merge(Model model, List<Dependency> dependencies) throws IOException, XmlPullParserException {
 
         Path outputJar = fileStore.getLocalFullPath(FileType.jar, model.getGroupId(), model.getArtifactId(),
                 model.getVersion());
@@ -250,7 +250,6 @@ public class CompositeCreator {
             }
 
         }
-        return Files.readAllBytes(outputJar);
     }
 
     private void updatePom(JarInputStream inputJar,
