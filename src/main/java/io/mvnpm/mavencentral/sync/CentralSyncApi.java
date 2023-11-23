@@ -140,6 +140,31 @@ public class CentralSyncApi {
     }
 
     @GET
+    @Path("/retry/{groupId}/{artifactId}")
+    public CentralSyncItem retryFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+            @DefaultValue("latest") @QueryParam("version") String version) {
+
+        if (version.equalsIgnoreCase("latest")) {
+            version = getLatestVersion(groupId, artifactId);
+        }
+
+        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+
+        // Already being synced
+        if (centralSyncItem.isInProgress() || centralSyncItem.stage.equals(Stage.INIT))
+            return centralSyncItem;
+
+        // Check the remote status
+        if (!centralSyncItem.alreadyRealeased() && centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
+            centralSyncItem.stage = Stage.RELEASED;
+            centralSyncItemService.merge(centralSyncItem);
+            return centralSyncItem;
+        }
+
+        return continuousSyncService.tryErroredItemAgain(centralSyncItem);
+    }
+
+    @GET
     @Path("/item/{stage}")
     public List<CentralSyncItem> getItems(@PathParam("stage") Stage stage) {
         return CentralSyncItem.findByStage(stage);
