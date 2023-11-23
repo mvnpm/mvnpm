@@ -4,6 +4,7 @@ import '@vaadin/radio-group';
 import '@vaadin/progress-bar';
 import '@vaadin/grid';
 import '@vaadin/grid/vaadin-grid-sort-column.js';
+import { columnBodyRenderer } from '@vaadin/grid/lit.js';
 
 /**
  * This component shows the Item stage screen
@@ -12,12 +13,26 @@ import '@vaadin/grid/vaadin-grid-sort-column.js';
 export class MvnpmReleases extends LitElement {
     static styles = css`
     :host {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-      padding: 20px;
-    }`;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        padding: 20px;
+    }
+    
+    .rotate {
+        animation: rotation 1s infinite linear;
+    }
+
+    @keyframes rotation {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    `;
 
     @state({ type: Array })
     private _itemList: any[] | null = null;
@@ -26,14 +41,13 @@ export class MvnpmReleases extends LitElement {
     constructor() {
         super();
         this._itemList = null;
+        this._selectedState = null;
     }
 
     connectedCallback() {
         super.connectedCallback();
-
-        fetch("/api/sync/item/RELEASED")
-            .then(response => response.json())
-            .then(response => this._itemList = response);
+        this._selectedState = "RELEASED";
+        this._fetchSelectedItemList();
     }
 
     disconnectedCallback() {
@@ -70,6 +84,7 @@ export class MvnpmReleases extends LitElement {
                 <vaadin-grid-sort-column header="Staging Repo Id" path="stagingRepoId"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Upload attemps" path="uploadAttempts"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Promotion attemps" path="promotionAttempts"></vaadin-grid-sort-column>
+                ${this._renderRetryCol()}
             </vaadin-grid>`;
         } else if(!this._itemList){
             return html`<vaadin-progress-bar class="progressBar" indeterminate></vaadin-progress-bar>`;
@@ -78,9 +93,34 @@ export class MvnpmReleases extends LitElement {
         }
     }
 
+    private _renderRetryCol(){
+        if(this._selectedState === "ERROR"){
+            return html`<vaadin-grid-sort-column resizable
+                                    header="Retry"
+                                    ${columnBodyRenderer(this._retryRenderer, [])}>`;
+        }
+    }
+
+    private _retryRenderer(item) {
+        return html`<span style="cursor: pointer;" @click="${(e) => this._requestFullSync(e, item)}"><vaadin-icon style="color:var(--lumo-success-color)" icon="vaadin:refresh"></vaadin-icon></span>`;
+    }
+
+    private _requestFullSync(e, item){
+        e.target.className = "rotate";
+        var fullSyncRequest = "/api/sync/retry/" + item.groupId + "/" + item.artifactId + "?version=" + item.version;
+        fetch(fullSyncRequest)
+            .then(response => response.json())
+            .then(response => this._fetchSelectedItemList());
+    }
+
     private _stageChange(e){
+        this._selectedState = e.target.value;
+        this._fetchSelectedItemList();
+    }
+    
+    private _fetchSelectedItemList(){
         this._itemList = null;
-        fetch("/api/sync/item/" + e.target.value)
+        fetch("/api/sync/item/" + this._selectedState)
             .then(response => response.json())
             .then(response => this._itemList = response);
     }

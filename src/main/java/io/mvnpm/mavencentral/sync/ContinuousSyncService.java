@@ -243,7 +243,7 @@ public class ContinuousSyncService {
         // Reset promotion if the server restarts
         resetPromotion();
 
-        eventLogApi.clearLog();
+        //eventLogApi.clearLog();
     }
 
     private void resetUpload() {
@@ -271,10 +271,37 @@ public class ContinuousSyncService {
                 (groupId.equals("org.mvnpm") && artifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
     }
 
+    @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
+    @Blocking
+    public void checkError() {
+        try {
+            Log.debug("Starting error retry...");
+            List<CentralSyncItem> error = CentralSyncItem.findByStage(Stage.ERROR);
+
+            if (error != null && !error.isEmpty()) {
+                for (CentralSyncItem centralSyncItem : error) {
+                    tryErroredItemAgain(centralSyncItem);
+                }
+            }
+        } catch (Throwable t) {
+            Log.error(t.getMessage());
+        }
+    }
+
+    public CentralSyncItem tryErroredItemAgain(CentralSyncItem centralSyncItem) {
+        if (centralSyncItem.uploadAttempts > 0) {
+            centralSyncItem.uploadAttempts = centralSyncItem.uploadAttempts - 1;
+        }
+        if (centralSyncItem.promotionAttempts > 0) {
+            centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
+        }
+        return centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+    }
+
     /**
      * Check all known artifacts for updates
      */
-    @Scheduled(cron = "{mvnpm.cron.expr}", concurrentExecution = SKIP)
+    @Scheduled(cron = "{mvnpm.checkall.cron.expr}", concurrentExecution = SKIP)
     @Blocking
     public void checkAll() {
         try {

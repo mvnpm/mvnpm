@@ -21,8 +21,8 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 @Entity
 @IdClass(Gav.class)
 @NamedQueries({
-        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime LIMIT 999"),
-        @NamedQuery(name = "CentralSyncItem.findUploadedButNotReleased", query = "from CentralSyncItem where stage IN ?1 order by stageChangeTime")
+        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT 999"),
+        @NamedQuery(name = "CentralSyncItem.findUploadedButNotReleased", query = "from CentralSyncItem where stage IN ?1 order by stageChangeTime DESC")
 })
 public class CentralSyncItem extends PanacheEntityBase {
     @Id
