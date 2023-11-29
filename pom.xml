@@ -59,6 +59,7 @@
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
     <impsort.plugin.version>1.9.0</impsort.plugin.version>
     <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
+    <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
     <!-- UI Libs -->
     <quarkus-qute-server-pages.version>2.1.0.Final</quarkus-qute-server-pages.version>
     <quarkus-web-bundler.version>1.1.5</quarkus-web-bundler.version>
