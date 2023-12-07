@@ -9,17 +9,23 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.zip.GZIPOutputStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveException;
+import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
@@ -38,7 +44,6 @@ import io.mvnpm.maven.MavenRespositoryService;
  */
 @ApplicationScoped
 public class JarClient {
-
     @Inject
     FileStore fileStore;
 
@@ -110,37 +115,71 @@ public class JarClient {
         try (InputStream tgzInputStream = Files.newInputStream(tgzPath);
                 GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(tgzInputStream);
                 TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream);) {
-
+            final Map<String, byte[]> toTgz = new LinkedHashMap<>();
             for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry(); entry != null; entry = tarArchiveInputStream
                     .getNextTarEntry()) {
-                tgzEntryToJarEntry(p, entry, tarArchiveInputStream, jarOutput);
+                tgzEntryToJarEntry(p, entry, tarArchiveInputStream, toTgz, jarOutput);
+            }
+            if (!toTgz.isEmpty()) {
+                final byte[] bytes = tarGz(toTgz);
+                writeJarEntry(jarOutput, MVNPM_BUILD_TGZ, bytes);
             }
         }
     }
 
     private void tgzEntryToJarEntry(io.mvnpm.npm.model.Package p, ArchiveEntry entry, TarArchiveInputStream tar,
+            Map<String, byte[]> toTgz,
             JarArchiveOutputStream jarOutput) throws IOException {
-        String root = MVN_ROOT + ImportMapUtil.getImportMapRoot(p);
+        String importMapRoot = ImportMapUtil.getImportMapRoot(p);
         // Let's filter out files we do not need..
         String name = entry.getName();
-
-        if (!shouldIgnore(name)) {
-
+        final boolean shouldAdd = !matches(FILES_TO_EXCLUDE, name);
+        final boolean shouldTgz = matches(FILES_TO_TGZ, name);
+        if (shouldAdd || shouldTgz) {
             name = name.replaceFirst(NPM_ROOT, Constants.EMPTY);
-
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     BufferedOutputStream bos = new BufferedOutputStream(baos, bufferSize)) {
                 IOUtils.copy(tar, bos, bufferSize);
                 bos.flush();
                 baos.flush();
-                writeJarEntry(jarOutput, root + name, baos.toByteArray());
+                if (shouldAdd) {
+                    writeJarEntry(jarOutput, MVN_ROOT + importMapRoot + name, baos.toByteArray());
+                } else {
+                    // We don't add the META-INF because the tgz is already in META-INF
+                    toTgz.put("resources" + importMapRoot + name, baos.toByteArray());
+                }
             }
         }
     }
 
-    private boolean shouldIgnore(String name) {
-        for (String end : FILETYPES_TO_IGNORE) {
-            if (name.endsWith(end) || name.endsWith(end.toUpperCase())) {
+    private byte[] tarGz(Map<String, byte[]> toCompress) throws IOException {
+        // Step 1, 2 and 3: Create tar archive from map
+        ByteArrayOutputStream tarOutput = new ByteArrayOutputStream();
+        try (TarArchiveOutputStream tarArchiveOutputStream = (TarArchiveOutputStream) new ArchiveStreamFactory()
+                .createArchiveOutputStream(ArchiveStreamFactory.TAR, tarOutput)) {
+            for (Map.Entry<String, byte[]> entry : toCompress.entrySet()) {
+                TarArchiveEntry tarEntry = new TarArchiveEntry(entry.getKey());
+                tarEntry.setSize(entry.getValue().length);
+                tarArchiveOutputStream.putArchiveEntry(tarEntry);
+                tarArchiveOutputStream.write(entry.getValue());
+                tarArchiveOutputStream.closeArchiveEntry();
+            }
+        } catch (ArchiveException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Step 4: Compress tar archive to tar.gz
+        ByteArrayOutputStream gzipOutput = new ByteArrayOutputStream();
+        try (GZIPOutputStream gzipOutputStream = new GZIPOutputStream(gzipOutput)) {
+            gzipOutputStream.write(tarOutput.toByteArray());
+        }
+
+        return gzipOutput.toByteArray();
+    }
+
+    static boolean matches(List<String> suffixes, String name) {
+        for (String suffix : suffixes) {
+            if (name.toLowerCase().endsWith(suffix.toLowerCase())) {
                 return true;
             }
         }
@@ -184,12 +223,19 @@ public class JarClient {
 
     private static final String PACKAGE = "package";
     private static final String NPM_ROOT = PACKAGE + Constants.SLASH;
-    private static final String MVN_ROOT = "META-INF/resources";
-    private static final String POM_ROOT = "META-INF/maven/";
+    private static final String META_INF = "META-INF";
+    private static final String MVN_ROOT = META_INF + "/resources";
+    private static final String POM_ROOT = META_INF + "/maven/";
+    public static final String MVNPM_BUILD_TGZ = META_INF + "/.mvnpm.build" + Constants.DOT_TGZ;
     private static final String POM_DOT_XML = "pom.xml";
     private static final String POM_DOT_PROPERTIES = "pom.properties";
     private static final String POM_DOT_PROPERTIES_COMMENT = "Generated by mvnpm.org";
     private final int bufferSize = 4096;
-    private static final List<String> FILETYPES_TO_IGNORE = List.of(".md", ".ts", ".ts.map", "/logo.svg"); // Make this configuable per package ?
+
+    // Files to add in a tgz compressed file in the jar
+    static final List<String> FILES_TO_TGZ = List.of(".d.ts");
+
+    // Excluded files which won't be added to the jar (unless gzipped)
+    static final List<String> FILES_TO_EXCLUDE = List.of(".md", ".ts", ".ts.map", "/logo.svg");
     private static final String CONTENTS = "No contents since this is a JavaScript Project";
 }
