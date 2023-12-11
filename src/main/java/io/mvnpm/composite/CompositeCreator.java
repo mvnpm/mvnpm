@@ -43,7 +43,6 @@ import io.mvnpm.maven.MavenRespositoryService;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.quarkus.logging.Log;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * This group a set of artifacts into one
@@ -65,7 +64,6 @@ public class CompositeCreator {
 
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
-    @Blocking
     public void buildAllComposites() {
         Set<Path> poms = getAllCompositePoms();
         for (Path pom : poms) {
@@ -73,7 +71,6 @@ public class CompositeCreator {
         }
     }
 
-    @Blocking
     public void buildComposite(String artifactId, String version) {
         Path compositesFolder = Paths.get(compositesDirectory);
         Path pom = compositesFolder.resolve(artifactId + ".xml");
