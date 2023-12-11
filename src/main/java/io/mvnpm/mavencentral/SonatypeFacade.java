@@ -21,7 +21,6 @@ import io.mvnpm.npm.model.Name;
 import io.quarkus.cache.CacheResult;
 import io.quarkus.logging.Log;
 import io.quarkus.security.UnauthorizedException;
-import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -51,7 +50,6 @@ public class SonatypeFacade {
     @ConfigProperty(name = "mvnpm.sonatype.profileId", defaultValue = "473ee06cf882e")
     String profileId;
 
-    @Blocking
     @CacheResult(cacheName = "maven-search-cache")
     public CentralSyncItem search(String groupId, String artifactId, String version) {
         try {
@@ -98,7 +96,6 @@ public class SonatypeFacade {
         return items;
     }
 
-    @Blocking
     public String upload(Path path) throws UploadFailedException {
         try {
             Log.debug("\tUploading " + path + "...");
@@ -124,7 +121,6 @@ public class SonatypeFacade {
         }
     }
 
-    @Blocking
     public Map<String, RepoStatus> statuses() throws StatusCheckException {
         try {
             if (authorization.isPresent()) {
@@ -165,7 +161,6 @@ public class SonatypeFacade {
         }
     }
 
-    @Blocking
     public RepoStatus status(Name name, String version, String repositoryId) throws StatusCheckException {
         try {
             if (authorization.isPresent()) {
@@ -195,7 +190,6 @@ public class SonatypeFacade {
         }
     }
 
-    @Blocking
     public void release(CentralSyncItem centralSyncItem) throws PromotionException {
         try {
             if (authorization.isPresent()) {
@@ -220,7 +214,6 @@ public class SonatypeFacade {
         }
     }
 
-    @Blocking
     public JsonObject getStagingProfileRepos() {
         if (authorization.isPresent()) {
             String a = "Basic " + authorization.get();
