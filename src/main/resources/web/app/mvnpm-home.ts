@@ -7,7 +7,7 @@ import '@vaadin/button';
 import '@vaadin/tabs';
 import '@vaadin/tabsheet';
 import '@vaadin/icon';
-import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
+import '@vaadin/vaadin-lumo-styles/vaadin-iconset';
 import '@vaadin/icons';
 import '@vaadin/progress-bar';
 import '@vaadin/tabs';

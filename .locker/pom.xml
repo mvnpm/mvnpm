@@ -7,7 +7,7 @@
 
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm-locker</artifactId>
-  <version>3.0.9-SNAPSHOT</version>
+  <version>3.0.13-SNAPSHOT</version>
   <packaging>pom</packaging>
   <dependencyManagement>
     <dependencies>
@@ -15,211 +15,176 @@
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>autocomplete</artifactId>
         <version>6.10.2</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>commands</artifactId>
         <version>6.3.0</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lang-javascript</artifactId>
         <version>6.2.1</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lang-json</artifactId>
         <version>6.0.1</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lang-xml</artifactId>
         <version>6.0.2</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>language</artifactId>
-        <version>6.9.2</version>
-        <scope>runtime</scope>
+        <version>6.9.3</version>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>legacy-modes</artifactId>
         <version>6.3.3</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lint</artifactId>
         <version>6.4.2</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>search</artifactId>
         <version>6.5.4</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>state</artifactId>
-        <version>6.3.1</version>
-        <scope>runtime</scope>
+        <version>6.3.3</version>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>view</artifactId>
-        <version>6.22.0</version>
-        <scope>runtime</scope>
+        <version>6.22.3</version>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>common</artifactId>
         <version>1.1.0</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>highlight</artifactId>
         <version>1.1.6</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>javascript</artifactId>
-        <version>1.4.8</version>
-        <scope>runtime</scope>
+        <version>1.4.10</version>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>json</artifactId>
         <version>1.0.1</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>lr</artifactId>
         <version>1.3.13</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>xml</artifactId>
         <version>1.0.2</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lit-labs</groupId>
         <artifactId>ssr-dom-shim</artifactId>
         <version>1.1.2</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lit</groupId>
         <artifactId>reactive-element</artifactId>
         <version>1.6.3</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
-        <version>24.2.1</version>
-        <scope>runtime</scope>
+        <version>24.2.5</version>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.open-wc</groupId>
         <artifactId>dedupe-mixin</artifactId>
         <version>1.4.0</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.polymer</groupId>
         <artifactId>polymer</artifactId>
         <version>3.5.1</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.types</groupId>
         <artifactId>trusted-types</artifactId>
-        <version>2.0.6</version>
-        <scope>runtime</scope>
+        <version>2.0.7</version>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>router</artifactId>
         <version>1.7.5</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-development-mode-detector</artifactId>
         <version>2.0.6</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-usage-statistics</artifactId>
         <version>2.1.2</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.webcomponents</groupId>
         <artifactId>shadycss</artifactId>
         <version>1.11.2</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>codemirror</artifactId>
         <version>6.0.1</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>crelt</artifactId>
         <version>1.0.6</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit-element</artifactId>
         <version>3.3.3</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit-html</artifactId>
         <version>2.8.0</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit</artifactId>
         <version>2.8.0</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>path-to-regexp</artifactId>
         <version>2.4.0</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>style-mod</artifactId>
         <version>4.1.0</version>
-        <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>w3c-keyname</artifactId>
         <version>2.2.8</version>
-        <scope>runtime</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -229,24 +194,24 @@
     <lock-integrity-org.mvnpm.at.codemirror--lang-javascript>sha512:kAq35kjFNH2WzJD37ZxmjakpzNv5Ya7n0iy3c8/NkNXI1G3VhaIS+9ViRjWPRZox/Jx7l+89ktxXaRI2O17BYQ==</lock-integrity-org.mvnpm.at.codemirror--lang-javascript>
     <lock-integrity-org.mvnpm.at.codemirror--lang-json>sha512:c3iaR0VNrxfpcovd6ZM+2+jvTrLBxnBxTWFLy5wx/a57beNMqhGV1d9ft6xlkx2KWTpfIMSyIeAHUhZEpnPZ6g==</lock-integrity-org.mvnpm.at.codemirror--lang-json>
     <lock-integrity-org.mvnpm.at.codemirror--lang-xml>sha512:3T9/gFG5bw8lbSfeIVrts7eOHBF0HlSFmSIDGWKCJZOWESh5dVruZM1XxZp42AwEDpZmPe45uLyCzwaBv52UoQ==</lock-integrity-org.mvnpm.at.codemirror--lang-xml>
-    <lock-integrity-org.mvnpm.at.codemirror--language>sha512:btwsuX2eTmyKJD9bwT/gaTFapMJAgL8OP0nb6MLGNrOLX3uMraQZrqAkQfSTeMN22vzAB3jNZxPdFZEFUWd0+g==</lock-integrity-org.mvnpm.at.codemirror--language>
+    <lock-integrity-org.mvnpm.at.codemirror--language>sha512:9MWv4viTqy1B3rlFIVCMrOnelVX9anH4s/KSbGddGEZhLNb4IYCHKtjn3BV2TnifuOTMGWWtTOqGCys9YbU2Qg==</lock-integrity-org.mvnpm.at.codemirror--language>
     <lock-integrity-org.mvnpm.at.codemirror--legacy-modes>sha512:h5DvCVaqPVZb8f1VElogaBrLdSkmfF0wkEQJjZbLGv3S2mYXyQzNWPFyAdljozedyrv8BCPCmHSpBaNoDYU06w==</lock-integrity-org.mvnpm.at.codemirror--legacy-modes>
     <lock-integrity-org.mvnpm.at.codemirror--lint>sha512:krCmSMJbuoKFWxWy5SGOKwI+lonYISyxSm3jqzUm2+W2O/xkkWiJE8FLOryAzQnnAjFIvYzP1EwGYivw9fLNIQ==</lock-integrity-org.mvnpm.at.codemirror--lint>
     <lock-integrity-org.mvnpm.at.codemirror--search>sha512:eou2bGPJTJkQLJDTMAJUmH7/0qO3Z8BcHYBo/WilV5IPQ8TlnKjNbMt86ByEnYD99MobbB7RBKKqbtm7FIEotA==</lock-integrity-org.mvnpm.at.codemirror--search>
-    <lock-integrity-org.mvnpm.at.codemirror--state>sha512:l2rGqZ3W5G7KTnmujF0+8HRzJRDzCdvSVmt2Khq80q6Nug9P+V32+eeGLqiyHhtRTDn3ZY+oclxcuaEhba72iQ==</lock-integrity-org.mvnpm.at.codemirror--state>
-    <lock-integrity-org.mvnpm.at.codemirror--view>sha512:InikwbZ4kPUiLPVjBycutZxYr/xkBlXB+CyqWciWOA8tDSvBet78S5eGUEOaGHsa+oxLKhMQtVzBfF47v4F27g==</lock-integrity-org.mvnpm.at.codemirror--view>
+    <lock-integrity-org.mvnpm.at.codemirror--state>sha512:pRbhJo8ycRgksV/gHvP+Nm22wGv0sHe2MLkc2eKAOYUv2I3mJWPnY66yGMspyDP0VBcx3ty7Ltg2fzEQ28jDRw==</lock-integrity-org.mvnpm.at.codemirror--state>
+    <lock-integrity-org.mvnpm.at.codemirror--view>sha512:xKJQf+eCOgS2mgxsLzjOKdLaybgG0x8Ux8pqJ12usNYJ8e14O5fPh43PTwihMXU9RWzdD+hywTrPtj+Ftf/fcg==</lock-integrity-org.mvnpm.at.codemirror--view>
     <lock-integrity-org.mvnpm.at.lezer--common>sha512:fHiQyWdjxTjNrBCMZXc4letqeIJ5uCZdX42uolqlYJ2q++gJZr/y4UZE15DfqsAFEv1+hdETj0j+hqJIPi+hSg==</lock-integrity-org.mvnpm.at.lezer--common>
     <lock-integrity-org.mvnpm.at.lezer--highlight>sha512:TCK8KawkW7zFPc/uUm1ViZI1vWACrN4LS2qrJmKM53VjGkCwCoTxbb3suQeQ1vxrlLKWtKh+poHbNmmy2GSBEQ==</lock-integrity-org.mvnpm.at.lezer--highlight>
-    <lock-integrity-org.mvnpm.at.lezer--javascript>sha512:ofnm5uOn03K+AiyevnNRdp8vj9/70eJIldAPH7b3r8/Occo9s3awNVyMOR0/TLt04ilFPSABVZAmP8xXuyMowg==</lock-integrity-org.mvnpm.at.lezer--javascript>
+    <lock-integrity-org.mvnpm.at.lezer--javascript>sha512:0eM2GkplqGJRtXjYHhxXUDSGYbzCqTpxiGFymr1Wl5WuPfk8ew0USI3deEFrZFwI9oQqDyN0Wv9CqMLL0rMyhw==</lock-integrity-org.mvnpm.at.lezer--javascript>
     <lock-integrity-org.mvnpm.at.lezer--json>sha512:cVqkLt8EXmb1wlauO2jkwgItcZrOHa2PAR7t8hwOWALlBd3HYuGJBjGOb6EtpSxrZuF3noNo23DXLL/Gmmc7Qw==</lock-integrity-org.mvnpm.at.lezer--json>
     <lock-integrity-org.mvnpm.at.lezer--lr>sha512:7+V56D1IfZks/Z0gKWCvMXffQMAMjB+TsBwTjc43yys+MeAPYA5sCQOX+CQz2amdShN8BAsHAbNM1KmhJuh7Og==</lock-integrity-org.mvnpm.at.lezer--lr>
     <lock-integrity-org.mvnpm.at.lezer--xml>sha512:fAE3VJTgSZFeZW6ai4hLJltsUz7KOTrlCJi67yos7Su6cMagdnu/CABWc5xOGbAUpnDW6/OaWl0vc5L5REYxEg==</lock-integrity-org.mvnpm.at.lezer--xml>
     <lock-integrity-org.mvnpm.at.lit-labs--ssr-dom-shim>sha512:QHLVmNeMc4hcO7gOQ8QrqVueWWMu+rrHFJXt1h0J2THYvdm5Fxdh+YlQAzWPGKtJcAI/9bl8dBMdmH0jdBtXUQ==</lock-integrity-org.mvnpm.at.lit-labs--ssr-dom-shim>
     <lock-integrity-org.mvnpm.at.lit--reactive-element>sha512:mMtO5CKX6Ryv9oRT7Ug7vWT6IwL9yOYrNwd7WInzrkIDjh1Ndk6Gp4RzVVzvwKdRmnla6Qfm9f7lkxV8tjpJ8A==</lock-integrity-org.mvnpm.at.lit--reactive-element>
-    <lock-integrity-org.mvnpm.at.mvnpm--vaadin-webcomponents>sha512:KH3LMxRKjTiOEAm3nPfEnBeEaWDQ1qI09OH2kt2QsgtTonF8Ep/r2qgx0NzW3tCnbH0jzxru+zLsXzYO3djmng==</lock-integrity-org.mvnpm.at.mvnpm--vaadin-webcomponents>
+    <lock-integrity-org.mvnpm.at.mvnpm--vaadin-webcomponents>sha512:Bl125lB3EO2DD3iZp44iwTBexEHWoUbymvZd7B0Sqsi0JbPx3UbbLzxVBbiqzbTg9yzehZX8sVDNvntv7E9CHQ==</lock-integrity-org.mvnpm.at.mvnpm--vaadin-webcomponents>
     <lock-integrity-org.mvnpm.at.open-wc--dedupe-mixin>sha512:SiKuq5MHkl2A3G9tomxQlfbnWFT3wDv9WwYlmDfk0VAiGLcAdnH6EFtKeRvojAKvUy0wCrLh04gPMlRRpyym9w==</lock-integrity-org.mvnpm.at.open-wc--dedupe-mixin>
     <lock-integrity-org.mvnpm.at.polymer--polymer>sha512:9S822JUYS+PqFGBsRTGOcz+/xJrVjuvQwJSxvXCGcvMYkDN5dSZcHFZoVWYw77A6bS/fd5QEWm70BZ4pO0cdJA==</lock-integrity-org.mvnpm.at.polymer--polymer>
-    <lock-integrity-org.mvnpm.at.types--trusted-types>sha512:KJUXOJEni0PqtkOyIRgeGAbJJlB34uutabCFJ87r6pPmCdq0SJ9qYn7C/1tQ4g2BdgRFeaZoZAw/3A+QZK0SbA==</lock-integrity-org.mvnpm.at.types--trusted-types>
+    <lock-integrity-org.mvnpm.at.types--trusted-types>sha512:Qzu+pvVp72uOcRnqnERRkqrSFYJm3Ckdu+j8Z9psRieZikQgcIwFWOjdRLAJhslPaQnXfh89CE7JDTwQZ/bPgA==</lock-integrity-org.mvnpm.at.types--trusted-types>
     <lock-integrity-org.mvnpm.at.vaadin--router>sha512:5BuJguvEhe6b6y6Mgn+ivFHoeUfUEqmRbP3K2PBHxp/ThpRHBGB6i9Gr0Ex1oWhDrQswg9L4cxxznSI5ykIUxA==</lock-integrity-org.mvnpm.at.vaadin--router>
     <lock-integrity-org.mvnpm.at.vaadin--vaadin-development-mode-detector>sha512:hOOsiBZL6adn6PAvya7Fu346RKiegszpN+NB03D7Nro/4ge4db570Z6rZABITP+rrlKCA27UPT0A/f4IsNRVWw==</lock-integrity-org.mvnpm.at.vaadin--vaadin-development-mode-detector>
     <lock-integrity-org.mvnpm.at.vaadin--vaadin-usage-statistics>sha512:gWTVp5E2mz9iy4sjKT6frOlkERgDJPe4T7kh2FfbGF5Na+spc0vF56pfgjOMgZxLk2JzQgzHEghK9hW6foDFDA==</lock-integrity-org.mvnpm.at.vaadin--vaadin-usage-statistics>

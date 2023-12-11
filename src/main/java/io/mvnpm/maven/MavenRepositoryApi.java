@@ -28,7 +28,7 @@ import io.mvnpm.npm.model.Package;
 public class MavenRepositoryApi {
 
     @Inject
-    MavenRespositoryService mavenRespositoryService;
+    MavenRepositoryService mavenRepositoryService;
 
     @Inject
     NpmRegistryFacade npmRegistryFacade;
@@ -260,19 +260,19 @@ public class MavenRepositoryApi {
     }
 
     private Response toResponse(Name fullName, String version, FileType type) {
-        return streamPath(mavenRespositoryService.getPath(fullName, version, type));
+        return streamPath(mavenRepositoryService.getPath(fullName, version, type));
     }
 
     private Response toSha1Response(Name fullName, String version, FileType type) {
-        return streamPath(mavenRespositoryService.getSha1(fullName, version, type));
+        return streamPath(mavenRepositoryService.getSha1(fullName, version, type));
     }
 
     private Response toMd5Response(Name fullName, String version, FileType type) {
-        return streamPath(mavenRespositoryService.getMd5(fullName, version, type));
+        return streamPath(mavenRepositoryService.getMd5(fullName, version, type));
     }
 
     private Response toAscResponse(Name fullName, String version, FileType type) {
-        return streamPath(mavenRespositoryService.getAsc(fullName, version, type));
+        return streamPath(mavenRepositoryService.getAsc(fullName, version, type));
     }
 
     private Response streamPath(java.nio.file.Path path) {

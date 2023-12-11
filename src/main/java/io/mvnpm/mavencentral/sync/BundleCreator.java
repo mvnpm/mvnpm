@@ -20,7 +20,7 @@ import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
 import io.mvnpm.file.FileUtil;
-import io.mvnpm.maven.MavenRespositoryService;
+import io.mvnpm.maven.MavenRepositoryService;
 import io.quarkus.logging.Log;
 
 /**
@@ -35,13 +35,13 @@ public class BundleCreator {
     FileStore fileStore;
 
     @Inject
-    MavenRespositoryService mavenRespositoryService;
+    MavenRepositoryService mavenRepositoryService;
 
     public Path bundle(String groupId, String artifactId, String version) {
         Log.debug("====== mvnpm: Nexus Bundler ======");
         // First get the jar, as the jar will create the pom, and
         // other files are being created once the pom and jar is downloaded
-        mavenRespositoryService.getPath(groupId, artifactId, version, FileType.jar);
+        mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
         Log.debug("\tbundle: Got initial Jar file");
         return buildBundle(groupId, artifactId, version);
     }

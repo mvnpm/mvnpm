@@ -53,7 +53,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.6.0</quarkus.platform.version>
+    <quarkus.platform.version>3.6.3</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.1.2</surefire-plugin.version>
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
@@ -61,8 +61,8 @@
     <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
     <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
     <!-- UI Libs -->
-    <quarkus-qute-server-pages.version>2.1.1.Final</quarkus-qute-server-pages.version>
-    <quarkus-web-bundler.version>1.1.6</quarkus-web-bundler.version>
+    <quarkus-qute-web.version>3.0.0</quarkus-qute-web.version>
+    <quarkus-web-bundler.version>1.2.0.alpha2</quarkus-web-bundler.version>
     <importmap.version>1.0.10</importmap.version>
   </properties>
   <dependencyManagement>
@@ -157,9 +157,9 @@
     </dependency>
     <!-- UI Qute and Web Bundler -->
     <dependency>
-      <groupId>io.quarkiverse.quteserverpages</groupId>
-      <artifactId>quarkus-qute-server-pages</artifactId>
-      <version>${quarkus-qute-server-pages.version}</version>
+      <groupId>io.quarkiverse.qute.web</groupId>
+      <artifactId>quarkus-qute-web</artifactId>
+      <version>${quarkus-qute-web.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkiverse.web-bundler</groupId>
@@ -171,14 +171,12 @@
     <dependency>
       <groupId>org.mvnpm.at.mvnpm</groupId>
       <artifactId>vaadin-webcomponents</artifactId>
-      <scope>runtime</scope>
-      <version>24.2.1</version>
+      <version>24.2.5</version>
     </dependency>
     <!-- Router -->
     <dependency>
       <groupId>org.mvnpm.at.vaadin</groupId>
       <artifactId>router</artifactId>
-      <scope>runtime</scope>
       <version>1.7.5</version>
     </dependency>
     <!-- Codemirror -->
@@ -186,30 +184,25 @@
       <groupId>org.mvnpm</groupId>
       <artifactId>codemirror</artifactId>
       <version>6.0.1</version>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>org.mvnpm.at.codemirror</groupId>
       <artifactId>lang-javascript</artifactId>
-      <scope>runtime</scope>
       <version>6.2.1</version>
     </dependency>
     <dependency>
       <groupId>org.mvnpm.at.codemirror</groupId>
       <artifactId>lang-xml</artifactId>
-      <scope>runtime</scope>
       <version>6.0.2</version>
     </dependency>
     <dependency>
       <groupId>org.mvnpm.at.codemirror</groupId>
       <artifactId>lang-json</artifactId>
-      <scope>runtime</scope>
       <version>6.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.mvnpm.at.codemirror</groupId>
       <artifactId>legacy-modes</artifactId>
-      <scope>runtime</scope>
       <version>6.3.3</version>
     </dependency>
     <!-- Testing -->

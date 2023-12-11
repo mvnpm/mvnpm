@@ -1,6 +1,6 @@
 package io.mvnpm.composite;
 
-import static io.mvnpm.file.type.JarClient.MVNPM_BUILD_TGZ;
+import static io.mvnpm.file.type.JarClient.MVNPM_MORE_ARCHIVE;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -47,7 +47,7 @@ import io.mvnpm.file.FileType;
 import io.mvnpm.file.FileUtil;
 import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
-import io.mvnpm.maven.MavenRespositoryService;
+import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.quarkus.logging.Log;
@@ -67,7 +67,7 @@ public class CompositeCreator {
     FileStore fileStore;
 
     @Inject
-    MavenRespositoryService mavenRespositoryService;
+    MavenRepositoryService mavenRepositoryService;
 
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
@@ -177,12 +177,12 @@ public class CompositeCreator {
                 Map<String, Developer> newDevelopers = new HashMap<>();
                 Map<String, License> newLicences = new HashMap<>();
 
-                try (ByteArrayOutputStream commonBuildTgzBaos = new ByteArrayOutputStream();
-                        TarArchiveOutputStream commonBuildTgzOut = new TarArchiveOutputStream(commonBuildTgzBaos)) {
-                    int countMvnpmBuildTgz = 0;
+                try (ByteArrayOutputStream commonTgzBaos = new ByteArrayOutputStream();
+                        TarArchiveOutputStream commonTgzOut = new TarArchiveOutputStream(commonTgzBaos)) {
+                    int countMvnpmMoreTgz = 0;
                     for (Dependency dependency : dependencies) {
                         Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                        Path jarPath = mavenRespositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
+                        Path jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
 
                         try (InputStream inputStream = Files.newInputStream(jarPath);
                                 JarInputStream inputJar = new JarInputStream(inputStream)) {
@@ -198,9 +198,9 @@ public class CompositeCreator {
                                 } else if (entryname.startsWith("META-INF/maven")) {
                                     updatePom(inputJar, newDependencies, newDevelopers, newLicences, entryname,
                                             List.copyOf(mapByGA(dependencies).keySet()));
-                                } else if (entryname.startsWith(MVNPM_BUILD_TGZ)) {
-                                    countMvnpmBuildTgz++;
-                                    extractTgzEntriesAndMergeToCommon(inputJar, commonBuildTgzOut);
+                                } else if (entryname.startsWith(MVNPM_MORE_ARCHIVE)) {
+                                    countMvnpmMoreTgz++;
+                                    extractTgzEntriesAndMergeToCommon(inputJar, commonTgzOut);
                                 } else if (!entryname.endsWith("LICENSE")) { // Ignore we will add one in root
                                     writeEntry(inputJar, mergedJar, entry);
                                 }
@@ -209,10 +209,10 @@ public class CompositeCreator {
                             throw new RuntimeException(e);
                         }
                     }
-                    commonBuildTgzOut.finish();
-                    commonBuildTgzOut.close();
-                    if (countMvnpmBuildTgz > 0) {
-                        writeEntry(mergedJar, MVNPM_BUILD_TGZ, commonBuildTgzBaos.toByteArray());
+                    commonTgzOut.finish();
+                    commonTgzOut.close();
+                    if (countMvnpmMoreTgz > 0) {
+                        writeEntry(mergedJar, MVNPM_MORE_ARCHIVE, commonTgzBaos.toByteArray());
                     }
                 }
 
@@ -263,7 +263,7 @@ public class CompositeCreator {
         return pom;
     }
 
-    private static void extractTgzEntriesAndMergeToCommon(JarInputStream inputJar, TarArchiveOutputStream commonBuildTgzOut)
+    private static void extractTgzEntriesAndMergeToCommon(JarInputStream inputJar, TarArchiveOutputStream commonTgz)
             throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             IOUtils.copy(inputJar, baos);
@@ -272,9 +272,9 @@ public class CompositeCreator {
                     TarArchiveInputStream tgzIn = new TarArchiveInputStream(gzipIn)) {
                 TarArchiveEntry tgzEntry;
                 while ((tgzEntry = tgzIn.getNextTarEntry()) != null) {
-                    commonBuildTgzOut.putArchiveEntry(tgzEntry);
-                    IOUtils.copy(tgzIn, commonBuildTgzOut);
-                    commonBuildTgzOut.closeArchiveEntry();
+                    commonTgz.putArchiveEntry(tgzEntry);
+                    IOUtils.copy(tgzIn, commonTgz);
+                    commonTgz.closeArchiveEntry();
                 }
             }
         }
@@ -293,7 +293,7 @@ public class CompositeCreator {
                 // Create new merged pom.xml
                 for (Dependency dependency : dependencies) {
                     Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                    Path jarPath = mavenRespositoryService.getPath(jarName, dependency.getVersion(), FileType.source);
+                    Path jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.source);
 
                     try (InputStream inputStream = Files.newInputStream(jarPath);
                             JarInputStream inputJar = new JarInputStream(inputStream)) {
