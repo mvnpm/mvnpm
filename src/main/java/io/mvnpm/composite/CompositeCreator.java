@@ -1,5 +1,8 @@
 package io.mvnpm.composite;
 
+import static io.mvnpm.file.type.JarClient.MVNPM_MORE_ARCHIVE;
+
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +28,11 @@ import java.util.stream.Stream;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
@@ -39,7 +47,7 @@ import io.mvnpm.file.FileType;
 import io.mvnpm.file.FileUtil;
 import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
-import io.mvnpm.maven.MavenRespositoryService;
+import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.quarkus.logging.Log;
@@ -48,7 +56,6 @@ import io.quarkus.logging.Log;
  * This group a set of artifacts into one
  *
  * @author Phillip Kruger(phillip.kruger@gmail.com)
- *
  */
 @ApplicationScoped
 public class CompositeCreator {
@@ -60,7 +67,7 @@ public class CompositeCreator {
     FileStore fileStore;
 
     @Inject
-    MavenRespositoryService mavenRespositoryService;
+    MavenRepositoryService mavenRepositoryService;
 
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
@@ -169,30 +176,43 @@ public class CompositeCreator {
                 Map<String, Dependency> newDependencies = new HashMap<>();
                 Map<String, Developer> newDevelopers = new HashMap<>();
                 Map<String, License> newLicences = new HashMap<>();
-                for (Dependency dependency : dependencies) {
-                    Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                    Path jarPath = mavenRespositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
 
-                    try (InputStream inputStream = Files.newInputStream(jarPath);
-                            JarInputStream inputJar = new JarInputStream(inputStream)) {
-                        // Add all entries from the input JAR to the merged JAR
-                        JarEntry entry;
-                        while ((entry = inputJar.getNextJarEntry()) != null) {
+                try (ByteArrayOutputStream commonTgzBaos = new ByteArrayOutputStream();
+                        TarArchiveOutputStream commonTgzOut = new TarArchiveOutputStream(commonTgzBaos)) {
+                    int countMvnpmMoreTgz = 0;
+                    for (Dependency dependency : dependencies) {
+                        Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
+                        Path jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
 
-                            String entryname = entry.getName();
+                        try (InputStream inputStream = Files.newInputStream(jarPath);
+                                JarInputStream inputJar = new JarInputStream(inputStream)) {
+                            // Add all entries from the input JAR to the merged JAR
+                            JarEntry entry;
+                            while ((entry = inputJar.getNextJarEntry()) != null) {
 
-                            if (entryname.equals("META-INF/importmap.json")) {
-                                // Remember importmap
-                                importmaps.putAll(getImportMap(inputJar));
-                            } else if (entryname.startsWith("META-INF/maven")) {
-                                updatePom(inputJar, newDependencies, newDevelopers, newLicences, entryname,
-                                        List.copyOf(mapByGA(dependencies).keySet()));
-                            } else if (!entryname.endsWith("LICENSE")) { // Ignore we will add one in root
-                                writeEntry(inputJar, mergedJar, entry);
+                                String entryname = entry.getName();
+
+                                if (entryname.equals("META-INF/importmap.json")) {
+                                    // Remember importmap
+                                    importmaps.putAll(getImportMap(inputJar));
+                                } else if (entryname.startsWith("META-INF/maven")) {
+                                    updatePom(inputJar, newDependencies, newDevelopers, newLicences, entryname,
+                                            List.copyOf(mapByGA(dependencies).keySet()));
+                                } else if (entryname.startsWith(MVNPM_MORE_ARCHIVE)) {
+                                    countMvnpmMoreTgz++;
+                                    extractTgzEntriesAndMergeToCommon(inputJar, commonTgzOut);
+                                } else if (!entryname.endsWith("LICENSE")) { // Ignore we will add one in root
+                                    writeEntry(inputJar, mergedJar, entry);
+                                }
                             }
+                        } catch (IOException | XmlPullParserException e) {
+                            throw new RuntimeException(e);
                         }
-                    } catch (IOException | XmlPullParserException e) {
-                        throw new RuntimeException(e);
+                    }
+                    commonTgzOut.finish();
+                    commonTgzOut.close();
+                    if (countMvnpmMoreTgz > 0) {
+                        writeEntry(mergedJar, MVNPM_MORE_ARCHIVE, commonTgzBaos.toByteArray());
                     }
                 }
 
@@ -243,6 +263,23 @@ public class CompositeCreator {
         return pom;
     }
 
+    private static void extractTgzEntriesAndMergeToCommon(JarInputStream inputJar, TarArchiveOutputStream commonTgz)
+            throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            IOUtils.copy(inputJar, baos);
+            try (ByteArrayInputStream bais = new ByteArrayInputStream(baos.toByteArray());
+                    GzipCompressorInputStream gzipIn = new GzipCompressorInputStream(bais);
+                    TarArchiveInputStream tgzIn = new TarArchiveInputStream(gzipIn)) {
+                TarArchiveEntry tgzEntry;
+                while ((tgzEntry = tgzIn.getNextTarEntry()) != null) {
+                    commonTgz.putArchiveEntry(tgzEntry);
+                    IOUtils.copy(tgzIn, commonTgz);
+                    commonTgz.closeArchiveEntry();
+                }
+            }
+        }
+    }
+
     private void mergeSource(Model pom, List<Dependency> dependencies) throws IOException, XmlPullParserException {
         Path outputJar = fileStore.getLocalFullPath(FileType.source, pom.getGroupId(), pom.getArtifactId(),
                 pom.getVersion());
@@ -256,7 +293,7 @@ public class CompositeCreator {
                 // Create new merged pom.xml
                 for (Dependency dependency : dependencies) {
                     Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                    Path jarPath = mavenRespositoryService.getPath(jarName, dependency.getVersion(), FileType.source);
+                    Path jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.source);
 
                     try (InputStream inputStream = Files.newInputStream(jarPath);
                             JarInputStream inputJar = new JarInputStream(inputStream)) {
@@ -347,11 +384,15 @@ public class CompositeCreator {
         return m;
     }
 
-    private void writeEntry(JarOutputStream mergedJar, String name, String content) throws IOException {
+    private void writeEntry(JarOutputStream jar, String name, String content) throws IOException {
+        writeEntry(jar, name, content.getBytes());
+    }
+
+    private void writeEntry(JarOutputStream jar, String name, byte[] bytes) throws IOException {
         JarEntry entry = new JarEntry(name);
-        mergedJar.putNextEntry(entry);
-        mergedJar.write(content.getBytes());
-        mergedJar.closeEntry();
+        jar.putNextEntry(entry);
+        jar.write(bytes);
+        jar.closeEntry();
     }
 
     private void writeEntry(JarOutputStream mergedJar, String name, Path path) throws IOException {

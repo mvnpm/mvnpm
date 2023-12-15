@@ -20,7 +20,7 @@ import io.mvnpm.npm.model.Project;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class MavenRespositoryService {
+public class MavenRepositoryService {
 
     @Inject
     NpmRegistryFacade npmRegistryFacade;
