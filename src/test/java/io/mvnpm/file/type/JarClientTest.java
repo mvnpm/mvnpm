@@ -22,4 +22,5 @@ class JarClientTest {
         assertTrue(JarClient.matches(JarClient.FILES_TO_TGZ, "/foo/bar.d.ts"));
         assertTrue(JarClient.matches(JarClient.FILES_TO_TGZ, "bar.d.ts"));
     }
+
 }
