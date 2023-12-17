@@ -61,8 +61,7 @@
     <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
     <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
     <!-- UI Libs -->
-    <quarkus-qute-web.version>3.0.0</quarkus-qute-web.version>
-    <quarkus-web-bundler.version>1.2.0.alpha2</quarkus-web-bundler.version>
+    <quarkus-web-bundler.version>1.2.0.CR1</quarkus-web-bundler.version>
     <importmap.version>1.0.10</importmap.version>
   </properties>
   <dependencyManagement>
@@ -155,12 +154,7 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-arc</artifactId>
     </dependency>
-    <!-- UI Qute and Web Bundler -->
-    <dependency>
-      <groupId>io.quarkiverse.qute.web</groupId>
-      <artifactId>quarkus-qute-web</artifactId>
-      <version>${quarkus-qute-web.version}</version>
-    </dependency>
+    <!-- Web Bundler -->
     <dependency>
       <groupId>io.quarkiverse.web-bundler</groupId>
       <artifactId>quarkus-web-bundler</artifactId>
