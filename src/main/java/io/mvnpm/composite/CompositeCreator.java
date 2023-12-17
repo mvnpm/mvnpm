@@ -179,6 +179,7 @@ public class CompositeCreator {
 
                 try (ByteArrayOutputStream commonTgzBaos = new ByteArrayOutputStream();
                         TarArchiveOutputStream commonTgzOut = new TarArchiveOutputStream(commonTgzBaos)) {
+                    commonTgzOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
                     int countMvnpmMoreTgz = 0;
                     for (Dependency dependency : dependencies) {
                         Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());

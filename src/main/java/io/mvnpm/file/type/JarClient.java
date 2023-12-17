@@ -155,8 +155,9 @@ public class JarClient {
     private byte[] tarGz(Map<String, byte[]> toCompress) throws IOException {
         // Step 1, 2 and 3: Create tar archive from map
         ByteArrayOutputStream tarOutput = new ByteArrayOutputStream();
-        try (TarArchiveOutputStream tarArchiveOutputStream = (TarArchiveOutputStream) new ArchiveStreamFactory()
+        try (TarArchiveOutputStream tarArchiveOutputStream = new ArchiveStreamFactory()
                 .createArchiveOutputStream(ArchiveStreamFactory.TAR, tarOutput)) {
+            tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
             for (Map.Entry<String, byte[]> entry : toCompress.entrySet()) {
                 TarArchiveEntry tarEntry = new TarArchiveEntry(entry.getKey());
                 tarEntry.setSize(entry.getValue().length);

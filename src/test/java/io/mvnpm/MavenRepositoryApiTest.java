@@ -32,4 +32,12 @@ public class MavenRepositoryApiTest {
                 .statusCode(200);
     }
 
+    @Test
+    public void testFileTooLong() {
+        RestAssured.given().header("User-Agent", "m2e/unit-test")
+                .when().get("/maven2/org/mvnpm/at/ui5/webcomponents-fiori/1.20.1/webcomponents-fiori-1.20.1.jar")
+                .then().log().all().and()
+                .statusCode(200);
+    }
+
 }
