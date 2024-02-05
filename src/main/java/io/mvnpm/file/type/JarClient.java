@@ -135,6 +135,17 @@ public class JarClient {
         String name = entry.getName();
         final boolean shouldAdd = !matches(FILES_TO_EXCLUDE, name);
         final boolean shouldTgz = matches(FILES_TO_TGZ, name);
+
+        // do not add entries that will result in invalid zip file systems that will not be able to be opened
+        // by quarkus because it uses the ZipFileSystem implementation.
+        final String jarEntryPath = MVN_ROOT + importMapRoot + name;
+        final String tarEntryPath = importMapRoot + name;
+        // paths that include "/./" or "/../" as path element are invalid
+        if (jarEntryPath.startsWith("./") || jarEntryPath.contains("/./")
+                || (shouldTgz && (tarEntryPath.startsWith(".") || tarEntryPath.contains("/./")))) {
+            return;
+        }
+
         if (shouldAdd || shouldTgz) {
             name = name.replaceFirst(NPM_ROOT, Constants.EMPTY);
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -143,7 +154,7 @@ public class JarClient {
                 bos.flush();
                 baos.flush();
                 if (shouldAdd) {
-                    writeJarEntry(jarOutput, MVN_ROOT + importMapRoot + name, baos.toByteArray());
+                    writeJarEntry(jarOutput, jarEntryPath, baos.toByteArray());
                 } else {
                     // We don't add the META-INF because the tgz is already in META-INF
                     toTgz.put("resources" + importMapRoot + name, baos.toByteArray());
