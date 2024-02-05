@@ -24,6 +24,7 @@ import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -178,7 +179,8 @@ public class CompositeCreator {
                 Map<String, License> newLicences = new HashMap<>();
 
                 try (ByteArrayOutputStream commonTgzBaos = new ByteArrayOutputStream();
-                        TarArchiveOutputStream commonTgzOut = new TarArchiveOutputStream(commonTgzBaos)) {
+                        GZIPOutputStream commonTgzGzos = new GZIPOutputStream(commonTgzBaos);
+                        TarArchiveOutputStream commonTgzOut = new TarArchiveOutputStream(commonTgzGzos)) {
                     commonTgzOut.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
                     int countMvnpmMoreTgz = 0;
                     for (Dependency dependency : dependencies) {
@@ -212,6 +214,8 @@ public class CompositeCreator {
                     }
                     commonTgzOut.finish();
                     commonTgzOut.close();
+                    commonTgzGzos.finish();
+                    commonTgzGzos.close();
                     if (countMvnpmMoreTgz > 0) {
                         writeEntry(mergedJar, MVNPM_MORE_ARCHIVE, commonTgzBaos.toByteArray());
                     }
