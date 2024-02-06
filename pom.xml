@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm</artifactId>
-  <version>3.0.15-SNAPSHOT</version>
+  <version>3.0.17-SNAPSHOT</version>
   <name>mvnpm</name>
   <description>Maven on NPM</description>
   <url>https://mvnpm.org/</url>
@@ -53,12 +53,12 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.6.3</quarkus.platform.version>
+    <quarkus.platform.version>3.7.1</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.1.2</surefire-plugin.version>
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
     <impsort.plugin.version>1.9.0</impsort.plugin.version>
-    <quarkus.ide-config.version>3.0.0.Final</quarkus.ide-config.version>
+    <quarkus.ide-config.version>3.7.1</quarkus.ide-config.version>
     <maven-antrun-plugin.version>3.1.0</maven-antrun-plugin.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>1.2.0.CR1</quarkus-web-bundler.version>

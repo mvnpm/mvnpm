@@ -62,8 +62,8 @@ public class MetadataClient {
             try (OutputStream os = Files.newOutputStream(localFilePath)) {
                 Metadata metadata = getMetadata(name);
                 metadataXpp3Writer.write(os, metadata);
-                FileUtil.createSha1(localFilePath);
-                FileUtil.createMd5(localFilePath);
+                FileUtil.createSha1(localFilePath, true);
+                FileUtil.createMd5(localFilePath, true);
             } catch (IOException ex) {
                 throw new UncheckedIOException(ex);
             }
@@ -80,7 +80,7 @@ public class MetadataClient {
         if (!Files.exists(localSha1Path) || !Files.isRegularFile(localSha1Path)) {
             createDir(localSha1Path);
             Path localFilePath = fileStore.getLocalMetadataXmlFullPath(name);
-            FileUtil.createSha1(localFilePath);
+            FileUtil.createSha1(localFilePath, true);
         }
         return FileUtil.toStreamingOutput(localSha1Path);
     }
@@ -92,7 +92,7 @@ public class MetadataClient {
         // Create if if does not exist.
         if (!Files.exists(localMd5Path) || !Files.isRegularFile(localMd5Path)) {
             Path localFilePath = fileStore.getLocalMetadataXmlFullPath(name);
-            FileUtil.createMd5(localFilePath);
+            FileUtil.createMd5(localFilePath, true);
         }
         return FileUtil.toStreamingOutput(localMd5Path);
     }
@@ -106,7 +106,7 @@ public class MetadataClient {
 
     }
 
-    public Versioning getVersioning(Name name) {
+    private Versioning getVersioning(Name name) {
         if (name.isInternal()) {
             return getInternalVersioning(name);
         } else {

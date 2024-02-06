@@ -82,7 +82,7 @@ public class EventLogApi {
     @GET
     @Path("/top")
     public List<EventLogEntry> getTop(@QueryParam("limit") @DefaultValue("999") int limit) {
-        return EventLogEntry.findAll(Sort.by("time")).range(0, limit).list();
+        return EventLogEntry.findAll(Sort.by("time", Sort.Direction.Descending)).range(0, limit).list();
     }
 
     @GET
