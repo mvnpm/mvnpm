@@ -88,12 +88,16 @@ public class FileUtil {
     }
 
     public static Path createSha1(Path forFile) {
+        return FileUtil.createSha1(forFile, false);
+    }
+
+    public static Path createSha1(Path forFile, boolean force) {
         String localSha1FileName = forFile.toString() + Constants.DOT_SHA1;
         Path localSha1File = Paths.get(localSha1FileName);
         try (InputStream inputStream = Files.newInputStream(forFile)) {
             String sha1 = FileUtil.getSha1(inputStream);
 
-            if (!Files.exists(localSha1File)) {
+            if (!Files.exists(localSha1File) || force) {
                 synchronized (localSha1File) {
                     Files.writeString(localSha1File, sha1);
                 }
@@ -118,12 +122,16 @@ public class FileUtil {
     }
 
     public static Path createMd5(Path forFile) {
+        return FileUtil.createMd5(forFile, false);
+    }
+
+    public static Path createMd5(Path forFile, boolean force) {
         String localMd5FileName = forFile.toString() + Constants.DOT_MD5;
         Path localMd5File = Paths.get(localMd5FileName);
         try (InputStream inputStream = Files.newInputStream(forFile)) {
             String md5 = FileUtil.getMd5(inputStream);
 
-            if (!Files.exists(localMd5File)) {
+            if (!Files.exists(localMd5File) || force) {
                 synchronized (localMd5File) {
                     Files.writeString(localMd5File, md5);
                 }
@@ -144,10 +152,14 @@ public class FileUtil {
     }
 
     public static boolean createAsc(Path localFilePath) {
+        return FileUtil.createAsc(localFilePath, false);
+    }
+
+    public static boolean createAsc(Path localFilePath, boolean force) {
         String outputFile = localFilePath.toString() + Constants.DOT_ASC;
         Path f = Paths.get(outputFile);
         synchronized (f) {
-            if (!Files.exists(f)) {
+            if (!Files.exists(f) || force) {
                 try {
                     Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFilePath.toString());
                     // Set a timeout of 10 seconds
