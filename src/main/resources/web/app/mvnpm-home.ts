@@ -242,6 +242,12 @@ export class MvnpmHome extends LitElement {
         this._codeViewSelection = ".pom";
         this._centralSyncItem = null;
         this._gavEventLog = null;
+        
+        var currentPath = window.location.pathname;
+        if(currentPath.startsWith("/package/")){
+            this._coordinates.name = currentPath.substring(9);
+            this._showGA(this._coordinates.name);
+        }
     }
 
     render() {
@@ -399,6 +405,7 @@ export class MvnpmHome extends LitElement {
         const gav = dependency.split(":");
         this._clearCoordinates()
         this._coordinates.name = gav[0]+":"+gav[1];
+        window.history.pushState({/* State */},"", "/package/" + this._coordinates.name);
         this._showGA(this._coordinates.name);
     }
 
@@ -509,8 +516,8 @@ export class MvnpmHome extends LitElement {
     
     _findVersionsAndShowLatest(e){    
         const name = this._coordinates.name.trim();
-        
         if ((e.which == 13 || e.which == 0)){
+            window.history.pushState({/* State */},"", "/package/" + name);
             this._showGA(name);    
         }
     }
