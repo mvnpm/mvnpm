@@ -14,6 +14,7 @@ if (indicator.length > 0) {
 const router = new Router(document.getElementById('outlet'));
 router.setRoutes([
     {path: '/', component: 'mvnpm-home', name: 'Home'},
+    {path: '/package/:package', component: 'mvnpm-home', name: 'Home'},
     {path: '/releases', component: 'mvnpm-releases', name: 'Releases'},
     {path: '/live', component: 'mvnpm-live', name: 'Live'},
     {path: '/about', component: 'mvnpm-about', name: 'About'},
@@ -40,7 +41,6 @@ export class MvnpmNav extends LitElement {
           } else {
             MvnpmNav.syncServerUri = "ws:";
           }
-          var currentPath = window.location.pathname;
           MvnpmNav.syncServerUri += "//" + window.location.host + "/api/queue/";
           MvnpmNav.connectSync();
       }
@@ -50,7 +50,6 @@ export class MvnpmNav extends LitElement {
           } else {
             MvnpmNav.logServerUri = "ws:";
           }
-          var currentPath = window.location.pathname;
           MvnpmNav.logServerUri += "//" + window.location.host + "/api/stream/eventlog";
           MvnpmNav.connectLog();
       }
@@ -59,13 +58,16 @@ export class MvnpmNav extends LitElement {
     render() {
         const routes = router.getRoutes();
         return html`<vaadin-tabs> 
-                        ${routes.map((r) =>
-                            html`<vaadin-tab>
-                                  <a href="${r.path}">
-                                    <span>${r.name}</span>
-                                  </a>
-                                </vaadin-tab>`
-                        )}
+                        ${routes.map((r) => {
+                            let ignore = r.path.includes(":");
+                            if(!ignore){
+                                return html`<vaadin-tab>
+                                        <a href="${r.path}">
+                                            <span>${r.name}</span>
+                                        </a>
+                                    </vaadin-tab>`;
+                            }
+                        })}
                         <vaadin-tab>
                           <a href="https://github.com/mvnpm/mvnpm" target="_blank" vaadin-router-ignore><span>Source</span></a>
                         </vaadin-tab>

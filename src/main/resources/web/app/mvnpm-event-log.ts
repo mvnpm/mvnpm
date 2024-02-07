@@ -104,9 +104,9 @@ export class MvnpmEventLog extends LitElement {
 
     private _addMultipleToLog(queue: any[] | null, items: any[]) {
         if (queue && queue.length > 0) {
-            return [...items.reverse(), ...queue];
+            return [...items, ...queue];
         } else {
-            return items.reverse();
+            return items;
         }
     }
 
