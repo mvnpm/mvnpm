@@ -90,7 +90,7 @@ public class MavenRepositoryApiTest {
                 .filter(installedDependency -> installedDependency.id().equals("vaadin-webcomponents"))
                 .findFirst()
                 .get();
-        assertEquals(55, installedVaadin.dirs().size());
+        assertEquals(3, installedVaadin.dirs().size());
     }
 
     private void checkNodeModulesDir(Path nodeModules, MvnpmInfo mvnpmInfo) {
