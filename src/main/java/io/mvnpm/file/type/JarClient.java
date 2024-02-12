@@ -246,7 +246,7 @@ public class JarClient {
     private final int bufferSize = 4096;
 
     // Files to add in a tgz compressed file in the jar
-    static final List<String> FILES_TO_TGZ = List.of(".d.ts");
+    static final List<String> FILES_TO_TGZ = List.of(".d.ts", ".d.ts.map");
 
     // Excluded files which won't be added to the jar (unless gzipped)
     static final List<String> FILES_TO_EXCLUDE = List.of(".md", ".ts", ".ts.map", "/logo.svg");
