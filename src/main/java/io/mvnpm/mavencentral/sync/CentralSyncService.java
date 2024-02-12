@@ -33,6 +33,7 @@ public class CentralSyncService {
             return false;
         }
         if (csi.isInProgress() || csi.isInError()) {
+            isInMavenCentralRemoteCheck(csi); // Clear the queue
             return false;
         }
         // Next try remote (might have been synced before we stored

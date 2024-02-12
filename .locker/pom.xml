@@ -5,7 +5,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
-  <version>3.0.18-SNAPSHOT</version>
+  <version>3.0.19-SNAPSHOT</version>
   <artifactId>mvnpm-locker</artifactId>
   <packaging>pom</packaging>
 
@@ -15,211 +15,176 @@
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>autocomplete</artifactId>
         <version>6.12.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>commands</artifactId>
         <version>6.3.3</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lang-javascript</artifactId>
         <version>6.2.1</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lang-json</artifactId>
         <version>6.0.1</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lang-xml</artifactId>
         <version>6.0.2</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>language</artifactId>
         <version>6.10.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>legacy-modes</artifactId>
         <version>6.3.3</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lint</artifactId>
         <version>6.5.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>search</artifactId>
         <version>6.5.5</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>state</artifactId>
         <version>6.4.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>view</artifactId>
         <version>6.23.1</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>common</artifactId>
         <version>1.2.1</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>highlight</artifactId>
         <version>1.2.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>javascript</artifactId>
         <version>1.4.13</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>json</artifactId>
         <version>1.0.2</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>lr</artifactId>
         <version>1.4.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>xml</artifactId>
         <version>1.0.4</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lit-labs</groupId>
         <artifactId>ssr-dom-shim</artifactId>
         <version>1.2.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.lit</groupId>
         <artifactId>reactive-element</artifactId>
         <version>2.0.4</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
         <version>24.3.5</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.open-wc</groupId>
         <artifactId>dedupe-mixin</artifactId>
         <version>1.4.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.polymer</groupId>
         <artifactId>polymer</artifactId>
         <version>3.5.1</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.types</groupId>
         <artifactId>trusted-types</artifactId>
         <version>2.0.7</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>router</artifactId>
         <version>1.7.5</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-development-mode-detector</artifactId>
         <version>2.0.6</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-usage-statistics</artifactId>
         <version>2.1.2</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.webcomponents</groupId>
         <artifactId>shadycss</artifactId>
         <version>1.11.2</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>codemirror</artifactId>
         <version>6.0.1</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>crelt</artifactId>
         <version>1.0.6</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit-element</artifactId>
         <version>4.0.4</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit-html</artifactId>
         <version>3.1.2</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit</artifactId>
         <version>3.1.2</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>path-to-regexp</artifactId>
         <version>2.4.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>style-mod</artifactId>
         <version>4.1.0</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>w3c-keyname</artifactId>
         <version>2.2.8</version>
-        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
