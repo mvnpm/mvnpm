@@ -49,8 +49,10 @@ import io.mvnpm.file.FileUtil;
 import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
+import io.mvnpm.npm.model.Project;
 import io.quarkus.logging.Log;
 
 /**
@@ -69,6 +71,9 @@ public class CompositeCreator {
 
     @Inject
     MavenRepositoryService mavenRepositoryService;
+
+    @Inject
+    NpmRegistryFacade npmRegistryFacade;
 
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
@@ -96,16 +101,32 @@ public class CompositeCreator {
     private void build(Path pom, String version) {
         try (InputStream inputStream = Files.newInputStream(pom)) {
             Model model = mavenXpp3Writer.read(inputStream);
+
+            if (version == null) {
+                version = getLatestVersionOfFirstDependency(model); // Used in auto update
+            }
+
             if (version != null) {
                 model.setVersion(version);
+                List<Dependency> dependencies = resolveDependencies(model);
+                merge(model, dependencies);
             }
-            List<Dependency> dependencies = resolveDependencies(model);
-            merge(model, dependencies);
         } catch (XmlPullParserException ex) {
             throw new RuntimeException("Invalid pom xml for " + pom);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
+    }
+
+    private String getLatestVersionOfFirstDependency(Model model) {
+        List<Dependency> dependencies = model.getDependencies();
+        if (dependencies != null && !dependencies.isEmpty()) {
+            Dependency first = dependencies.get(0);
+            Name name = NameParser.fromMavenGA(first.getGroupId(), first.getArtifactId());
+            Project p = npmRegistryFacade.getProject(name.npmFullName);
+            return p.distTags().latest();
+        }
+        return null;
     }
 
     private Set<Path> getAllCompositePoms() {

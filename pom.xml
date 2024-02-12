@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm</artifactId>
-  <version>3.0.19-SNAPSHOT</version>
+  <version>3.0.20-SNAPSHOT</version>
   <name>mvnpm</name>
   <description>Maven on NPM</description>
   <url>https://mvnpm.org/</url>
@@ -165,7 +165,7 @@
     <dependency>
       <groupId>org.mvnpm.at.mvnpm</groupId>
       <artifactId>vaadin-webcomponents</artifactId>
-      <version>24.3.5</version>
+      <version>24.3.6</version>
       <!--<scope>provided</scope>-->
     </dependency>
     <!-- Router -->

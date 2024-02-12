@@ -12,6 +12,7 @@ import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.WebApplicationException;
 
+import io.mvnpm.composite.CompositeCreator;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.log.EventLogApi;
 import io.mvnpm.mavencentral.PromotionException;
@@ -53,6 +54,8 @@ public class ContinuousSyncService {
     CentralSyncItemService centralSyncItemService;
     @Inject
     EventLogApi eventLogApi;
+    @Inject
+    CompositeCreator compositeCreator;
 
     /**
      * Check for version updates, and if a new version is out, do a sync
@@ -73,7 +76,8 @@ public class ContinuousSyncService {
                 Log.error("Could not do update for [" + groupId + ":" + artifactId + "] - " + wae.getMessage());
             }
         } else {
-            // TODO: Handle internal compositions !
+            // Handle internal compositions
+            compositeCreator.buildComposite(artifactId, groupId);
         }
     }
 
@@ -127,6 +131,16 @@ public class ContinuousSyncService {
         // We only process one at a time, so first check that there is not another process in progress
         long uploadingCount = CentralSyncItem.count("stage", Stage.UPLOADING);
         return uploadingCount != 0;
+    }
+
+    @Scheduled(every = "150s", concurrentExecution = SKIP)
+    @Blocking
+    void cleanSonatypeStatuses() {
+        // Check if this is in central, and update the status
+        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findNotReleased();
+        for (CentralSyncItem centralSyncItem : uploadedToSonatype) {
+            centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem);
+        }
     }
 
     @Scheduled(every = "60s", concurrentExecution = SKIP)
