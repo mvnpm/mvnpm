@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import io.mvnpm.esbuild.install.MvnpmInfo;
 import io.mvnpm.esbuild.install.WebDepsInstaller;
 import io.mvnpm.esbuild.model.WebDependency;
+import io.quarkus.test.junit.DisabledOnIntegrationTest;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
@@ -68,6 +69,7 @@ public class MavenRepositoryApiTest {
     }
 
     @Test
+    @DisabledOnIntegrationTest
     public void testComposite() throws IOException {
         RestAssuredConfig config = RestAssured.config()
                 .httpClient(HttpClientConfig.httpClientConfig()
