@@ -159,37 +159,24 @@ export class MvnpmProgress extends LitElement {
     }
 
     private _renderMavenCentral() {
-        return html`<div class="maven-central">
-      ${this._renderUploaded()}
-      ${this._renderClosed()}
-      ${this._renderReleasing()}
-      ${this._renderReleased()}
-      </div>
-    `;
-    }
-
-    private _renderUploaded() {
+        
+        let merged = [];
         if (this._uploadedQueue && this._uploadedQueue.length > 0) {
-            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._uploadedQueue}"></vaadin-message-list>`;
+            merged = merged.concat(this._uploadedQueue);
         }
-    }
-
-    private _renderClosed() {
         if (this._closedQueue && this._closedQueue.length > 0) {
-            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._closedQueue}"></vaadin-message-list>`;
+            merged = merged.concat(this._closedQueue);
         }
-    }
-
-    private _renderReleasing() {
         if (this._releasingQueue && this._releasingQueue.length > 0) {
-            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._releasingQueue}"></vaadin-message-list>`;
+            merged = merged.concat(this._releasingQueue);
         }
-    }
-
-    private _renderReleased() {
         if (this._releasedQueue && this._releasedQueue.length > 0) {
-            return html`<vaadin-message-list class="maven-central-message-box" .items="${this._releasedQueue}"></vaadin-message-list>`;
+            merged = merged.concat(this._releasedQueue);
         }
+        
+        return html`<div class="maven-central">
+                        <vaadin-message-list class="maven-central-message-box" .items="${merged}"></vaadin-message-list>
+                    </div>`;
     }
 
     private _addToQueue(queue: any[] | null, item: any, stagemessage: string, step: number) {
