@@ -517,7 +517,6 @@ export class MvnpmHome extends LitElement {
     _findVersionsAndShowLatest(e){    
         const name = this._coordinates.name.trim();
         if ((e.which == 13 || e.which == 0)){
-            window.history.pushState({/* State */},"", "/package/" + name);
             this._showGA(name);    
         }
     }
@@ -568,6 +567,8 @@ export class MvnpmHome extends LitElement {
     _inspectMetadata(metadata){
         this._coordinates.groupId = metadata.getElementsByTagName("groupId")[0].childNodes[0].nodeValue.substring(9);
         this._coordinates.artifactId = metadata.getElementsByTagName("artifactId")[0].childNodes[0].nodeValue;
+        
+        window.history.pushState({/* State */},"", "/package/" + this._coordinates.groupId + ":" + this._coordinates.artifactId);
         
         var latestTags = metadata.getElementsByTagName("latest");
         var versionTags = metadata.getElementsByTagName("version");
