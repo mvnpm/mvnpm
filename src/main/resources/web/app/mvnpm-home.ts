@@ -12,6 +12,7 @@ import '@vaadin/icons';
 import '@vaadin/progress-bar';
 import '@vaadin/tabs';
 import '@vaadin/tabsheet';
+import '@quarkus-webcomponents/codeblock';
 import { Notification } from '@vaadin/notification';
 
 interface Coordinates {
@@ -109,7 +110,7 @@ export class MvnpmHome extends LitElement {
             border-left: 1px solid var(--lumo-contrast-10pct);
             width: 50%;
         }
-        codemirror-viewer {
+        qui-code-block {
             width: 100%;
         }
         .fileBrowser {
@@ -234,7 +235,9 @@ export class MvnpmHome extends LitElement {
     @state() 
     private _gavEventLog?: object;
     
-
+    @state() 
+    private _theme?: string;
+    
     constructor() {
         super();
         this._clearCoordinates();
@@ -242,6 +245,7 @@ export class MvnpmHome extends LitElement {
         this._codeViewSelection = ".pom";
         this._centralSyncItem = null;
         this._gavEventLog = null;
+        this._theme = "dark";
         
         var currentPath = window.location.pathname;
         if(currentPath.startsWith("/package/")){
@@ -369,13 +373,13 @@ export class MvnpmHome extends LitElement {
                                 <div class="dependencies">
                                     <div class="useBlock">
                                         <span class="heading">Pom dependency</span>
-                                        <pre lang="xml" class="basiccode" id="pom-dependency-code">${this._usePom}</pre>
+                                        <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
                                         <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
                                     </div>
                                     
                                     <div class="useBlock">
                                         <span class="heading">Import map</span>
-                                        <pre lang="json" class="basiccode" id="import-map-code">${this._useJson}</pre>
+                                        <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
                                     </div>
 
                                     <div class="useBlock">
@@ -484,7 +488,7 @@ export class MvnpmHome extends LitElement {
     
     _renderCodeView(){
         if(this._codeViewMode){
-            return html`<codemirror-viewer src='${this._codeViewSrc}'></codemirror-viewer>`;
+            return html`<qui-code-block mode="${this._codeViewMode}" src='${this._codeViewSrc}'></qui-code-block>`;
         }else{
             return html`<div class="codeView">
                             <div class="nopreview"> 
@@ -495,7 +499,9 @@ export class MvnpmHome extends LitElement {
     }
     
     _showFile(e){
+        console.log("src = " + e.target.dataset.file);
         this._changeCodeView(e.target.dataset.file);
+        this._theme = "dark";
     }
     
     _changeCodeView(src){
@@ -505,13 +511,16 @@ export class MvnpmHome extends LitElement {
         }else if(this._codeViewSrc.endsWith('.pom')){
             this._codeViewMode = "xml";
         }else if(this._codeViewSrc.endsWith('.asc')){
-            this._codeViewMode = "asciiarmor";
+            this._codeViewMode = "asc";
         }else{
-            this._codeViewMode = "powershell";
+            this._codeViewMode = "default";
         }
         
         var n = this._baseUrl.length + this._baseFile.length;
+        console.log("n=" + n);
         this._codeViewSelection = this._codeViewSrc.substring(n);
+        
+        console.log("codeViewSelection=" + this._codeViewSelection);
     }
     
     _findVersionsAndShowLatest(e){    
@@ -568,7 +577,12 @@ export class MvnpmHome extends LitElement {
         this._coordinates.groupId = metadata.getElementsByTagName("groupId")[0].childNodes[0].nodeValue.substring(9);
         this._coordinates.artifactId = metadata.getElementsByTagName("artifactId")[0].childNodes[0].nodeValue;
         
-        window.history.pushState({/* State */},"", "/package/" + this._coordinates.groupId + ":" + this._coordinates.artifactId);
+        if(this._coordinates.groupId){
+            window.history.pushState({/* State */},"", "/package/org.mvnpm" + this._coordinates.groupId + ":" + this._coordinates.artifactId);
+        }else {
+            window.history.pushState({/* State */},"", "/package/" + this._coordinates.artifactId);
+        }
+        
         
         var latestTags = metadata.getElementsByTagName("latest");
         var versionTags = metadata.getElementsByTagName("version");
