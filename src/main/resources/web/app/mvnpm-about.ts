@@ -1,5 +1,6 @@
 import { LitElement, html, css} from 'lit';
 import { customElement } from 'lit/decorators.js';
+import '@quarkus-webcomponents/codeblock';
 
 /**
  * This component shows the About screen
@@ -82,8 +83,8 @@ export class MvnpmAbout extends LitElement {
             <p>
                 <b>mvnpm</b> (Maven NPM) is a maven repository facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a><br/>
                 To use this in your maven project add the following to your settings.xml (typically <span class="url">/home/your-username/.m2/settings.xml</span>)<br/>
-                <pre lang="xml" class="use">${this._use}</pre>
-
+                <qui-code-block mode="xml" content="${this._use}"></qui-code-block>
+                
                 <h3>How does it work ?</h3>
                 <img src="/static/mvnpm.png"/>
 

@@ -29,7 +29,7 @@ public interface SonatypeClient {
     @POST
     @Path("/service/local/staging/bundle_upload")
     @Consumes(MediaType.APPLICATION_OCTET_STREAM)
-    @Timeout(unit = ChronoUnit.SECONDS, value = 240)
+    @Timeout(unit = ChronoUnit.SECONDS, value = 300)
     public Response uploadBundle(@HeaderParam("Authorization") String authorization, java.nio.file.Path path);
 
     @GET
