@@ -2,11 +2,13 @@
 
 Consume the NPM packages directly from Maven and Gradle projects.
 
-A lot of packages are already synced on Central, you may check this from [mvnpm.org](mvnpm.org): <img height="30" alt="image" src="https://github.com/mvnpm/mvnpm/assets/2223984/e1c9b820-d9f9-43f5-a61d-6b0514f0efe1">
+A lot of packages are already synced on Central, you may check this from [mvnpm.org](mvnpm.org): <img height="25" alt="image" src="https://github.com/mvnpm/mvnpm/assets/2223984/60aa898d-73e2-4a5e-83ec-fb7e0a7d22c3">
+
 
 If it's not:
 - Configure your project to use the MVNPM Maven Repository as a fallback. When a package is missing, it will fetch it from the fallback repository and automatically trigger a sync with Maven Central.
-- Click to trigger a sync with Maven Central: <img height="30" alt="image" src="https://github.com/mvnpm/mvnpm/assets/2223984/32a30bc6-2d4a-47a8-bd4d-d245b03f1422">
+- Click to trigger a sync with Maven Central: <img height="25" alt="image" src="https://github.com/mvnpm/mvnpm/assets/2223984/923f09ff-9631-4c11-aa61-8f6a9ded73d8">
+
 
 
 
@@ -85,7 +87,7 @@ In your project pom.xml:
 
 The scope depends on the usage of the dependencies, for example with the [Quarkus Web Bundler](https://docs.quarkiverse.io/quarkus-web-bundler/dev/advanced-guides.html#mvnpm), use `provided` scope instead.
 
-Examples:
+**Examples:**
 
 Lit
 ```
