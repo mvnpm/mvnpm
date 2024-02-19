@@ -1,5 +1,3 @@
-![banner](https://github.com/mvnpm/mvnpm/assets/6836179/787a3974-0b9a-4809-a74d-3710c6d08229)
-
 Consume the NPM packages directly from Maven and Gradle projects.
 
 A lot of packages are already synced on Central, you may check this from [mvnpm.org](mvnpm.org): <img height="25" alt="image" src="https://github.com/mvnpm/mvnpm/assets/2223984/60aa898d-73e2-4a5e-83ec-fb7e0a7d22c3">
