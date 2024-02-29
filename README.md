@@ -1,3 +1,5 @@
+![Logo](brand/fulllogo_transparent_nobuffer.png)
+
 Consume the NPM packages directly from Maven and Gradle projects.
 
 A lot of packages are already synced on Central, you may check this from [mvnpm.org](mvnpm.org): <img height="25" alt="image" src="https://github.com/mvnpm/mvnpm/assets/2223984/60aa898d-73e2-4a5e-83ec-fb7e0a7d22c3">
