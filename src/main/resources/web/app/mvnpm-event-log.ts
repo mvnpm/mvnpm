@@ -12,6 +12,7 @@ export class MvnpmEventLog extends LitElement {
       gap: 10px;
       width: 100%;
       max-height: 40vh;
+      background: black;
     }
     .console {
       display: flex;

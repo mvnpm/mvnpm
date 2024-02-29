@@ -13,6 +13,7 @@ import com.microsoft.playwright.Response;
 import io.quarkiverse.playwright.InjectPlaywright;
 import io.quarkiverse.playwright.WithPlaywright;
 import io.quarkus.test.common.http.TestHTTPResource;
+import io.quarkus.test.junit.DisabledOnIntegrationTest;
 import io.quarkus.test.junit.QuarkusTest;
 
 @QuarkusTest
@@ -29,6 +30,7 @@ public class UITest {
     URL about;
 
     @Test
+    @DisabledOnIntegrationTest
     public void testIndex() {
         final Page page = context.newPage();
         Response response = page.navigate(index.toString());

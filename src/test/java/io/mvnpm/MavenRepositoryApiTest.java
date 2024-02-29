@@ -50,6 +50,7 @@ public class MavenRepositoryApiTest {
     }
 
     @Test
+    @DisabledOnIntegrationTest
     public void testFileTooLong() throws IOException {
         final byte[] jar = RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/at/ui5/webcomponents-fiori/1.20.1/webcomponents-fiori-1.20.1.jar")

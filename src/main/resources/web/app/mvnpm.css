@@ -12,7 +12,7 @@ html, body {
     --lumo-primary-color-50pct: hsla(211, 63%, 54%, 0.5);
     --lumo-body-text-color: hsla(214, 96%, 96%, 0.9);
     --lumo-tertiary-text-color: hsla(214, 78%, 88%, 0.5);
-    --lumo-base-color: #154041;
+    --lumo-base-color: #326771;
     --lumo-error-contrast-color: hsla(0, 100%, 100%, 1.0);
     --lumo-contrast-30pct: hsla(214, 69%, 84%, 0.32);
     --lumo-contrast-80pct: hsla(214, 91%, 94%, 0.8);
@@ -60,7 +60,8 @@ header {
 }
 
 header img{
-    height: 100px;
+    height: 50px;
+    padding: 15px;
 }
 main {
     width:100vw;
