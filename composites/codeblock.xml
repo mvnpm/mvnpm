@@ -34,12 +34,12 @@
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>state</artifactId>
-            <version>6.4.0</version>
+            <version>6.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>view</artifactId>
-            <version>6.24.0</version>
+            <version>6.24.1</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>

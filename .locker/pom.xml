@@ -5,9 +5,11 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
-  <version>3.0.23-SNAPSHOT</version>
+  <version>3.0.23</version>
   <artifactId>mvnpm-locker</artifactId>
   <packaging>pom</packaging>
+
+  <!-- Locked dependencies (Update with 'mvn io.mvnpm:locker-maven-plugin:LATEST:lock -Dunlocked') -->
 
   <dependencyManagement>
     <dependencies>
@@ -31,7 +33,7 @@
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
-        <version>24.3.6</version>
+        <version>24.3.7</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
