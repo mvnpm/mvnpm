@@ -12,7 +12,7 @@ html, body {
     --lumo-primary-color-50pct: hsla(211, 63%, 54%, 0.5);
     --lumo-body-text-color: hsla(214, 96%, 96%, 0.9);
     --lumo-tertiary-text-color: hsla(214, 78%, 88%, 0.5);
-    --lumo-base-color: #326771;
+    --lumo-base-color: rgb(2, 0, 36);
     --lumo-error-contrast-color: hsla(0, 100%, 100%, 1.0);
     --lumo-contrast-30pct: hsla(214, 69%, 84%, 0.32);
     --lumo-contrast-80pct: hsla(214, 91%, 94%, 0.8);
@@ -50,7 +50,8 @@ html, body {
     font-size: var(--lumo-font-size-m);
     line-height: var(--lumo-line-height-m);
     color: var(--lumo-body-text-color);                        
-    background: var(--lumo-base-color);
+    background: rgb(2,0,36);
+    background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(50,103,113,1) 54%, rgba(103,167,179,1) 97%);
 }
 header {
     display: flex;

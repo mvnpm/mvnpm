@@ -499,7 +499,6 @@ export class MvnpmHome extends LitElement {
     }
     
     _showFile(e){
-        console.log("src = " + e.target.dataset.file);
         this._changeCodeView(e.target.dataset.file);
         this._theme = "dark";
     }
@@ -517,10 +516,7 @@ export class MvnpmHome extends LitElement {
         }
         
         var n = this._baseUrl.length + this._baseFile.length;
-        console.log("n=" + n);
         this._codeViewSelection = this._codeViewSrc.substring(n);
-        
-        console.log("codeViewSelection=" + this._codeViewSelection);
     }
     
     _findVersionsAndShowLatest(e){    
