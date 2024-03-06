@@ -24,11 +24,6 @@ interface Coordinates {
     version: string;
 }
 
-const DEFAULT_COORDS = {
-    name: '',
-    version: '',
-};
-
 /**
  * This component shows the Home screen
  * 
@@ -244,10 +239,18 @@ export class MvnpmHome extends LitElement {
         .infoCard {
             width: 100%;
         }
+        .emptyScreen{
+            display: flex;
+            align-items: center;
+            height: 70%;
+            font-size: xxx-large;
+            opacity: 0.2;
+        }
+        
     `;
 
     @state() 
-    private _coordinates = DEFAULT_COORDS;
+    private _coordinates = {};
     @state() 
     private _info = null;
     @state() 
@@ -342,10 +345,12 @@ export class MvnpmHome extends LitElement {
     }
     
     _renderMiddlePane(){
-        if(this._coordinates.version) {
+        if(this._coordinates && this._coordinates.version) {
             return this._renderTabPane();
         } else if(this._searchResults){
             return this._renderSearchResults();
+        } else {
+            return html`<div class="emptyScreen">mvnpm - a maven repository for npm registry</div>`;
         }
     }
     
@@ -631,9 +636,10 @@ export class MvnpmHome extends LitElement {
     }
     
     _findVersionsAndShowLatest(e){    
-        const name = this._coordinates.name.trim();
         if ((e.which == 13 || e.which == 0)){
-            this._showGA(name);    
+            this._showGA(this._coordinates.name.trim());    
+        }else{
+            
         }
     }
     
@@ -837,7 +843,6 @@ export class MvnpmHome extends LitElement {
     }
 
     _clearCoordinates(){
-        this._coordinates = DEFAULT_COORDS;
         this._info = null;
         this._baseUrl = null;
         this._baseFile = null;
@@ -850,11 +855,16 @@ export class MvnpmHome extends LitElement {
         this._loadingIcon = "hidden";
         this._searchResults = null;
         this._disabled = "disabled";
+        this._coordinates = {};
     }
     
     _coordinatesNameChanged(e){
-        this._coordinates.name = e.target.value;
-        this._disabled = "disabled";
+        if(e.target.value.trim() === ''){
+            this._clearCoordinates();
+        }else{
+            this._coordinates.name = e.target.value;
+            this._disabled = "disabled";
+        }
     }
 
     _versionChanged(e){
