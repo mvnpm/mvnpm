@@ -183,27 +183,35 @@
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>codeblock</artifactId>
         <version>1.0.6</version>
+        <scope>provided</scope>
+    </dependency>
+    <!-- To compare versions -->
+    <dependency>
+      <groupId>org.mvnpm</groupId>
+      <artifactId>compare-versions</artifactId>
+      <version>6.1.0</version>
+      <scope>provided</scope>
     </dependency>
     <!-- To render Markdown -->
     <dependency>
 	<groupId>org.mvnpm</groupId>
 	<artifactId>marked</artifactId>
 	<version>12.0.0</version>
-	<scope>runtime</scope>
+	<scope>provided</scope>
     </dependency>
     <!-- Cards for display -->
     <dependency>
 	<groupId>org.mvnpm.at.quarkus-webcomponents</groupId>
 	<artifactId>card</artifactId>
 	<version>1.0.0</version>
-	<scope>runtime</scope>
+	<scope>provided</scope>
     </dependency>
     <!-- Badges for display -->
     <dependency>
 	<groupId>org.mvnpm.at.quarkus-webcomponents</groupId>
 	<artifactId>badge</artifactId>
 	<version>1.0.0</version>
-	<scope>runtime</scope>
+	<scope>provided</scope>
     </dependency>
     <!-- Testing -->
     <dependency>
