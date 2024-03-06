@@ -1,6 +1,7 @@
 import { LitElement, html, css} from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { compareVersions } from 'compare-versions';
 import '@vaadin/form-layout';
 import '@vaadin/text-field';
 import '@vaadin/combo-box';
@@ -174,12 +175,20 @@ export class MvnpmHome extends LitElement {
             width: 20px;
             cursor: pointer;
             position: absolute;
-            bottom: 3px;
+            bottom: 5px;
             right: 5px;
         }
         .copy:hover { 
             filter: brightness(0.85);
         }
+        
+        .scope-combo {
+            position: absolute;
+            top: 0px;
+            right: 5px;
+        }
+        
+        
 
         .gaveventlogconsole {
             display: flex;
@@ -281,6 +290,8 @@ export class MvnpmHome extends LitElement {
     private _centralSyncItem?: object;
     @state() 
     private _gavEventLog?: object;
+    @state()
+    private _scope = "runtime";
     
     @state() 
     private _theme?: string;
@@ -350,7 +361,7 @@ export class MvnpmHome extends LitElement {
         } else if(this._searchResults){
             return this._renderSearchResults();
         } else {
-            return html`<div class="emptyScreen">mvnpm - a maven repository for npm registry</div>`;
+            return html`<div class="emptyScreen">Use npm like any other Maven dependency</div>`;
         }
     }
     
@@ -468,6 +479,11 @@ export class MvnpmHome extends LitElement {
             .then(response => this._centralSyncItem = response);
     }
 
+    _scopeChanged(e){
+        this._scope = e.target.value;
+        this._changeVersion(this._coordinates.version);
+    }
+
     _loadInfoTab(){
         if(this._info){
             return html`<div class="info">
@@ -490,11 +506,20 @@ export class MvnpmHome extends LitElement {
                                 <div class="dependencies">
                                     <qui-card class="infoCard" title="Pom dependency">
                                         <div slot="content">
+                                           
                                             <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
                                             <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
+                                            <vaadin-combo-box
+                                                    class="scope-combo"
+                                                    item-label-path="name"
+                                                    item-value-path="value"
+                                                    .items="${[{value: 'runtime', name: 'Scope: runtime'}, {value: 'provided', name: 'Scope: provided'}]}"
+                                                    value="${this._scope}"
+                                                    @change="${this._scopeChanged}"
+                                            ></vaadin-combo-box>
                                         </div>
                                     </qui-card>
-                                    <qui-card class="infoCard" title="Import map">
+                                    <qui-card class="infoCard" title="Import map (Runtime)">
                                         <div slot="content">
                                             <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
                                         </div>
@@ -727,14 +752,9 @@ export class MvnpmHome extends LitElement {
         var versionTags = metadata.getElementsByTagName("version");
 
         this._latestVersion = latestTags[0].childNodes[0].nodeValue;
-        var s = new Set();
-        Array.from(versionTags).forEach(function (element) {
-            var selectEntry = {
-                value: element.childNodes[0].nodeValue
-            };
-            s.add(selectEntry);
-        });
-        this._versions = Array.from(s).reverse();
+        var s = [... new Set(Array.from(versionTags).map(e => e.childNodes[0].nodeValue))].sort(compareVersions).reverse();
+        ;
+        this._versions = s.map(e => ({value: e}));
         
         this._changeVersion(this._latestVersion);
     }
@@ -884,7 +904,7 @@ export class MvnpmHome extends LitElement {
         }
         
         groupId = groupId.replaceAll('/', '.');
-        this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>runtime</scope>\n</dependency>";
+        this._usePom = "<dependency>\n\t<groupId>" + groupId + "</groupId>\n\t<artifactId>" + artifactId + "</artifactId>\n\t<version>" + version + "</version>\n\t<scope>"+this._scope+"</scope>\n</dependency>";
         var getCentralSyncItemUrl = "/api/sync/info/" + groupId + "/" + artifactId + "?version=" + version;
         var eventLogUrl = `/api/eventlog/gav/${groupId}/${artifactId}/${version}`;
         fetch(eventLogUrl)

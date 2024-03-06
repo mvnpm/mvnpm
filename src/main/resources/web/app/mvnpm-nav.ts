@@ -4,7 +4,7 @@ import { Router } from '@vaadin/router';
 import './mvnpm-home.js';
 import './mvnpm-releases.js';
 import './mvnpm-live.js';
-import './mvnpm-about.js';
+import './mvnpm-doc.js';
 
 const indicator = document.querySelectorAll('.js-loading-indicator');
 if (indicator.length > 0) {
@@ -13,13 +13,12 @@ if (indicator.length > 0) {
 
 const router = new Router(document.getElementById('outlet'));
 router.setRoutes([
-    {path: '/', component: 'mvnpm-home', name: 'Home'},
-    {path: '/package/:package', component: 'mvnpm-home', name: 'Home'},
-    {path: '/search/:name', component: 'mvnpm-home', name: 'Home'},
+    {path: '/', component: 'mvnpm-home', name: 'Browse'},
+    {path: '/package/:package', component: 'mvnpm-home', name: 'Browse'},
+    {path: '/search/:name', component: 'mvnpm-home', name: 'Browse'},
+    {path: '/doc', component: 'mvnpm-doc', name: 'Getting Started'},
     {path: '/releases', component: 'mvnpm-releases', name: 'Releases'},
     {path: '/live', component: 'mvnpm-live', name: 'Live'},
-    {path: '/about', component: 'mvnpm-about', name: 'About'},
-    
 ]);
 
 /**

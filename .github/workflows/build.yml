@@ -20,4 +20,6 @@ jobs:
         distribution: 'temurin'
         cache: maven
     - name: Build with Maven
-      run: mvn -B  formatter:validate impsort:check package --file pom.xml
+      run: mvn -B  formatter:validate impsort:check package -Dno-format --file pom.xml
+    - name: Build with Maven (Native)
+      run: mvn -B install -Dnative -Dquarkus.native.container-build -Dnative.surefire.skip -Dquarkus.profile=test

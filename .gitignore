@@ -42,3 +42,6 @@ nbactions.xml
 .env
 /dev.sh
 /local.sh
+
+# Quarkus
+.quarkus

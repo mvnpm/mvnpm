@@ -26,8 +26,8 @@ public class UITest {
     @TestHTTPResource("/")
     URL index;
 
-    @TestHTTPResource("/about")
-    URL about;
+    @TestHTTPResource("/doc")
+    URL doc;
 
     @Test
     @DisabledOnIntegrationTest
@@ -46,22 +46,23 @@ public class UITest {
         coordinatesInputEl.fill("lit");
         coordinatesInputEl.press("Enter");
         final ElementHandle depEl = page.waitForSelector("#pom-dependency-code");
-        Assertions.assertTrue(depEl.innerText().contains("<artifactId>lit</artifactId>"),
+        Assertions.assertTrue(depEl.getAttribute("content").contains("<artifactId>lit</artifactId>"),
                 "contains <artifactId>lit</artifactId>");
 
     }
 
     @Test
-    public void testAbout() {
+    public void testDoc() {
         final Page page = context.newPage();
-        Response response = page.navigate(about.toString());
+        Response response = page.navigate(doc.toString());
         Assertions.assertEquals("OK", response.statusText());
 
         page.waitForLoadState();
 
         String title = page.title();
         Assertions.assertEquals("mvnpm", title);
-        page.getByText("mvnpm", new Page.GetByTextOptions().setExact(true)).elementHandle();
+        page.getByText("Use npm like any other Maven dependency...", new Page.GetByTextOptions().setExact(true))
+                .elementHandle();
     }
 
 }
