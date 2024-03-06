@@ -61,7 +61,7 @@ public class NpmRegistryFacade {
     public SearchResults search(String term, int page) {
         if (page < 0)
             page = 1;
-        Response response = npmRegistryClient.search(term, ITEMS_PER_PAGE, page - 1, 1.0, 0.0, 0.0);
+        Response response = npmRegistryClient.search(term, ITEMS_PER_PAGE, page - 1, 0.0, 0.0, 1.0);
         if (response.getStatus() < 300) {
             return response.readEntity(SearchResults.class);
         } else {

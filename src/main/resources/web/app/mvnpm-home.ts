@@ -1,5 +1,6 @@
 import { LitElement, html, css} from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import '@vaadin/form-layout';
 import '@vaadin/text-field';
 import '@vaadin/combo-box';
@@ -13,7 +14,10 @@ import '@vaadin/progress-bar';
 import '@vaadin/tabs';
 import '@vaadin/tabsheet';
 import '@quarkus-webcomponents/codeblock';
+import '@quarkus-webcomponents/card';
+import '@quarkus-webcomponents/badge';
 import { Notification } from '@vaadin/notification';
+import { marked } from 'marked';
 
 interface Coordinates {
     name: string;
@@ -202,6 +206,45 @@ export class MvnpmHome extends LitElement {
             flex-direction: row;
             gap: 10px;
         }
+        .searchResults {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 90%;
+        }
+        
+        .searchResultName {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 0px;
+            margin-bottom: 1px;
+        }
+        qui-card:hover {
+            filter: brightness(0.85);
+            cursor: pointer;
+        }
+        .searchResultContent:hover {
+            cursor: unset;
+        }
+        
+        .searchResultDescription{
+            padding-right: 10px;
+            padding-left: 10px;
+        }    
+        .searchResultKeywords{
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+        }
+        .searchResultDetails{
+            display: flex;
+            justify-content: space-between;
+        }
+        .searchResultLinks{
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+        }
     `;
 
     @state() 
@@ -231,6 +274,8 @@ export class MvnpmHome extends LitElement {
     @state() 
     private _loadingIcon = "hidden";
     @state() 
+    private _searchResults: string;
+    @state() 
     private _centralSyncItem?: object;
     @state() 
     private _gavEventLog?: object;
@@ -251,13 +296,15 @@ export class MvnpmHome extends LitElement {
         if(currentPath.startsWith("/package/")){
             this._coordinates.name = currentPath.substring(9);
             this._showGA(this._coordinates.name);
+        }else if(currentPath.startsWith("/search/")){
+            this._showGA(currentPath.substring(8));
         }
     }
 
     render() {
         return html`
                 ${this._renderCoordinatesPane()}
-                ${this._renderTabPane()}
+                ${this._renderMiddlePane()}
                 `;
     }
     
@@ -295,6 +342,14 @@ export class MvnpmHome extends LitElement {
         
     }
     
+    _renderMiddlePane(){
+        if(this._coordinates.version) {
+            return this._renderTabPane();
+        } else if(this._searchResults){
+            return this._renderSearchResults();
+        }
+    }
+    
     _renderTabPane(){
         if(this._coordinates.version) {
             return html`<vaadin-tabsheet class="tabpane">
@@ -317,6 +372,64 @@ export class MvnpmHome extends LitElement {
                 </div>
 
             </vaadin-tabsheet>`;
+        }
+    }
+    
+    _renderSearchResults(){
+        if(this._searchResults.objects){
+            const objects = this._searchResults.objects;
+            return html`<div class="searchResults">
+                ${objects.map((result) => 
+                    html`<qui-card title="${result.package.name} : ${result.package.version}" data-package="${result.package.name}" @click="${this._selectSearchResult}">
+                            <div class="searchResultContent" slot="content">
+                                <div class="searchResultDetails">
+                                    <div class="searchResultDescription">
+                                        ${unsafeHTML(marked(result.package.description))}
+                                        ${this._renderBy(result)}
+                                    </div>
+                                    <div class="searchResultLinks">
+                                        <a href="${result.package.links.npm}" target="_blank">
+                                            <vaadin-icon title="Go to NPM registry page" icon="vaadin:tag"></vaadin-icon> npm registry
+                                        </a>
+                                        <a href="${result.package.links.homepage}" target="_blank">
+                                            <vaadin-icon icon="vaadin:external-link"></vaadin-icon> page
+                                        </a>
+                                    </div>
+                                </div>
+                                ${this._renderSearchKeywords(result.package.keywords)}
+                                
+                            </div>
+                        </qui-card>`
+                )}
+            </div>`; 
+        }
+    }
+    
+    _renderBy(result){
+        if(result.package.author && result.package.author.name){
+            return html` - by ${result.package.author.name}`;
+        }else if(result.package.publisher){
+            if(result.package.publisher.name){
+                return html` - by ${result.package.publisher.name}`;
+            }else if(result.package.publisher.username){
+                return html` - by ${result.package.publisher.username}`;
+            }
+        }
+    }
+    
+    _selectSearchResult(e){
+        this._coordinates.version = null;
+        this._coordinates.name = e.target.dataset.package;
+        this._showGA(this._coordinates.name);
+    }
+    
+    _renderSearchKeywords(keywords){
+        if(keywords){
+            return html`<div class="searchResultKeywords">
+                ${keywords.map((keyword) => 
+                    html`<qui-badge level="contrast" small><span>${keyword}</span></qui-badge>`
+                )}
+            </div>`;
         }
     }
     
@@ -366,7 +479,7 @@ export class MvnpmHome extends LitElement {
                                 </div>
                             </div>
                             <div class="info-line">
-                                ${this._info.description}
+                                ${unsafeHTML(marked(this._info.description))}
                                 <div>by <a href="${this._info.organizationUrl}">${this._info.organizationName}</a></div>
                             </div>
                             <div class="info-line">
@@ -538,22 +651,50 @@ export class MvnpmHome extends LitElement {
                     groupPath = `org/mvnpm/${groupPath}`;
                 }
                 artifactPath = ga[1].trim();
-
             } else {
-                // TODO: This should do a search...
                 this._loadingIcon = "visible";
                 groupPath = "org/mvnpm";
                 artifactPath =  name.replaceAll('@', 'at/');
             }
 
             const metadataUrl = `/maven2/${groupPath}/${artifactPath}/maven-metadata.xml`;
+            console.log("metadataUrl:" + metadataUrl);
+
             fetch(metadataUrl)
+                .then((response) => {
+
+
+
+                    if(response.ok){
+                        let contentLength = response.headers.get('Content-Length');
+                        console.log("contentLength:" + contentLength);
+                        if (contentLength == null || parseInt(contentLength, 10) > 0) {
+                            console.log("RESULT");
+                            this._stopLoading();
+                            return response.text();
+                        }
+                    }
+                    throw new Error();
+                })
+                .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
+                .then(metadata => this._inspectMetadata(metadata))
+                .catch(error => {
+                        console.log("SEARCH !!" + name);
+                        this._search(name);
+                    });
+                
+            }
+    }
+
+    _search(name){
+        var searchUrl = "/api/info/search/" + name;
+        fetch(searchUrl)
                 .then((response) => {
                     this._stopLoading();
                     if(response.ok){
-                        return response.text();
+                        return response.json();
                     }else if(response.status === 404){
-                        const notification = Notification.show(groupPath + '/' + artifactPath + ' not found', {
+                        const notification = Notification.show(name + ' not found', {
                             position: 'top-center',
                             duration: 5000,
                         });
@@ -564,9 +705,11 @@ export class MvnpmHome extends LitElement {
                         });
                     }
                 })
-                .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
-                .then(metadata => this._inspectMetadata(metadata));
-        }
+                .then(jsonResult => {
+                    window.history.pushState({/* State */},"", "/search/" + name);
+                    this._coordinates.version = null;
+                    this._searchResults = jsonResult;
+                });
     }
 
     _inspectMetadata(metadata){
@@ -702,15 +845,17 @@ export class MvnpmHome extends LitElement {
     _clearCoordinates(){
         this._coordinates = DEFAULT_COORDS;
         this._info = null;
-        this._disabled = "disabled";
         this._baseUrl = null;
         this._baseFile = null;
         this._usePom = null;
         this._useJson = null;
         this._versions = null;
+        this._latestVersion = null;
         this._codeViewSelection = ".pom";
         this._codeViewMode = "xml"; 
         this._loadingIcon = "hidden";
+        this._searchResults = null;
+        this._disabled = "disabled";
     }
     
     _coordinatesNameChanged(e){
