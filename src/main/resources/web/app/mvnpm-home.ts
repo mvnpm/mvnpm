@@ -106,14 +106,6 @@ export class MvnpmHome extends LitElement {
             gap: 10px;
         }
     
-        .useBlock{
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            gap: 10px;
-            border-left: 1px solid var(--lumo-contrast-10pct);
-            width: 50%;
-        }
         qui-code-block {
             width: 100%;
         }
@@ -175,6 +167,8 @@ export class MvnpmHome extends LitElement {
             display: flex;
             justify-content: space-evenly;
             width: 100%;
+            justify-content: center;
+            gap: 20px;
         }
         @media (max-width: 1000px) {
             .dependencies {
@@ -184,10 +178,12 @@ export class MvnpmHome extends LitElement {
         .copy {
             width: 20px;
             cursor: pointer;
-            align-self: end;
+            position: absolute;
+            bottom: 3px;
+            right: 5px;
         }
         .copy:hover { 
-            color:var(--lumo-success-color);
+            filter: brightness(0.85);
         }
 
         .gaveventlogconsole {
@@ -219,7 +215,7 @@ export class MvnpmHome extends LitElement {
             margin-top: 0px;
             margin-bottom: 1px;
         }
-        qui-card:hover {
+        .searchResultCard:hover {
             filter: brightness(0.85);
             cursor: pointer;
         }
@@ -244,6 +240,9 @@ export class MvnpmHome extends LitElement {
             padding: 15px;
             display: flex;
             gap: 15px;
+        }
+        .infoCard {
+            width: 100%;
         }
     `;
 
@@ -380,7 +379,7 @@ export class MvnpmHome extends LitElement {
             const objects = this._searchResults.objects;
             return html`<div class="searchResults">
                 ${objects.map((result) => 
-                    html`<qui-card title="${result.package.name} : ${result.package.version}" data-package="${result.package.name}" @click="${this._selectSearchResult}">
+                    html`<qui-card class="searchResultCard" title="${result.package.name} : ${result.package.version}" data-package="${result.package.name}" @click="${this._selectSearchResult}">
                             <div class="searchResultContent" slot="content">
                                 <div class="searchResultDetails">
                                     <div class="searchResultDescription">
@@ -484,29 +483,28 @@ export class MvnpmHome extends LitElement {
                             </div>
                             <div class="info-line">
                                 <div class="dependencies">
-                                    <div class="useBlock">
-                                        <span class="heading">Pom dependency</span>
-                                        <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
-                                        <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
-                                    </div>
-                                    
-                                    <div class="useBlock">
-                                        <span class="heading">Import map</span>
-                                        <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
-                                    </div>
-
-                                    <div class="useBlock">
-                                        <span class="heading">Dependencies</span>
-
-                                        <table class="dependencyTable">
+                                    <qui-card class="infoCard" title="Pom dependency">
+                                        <div slot="content">
+                                            <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
+                                            <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
+                                        </div>
+                                    </qui-card>
+                                    <qui-card class="infoCard" title="Import map">
+                                        <div slot="content">
+                                            <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
+                                        </div>
+                                    </qui-card>
+                                    <qui-card class="infoCard" title="Dependencies">
+                                        <div slot="content">
+                                            <table class="dependencyTable">
                                             ${this._info.dependencies.map((dependency) =>
                                                 html`<tr>
                                                         <td style="cursor: pointer;" @click="${()=>this._viewDependency(dependency)}">${dependency}</td>
                                                     </tr>`
                                             )}
-                                        </table>
-                                    </div>
-                                    
+                                            </table>
+                                        </div>
+                                    </qui-card>
                                 </div>
                             </div>
                         </div>
@@ -658,8 +656,7 @@ export class MvnpmHome extends LitElement {
             }
 
             const metadataUrl = `/maven2/${groupPath}/${artifactPath}/maven-metadata.xml`;
-            console.log("metadataUrl:" + metadataUrl);
-
+            
             fetch(metadataUrl)
                 .then((response) => {
 
@@ -667,9 +664,7 @@ export class MvnpmHome extends LitElement {
 
                     if(response.ok){
                         let contentLength = response.headers.get('Content-Length');
-                        console.log("contentLength:" + contentLength);
                         if (contentLength == null || parseInt(contentLength, 10) > 0) {
-                            console.log("RESULT");
                             this._stopLoading();
                             return response.text();
                         }
@@ -679,7 +674,6 @@ export class MvnpmHome extends LitElement {
                 .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
                 .then(metadata => this._inspectMetadata(metadata))
                 .catch(error => {
-                        console.log("SEARCH !!" + name);
                         this._search(name);
                     });
                 
