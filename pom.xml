@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm</artifactId>
-  <version>3.0.25-SNAPSHOT</version>
+  <version>3.0.26-SNAPSHOT</version>
   <name>mvnpm</name>
   <description>Maven on NPM</description>
   <url>https://mvnpm.org/</url>
@@ -183,6 +183,27 @@
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>codeblock</artifactId>
         <version>1.0.6</version>
+    </dependency>
+    <!-- To render Markdown -->
+    <dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>marked</artifactId>
+	<version>12.0.0</version>
+	<scope>runtime</scope>
+    </dependency>
+    <!-- Cards for display -->
+    <dependency>
+	<groupId>org.mvnpm.at.quarkus-webcomponents</groupId>
+	<artifactId>card</artifactId>
+	<version>1.0.0</version>
+	<scope>runtime</scope>
+    </dependency>
+    <!-- Badges for display -->
+    <dependency>
+	<groupId>org.mvnpm.at.quarkus-webcomponents</groupId>
+	<artifactId>badge</artifactId>
+	<version>1.0.0</version>
+	<scope>runtime</scope>
     </dependency>
     <!-- Testing -->
     <dependency>

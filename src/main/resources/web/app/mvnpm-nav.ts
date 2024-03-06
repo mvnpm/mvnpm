@@ -15,6 +15,7 @@ const router = new Router(document.getElementById('outlet'));
 router.setRoutes([
     {path: '/', component: 'mvnpm-home', name: 'Home'},
     {path: '/package/:package', component: 'mvnpm-home', name: 'Home'},
+    {path: '/search/:name', component: 'mvnpm-home', name: 'Home'},
     {path: '/releases', component: 'mvnpm-releases', name: 'Releases'},
     {path: '/live', component: 'mvnpm-live', name: 'Live'},
     {path: '/about', component: 'mvnpm-about', name: 'About'},

@@ -163,7 +163,7 @@ public class FileUtil {
                 try {
                     Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFilePath.toString());
                     // Set a timeout of 10 seconds
-                    long timeout = 10;
+                    long timeout = 20;
                     boolean processFinished = process.waitFor(timeout, TimeUnit.SECONDS);
 
                     if (!processFinished) {
