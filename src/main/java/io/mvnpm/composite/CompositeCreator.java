@@ -46,6 +46,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
 import io.mvnpm.file.FileUtil;
+import io.mvnpm.file.KeyHolder;
 import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
 import io.mvnpm.maven.MavenRepositoryService;
@@ -74,6 +75,9 @@ public class CompositeCreator {
 
     @Inject
     NpmRegistryFacade npmRegistryFacade;
+
+    @Inject
+    KeyHolder keyHolder;
 
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
@@ -353,7 +357,7 @@ public class CompositeCreator {
             }
             // Also create the Sha1
             FileUtil.createSha1(outputJar);
-            FileUtil.createAsc(outputJar);
+            FileUtil.createAsc(keyHolder.getSecretKeyRing(), outputJar);
             FileUtil.createMd5(outputJar);
         }
     }

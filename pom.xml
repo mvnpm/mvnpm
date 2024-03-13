@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm</artifactId>
-  <version>3.0.28-SNAPSHOT</version>
+  <version>3.0.29-SNAPSHOT</version>
   <name>mvnpm</name>
   <description>Maven on NPM</description>
   <url>https://mvnpm.org/</url>
@@ -53,15 +53,27 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.8.1</quarkus.platform.version>
+    <quarkus.platform.version>3.8.2</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
     <impsort.plugin.version>1.9.0</impsort.plugin.version>
     <quarkus.ide-config.version>${quarkus.platform.version}</quarkus.ide-config.version>
+    
+    <pgpainless.version>1.5.5</pgpainless.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>1.3.1</quarkus-web-bundler.version>
     <importmap.version>1.0.10</importmap.version>
+    <vaadin.version>24.3.7</vaadin.version>
+    <vaadin-router.version>1.7.5</vaadin-router.version>
+    <codeblock.version>1.0.6</codeblock.version>
+    <compare-versions.version>6.1.0</compare-versions.version>
+    <marked.version>12.0.1</marked.version>
+    <card.version>1.0.0</card.version>
+    <badge.version>1.0.0</badge.version>
+    <!-- Testing-->
+    <playwright.version>0.0.1</playwright.version>
+    <esbuild-java.version>1.3.0</esbuild-java.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -147,6 +159,17 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-postgresql</artifactId>
     </dependency>
+    <!-- To sign the files (PGP) -->
+    <dependency>
+        <groupId>org.pgpainless</groupId>
+        <artifactId>pgpainless-core</artifactId>
+        <version>${pgpainless.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>org.pgpainless</groupId>
+        <artifactId>pgpainless-sop</artifactId>
+        <version>${pgpainless.version}</version>
+    </dependency>
     <!-- To create the importmap -->
     <dependency>
       <groupId>io.mvnpm</groupId>
@@ -168,49 +191,49 @@
     <dependency>
       <groupId>org.mvnpm.at.mvnpm</groupId>
       <artifactId>vaadin-webcomponents</artifactId>
-      <version>24.3.7</version>
+      <version>${vaadin.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- Router -->
     <dependency>
       <groupId>org.mvnpm.at.vaadin</groupId>
       <artifactId>router</artifactId>
-      <version>1.7.5</version>
+      <version>${vaadin-router.version}</version>
       <scope>provided</scope>
     </dependency>
-    <!-- Codemirror -->
+    <!-- Codeblock -->
     <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>codeblock</artifactId>
-        <version>1.0.6</version>
+        <version>${codeblock.version}</version>
         <scope>provided</scope>
     </dependency>
     <!-- To compare versions -->
     <dependency>
       <groupId>org.mvnpm</groupId>
       <artifactId>compare-versions</artifactId>
-      <version>6.1.0</version>
+      <version>${compare-versions.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- To render Markdown -->
     <dependency>
 	<groupId>org.mvnpm</groupId>
 	<artifactId>marked</artifactId>
-	<version>12.0.0</version>
+	<version>${marked.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Cards for display -->
     <dependency>
 	<groupId>org.mvnpm.at.quarkus-webcomponents</groupId>
 	<artifactId>card</artifactId>
-	<version>1.0.0</version>
+	<version>${card.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Badges for display -->
     <dependency>
 	<groupId>org.mvnpm.at.quarkus-webcomponents</groupId>
 	<artifactId>badge</artifactId>
-	<version>1.0.0</version>
+	<version>${badge.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Testing -->
@@ -227,13 +250,13 @@
     <dependency>
       <groupId>io.quarkiverse.playwright</groupId>
       <artifactId>quarkus-playwright</artifactId>
-      <version>0.0.1</version>
+      <version>${playwright.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>io.mvnpm</groupId>
       <artifactId>esbuild-java</artifactId>
-      <version>1.2.0</version>
+      <version>${esbuild-java.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

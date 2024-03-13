@@ -27,7 +27,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.IOUtils;
 
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
@@ -114,10 +114,10 @@ public class JarClient {
 
         try (InputStream tgzInputStream = Files.newInputStream(tgzPath);
                 GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(tgzInputStream);
-                TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream);) {
+                TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream)) {
             final Map<String, byte[]> toTgz = new LinkedHashMap<>();
-            for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry(); entry != null; entry = tarArchiveInputStream
-                    .getNextTarEntry()) {
+            for (TarArchiveEntry entry = tarArchiveInputStream.getNextEntry(); entry != null; entry = tarArchiveInputStream
+                    .getNextEntry()) {
                 tgzEntryToJarEntry(p, entry, tarArchiveInputStream, toTgz, jarOutput);
             }
             if (!toTgz.isEmpty()) {
@@ -135,31 +135,35 @@ public class JarClient {
         String name = entry.getName();
         final boolean shouldAdd = !matches(FILES_TO_EXCLUDE, name);
         final boolean shouldTgz = matches(FILES_TO_TGZ, name);
-        if (shouldAdd || shouldTgz) {
-            name = name.replaceFirst(NPM_ROOT, Constants.EMPTY);
-            // do not add entries that will result in invalid zip file systems that will not be able to be opened
-            // by quarkus because it uses the ZipFileSystem implementation.
-            final String jarEntryPath = MVN_ROOT + importMapRoot + name;
-            final String tarEntryPath = importMapRoot + name;
-            // paths that include "/./" or "/../" as path element are invalid
-            if (jarEntryPath.startsWith("./") || jarEntryPath.contains("/./")
-                    || (shouldTgz && (tarEntryPath.startsWith(".") || tarEntryPath.contains("/./")))) {
-                return;
-            }
 
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    BufferedOutputStream bos = new BufferedOutputStream(baos, bufferSize)) {
-                IOUtils.copy(tar, bos, bufferSize);
-                bos.flush();
-                baos.flush();
-                if (shouldAdd) {
-                    writeJarEntry(jarOutput, jarEntryPath, baos.toByteArray());
-                } else {
-                    // We don't add the META-INF because the tgz is already in META-INF
-                    toTgz.put("resources" + importMapRoot + name, baos.toByteArray());
-                }
+        name = name.replaceFirst(NPM_ROOT, Constants.EMPTY);
+        // do not add entries that will result in invalid zip file systems that will not be able to be opened
+        // by quarkus because it uses the ZipFileSystem implementation.
+        final String jarEntryPath = MVN_ROOT + importMapRoot + name;
+        final String tarEntryPath = importMapRoot + name;
+        final boolean isRelativeLink = isRelativeLink(jarEntryPath, tarEntryPath, shouldTgz);
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                BufferedOutputStream bos = new BufferedOutputStream(baos, bufferSize)) {
+            IOUtils.copy(tar, bos, bufferSize);
+            bos.flush();
+            baos.flush();
+            if (shouldAdd && !isRelativeLink) {
+                writeJarEntry(jarOutput, jarEntryPath, baos.toByteArray());
+            } else if (shouldTgz && !isRelativeLink) {
+                // We don't add the META-INF because the tgz is already in META-INF
+                toTgz.put("resources" + importMapRoot + name, baos.toByteArray());
             }
         }
+    }
+
+    private boolean isRelativeLink(final String jarEntryPath, final String tarEntryPath, final boolean shouldTgz) {
+        // paths that include "/./" or "/../" as path element are invalid
+        if (jarEntryPath.startsWith("./") || jarEntryPath.contains("/./")
+                || (shouldTgz && (tarEntryPath.startsWith(".") || tarEntryPath.contains("/./")))) {
+            return true;
+        }
+        return false;
     }
 
     private byte[] tarGz(Map<String, byte[]> toCompress) throws IOException {

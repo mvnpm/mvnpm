@@ -28,7 +28,7 @@ public class MavenRepositoryApiTest {
     @Test
     public void testBasicPom() {
         RestAssured.given().header("User-Agent", "m2e/unit-test")
-                .when().get("/maven2/org/mvnpm/lit/2.4.0/lit-2.4.0.pom")
+                .when().get("/maven2/org/mvnpm/lit/3.1.2/lit-3.1.2.pom")
                 .then().log().all().and()
                 .statusCode(200);
     }
@@ -36,7 +36,7 @@ public class MavenRepositoryApiTest {
     @Test
     public void testStarDependencyPom() {
         RestAssured.given().header("User-Agent", "m2e/unit-test")
-                .when().get("/maven2/org/mvnpm/at/types/codemirror/5.60.5/codemirror-5.60.5.pom")
+                .when().get("/maven2/org/mvnpm/at/types/codemirror/5.60.15/codemirror-5.60.15.pom")
                 .then().log().all().and()
                 .statusCode(200);
     }
@@ -44,7 +44,7 @@ public class MavenRepositoryApiTest {
     @Test
     public void testIgnoreBetaPom() {
         RestAssured.given().header("User-Agent", "m2e/unit-test")
-                .when().get("/maven2/org/mvnpm/at/vaadin/tabs/23.2.3/vaadin-23.2.3.pom")
+                .when().get("/maven2/org/mvnpm/at/vaadin/tabs/24.3.8/vaadin-24.3.8.pom")
                 .then().log().all().and()
                 .statusCode(200);
     }
@@ -77,11 +77,11 @@ public class MavenRepositoryApiTest {
                         .setParam(CoreConnectionPNames.SO_TIMEOUT, 300000));
         final byte[] jar = RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .config(config)
-                .when().get("/maven2/org/mvnpm/at/mvnpm/vaadin-webcomponents/24.2.5/vaadin-webcomponents-24.2.5.jar")
+                .when().get("/maven2/org/mvnpm/at/mvnpm/vaadin-webcomponents/24.3.8/vaadin-webcomponents-24.3.8.jar")
                 .then()
                 .statusCode(200)
                 .extract().asByteArray();
-        final Path tempFile = Files.createTempFile("vaadin-webcomponents-24.2.5", ".jar");
+        final Path tempFile = Files.createTempFile("vaadin-webcomponents-24.3.8", ".jar");
         final Path nodeModules = Files.createTempDirectory("node_modules");
         Files.write(tempFile, jar);
         WebDepsInstaller.install(nodeModules,
