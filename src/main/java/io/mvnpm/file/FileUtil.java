@@ -17,8 +17,15 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.ws.rs.core.StreamingOutput;
 
+import org.bouncycastle.openpgp.PGPSecretKeyRing;
+import org.pgpainless.sop.SOPImpl;
+
 import io.mvnpm.Constants;
 import io.quarkus.logging.Log;
+import sop.ByteArrayAndResult;
+import sop.ReadyWithResult;
+import sop.SOP;
+import sop.SigningResult;
 
 public class FileUtil {
 
@@ -151,34 +158,34 @@ public class FileUtil {
         }
     }
 
-    public static boolean createAsc(Path localFilePath) {
-        return FileUtil.createAsc(localFilePath, false);
-    }
+    public static boolean createAsc(PGPSecretKeyRing secretKeyRing, Path localFilePath) {
+        if (secretKeyRing != null) {
+            String outputFile = localFilePath.toString() + Constants.DOT_ASC;
+            Path ascFileOutput = Paths.get(outputFile);
+            synchronized (ascFileOutput) {
+                if (!Files.exists(ascFileOutput)) {
 
-    public static boolean createAsc(Path localFilePath, boolean force) {
-        String outputFile = localFilePath.toString() + Constants.DOT_ASC;
-        Path f = Paths.get(outputFile);
-        synchronized (f) {
-            if (!Files.exists(f) || force) {
-                try {
-                    Process process = Runtime.getRuntime().exec(GPG_COMMAND + localFilePath.toString());
-                    // Set a timeout of 10 seconds
-                    long timeout = 20;
-                    boolean processFinished = process.waitFor(timeout, TimeUnit.SECONDS);
+                    try {
+                        byte[] jarFileBytes = Files.readAllBytes(localFilePath);
 
-                    if (!processFinished) {
-                        process.destroy(); // If the process doesn't finish, we can destroy it
+                        SOP sop = new SOPImpl();
+                        ReadyWithResult<SigningResult> readyWithResult = sop.detachedSign()
+                                .key(secretKeyRing.getSecretKey().getEncoded())
+                                .data(jarFileBytes);
+
+                        ByteArrayAndResult<SigningResult> bytesAndResult = readyWithResult.toByteArrayAndResult();
+
+                        byte[] detachedSignature = bytesAndResult.getBytes();
+
+                        Files.write(ascFileOutput, detachedSignature);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                         return false;
-                    } else {
-                        // Process finished within the timeout
-                        int exitCode = process.exitValue();
-                        process.destroy();
-                        return true;
                     }
-                } catch (InterruptedException | IOException ex) {
-                    throw new IllegalStateException(ex);
                 }
             }
+        } else {
+            return false;
         }
         return true;
     }
@@ -194,6 +201,4 @@ public class FileUtil {
 
         return md.digest();
     }
-
-    private static final String GPG_COMMAND = "gpg -ab ";
 }
