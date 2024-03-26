@@ -81,6 +81,11 @@ export class MvnpmNav extends LitElement {
             const centralSyncStateChangeEvent = new CustomEvent('centralSyncStateChange', {detail: centralSyncItem});
             document.dispatchEvent(centralSyncStateChangeEvent);
         }
+        MvnpmNav.syncWebSocket.onclose = function (event) {
+            setTimeout(function () {
+                MvnpmNav.connectSync();
+            }, 100);
+        };
     }
     
     static connectLog() {
@@ -90,5 +95,10 @@ export class MvnpmNav extends LitElement {
             const eventLogEntryEvent = new CustomEvent('eventLogEntryEvent', {detail: eventLogEntry});
             document.dispatchEvent(eventLogEntryEvent);
         }
+        MvnpmNav.logWebSocket.onclose = function (event) {
+            setTimeout(function () {
+                MvnpmNav.connectLog();
+            }, 100);
+        };
     }
  }
