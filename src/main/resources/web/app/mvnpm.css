@@ -1,3 +1,10 @@
+@font-face {
+    font-family: 'blutter';
+    font-style: normal;
+    font-weight: normal;
+    src: local('blutter'), url('blutter.woff') format('woff');
+}
+
 html, body {
     margin: 0;
     width:100vw;
@@ -64,6 +71,13 @@ header img{
     height: 50px;
     padding: 15px;
 }
+
+.banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 main {
     width:100vw;
     height: 100%;

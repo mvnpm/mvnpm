@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm</artifactId>
-  <version>3.0.29-SNAPSHOT</version>
+  <version>3.0.30-SNAPSHOT</version>
   <name>mvnpm</name>
   <description>Maven on NPM</description>
   <url>https://mvnpm.org/</url>
@@ -52,8 +52,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
-    <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.8.2</quarkus.platform.version>
+    <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
+    <quarkus.platform.version>3.9.0</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
@@ -64,7 +64,7 @@
     <!-- UI Libs -->
     <quarkus-web-bundler.version>1.3.1</quarkus-web-bundler.version>
     <importmap.version>1.0.10</importmap.version>
-    <vaadin.version>24.3.7</vaadin.version>
+    <vaadin.version>24.3.10</vaadin.version>
     <vaadin-router.version>1.7.5</vaadin-router.version>
     <codeblock.version>1.0.6</codeblock.version>
     <compare-versions.version>6.1.0</compare-versions.version>
@@ -90,11 +90,11 @@
     <!-- To serve the maven files -->
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-reactive</artifactId>
+      <artifactId>quarkus-rest</artifactId>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-resteasy-reactive-jackson</artifactId>
+      <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
     <!-- To create the pom.xml -->
     <dependency>
@@ -128,7 +128,7 @@
     <!-- To fetch the info from npm -->
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-rest-client-reactive-jackson</artifactId>
+      <artifactId>quarkus-rest-client-jackson</artifactId>
     </dependency>
     <!-- To schedule an update check -->
     <dependency>

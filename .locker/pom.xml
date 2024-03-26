@@ -5,11 +5,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
-  <version>3.0.29-SNAPSHOT</version>
+  <version>3.0.30-SNAPSHOT</version>
   <artifactId>mvnpm-locker</artifactId>
   <packaging>pom</packaging>
-
-  <!-- Locked dependencies (Update with 'mvn io.mvnpm:locker-maven-plugin:LATEST:lock -Dunlocked') -->
 
   <dependencyManagement>
     <dependencies>
@@ -34,7 +32,7 @@
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
-        <version>24.3.7</version>
+        <version>24.3.10</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -70,13 +68,13 @@
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>component-base</artifactId>
-        <version>24.3.7</version>
+        <version>24.3.10</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>icon</artifactId>
-        <version>24.3.7</version>
+        <version>24.3.10</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -94,13 +92,13 @@
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-lumo-styles</artifactId>
-        <version>24.3.7</version>
+        <version>24.3.10</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-themable-mixin</artifactId>
-        <version>24.3.7</version>
+        <version>24.3.10</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
