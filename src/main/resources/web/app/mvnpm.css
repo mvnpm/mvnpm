@@ -68,14 +68,13 @@ header {
 }
 
 header img{
-    height: 50px;
-    padding: 15px;
+    height: 100px;
+    padding: 20px;
 }
 
 .banner {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    height: 50px;
+    overflow: visible;
 }
 
 main {

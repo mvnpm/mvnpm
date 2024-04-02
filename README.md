@@ -1,4 +1,4 @@
-![Logo](brand/fulllogo.png)
+![Logo](mvnpm-logo.png)
 
 ### Use npm like any other Maven dependency...
 
