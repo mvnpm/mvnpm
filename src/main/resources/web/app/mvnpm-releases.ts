@@ -18,6 +18,7 @@ export class MvnpmReleases extends LitElement {
         gap: 10px;
         width: 100%;
         padding: 20px;
+        padding-top: 60px;
     }
     
     .rotate {
@@ -63,7 +64,7 @@ export class MvnpmReleases extends LitElement {
 
     private _renderStageRadioBar() {
         return html`
-            <vaadin-radio-group label="Stage" theme="horizontal">
+            <vaadin-radio-group theme="horizontal">
                 <vaadin-radio-button value="INIT" label="Pending" @change=${this._stageChange}></vaadin-radio-button>
                 <vaadin-radio-button value="UPLOADING" label="Uploading" @change=${this._stageChange}></vaadin-radio-button>
                 <vaadin-radio-button value="UPLOADED" label="Uploaded" @change=${this._stageChange}></vaadin-radio-button>
