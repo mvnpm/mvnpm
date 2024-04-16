@@ -22,5 +22,6 @@ public record Package(
         String type,
         List<Maintainer> maintainers,
         Map<Name, String> dependencies,
+        Map<Name, String> peerDependencies,
         Dist dist) {
 }

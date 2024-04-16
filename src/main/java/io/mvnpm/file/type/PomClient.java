@@ -61,7 +61,7 @@ public class PomClient {
 
     private void writePomToFileSystem(io.mvnpm.npm.model.Package p, Path localFilePath) {
 
-        List<Dependency> deps = toDependencies(p.dependencies());
+        List<Dependency> deps = toDependencies(p);
 
         Model model = new Model();
 
@@ -208,17 +208,20 @@ public class PomClient {
         return ds;
     }
 
-    private List<Dependency> toDependencies(Map<Name, String> dependencies) {
+    private List<Dependency> toDependencies(io.mvnpm.npm.model.Package p) {
         List<Dependency> deps = new ArrayList<>();
+        populateFromMap(deps, p.dependencies());
+        populateFromMap(deps, p.peerDependencies());
+        return deps;
+    }
+
+    private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies) {
         if (dependencies != null && !dependencies.isEmpty()) {
             for (Map.Entry<Name, String> e : dependencies.entrySet()) {
                 Name name = e.getKey();
                 String version = e.getValue();
-                deps.add(toDependency(name, version));
+                listToPopulate.add(toDependency(name, version));
             }
-            return deps;
-        } else {
-            return List.of();
         }
     }
 

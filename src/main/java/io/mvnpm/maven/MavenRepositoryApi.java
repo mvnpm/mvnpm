@@ -39,6 +39,9 @@ public class MavenRepositoryApi {
     @Inject
     CompositeService compositeService;
 
+    @Inject
+    ImportMapUtil importMapUtil;
+
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
     @Produces(MediaType.APPLICATION_XML)
@@ -95,7 +98,7 @@ public class MavenRepositoryApi {
                     .build();
         } else {
             Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName, nameVersionType.version());
-            return Response.ok(ImportMapUtil.createImportMap(npmPackage)).build();
+            return Response.ok(importMapUtil.createImportMap(npmPackage)).build();
         }
     }
 
