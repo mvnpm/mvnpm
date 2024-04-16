@@ -50,6 +50,9 @@ public class JarClient {
     @Inject
     MavenRepositoryService mavenRepositoryService;
 
+    @Inject
+    ImportMapUtil importMapUtil;
+
     public Path createEmptyJar(Path forJar, String replaceJarWith) {
         Path emptyFile = Paths.get(forJar.toString().replace(Constants.DOT_JAR, replaceJarWith));
         if (!Files.exists(emptyFile)) {
@@ -95,9 +98,6 @@ public class JarClient {
             // Pom properties entry
             writeJarEntry(jarOutput, pomXmlDir + POM_DOT_PROPERTIES, createPomProperties(p));
 
-            // Import map
-            writeJarEntry(jarOutput, Location.IMPORTMAP_PATH, ImportMapUtil.createImportMap(p));
-
             // Tar contents
             tgzToJar(p, tgzPath, jarOutput);
 
@@ -116,21 +116,29 @@ public class JarClient {
                 GzipCompressorInputStream gzipInputStream = new GzipCompressorInputStream(tgzInputStream);
                 TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(gzipInputStream)) {
             final Map<String, byte[]> toTgz = new LinkedHashMap<>();
+            final Map<String, byte[]> toImportMap = new LinkedHashMap<>();
             for (TarArchiveEntry entry = tarArchiveInputStream.getNextEntry(); entry != null; entry = tarArchiveInputStream
                     .getNextEntry()) {
-                tgzEntryToJarEntry(p, entry, tarArchiveInputStream, toTgz, jarOutput);
+                tgzEntryToJarEntry(p, entry, tarArchiveInputStream, toTgz, toImportMap, jarOutput);
             }
+            // More.tar.gz
             if (!toTgz.isEmpty()) {
                 final byte[] bytes = tarGz(toTgz);
                 writeJarEntry(jarOutput, MVNPM_MORE_ARCHIVE, bytes);
             }
+            // Import map
+            if (!toImportMap.isEmpty()) {
+                writeJarEntry(jarOutput, Location.IMPORTMAP_PATH, importMapUtil.createImportMap(toImportMap));
+            }
+
         }
     }
 
     private void tgzEntryToJarEntry(io.mvnpm.npm.model.Package p, ArchiveEntry entry, TarArchiveInputStream tar,
             Map<String, byte[]> toTgz,
+            Map<String, byte[]> toImportMap,
             JarArchiveOutputStream jarOutput) throws IOException {
-        String importMapRoot = ImportMapUtil.getImportMapRoot(p);
+        String importMapRoot = importMapUtil.getImportMapRoot(p);
         // Let's filter out files we do not need..
         String name = entry.getName();
         final boolean shouldAdd = !matches(FILES_TO_EXCLUDE, name);
@@ -149,7 +157,12 @@ public class JarClient {
             bos.flush();
             baos.flush();
             if (shouldAdd && !isRelativeLink) {
-                writeJarEntry(jarOutput, jarEntryPath, baos.toByteArray());
+                byte[] contents = baos.toByteArray();
+                writeJarEntry(jarOutput, jarEntryPath, contents);
+                // Also gather all package.json
+                if (jarEntryPath.endsWith("/package.json")) {
+                    toImportMap.put(name, contents);
+                }
             } else if (shouldTgz && !isRelativeLink) {
                 // We don't add the META-INF because the tgz is already in META-INF
                 toTgz.put("resources" + importMapRoot + name, baos.toByteArray());

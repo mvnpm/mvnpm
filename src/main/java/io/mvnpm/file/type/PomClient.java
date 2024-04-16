@@ -215,7 +215,7 @@ public class PomClient {
         return deps;
     }
 
-    private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies){
+    private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies) {
         if (dependencies != null && !dependencies.isEmpty()) {
             for (Map.Entry<Name, String> e : dependencies.entrySet()) {
                 Name name = e.getKey();
@@ -224,7 +224,7 @@ public class PomClient {
             }
         }
     }
-    
+
     private Dependency toDependency(Name name, String version) {
         Dependency d = new Dependency();
         d.setGroupId(name.mvnGroupId);
