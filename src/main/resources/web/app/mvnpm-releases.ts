@@ -38,7 +38,6 @@ export class MvnpmReleases extends LitElement {
     @state({ type: Array })
     private _itemList: any[] | null = null;
 
-
     constructor() {
         super();
         this._itemList = null;
@@ -49,10 +48,6 @@ export class MvnpmReleases extends LitElement {
         super.connectedCallback();
         this._selectedState = "RELEASED";
         this._fetchSelectedItemList();
-    }
-
-    disconnectedCallback() {
-        super.disconnectedCallback();
     }
 
     render() {

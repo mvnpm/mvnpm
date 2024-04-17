@@ -18,18 +18,6 @@ export class MvnpmLive extends LitElement {
       padding: 20px;
     }`;
 
-    constructor() {
-        super();
-    }
-
-    connectedCallback() {
-        super.connectedCallback();
-    }
-
-    disconnectedCallback() {
-        super.disconnectedCallback();
-    }
-
     render() {
         return html`
             <vaadin-split-layout style="height: 100%;" orientation="vertical">

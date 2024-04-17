@@ -47,6 +47,9 @@ export class MvnpmDoc extends LitElement {
             text-decoration: none; 
             color:var(--lumo-body-text-color);
         }
+        .how{
+            width: 100%;
+        }
     `;
     @state() _dep: string = `
     <dependency>
@@ -156,7 +159,7 @@ export class MvnpmDoc extends LitElement {
             </section>
             <section>
                 <h3>How does the mvnpm Maven repository work ?</h3>
-                <img src="/static/mvnpm.png"/>
+                <img class="how" src="/static/how-does-mvnpm-work.png"/>
 
                 <ul>
                     <li>Developer's Maven build requests an npm package from Maven Central.</li>
