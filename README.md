@@ -69,7 +69,7 @@ to use it in your local Maven settings add the following to your settings.xml (t
 
 ### How does the mvnpm Maven repository work ?
 
-![Schema](src/main/resources/web/static/mvnpm.png)
+![Schema](src/main/resources/web/static/how-does-mvnpm-work.png)
 
 *   Developer's Maven build requests an npm package from Maven Central.
 *   Maven Central returns a 404 if the package does not exist.

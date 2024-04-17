@@ -19,6 +19,7 @@ import '@quarkus-webcomponents/card';
 import '@quarkus-webcomponents/badge';
 import { Notification } from '@vaadin/notification';
 import { marked } from 'marked';
+import './mvnpm-jar-view.js';
 
 interface Coordinates {
     name: string;
@@ -631,11 +632,7 @@ export class MvnpmHome extends LitElement {
         if(this._codeViewMode){
             return html`<qui-code-block mode="${this._codeViewMode}" src='${this._codeViewSrc}'></qui-code-block>`;
         }else{
-            return html`<div class="codeView">
-                            <div class="nopreview"> 
-                                binary format - no preview
-                            </div>
-                        </div>`;
+            return html`<mvnpm-jar-view jarName="${this._codeViewSrc}"></mvnpm-jar-view>`;
         }
     }
     
@@ -690,9 +687,6 @@ export class MvnpmHome extends LitElement {
             
             fetch(metadataUrl)
                 .then((response) => {
-
-
-
                     if(response.ok){
                         let contentLength = response.headers.get('Content-Length');
                         if (contentLength == null || parseInt(contentLength, 10) > 0) {
