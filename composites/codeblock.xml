@@ -39,12 +39,12 @@
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>view</artifactId>
-            <version>6.24.1</version>
+            <version>6.26.3</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>commands</artifactId>
-            <version>6.3.3</version>
+            <version>6.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>autocomplete</artifactId>
-            <version>6.12.0</version>
+            <version>6.16.0</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
@@ -64,7 +64,7 @@
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-javascript</artifactId>
-            <version>6.2.1</version>
+            <version>6.2.2</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
@@ -74,22 +74,22 @@
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-yaml</artifactId>
-            <version>6.0.0</version>
+            <version>6.1.1</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-sql</artifactId>
-            <version>6.5.5</version>
+            <version>6.6.3</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.codemirror</groupId>
             <artifactId>lang-xml</artifactId>
-            <version>6.0.2</version>
+            <version>6.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm</groupId>
             <artifactId>style-mod</artifactId>
-            <version>4.1.0</version>
+            <version>4.1.2</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm</groupId>
@@ -129,7 +129,7 @@
         <dependency>
             <groupId>org.mvnpm.at.lezer</groupId>
             <artifactId>javascript</artifactId>
-            <version>1.4.13</version>
+            <version>1.4.14</version>
         </dependency>
         <dependency>
             <groupId>org.mvnpm.at.lezer</groupId>
@@ -144,7 +144,7 @@
         <dependency>
             <groupId>org.mvnpm.at.lezer</groupId>
             <artifactId>xml</artifactId>
-            <version>1.0.4</version>
+            <version>1.0.5</version>
         </dependency>
     </dependencies>
 </project>
