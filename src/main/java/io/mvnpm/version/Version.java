@@ -5,6 +5,7 @@ import static io.mvnpm.Constants.EMPTY;
 import static io.mvnpm.Constants.ESCAPED_DOT;
 import static io.mvnpm.Constants.EX;
 import static io.mvnpm.Constants.HYPHEN;
+import static io.mvnpm.Constants.LATEST;
 import static io.mvnpm.Constants.STAR;
 
 public record Version(Integer major,
@@ -43,7 +44,7 @@ public record Version(Integer major,
     }
 
     private static Integer toNumber(String part) {
-        if (part == null || part.equals(STAR) || part.equalsIgnoreCase(EX)) {
+        if (part == null || part.equals(STAR) || part.equalsIgnoreCase(EX) || part.equalsIgnoreCase(LATEST)) {
             return null;
         }
         return Integer.valueOf(part);

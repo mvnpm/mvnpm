@@ -27,15 +27,20 @@ public class ImportMapUtil {
         Map<String, io.mvnpm.npm.model.Package> packageJsonObjects = new HashMap<>();
 
         byte[] mainPackageJson = packageJsonFiles.remove(PACKAGE_JSON);
-        Package mainPackageObject = objectMapper.readValue(mainPackageJson, io.mvnpm.npm.model.Package.class);
+        Package mainPackageObject = null;
+        if (mainPackageJson != null) {
+            mainPackageObject = objectMapper.readValue(mainPackageJson, io.mvnpm.npm.model.Package.class);
+        }
 
         for (Map.Entry<String, byte[]> packageJsonFile : packageJsonFiles.entrySet()) {
             String path = packageJsonFile.getKey();
             byte[] content = packageJsonFile.getValue();
-            try {
-                packageJsonObjects.put(path, objectMapper.readValue(content, io.mvnpm.npm.model.Package.class));
-            } catch (IOException ex) {
-                Log.error(ex);
+            if (content != null) {
+                try {
+                    packageJsonObjects.put(path, objectMapper.readValue(content, io.mvnpm.npm.model.Package.class));
+                } catch (IOException ex) {
+                    Log.error(ex);
+                }
             }
         }
 
@@ -44,16 +49,23 @@ public class ImportMapUtil {
 
     public byte[] createImportMap(io.mvnpm.npm.model.Package mainPackage,
             Map<String, io.mvnpm.npm.model.Package> otherPackages) {
-        String root = getImportMapRoot(mainPackage);
 
-        String module = getModule(mainPackage);
         Map<String, String> v = new HashMap<>();
 
-        v.put(mainPackage.name().npmFullName, root + module);
-        v.put(mainPackage.name().npmFullName + Constants.SLASH, root + getModuleRoot(module));
+        if (mainPackage != null) {
+            String root = getImportMapRoot(mainPackage);
+            String module = getModule(mainPackage);
+            v.put(mainPackage.name().npmFullName, root + module);
+            v.put(mainPackage.name().npmFullName + Constants.SLASH, root + getModuleRoot(module));
+        }
 
         if (otherPackages != null && !otherPackages.isEmpty()) {
             for (Map.Entry<String, Package> otherPackage : otherPackages.entrySet()) {
+
+                if (mainPackage == null) {
+                    mainPackage = otherPackage.getValue();
+                }
+                String root = getImportMapRoot(mainPackage);
                 String path = otherPackage.getKey();
 
                 path = path.replace("/" + PACKAGE_JSON, "");

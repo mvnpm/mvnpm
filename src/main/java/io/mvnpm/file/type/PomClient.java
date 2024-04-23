@@ -194,10 +194,12 @@ public class PomClient {
         List<Developer> ds = new ArrayList<>();
         if (maintainers != null && !maintainers.isEmpty()) {
             for (Maintainer m : maintainers) {
-                Developer d = new Developer();
-                d.setEmail(m.email());
-                d.setName(m.name());
-                ds.add(d);
+                if (m != null) {
+                    Developer d = new Developer();
+                    d.setEmail(m.email());
+                    d.setName(m.name());
+                    ds.add(d);
+                }
             }
         }
         if (ds.isEmpty()) {
