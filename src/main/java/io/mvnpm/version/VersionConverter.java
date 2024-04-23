@@ -29,6 +29,8 @@ import java.util.List;
 
 import org.jboss.logging.Logger;
 
+import io.mvnpm.Constants;
+
 /**
  * Convert a npm version to a maven version
  *
@@ -150,6 +152,9 @@ public class VersionConverter {
      */
     private static String convertTilde(String version) {
         version = version.substring(1);
+        if (version.equalsIgnoreCase(Constants.LATEST)) {
+            return convert(version);
+        }
         Version lowerBoundary = Version.fromString(version);
         Version upperBoundary = lowerBoundary.nextMajor();
         if (lowerBoundary.minor() != null) {
@@ -167,6 +172,9 @@ public class VersionConverter {
      */
     private static String convertCaret(String version) {
         version = version.substring(1);
+        if (version.equalsIgnoreCase(Constants.LATEST)) {
+            return convert(version);
+        }
         Version lowerBoundary = Version.fromString(version);
         Version upperBoundary = lowerBoundary.nextMajor();
 

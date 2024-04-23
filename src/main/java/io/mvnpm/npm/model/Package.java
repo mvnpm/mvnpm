@@ -20,7 +20,7 @@ public record Package(
         String main,
         String module,
         String type,
-        List<Maintainer> maintainers,
+        @JsonDeserialize(using = MaintainersDeserializer.class) List<Maintainer> maintainers,
         Map<Name, String> dependencies,
         Map<Name, String> peerDependencies,
         Dist dist) {

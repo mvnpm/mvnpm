@@ -38,15 +38,14 @@ export class MvnpmReleases extends LitElement {
     @state({ type: Array })
     private _itemList: any[] | null = null;
 
-    constructor() {
-        super();
-        this._itemList = null;
-        this._selectedState = null;
-    }
+    @state() 
+    private _selectedState?: string = "RELEASED";
+
+    @state({ type: Boolean})
+    private _disabled: boolean = false;
 
     connectedCallback() {
         super.connectedCallback();
-        this._selectedState = "RELEASED";
         this._fetchSelectedItemList();
     }
 
@@ -59,7 +58,7 @@ export class MvnpmReleases extends LitElement {
 
     private _renderStageRadioBar() {
         return html`
-            <vaadin-radio-group theme="horizontal">
+            <vaadin-radio-group theme="horizontal" ?disabled=${this._disabled}>
                 <vaadin-radio-button value="INIT" label="Pending" @change=${this._stageChange}></vaadin-radio-button>
                 <vaadin-radio-button value="UPLOADING" label="Uploading" @change=${this._stageChange}></vaadin-radio-button>
                 <vaadin-radio-button value="UPLOADED" label="Uploaded" @change=${this._stageChange}></vaadin-radio-button>
@@ -116,8 +115,12 @@ export class MvnpmReleases extends LitElement {
     
     private _fetchSelectedItemList(){
         this._itemList = null;
+        this._disabled = true;
         fetch("/api/sync/item/" + this._selectedState)
             .then(response => response.json())
-            .then(response => this._itemList = response);
+            .then(response => {
+                this._itemList = response;
+                this._disabled = false;
+            });
     }
 }
