@@ -5,6 +5,7 @@ import { compareVersions } from 'compare-versions';
 import '@vaadin/form-layout';
 import '@vaadin/text-field';
 import '@vaadin/combo-box';
+import '@vaadin/radio-group';
 import '@vaadin/button';
 import '@vaadin/tabs';
 import '@vaadin/tabsheet';
@@ -14,9 +15,9 @@ import '@vaadin/icons';
 import '@vaadin/progress-bar';
 import '@vaadin/tabs';
 import '@vaadin/tabsheet';
-import '@quarkus-webcomponents/codeblock';
-import '@quarkus-webcomponents/card';
-import '@quarkus-webcomponents/badge';
+import '@qomponent/qui-code-block';
+import '@qomponent/qui-card';
+import '@qomponent/qui-badge';
 import { Notification } from '@vaadin/notification';
 import { marked } from 'marked';
 import './mvnpm-jar-view.js';
@@ -175,22 +176,11 @@ export class MvnpmHome extends LitElement {
         .copy {
             width: 20px;
             cursor: pointer;
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
         }
         .copy:hover { 
             filter: brightness(0.85);
         }
         
-        .scope-combo {
-            position: absolute;
-            top: 0px;
-            right: 5px;
-        }
-        
-        
-
         .gaveventlogconsole {
             display: flex;
             flex-direction: column;
@@ -249,6 +239,12 @@ export class MvnpmHome extends LitElement {
         .infoCard {
             width: 100%;
         }
+        .infoCardHeader {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+        }
         .emptyScreen{
             display: flex;
             align-items: center;
@@ -292,7 +288,7 @@ export class MvnpmHome extends LitElement {
     @state() 
     private _gavEventLog?: object;
     @state()
-    private _scope = "runtime";
+    private _scope = "provided";
     
     @state() 
     private _theme?: string;
@@ -396,7 +392,7 @@ export class MvnpmHome extends LitElement {
             const objects = this._searchResults.objects;
             return html`<div class="searchResults">
                 ${objects.map((result) => 
-                    html`<qui-card class="searchResultCard" title="${result.package.name} : ${result.package.version}" data-package="${result.package.name}" @click="${this._selectSearchResult}">
+                    html`<qui-card class="searchResultCard" header="${result.package.name} : ${result.package.version}" data-package="${result.package.name}" @click="${this._selectSearchResult}">
                             <div class="searchResultContent" slot="content">
                                 <div class="searchResultDetails">
                                     <div class="searchResultDescription">
@@ -505,27 +501,29 @@ export class MvnpmHome extends LitElement {
                             </div>
                             <div class="info-line">
                                 <div class="dependencies">
-                                    <qui-card class="infoCard" title="Pom dependency">
+                                    <qui-card class="infoCard">
+                                        <div slot="header" style="width:100%;">
+                                            <div class="infoCardHeader">
+                                                <span>Pom dependency</span>
+                                                <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
+                                            </div>
+                                        </div>
                                         <div slot="content">
-                                           
                                             <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
-                                            <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o" @click=${this._pomToClipboard}></vaadin-icon>
-                                            <vaadin-combo-box
-                                                    class="scope-combo"
-                                                    item-label-path="name"
-                                                    item-value-path="value"
-                                                    .items="${[{value: 'runtime', name: 'Scope: runtime'}, {value: 'provided', name: 'Scope: provided'}]}"
-                                                    value="${this._scope}"
-                                                    @change="${this._scopeChanged}"
-                                            ></vaadin-combo-box>
+                                        </div>
+                                        <div slot="footer">
+                                            <vaadin-radio-group @change="${this._scopeChanged}">
+                                                <vaadin-radio-button value="runtime" label="runtime"></vaadin-radio-button>
+                                                <vaadin-radio-button value="provided" label="provided" checked></vaadin-radio-button>
+                                            </vaadin-radio-group>
                                         </div>
                                     </qui-card>
-                                    <qui-card class="infoCard" title="Import map (Runtime)">
+                                    <qui-card class="infoCard" header="Import map (Runtime)">
                                         <div slot="content">
                                             <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
                                         </div>
                                     </qui-card>
-                                    <qui-card class="infoCard" title="Dependencies">
+                                    <qui-card class="infoCard" header="Dependencies">
                                         <div slot="content">
                                             <table class="dependencyTable">
                                             ${this._info.dependencies.map((dependency) =>

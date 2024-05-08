@@ -1,6 +1,6 @@
 import { LitElement, html, css} from 'lit';
 import { customElement, state } from 'lit/decorators.js';
-import '@quarkus-webcomponents/codeblock';
+import '@qomponent/qui-code-block';
 
 /**
  * This component shows the Doc screen
