@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.mvnpm.at.mvnpm</groupId>
+    <artifactId>qomponent</artifactId>
+    <version>latest</version>
+    <name>Qomponent</name>
+    <description>Qomponent web components</description>
+    <url>https://github.com/qomponent</url>
+
+    <organization>
+        <name>Qomponent</name>
+        <url>https://github.com/qomponent</url>
+    </organization>
+
+    <scm>
+        <connection>https://github.com/qomponent</connection>
+        <developerConnection>https://github.com/qomponent</developerConnection>
+        <url>https://github.com/qomponent</url>
+    </scm>
+    <issueManagement>
+        <url>https://github.com/qomponent</url>
+    </issueManagement>
+
+    <dependencies>
+        
+        <dependency>
+            <groupId>org.mvnpm.at.qomponent</groupId>
+            <artifactId>qui-alert</artifactId>
+            <version>1.0.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.qomponent</groupId>
+            <artifactId>qui-badge</artifactId>
+            <version>1.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.qomponent</groupId>
+            <artifactId>qui-card</artifactId>
+            <version>1.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.qomponent</groupId>
+            <artifactId>qui-icons</artifactId>
+            <version>1.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.qomponent</groupId>
+            <artifactId>qui-switch</artifactId>
+            <version>1.0.3</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.mvnpm.at.fortawesome</groupId>
+            <artifactId>fontawesome-common-types</artifactId>
+            <version>6.5.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.fortawesome</groupId>
+            <artifactId>fontawesome-svg-core</artifactId>
+            <version>6.5.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.fortawesome</groupId>
+            <artifactId>free-brands-svg-icons</artifactId>
+            <version>6.5.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.fortawesome</groupId>
+            <artifactId>free-regular-svg-icons</artifactId>
+            <version>6.5.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.fortawesome</groupId>
+            <artifactId>free-solid-svg-icons</artifactId>
+            <version>6.5.2</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+        
+</project>
