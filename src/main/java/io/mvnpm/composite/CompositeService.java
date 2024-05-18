@@ -5,8 +5,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -19,8 +21,6 @@ import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
 import io.mvnpm.npm.model.Name;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 
 @ApplicationScoped
 public class CompositeService {
@@ -70,7 +70,7 @@ public class CompositeService {
 
     }
 
-    public Map<String, Date> sort(Map<String,Date> map){
+    public Map<String, Date> sort(Map<String, Date> map) {
         List<Map.Entry<String, Date>> list = new ArrayList<>(map.entrySet());
         list.sort(Map.Entry.comparingByValue());
         Map<String, Date> sortedMap = new LinkedHashMap<>();
@@ -79,7 +79,7 @@ public class CompositeService {
         }
         return sortedMap;
     }
-    
+
     public Path getImportMap(Name name, String version) {
         return compositeCreator.getImportMapPath(name, version);
     }

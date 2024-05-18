@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
   <artifactId>mvnpm</artifactId>
-  <version>3.0.37-SNAPSHOT</version>
+  <version>3.0.38-SNAPSHOT</version>
   <name>mvnpm</name>
   <description>Maven on NPM</description>
   <url>https://mvnpm.org/</url>
@@ -62,9 +62,9 @@
     
     <pgpainless.version>1.5.5</pgpainless.version>
     <!-- UI Libs -->
-    <quarkus-web-bundler.version>1.5.0.CR1</quarkus-web-bundler.version>
+    <quarkus-web-bundler.version>1.5.0.CR2</quarkus-web-bundler.version>
     <importmap.version>1.0.10</importmap.version>
-    <vaadin.version>24.3.12</vaadin.version>
+    <vaadin.version>24.3.13</vaadin.version>
     <vaadin-router.version>1.7.5</vaadin-router.version>
     <codeblock.version>1.0.16</codeblock.version>
     <compare-versions.version>6.1.0</compare-versions.version>

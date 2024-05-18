@@ -1,21 +1,22 @@
 package io.mvnpm.composite;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
 import io.mvnpm.npm.model.Name;
-import jakarta.ws.rs.PathParam;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Some info on composites
@@ -30,7 +31,7 @@ public class CompositeApi {
 
     @Inject
     CompositeService compositeService;
-    
+
     @GET
     public Collection<GitHubContent> listComposites() {
         return compositeCreator.listComposites();
@@ -47,13 +48,13 @@ public class CompositeApi {
     public List<String> versions(@PathParam("name") String name) {
         Name n = new Name("@mvnpm/" + name);
         Map<String, Date> versions = compositeService.getVersions(n);
-        if(versions==null || versions.isEmpty()){
+        if (versions == null || versions.isEmpty()) {
             return List.of();
-        }else{
+        } else {
             return new ArrayList<>(versions.keySet());
         }
     }
-    
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     public void handleWebhook(JsonNode payload) {
