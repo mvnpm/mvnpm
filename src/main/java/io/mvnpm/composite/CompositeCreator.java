@@ -7,25 +7,26 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
@@ -41,7 +42,7 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
@@ -55,6 +56,9 @@ import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
 import io.quarkus.logging.Log;
+import io.vertx.core.Vertx;
+import io.vertx.ext.web.client.HttpResponse;
+import io.vertx.ext.web.client.WebClient;
 
 /**
  * This group a set of artifacts into one
@@ -63,9 +67,6 @@ import io.quarkus.logging.Log;
  */
 @ApplicationScoped
 public class CompositeCreator {
-
-    @ConfigProperty(name = "mvnpm.composites-directory")
-    String compositesDirectory;
 
     @Inject
     FileStore fileStore;
@@ -79,20 +80,35 @@ public class CompositeCreator {
     @Inject
     KeyHolder keyHolder;
 
+    @Inject
+    @RestClient
+    GitHubService gitHubService;
+
+    private Vertx vertx = Vertx.vertx();
+
+    private final WebClient webClient = WebClient.create(vertx);
+
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
-    public void buildAllComposites() {
-        Set<Path> poms = getAllCompositePoms();
-        for (Path pom : poms) {
-            build(pom, null); // TODO: Get latest version
+    private Map<String, GitHubContent> compositesMap = new HashMap<>();
+
+    @PostConstruct
+    public void loadAllComposites() {
+        compositesMap.clear();
+        List<GitHubContent> allComposites = gitHubService.getContents("mvnpm", "composites", "definitions").await()
+                .indefinitely();
+
+        for (GitHubContent ghc : allComposites) {
+            String name = ghc.getName();
+            name = name.replace(".xml", "");
+            compositesMap.put(name, ghc);
         }
     }
 
     public void buildComposite(String artifactId, String version) {
-        Path compositesFolder = Paths.get(compositesDirectory);
-        Path pom = compositesFolder.resolve(artifactId + ".xml");
-        if (Files.exists(pom)) {
-            build(pom, version);
+        if (this.compositesMap.containsKey(artifactId)) {
+            String url = this.compositesMap.get(artifactId).getDownloadUrl();
+            build(url, version);
         } else {
             throw new RuntimeException("Composite definition for " + artifactId + " does not exist");
         }
@@ -102,23 +118,28 @@ public class CompositeCreator {
         return fileStore.getLocalDirectory(name, version).resolve("importmap.json");
     }
 
-    private void build(Path pom, String version) {
-        try (InputStream inputStream = Files.newInputStream(pom)) {
-            Model model = mavenXpp3Writer.read(inputStream);
+    private void build(String downloadUrl, String version) {
+        try {
+            String content = downloadFileContent(downloadUrl);
+            try (Reader reader = new StringReader(content)) {
+                Model model = mavenXpp3Writer.read(reader);
 
-            if (version == null) {
-                version = getLatestVersionOfFirstDependency(model); // Used in auto update
-            }
+                if (version == null) {
+                    version = getLatestVersionOfFirstDependency(model); // Used in auto update
+                }
 
-            if (version != null) {
-                model.setVersion(version);
-                List<Dependency> dependencies = resolveDependencies(model);
-                merge(model, dependencies);
+                if (version != null) {
+                    model.setVersion(version);
+                    List<Dependency> dependencies = resolveDependencies(model);
+                    merge(model, dependencies);
+                }
+            } catch (XmlPullParserException ex) {
+                throw new RuntimeException("Invalid pom xml for " + downloadUrl);
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
             }
-        } catch (XmlPullParserException ex) {
-            throw new RuntimeException("Invalid pom xml for " + pom);
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
@@ -133,19 +154,8 @@ public class CompositeCreator {
         return null;
     }
 
-    private Set<Path> getAllCompositePoms() {
-        Path compositesFolder = Paths.get(compositesDirectory);
-        boolean hasComposites = Files.exists(compositesFolder);
-        if (hasComposites) {
-            try (Stream<Path> stream = Files.list(compositesFolder)) {
-                return stream
-                        .filter(file -> !Files.isDirectory(file))
-                        .collect(Collectors.toSet());
-            } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-            }
-        }
-        return Set.of();
+    public Collection<GitHubContent> listComposites() {
+        return this.compositesMap.values();
     }
 
     private List<Dependency> resolveDependencies(Model model) {
@@ -486,4 +496,22 @@ public class CompositeCreator {
         }
     }
 
+    private String downloadFileContent(String downloadUrl) throws InterruptedException {
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<String> result = new AtomicReference<>();
+
+        webClient.getAbs(downloadUrl)
+                .send(ar -> {
+                    if (ar.succeeded()) {
+                        HttpResponse<io.vertx.core.buffer.Buffer> response = ar.result();
+                        result.set(response.bodyAsString());
+                    } else {
+                        ar.cause().printStackTrace();
+                    }
+                    latch.countDown();
+                });
+
+        latch.await();
+        return result.get();
+    }
 }

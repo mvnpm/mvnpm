@@ -19,6 +19,8 @@ import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
 import io.mvnpm.npm.model.Name;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 @ApplicationScoped
 public class CompositeService {
@@ -61,13 +63,23 @@ public class CompositeService {
                     nameTimeMap.put(versionDir.getFileName().toString(), lastModified);
                 }
             }
-            return nameTimeMap;
+            return sort(nameTimeMap);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
 
     }
 
+    public Map<String, Date> sort(Map<String,Date> map){
+        List<Map.Entry<String, Date>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+        Map<String, Date> sortedMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Date> entry : list) {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+        return sortedMap;
+    }
+    
     public Path getImportMap(Name name, String version) {
         return compositeCreator.getImportMapPath(name, version);
     }
