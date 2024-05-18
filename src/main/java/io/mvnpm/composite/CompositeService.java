@@ -5,8 +5,10 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,11 +63,21 @@ public class CompositeService {
                     nameTimeMap.put(versionDir.getFileName().toString(), lastModified);
                 }
             }
-            return nameTimeMap;
+            return sort(nameTimeMap);
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }
 
+    }
+
+    public Map<String, Date> sort(Map<String, Date> map) {
+        List<Map.Entry<String, Date>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.comparingByValue());
+        Map<String, Date> sortedMap = new LinkedHashMap<>();
+        for (Map.Entry<String, Date> entry : list) {
+            sortedMap.put(entry.getKey(), entry.getValue());
+        }
+        return sortedMap;
     }
 
     public Path getImportMap(Name name, String version) {

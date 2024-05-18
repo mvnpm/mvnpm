@@ -94,8 +94,7 @@ public class MavenRepositoryApi {
     public Response getImportMap(@PathParam("gavt") String gavt) {
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + "/importmap.json");
         if (nameVersionType.name().isInternal()) {
-            return Response.ok(streamPath(compositeService.getImportMap(nameVersionType.name(), nameVersionType.version())))
-                    .build();
+            return streamPath(compositeService.getImportMap(nameVersionType.name(), nameVersionType.version()));
         } else {
             Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName, nameVersionType.version());
             return Response.ok(importMapUtil.createImportMap(npmPackage)).build();

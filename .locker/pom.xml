@@ -5,7 +5,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
-  <version>3.0.37-SNAPSHOT</version>
+  <version>3.0.38-SNAPSHOT</version>
   <artifactId>mvnpm-locker</artifactId>
   <packaging>pom</packaging>
 
@@ -92,7 +92,7 @@
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>lint</artifactId>
-        <version>6.7.0</version>
+        <version>6.7.1</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -194,7 +194,7 @@
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
-        <version>24.3.12</version>
+        <version>24.3.13</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -236,13 +236,13 @@
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>component-base</artifactId>
-        <version>24.3.12</version>
+        <version>24.3.13</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>icon</artifactId>
-        <version>24.3.12</version>
+        <version>24.3.13</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -260,13 +260,13 @@
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-lumo-styles</artifactId>
-        <version>24.3.12</version>
+        <version>24.3.13</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>vaadin-themable-mixin</artifactId>
-        <version>24.3.12</version>
+        <version>24.3.13</version>
         <scope>provided</scope>
       </dependency>
       <dependency>

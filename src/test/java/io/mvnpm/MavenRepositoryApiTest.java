@@ -77,23 +77,23 @@ public class MavenRepositoryApiTest {
                         .setParam(CoreConnectionPNames.SO_TIMEOUT, 300000));
         final byte[] jar = RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .config(config)
-                .when().get("/maven2/org/mvnpm/at/mvnpm/vaadin-webcomponents/24.3.8/vaadin-webcomponents-24.3.8.jar")
+                .when().get("/maven2/org/mvnpm/at/mvnpm/lit/3.1.2/lit-3.1.2.jar")
                 .then()
                 .statusCode(200)
                 .extract().asByteArray();
-        final Path tempFile = Files.createTempFile("vaadin-webcomponents-24.3.8", ".jar");
+        final Path tempFile = Files.createTempFile("lit-3.1.2", ".jar");
         final Path nodeModules = Files.createTempDirectory("node_modules");
         Files.write(tempFile, jar);
         WebDepsInstaller.install(nodeModules,
-                List.of(WebDependency.of("vaadin-webcomponents", tempFile, WebDependency.WebDependencyType.MVNPM)));
+                List.of(WebDependency.of("lit", tempFile, WebDependency.WebDependencyType.MVNPM)));
         final MvnpmInfo mvnpmInfo = readMvnpmInfo(getMvnpmInfoPath(nodeModules));
         checkNodeModulesDir(nodeModules, mvnpmInfo);
         assertEquals(1, mvnpmInfo.installed().size());
-        final MvnpmInfo.InstalledDependency installedVaadin = mvnpmInfo.installed().stream()
-                .filter(installedDependency -> installedDependency.id().equals("vaadin-webcomponents"))
+        final MvnpmInfo.InstalledDependency installedLit = mvnpmInfo.installed().stream()
+                .filter(installedDependency -> installedDependency.id().equals("lit"))
                 .findFirst()
                 .get();
-        assertEquals(3, installedVaadin.dirs().size());
+        assertEquals(6, installedLit.dirs().size());
     }
 
     private void checkNodeModulesDir(Path nodeModules, MvnpmInfo mvnpmInfo) {

@@ -19,6 +19,7 @@ router.setRoutes([
     {path: '/doc', component: 'mvnpm-doc', name: 'Getting Started'},
     {path: '/releases', component: 'mvnpm-releases', name: 'Releases'},
     {path: '/live', component: 'mvnpm-live', name: 'Live'},
+    {path: '/composites', component: 'mvnpm-composites', name: 'Composites'},
 ]);
 
 /**
