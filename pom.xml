@@ -73,7 +73,7 @@
     <badge.version>1.0.0</badge.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
-    <esbuild-java.version>1.3.3</esbuild-java.version>
+    <esbuild-java.version>1.4.1</esbuild-java.version>
   </properties>
   <dependencyManagement>
     <dependencies>
