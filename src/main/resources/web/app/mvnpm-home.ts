@@ -396,8 +396,7 @@ export class MvnpmHome extends LitElement {
                             <div class="searchResultContent" slot="content">
                                 <div class="searchResultDetails">
                                     <div class="searchResultDescription">
-                                        ${unsafeHTML(marked(result.package.description))}
-                                        ${this._renderBy(result)}
+                                        ${this._renderPackageDescription(result)}
                                     </div>
                                     <div class="searchResultLinks">
                                         <a href="${result.package.links.npm}" target="_blank">
@@ -414,6 +413,14 @@ export class MvnpmHome extends LitElement {
                         </qui-card>`
                 )}
             </div>`; 
+        }
+    }
+    
+    _renderPackageDescription(result){
+        if(result.package.description){
+            return html`
+                ${unsafeHTML(marked(result.package.description))}
+                ${this._renderBy(result)}`;
         }
     }
     
