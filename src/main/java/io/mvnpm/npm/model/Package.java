@@ -14,7 +14,7 @@ public record Package(
         String description,
         @JsonDeserialize(using = LicenseDeserializer.class) License license,
         @JsonDeserialize(using = AuthorDeserializer.class) Author author,
-        URL homepage,
+        @JsonDeserialize(using = URLDeserializer.class) URL homepage,
         @JsonDeserialize(using = RepositoryDeserializer.class) Repository repository,
         @JsonDeserialize(using = BugsDeserializer.class) Bugs bugs,
         String main,

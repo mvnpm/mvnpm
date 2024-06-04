@@ -11,7 +11,7 @@ public record Project(
         @JsonProperty("name") Name name,
         String description,
         @JsonProperty("dist-tags") DistTags distTags,
-        URL homepage,
+        @JsonDeserialize(using = URLDeserializer.class) URL homepage,
         @JsonDeserialize(using = LicenseDeserializer.class) License license,
         @JsonDeserialize(using = VersionDeserializer.class) Set<String> versions,
         Map<String, String> time) {
