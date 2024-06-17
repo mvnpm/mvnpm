@@ -108,6 +108,36 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
+        <groupId>org.mvnpm.at.fortawesome</groupId>
+        <artifactId>fontawesome-common-types</artifactId>
+        <version>6.5.2</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.fortawesome</groupId>
+        <artifactId>fontawesome-svg-core</artifactId>
+        <version>6.5.2</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.fortawesome</groupId>
+        <artifactId>free-brands-svg-icons</artifactId>
+        <version>6.5.2</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.fortawesome</groupId>
+        <artifactId>free-regular-svg-icons</artifactId>
+        <version>6.5.2</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.fortawesome</groupId>
+        <artifactId>free-solid-svg-icons</artifactId>
+        <version>6.5.2</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>common</artifactId>
         <version>1.2.1</version>
@@ -140,7 +170,7 @@
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>javascript</artifactId>
-        <version>1.4.16</version>
+        <version>1.4.17</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -194,7 +224,7 @@
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
-        <version>24.3.13</version>
+        <version>24.4.0</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -212,7 +242,7 @@
       <dependency>
         <groupId>org.mvnpm.at.qomponent</groupId>
         <artifactId>qui-badge</artifactId>
-        <version>1.0.0</version>
+        <version>1.0.2</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -228,22 +258,16 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
+        <groupId>org.mvnpm.at.qomponent</groupId>
+        <artifactId>qui-icons</artifactId>
+        <version>1.0.1</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
         <groupId>org.mvnpm.at.types</groupId>
         <artifactId>trusted-types</artifactId>
         <version>2.0.7</version>
         <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>component-base</artifactId>
-        <version>24.3.13</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>icon</artifactId>
-        <version>24.3.13</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
@@ -256,18 +280,6 @@
         <artifactId>vaadin-development-mode-detector</artifactId>
         <version>2.0.6</version>
         <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>vaadin-lumo-styles</artifactId>
-        <version>24.3.13</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>vaadin-themable-mixin</artifactId>
-        <version>24.3.13</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
@@ -295,6 +307,12 @@
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
+        <artifactId>ldrs</artifactId>
+        <version>1.0.2</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm</groupId>
         <artifactId>lit-element</artifactId>
         <version>4.0.5</version>
         <scope>runtime</scope>
@@ -308,8 +326,8 @@
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit</artifactId>
-        <version>3.1.3</version>
-        <scope>runtime</scope>
+        <version>3.1.4</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>

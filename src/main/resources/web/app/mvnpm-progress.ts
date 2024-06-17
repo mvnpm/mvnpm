@@ -2,6 +2,9 @@ import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import '@vaadin/progress-bar';
 import '@vaadin/message-list';
+import { dotStream } from 'ldrs';
+
+dotStream.register();
 
 /**
  * This component shows the Sync Progress screen
@@ -143,9 +146,19 @@ export class MvnpmProgress extends LitElement {
 
     private _renderInitQueue() {
         if (this._initQueue && this._initQueue.length > 0) {
-            return html`<vaadin-message-list .items="${this._initQueue}"></vaadin-message-list>`;
+            return html`<vaadin-message-list .items="${this._initQueue}"></vaadin-message-list>
+            <l-dot-stream
+                size="60"
+                speed="2.5"
+                color="#66a5b1" 
+            ></l-dot-stream>`;
         } else {
-            return html`<p>Nothing in the sync queue</p>`;
+            return html`<l-dot-stream
+                size="60"
+                speed="2.5"
+                color="#66a5b1" 
+            ></l-dot-stream> <br/>Waiting for sync
+            `;
         }
     }
 

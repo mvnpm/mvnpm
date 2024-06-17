@@ -53,7 +53,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.11.0</quarkus.platform.version>
+    <quarkus.platform.version>3.11.1</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
@@ -62,18 +62,20 @@
     
     <pgpainless.version>1.5.5</pgpainless.version>
     <!-- UI Libs -->
-    <quarkus-web-bundler.version>1.5.0.CR2</quarkus-web-bundler.version>
+    <quarkus-web-bundler.version>1.5.3</quarkus-web-bundler.version>
     <importmap.version>1.0.10</importmap.version>
-    <vaadin.version>24.3.13</vaadin.version>
+    <lit.version>3.1.4</lit.version>
+    <vaadin.version>24.4.0</vaadin.version>
+    <ldrs.version>1.0.2</ldrs.version>
     <vaadin-router.version>1.7.5</vaadin-router.version>
     <codeblock.version>1.0.16</codeblock.version>
     <compare-versions.version>6.1.0</compare-versions.version>
     <marked.version>12.0.1</marked.version>
     <card.version>1.0.1</card.version>
-    <badge.version>1.0.0</badge.version>
+    <badge.version>1.0.2</badge.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
-    <esbuild-java.version>1.4.1</esbuild-java.version>
+    <esbuild-java.version>1.4.3</esbuild-java.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -187,12 +189,25 @@
       <version>${quarkus-web-bundler.version}</version>
     </dependency>
     <!-- UI (from mvnpm) -->
+    <dependency>
+        <groupId>org.mvnpm</groupId>
+        <artifactId>lit</artifactId>
+        <version>${lit.version}</version>
+        <scope>provided</scope>
+    </dependency>
     <!-- Vaadin Web components -->
     <dependency>
       <groupId>org.mvnpm.at.mvnpm</groupId>
       <artifactId>vaadin-webcomponents</artifactId>
       <version>${vaadin.version}</version>
       <scope>provided</scope>
+    </dependency>
+    <!-- Loaders -->
+    <dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>ldrs</artifactId>
+	<version>${ldrs.version}</version>
+	<scope>provided</scope>
     </dependency>
     <!-- Router -->
     <dependency>
