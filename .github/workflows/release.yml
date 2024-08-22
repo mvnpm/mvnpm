@@ -41,6 +41,7 @@ jobs:
     - name: Push Docker image to Quay.io
       run: docker push quay.io/pkruger/mvnpm:${{ github.event.release.tag_name }}
 
+  
   update_version:
     runs-on: ubuntu-latest
     needs: release
@@ -64,10 +65,30 @@ jobs:
         NEXT_PATCH_VERSION="$MAJOR.$MINOR.$((PATCH + 1))-SNAPSHOT"
         mvn versions:set -DnewVersion=${NEXT_PATCH_VERSION} -DgenerateBackupPoms=false
     
-    - name: Commit and push changes
+    - name: Commit and push changes to a new branch
       run: |
         git config user.name "GitHub Actions"
         git config user.email "actions@github.com"
+        git checkout -b update-version-${{ github.event.release.tag_name }}
         git add pom.xml
         git commit -m "Bump version to ${NEXT_PATCH_VERSION}"
-        git push origin main
+        git push origin update-version-${{ github.event.release.tag_name }}
+
+    - name: Create a pull request
+      id: create_pr
+      uses: peter-evans/create-pull-request@v5
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        commit-message: "Bump version to ${NEXT_PATCH_VERSION}"
+        branch: update-version-${{ github.event.release.tag_name }}
+        title: "Bump version to ${NEXT_PATCH_VERSION}"
+        body: "Automatically created by GitHub Actions. Bump version to ${NEXT_PATCH_VERSION}."
+        labels: version-update
+        base: main
+
+    - name: Automatically merge the pull request
+      uses: "peter-evans/enable-pull-request-automerge@v2"
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        pull-request-number: ${{ steps.create_pr.outputs.pull-request-number }}
+        merge-method: "squash"
