@@ -1,0 +1,36 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+    
+    - name: Update version in pom.xml
+      run: |
+        RELEASE_VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/^v//')
+        mvn versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false
+    
+    - name: Build with Maven
+      run: mvn clean install -Dnative -DskipTests
+    
+    - name: Log in to Quay.io
+      run: echo "${{ secrets.QUAY_PASSWORD }}" | docker login quay.io -u "${{ secrets.QUAY_USERNAME }}" --password-stdin
+    
+    - name: Build Docker image
+      run: docker build -f src/main/docker/Dockerfile.native-micro -t pkruger/mvnpm:${{ github.event.release.tag_name }} .
+    
+    - name: Push Docker image to Quay.io
+      run: docker push quay.io/pkruger/mvnpm:${{ github.event.release.tag_name }}
