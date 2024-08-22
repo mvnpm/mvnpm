@@ -34,6 +34,10 @@ jobs:
     
     - name: Build Docker image
       run: docker build -f src/main/docker/Dockerfile.native-micro -t pkruger/mvnpm:${{ github.event.release.tag_name }} .
+
+    - name: Tag Docker image
+      run: docker build -f src/main/docker/Dockerfile.native-micro -t pkruger/mvnpm:${{ github.event.release.tag_name }} .
+           docker tag pkruger/mvnpm:${{ github.event.release.tag_name }} quay.io/pkruger/mvnpm:${{ github.event.release.tag_name }}
     
     - name: Push Docker image to Quay.io
       run: docker push quay.io/pkruger/mvnpm:${{ github.event.release.tag_name }}
