@@ -85,8 +85,12 @@ jobs:
         body: "Automatically created by GitHub Actions. Bump version to ${NEXT_PATCH_VERSION}."
         labels: version-update
         base: main
+    
+    - name: Log pull request number
+      run: echo "Pull request number: ${{ steps.create_pr.outputs.pull-request-number }}"
 
-    - name: Automatically merge the pull request
+    - name: Automatically merge the pull request (optional)
+      if: ${{ steps.create_pr.outputs.pull-request-number != '' }}
       uses: "peter-evans/enable-pull-request-automerge@v2"
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
