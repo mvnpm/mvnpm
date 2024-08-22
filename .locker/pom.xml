@@ -5,7 +5,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.mvnpm</groupId>
-  <version>3.0.42-SNAPSHOT</version>
+  <version>999-SNAPSHOT</version>
   <artifactId>mvnpm-locker</artifactId>
   <packaging>pom</packaging>
 
