@@ -1,0 +1,131 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
+  labels:
+    app.kubernetes.io/name: mvnpm
+    app.kubernetes.io/managed-by: quarkus
+    app.openshift.io/runtime: quarkus
+  name: mvnpm
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: mvnpm
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
+    app.quarkus.io/vcs-uri: https://github.com/mvnpm/mvnpm.git
+  labels:
+    app.kubernetes.io/managed-by: quarkus
+    app.openshift.io/runtime: quarkus
+    app.kubernetes.io/name: mvnpm
+  name: mvnpm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mvnpm
+  template:
+    metadata:
+      annotations:
+        alpha.image.policy.openshift.io/resolve-names: '*'
+        app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
+        app.quarkus.io/vcs-uri: https://github.com/mvnpm/mvnpm.git
+      labels:
+        app.kubernetes.io/managed-by: quarkus
+        app.openshift.io/runtime: quarkus
+        app.kubernetes.io/name: mvnpm
+    spec:
+      containers:
+        - envFrom:
+            - secretRef:
+                name: mvnpm-secrets
+            - configMapRef:
+                name: mvnpm-config
+          image: quay.io/pkruger/mvnpm:3.0.42
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /q/health/live
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          name: mvnpm
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          startupProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /q/health/started
+              port: 8080
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 10
+          volumeMounts:
+            - mountPath: /mvnpm-data
+              name: mvnpm-data
+      volumes:
+        - name: mvnpm-data
+          persistentVolumeClaim:
+            claimName: mvnpm-data-pvc
+            readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mvnpm-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
+    app.quarkus.io/vcs-uri: https://github.com/mvnpm/mvnpm.git
+  labels:
+    app.kubernetes.io/name: mvnpm
+    app.kubernetes.io/managed-by: quarkus
+    app.openshift.io/runtime: quarkus
+  name: mvnpm
+spec:
+  port:
+    targetPort: http
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: mvnpm
