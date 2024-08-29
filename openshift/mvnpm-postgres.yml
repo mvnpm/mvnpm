@@ -1,0 +1,68 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mvnpm-postgres
+spec:
+  serviceName: mvnpm-postgres
+  selector:
+    matchLabels:
+      app: mvnpm-postgres
+  template:
+    metadata:
+      labels:
+        app: mvnpm-postgres
+    spec:
+      containers:
+        - name: mvnpm-postgres
+          image: registry.redhat.io/rhel9/postgresql-16:latest
+          resources:
+            limits:
+              memory: 150Mi
+          volumeMounts:
+            - mountPath: /var/lib/pgsql/data
+              name: mvnpm-postgres-data
+          env:
+            - name: POSTGRESQL_DATABASE
+              value: mvnpm
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  key: QUARKUS_DATASOURCE_USER
+                  name: mvnpm-secrets
+                  optional: false
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: QUARKUS_DATASOURCE_PASSWORD
+                  name: mvnpm-secrets
+                  optional: false
+            - name: POSTGRESQL_VOLUME_CAPACITY
+              value: 3Gi
+      volumes:
+        - name: mvnpm-postgres-data
+          persistentVolumeClaim:
+            claimName: mvnpm-postgres-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mvnpm-postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mvnpm-postgres
+spec:
+  selector:
+    app: mvnpm-postgres
+  type: LoadBalancer
+  ports:
+    - port: 5432
+      targetPort: 5432
