@@ -38,7 +38,7 @@ spec:
                   name: mvnpm-secrets
                   optional: false
             - name: POSTGRESQL_VOLUME_CAPACITY
-              value: 3Gi
+              value: 1Gi
       volumes:
         - name: mvnpm-postgres-data
           persistentVolumeClaim:
@@ -53,7 +53,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 3Gi
+      storage: 1Gi
 ---
 apiVersion: v1
 kind: Service
