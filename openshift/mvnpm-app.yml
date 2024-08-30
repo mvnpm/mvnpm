@@ -128,17 +128,56 @@ metadata:
   annotations:
     app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
     app.quarkus.io/vcs-uri: https://github.com/mvnpm/mvnpm.git
+    kubernetes.io/tls-acme: 'true'
   labels:
     app.kubernetes.io/name: mvnpm
     app.kubernetes.io/managed-by: quarkus
     app.openshift.io/runtime: quarkus
-  name: mvnpm
+  name: mvnpm.org
 spec:
+  host: mvnpm.org
   port:
     targetPort: http
-  tls:
-    insecureEdgeTerminationPolicy: Redirect
-    termination: edge
+  to:
+    kind: Service
+    name: mvnpm
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
+    app.quarkus.io/vcs-uri: https://github.com/mvnpm/mvnpm.git
+    kubernetes.io/tls-acme: 'true'
+  labels:
+    app.kubernetes.io/name: mvnpm
+    app.kubernetes.io/managed-by: quarkus
+    app.openshift.io/runtime: quarkus
+  name: repo.mvnpm.org
+spec:
+  host: repo.mvnpm.org
+  port:
+    targetPort: http
+  to:
+    kind: Service
+    name: mvnpm
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
+    app.quarkus.io/vcs-uri: https://github.com/mvnpm/mvnpm.git
+    kubernetes.io/tls-acme: 'true'
+  labels:
+    app.kubernetes.io/name: mvnpm
+    app.kubernetes.io/managed-by: quarkus
+    app.openshift.io/runtime: quarkus
+  name: www.mvnpm.org
+spec:
+  host: www.mvnpm.org
+  port:
+    targetPort: http
   to:
     kind: Service
     name: mvnpm
