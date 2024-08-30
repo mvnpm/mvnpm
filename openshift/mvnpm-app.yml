@@ -1,24 +1,4 @@
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
-  labels:
-    app.kubernetes.io/name: mvnpm
-    app.kubernetes.io/managed-by: quarkus
-    app.openshift.io/runtime: quarkus
-  name: mvnpm
-spec:
-  ports:
-    - name: http
-      port: 80
-      protocol: TCP
-      targetPort: 8080
-  selector:
-    app.kubernetes.io/name: mvnpm
-  type: ClusterIP
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -47,13 +27,13 @@ spec:
         app.kubernetes.io/name: mvnpm
     spec:
       containers:
-        - envFrom:
-            - secretRef:
-                name: mvnpm-secrets
-            - configMapRef:
-                name: mvnpm-config
+        - name: mvnpm
           image: quay.io/pkruger/mvnpm:3.0.42
           imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
           livenessProbe:
             failureThreshold: 3
             httpGet:
@@ -64,11 +44,6 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 10
-          name: mvnpm
-          ports:
-            - containerPort: 8080
-              name: http
-              protocol: TCP
           readinessProbe:
             failureThreshold: 3
             httpGet:
@@ -89,14 +64,52 @@ spec:
             periodSeconds: 10
             successThreshold: 1
             timeoutSeconds: 10
+          env:
+            - name: MVNPM_ASCKEY_PATH
+              value: /mvnpm-cert/phillipkruger.asc
+            - name: MVNPM_LOCAL_USER_DIRECTORY
+              value: /mvnpm-data
+            - name: QUARKUS_DATASOURCE_JDBC_URL
+              value: jdbc:postgresql://mvnpm-postgres:5432/mvnpm?loggerLevel=OFF
+          envFrom:
+            - secretRef:
+                name: mvnpm-secrets
+            - configMapRef:
+                name: mvnpm-config
           volumeMounts:
             - mountPath: /mvnpm-data
               name: mvnpm-data
+            - mountPath: /mvnpm-cert
+              name: mvnpm-cert
+              readOnly: true
       volumes:
         - name: mvnpm-data
           persistentVolumeClaim:
             claimName: mvnpm-data-pvc
             readOnly: false
+        - name: mvnpm-cert
+          secret:
+            secretName: mvnpm-cert-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    app.openshift.io/vcs-uri: https://github.com/mvnpm/mvnpm
+  labels:
+    app.kubernetes.io/name: mvnpm
+    app.kubernetes.io/managed-by: quarkus
+    app.openshift.io/runtime: quarkus
+  name: mvnpm
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: mvnpm
+  type: ClusterIP
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
