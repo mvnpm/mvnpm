@@ -2,7 +2,7 @@
 
 ### Use npm like any other Maven dependency...
 
-**mvnpm** (Maven NPM) allows to consume the [NPM Registry](https://www.npmjs.com/) packages as dependencies directly from a Maven or Gradle project:
+**mvnpm** (Maven NPM) allows to consume the [NPM Registry](https://www.npmjs.com/) packages as dependencies directly from a Maven project:
 
 ```xml
     <dependency>
@@ -13,12 +13,20 @@
     </dependency>
 ```
 
-_Use `org.mvnpm.at.{namespace}` as groupId for a particular namespace (i.e. `@hotwired/stimulus` becomes `org.mvnpm.at.hotwired:stimulus`)._
+or from a Gradle project:
+
+```groovy
+dependencies {
+    runtimeOnly/compileOnly("org.mvnpm:{package-name}:{package-version}")
+}
+```
+
+_Use `org.mvnpm.at.{namespace}` as **groupId** for a particular namespace (i.e. `@hotwired/stimulus` becomes `org.mvnpm.at.hotwired:stimulus`)._
 
 ### How to consume?
 
-*   Packaged and served with the [Quarkus Web Bundler extension](https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html) using scope "provided".
-*   Directly Served by Quarkus with scope "runtime"
+*   Packaged and served with the [Quarkus Web Bundler extension](https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html) or [Quarkus Web dependency locator extension](https://quarkus.io/guides/web-dependency-locator) using scope "provided" ("compileOnly" with Gradle)
+*   Directly Served by Quarkus with scope "runtime" ("runtimeOnly" with Gradle)
 *   In any Java application with [importmaps](https://github.com/mvnpm/importmap) or [esbuild-java](https://github.com/mvnpm/esbuild-java)
 *   In any Java application like you would have done with [webjars](https://www.webjars.org/)
 
@@ -28,14 +36,17 @@ A lot of packages are already synced on Central, which mean they can directly be
 **If it's not:**
 
 *   Click on the "Maven Central" badge to trigger a sync with Maven Central
-*   Configure your local Maven settings to use the [MVNPM Maven Repository as a fallback](#configure-fallback-repo). When a package is missing, it will fetch it from the fallback repository and automatically trigger a sync with Maven Central.
+*   Configure your local Maven settings to use the [MVNPM Maven Repository as a fallback](#how-to-configure-the-fallback-repository). When a package is missing, it will fetch it from the fallback repository and automatically trigger a sync with Maven Central.
 
 **You should use the Maven Central repository for production builds.**
 
 ### How to configure the fallback repository?
 
-The **mvnpm** Maven repository is a facade on top of the [NPM Registry](https://www.npmjs.com/), it is handy when starting (or updating versions) on a project with many non synchronised packages (which will become more and more unlikely in the future).  
-to use it in your local Maven settings add the following to your settings.xml (typically /home/your-username/.m2/settings.xml)
+The **mvnpm** Maven repository is a facade on top of the [NPM Registry](https://www.npmjs.com/), it is handy when starting (or updating versions) on a project with many non synchronised packages (which will become more and more unlikely in the future).
+
+#### Maven
+
+To use it in your local Maven settings add the following to your settings.xml (typically `/home/your-username/.m2/settings.xml`)
 
 ```xml
     <settings>
@@ -67,6 +78,26 @@ to use it in your local Maven settings add the following to your settings.xml (t
 </settings>
 ```
 
+#### Gradle
+
+The `mvnpm` repository can be configured as any other repositories in your project.
+Since Gradle honnors the repository order when fetching dependencies, it is recommended to declare it **after** maven-central.
+This way it will only be used as fallback, when the dependency is absent from maven-central.
+In addition it is a good practice to configure repository content filtering to help Gradle to understand which dependencies can be fetched from the `mvnpm` repository and avoid uncessary lookups.
+
+```groovy
+repositories {
+    mavenCentral()
+    maven {
+        name = "mvnpm"
+        url = uri("https://repo.mvnpm.org/maven2")
+        content {
+            includeGroupByRegex "org\\.mvnpm.*"
+        }
+    }
+}
+```
+
 ### How does the mvnpm Maven repository work ?
 
 ![Schema](src/main/resources/web/static/how-does-mvnpm-work.png)
@@ -90,7 +121,7 @@ to use it in your local Maven settings add the following to your settings.xml (t
 
 ### How to lock dependencies?
 
-**Locking with Maven**
+#### Locking with Maven
 
 The [mvnpm locker Maven Plugin](https://github.com/mvnpm/locker) will create a version locker profile for your org.mvnpm and org.webjars dependencies. Allowing you to mimick the package-lock.json and yarn.lock files in a Maven world.
 
@@ -98,13 +129,14 @@ It is essential as NPM dependencies are typically deployed using version ranges,
 
 In addition when using the locker, the number of files Maven need to download is considerably reduced as it no longer need to check all possible version ranges (better for reproducibility, contributors and CI).
 
-**Locking with Gradle**
+#### Locking with Gradle
+
 Gradle provides a native version locking system, to install it, add this:
 
 build.gradle
 ```groovy
 dependencyLocking {
-lockAllConfigurations()
+    lockAllConfigurations()
 }
 ```
 Then run `gradle dependencies --write-locks` to generate the lockfile.
