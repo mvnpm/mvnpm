@@ -14,6 +14,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.MediaType;
 
+import org.jboss.resteasy.reactive.NoCache;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.mvnpm.npm.model.Name;
@@ -39,11 +41,13 @@ public class CompositeApi {
 
     @GET
     @Path("/refresh")
+    @NoCache
     public void refresh() {
         compositeCreator.loadAllComposites();
     }
 
     @GET
+    @NoCache
     @Path("/versions/{name}")
     public List<String> versions(@PathParam("name") String name) {
         Name n = new Name("@mvnpm/" + name);

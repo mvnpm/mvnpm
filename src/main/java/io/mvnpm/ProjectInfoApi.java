@@ -1,5 +1,9 @@
 package io.mvnpm;
 
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_1DAY;
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -12,6 +16,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
 
+import org.jboss.resteasy.reactive.ResponseHeader;
 import org.jboss.resteasy.reactive.RestResponse;
 
 import io.mvnpm.npm.NpmRegistryFacade;
@@ -34,6 +39,7 @@ public class ProjectInfoApi {
 
     @GET
     @Path("/project/{project : (.+)?}")
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     public RestResponse<Project> projectInfo(@PathParam("project") String project) {
         try {
             return RestResponse.ok(npmRegistryFacade.getProject(project));
@@ -46,6 +52,7 @@ public class ProjectInfoApi {
 
     @GET
     @Path("/package/{project : (.+)?}")
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     public io.mvnpm.npm.model.Package packageInfo(@PathParam("project") String project,
             @DefaultValue("latest") @QueryParam("version") String version) {
         return npmRegistryFacade.getPackage(project, version);
@@ -53,12 +60,14 @@ public class ProjectInfoApi {
 
     @GET
     @Path("/search/{term : (.+)?}")
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_1DAY)
     public SearchResults search(@PathParam("term") String term, @QueryParam("page") @DefaultValue("1") int page) {
         return npmRegistryFacade.search(term, page);
     }
 
     @GET
     @Path("/npm/{groupId}/{artifactId}")
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     public Response toNpmRegistry(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
 

@@ -8,6 +8,8 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 
+import org.jboss.resteasy.reactive.NoCache;
+
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
 import io.quarkus.logging.Log;
@@ -24,6 +26,7 @@ public class BackupApi {
     CentralSyncItemService centralSyncItemService;
 
     @GET
+    @NoCache
     public List<CentralSyncItem> exportAll() {
         return CentralSyncItem.findAll().list();
     }

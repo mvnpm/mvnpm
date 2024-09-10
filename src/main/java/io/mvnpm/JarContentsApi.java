@@ -1,5 +1,8 @@
 package io.mvnpm;
 
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,6 +19,7 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.jboss.resteasy.reactive.ResponseHeader;
 
 import io.mvnpm.file.FileType;
 import io.mvnpm.maven.MavenRepositoryService;
@@ -34,6 +38,7 @@ public class JarContentsApi {
     MavenRepositoryService mavenRepositoryService;
 
     @GET
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}.jar")
     public JarLibrary getJar(@PathParam("gavt") String gavt) {
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
@@ -41,6 +46,7 @@ public class JarContentsApi {
     }
 
     @GET
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}-sources.jar")
     public JarLibrary getSourcesJar(@PathParam("gavt") String gavt) {
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
@@ -48,6 +54,7 @@ public class JarContentsApi {
     }
 
     @GET
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}-javadoc.jar")
     public JarLibrary getJavadocJar(@PathParam("gavt") String gavt) {
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
@@ -55,6 +62,7 @@ public class JarContentsApi {
     }
 
     @GET
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}.tgz")
     public JarLibrary getTgz(@PathParam("gavt") String gavt) {
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
