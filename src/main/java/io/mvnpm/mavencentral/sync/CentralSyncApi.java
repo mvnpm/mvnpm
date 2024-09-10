@@ -86,7 +86,7 @@ public class CentralSyncApi {
     }
 
     @GET
-    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
+    @NoCache
     @Path("/info/{groupId}/{artifactId}")
     public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
