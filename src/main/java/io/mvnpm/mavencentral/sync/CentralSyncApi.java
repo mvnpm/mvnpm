@@ -1,5 +1,8 @@
 package io.mvnpm.mavencentral.sync;
 
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
+
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +18,9 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
+
+import org.jboss.resteasy.reactive.NoCache;
+import org.jboss.resteasy.reactive.ResponseHeader;
 
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -80,6 +86,7 @@ public class CentralSyncApi {
     }
 
     @GET
+    @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/info/{groupId}/{artifactId}")
     public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
@@ -99,6 +106,7 @@ public class CentralSyncApi {
     }
 
     @GET
+    @NoCache
     @Path("/request/{groupId}/{artifactId}")
     public CentralSyncItem requestFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
@@ -140,6 +148,7 @@ public class CentralSyncApi {
     }
 
     @GET
+    @NoCache
     @Path("/retry/{groupId}/{artifactId}")
     public CentralSyncItem retryFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
@@ -165,12 +174,14 @@ public class CentralSyncApi {
     }
 
     @GET
+    @NoCache
     @Path("/item/{stage}")
     public List<CentralSyncItem> getItems(@PathParam("stage") Stage stage) {
         return CentralSyncItem.findByStage(stage);
     }
 
     @GET
+    @NoCache
     @Path("/items")
     public List<CentralSyncItem> getItems() {
         return CentralSyncItem.findAll().list();

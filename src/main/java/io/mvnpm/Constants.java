@@ -2,6 +2,10 @@ package io.mvnpm;
 
 public interface Constants {
 
+    String HEADER_CACHE_CONTROL = "Cache-Control";
+    String HEADER_CACHE_CONTROL_IMMUTABLE = "public, max-age=315360000, immutable";
+    String HEADER_CACHE_CONTROL_1DAY = "public, max-age=86400";
+
     String OR = "||";
     String OR_ESCAPED = "\\|\\|";
     String SPACE = " ";

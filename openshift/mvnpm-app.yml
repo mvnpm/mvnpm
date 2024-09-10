@@ -35,23 +35,23 @@ spec:
               name: http
               protocol: TCP
           livenessProbe:
-            failureThreshold: 3
+            failureThreshold: 10
             httpGet:
               path: /q/health/live
               port: 8080
               scheme: HTTP
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 10
           readinessProbe:
-            failureThreshold: 3
+            failureThreshold: 10
             httpGet:
               path: /q/health/ready
               port: 8080
               scheme: HTTP
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            periodSeconds: 30
             successThreshold: 1
             timeoutSeconds: 10
           startupProbe:
@@ -63,7 +63,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
             successThreshold: 1
-            timeoutSeconds: 10
+            timeoutSeconds: 20
           env:
             - name: MVNPM_ASCKEY_PATH
               value: /mvnpm-cert/phillipkruger.asc
@@ -82,6 +82,13 @@ spec:
             - mountPath: /mvnpm-cert
               name: mvnpm-cert
               readOnly: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "2048Mi"
       volumes:
         - name: mvnpm-data
           persistentVolumeClaim:

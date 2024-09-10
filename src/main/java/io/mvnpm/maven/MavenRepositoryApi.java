@@ -1,5 +1,8 @@
 package io.mvnpm.maven;
 
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
+import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -9,6 +12,8 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
+
+import org.jboss.resteasy.reactive.NoCache;
 
 import io.mvnpm.composite.CompositeService;
 import io.mvnpm.file.FileType;
@@ -44,6 +49,7 @@ public class MavenRepositoryApi {
 
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
+    @NoCache
     @Produces(MediaType.APPLICATION_XML)
     public Response getMavenMetadata(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
@@ -59,6 +65,7 @@ public class MavenRepositoryApi {
 
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml.sha1")
+    @NoCache
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataSha1(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
@@ -68,6 +75,7 @@ public class MavenRepositoryApi {
 
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml.md5")
+    @NoCache
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataMd5(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
@@ -81,9 +89,12 @@ public class MavenRepositoryApi {
     public Response getPackageJson(@PathParam("gavt") String gavt) {
         NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt + "/package.json");
         if (nameVersionType.name().isInternal()) {
-            return Response.ok().build(); // TODO: Can we return this in some format ?
+            return Response.ok()
+                    .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
+                    .build(); // TODO: Can we return this in some format ?
         } else {
             return Response.ok(npmRegistryFacade.getPackage(nameVersionType.name().npmFullName, nameVersionType.version()))
+                    .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
                     .build();
         }
     }
@@ -97,7 +108,9 @@ public class MavenRepositoryApi {
             return streamPath(compositeService.getImportMap(nameVersionType.name(), nameVersionType.version()));
         } else {
             Package npmPackage = npmRegistryFacade.getPackage(nameVersionType.name().npmFullName, nameVersionType.version());
-            return Response.ok(importMapUtil.createImportMap(npmPackage)).build();
+            return Response.ok(importMapUtil.createImportMap(npmPackage))
+                    .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
+                    .build();
         }
     }
 
@@ -279,6 +292,8 @@ public class MavenRepositoryApi {
 
     private Response streamPath(java.nio.file.Path path) {
         StreamingOutput streamingOutput = FileUtil.toStreamingOutput(path);
-        return Response.ok(streamingOutput).build();
+        return Response.ok(streamingOutput)
+                .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
+                .build();
     }
 }

@@ -16,6 +16,8 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 
+import org.jboss.resteasy.reactive.NoCache;
+
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
@@ -80,12 +82,14 @@ public class EventLogApi {
     }
 
     @GET
+    @NoCache
     @Path("/top")
     public List<EventLogEntry> getTop(@QueryParam("limit") @DefaultValue("999") int limit) {
         return EventLogEntry.findAll(Sort.by("time", Sort.Direction.Descending)).range(0, limit).list();
     }
 
     @GET
+    @NoCache
     @Path("/gav/{groupId}/{artifactId}/{version}")
     public List<EventLogEntry> getGavLog(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @PathParam("version") String version) {
