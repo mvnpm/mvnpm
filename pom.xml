@@ -62,7 +62,7 @@
     
     <pgpainless.version>1.5.5</pgpainless.version>
     <!-- UI Libs -->
-    <quarkus-web-bundler.version>1.7.0</quarkus-web-bundler.version>
+    <quarkus-web-bundler.version>1.7.2</quarkus-web-bundler.version>
     <lit.version>3.2.0</lit.version>
     <vaadin.version>24.4.5</vaadin.version>
     <ldrs.version>1.0.2</ldrs.version>
@@ -74,7 +74,7 @@
     <badge.version>1.0.2</badge.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
-    <esbuild-java.version>1.4.3</esbuild-java.version>
+    <esbuild-java.version>1.5.0</esbuild-java.version>
   </properties>
   <dependencyManagement>
     <dependencies>

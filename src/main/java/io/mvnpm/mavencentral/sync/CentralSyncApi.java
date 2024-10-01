@@ -1,8 +1,5 @@
 package io.mvnpm.mavencentral.sync;
 
-import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
-import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
-
 import java.util.List;
 import java.util.Set;
 
@@ -20,7 +17,6 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 
 import org.jboss.resteasy.reactive.NoCache;
-import org.jboss.resteasy.reactive.ResponseHeader;
 
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;

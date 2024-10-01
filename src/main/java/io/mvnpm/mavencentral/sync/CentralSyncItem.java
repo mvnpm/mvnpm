@@ -1,12 +1,5 @@
 package io.mvnpm.mavencentral.sync;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.NamedQueries;
-import jakarta.persistence.NamedQuery;
-
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -14,6 +7,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
 @IdClass(Gav.class)

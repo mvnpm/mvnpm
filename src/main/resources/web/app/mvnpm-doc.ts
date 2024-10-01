@@ -5,6 +5,7 @@ import '@qomponent/qui-code-block';
 /**
  * This component shows the Doc screen
  */
+
 @customElement('mvnpm-doc')
 export class MvnpmDoc extends LitElement {
 
