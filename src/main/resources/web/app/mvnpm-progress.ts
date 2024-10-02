@@ -182,6 +182,11 @@ export class MvnpmProgress extends LitElement {
     return html`
       <div class="lane">
         <h3>Queue</h3>
+        ${this.liveSync ? html`<l-dot-stream
+            size="30"
+            speed="2.5"
+            color="#66a5b1"
+        ></l-dot-stream>`:''}
         ${this._renderInitQueue()}
       </div>
       <div class="lane uploading">
@@ -197,22 +202,11 @@ export class MvnpmProgress extends LitElement {
   private _renderInitQueue() {
     if (this._initQueue && this._initQueue.length > 0) {
       return html`
-        <vaadin-message-list .items="${this._initQueue}"></vaadin-message-list>
-        <l-dot-stream
-            size="30"
-            speed="2.5"
-            color="#66a5b1"
-        ></l-dot-stream>`;
+        <vaadin-message-list .items="${this._initQueue}"></vaadin-message-list>`;
     } else if (this.liveSync) {
-      return html`
-        <l-dot-stream
-            size="40"
-            speed="2.5"
-            color="#66a5b1"
-        ></l-dot-stream> <br/>Waiting for items
-      `;
+      return html`Waiting for work`;
     } else {
-      return html`No items`;
+      return html`<p style="color: gray">Nothing in the queue</p>`;
     }
   }
 
