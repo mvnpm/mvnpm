@@ -1,7 +1,7 @@
 import {LitElement, html, css} from 'lit';
 import {customElement, state, property} from 'lit/decorators.js';
 
-export const WEBSOCKET_BASE = window.location.protocol === "https:" ? "wss:" : "ws:" + "//" + window.location.host;
+export const WEBSOCKET_BASE = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}`;
 
 /**
  * This component shows the Event log
@@ -110,6 +110,13 @@ export class MvnpmEventLog extends LitElement {
   render() {
     return html`
       <div class="console">
+        ${this.liveSync ? html` <p>Listening for new events
+          <l-dot-stream
+              size="20"
+              speed="2.5"
+              color="#66a5b1"
+          ></l-dot-stream>
+        </p>`: ''}
         ${this._renderInitEventLog()}
       </div>
     `;
@@ -118,26 +125,12 @@ export class MvnpmEventLog extends LitElement {
   private _renderInitEventLog() {
     if (this._initEventLog && this._initEventLog.length > 0) {
       return html`
-        <l-dot-stream
-            size="20"
-            speed="2.5"
-            color="#66a5b1"
-        ></l-dot-stream><br/>
         ${this._initEventLog.map((entry) => {
           return html`${this._renderLine(entry)}`
         })}
       `;
-    } else if (this.liveSync) {
-      return html`
-        <p>Nothing in the event log <br/>
-          <l-dot-stream
-              size="20"
-              speed="2.5"
-              color="#66a5b1"
-          ></l-dot-stream>
-        </p>`;
     } else {
-      return html`<p>Nothing in the event log</p>`;
+      return html`<p style="color: gray">Nothing yet in the event log</p>`;
     }
   }
 
