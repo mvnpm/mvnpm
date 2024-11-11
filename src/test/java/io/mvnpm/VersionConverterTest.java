@@ -275,6 +275,12 @@ public class VersionConverterTest {
         Assertions.assertEquals("[1,)", mavenVersion);
     }
 
+    @Test
+    public void testGreaterThanOrEqualToVersionXMinor() {
+        String mavenVersion = VersionConverter.convert(">=14.x");
+        Assertions.assertEquals("[14,)", mavenVersion);
+    }
+
     // Greater than or equalTo AND Less than or equalTo
     @Test
     public void testGreaterThanOrEqualToAndLessThanOrEqualToVersionWithZeroMajor() {
@@ -491,13 +497,19 @@ public class VersionConverterTest {
     @Test
     public void testOr() {
         String mavenVersion = VersionConverter.convert("1.2.7 || >=1.2.9 <2.0.0");
-        Assertions.assertEquals("1.2.7,[1.2.9,2.0.0)", mavenVersion);
+        Assertions.assertEquals("[1.2.7],[1.2.9,2.0.0)", mavenVersion);
+    }
+
+    @Test
+    public void testGreaterThanOrEqualToORVersion() {
+        String mavenVersion = VersionConverter.convert(">= 16.8 || 18.0.0");
+        Assertions.assertEquals("[16.8,),[18.0.0]", mavenVersion);
     }
 
     @Test
     public void testOrOr() {
         String mavenVersion = VersionConverter.convert("1.2.7 || >=1.2.9 <2.0.0 || >3.3.2 <=4.0.0");
-        Assertions.assertEquals("1.2.7,[1.2.9,2.0.0),(3.3.2,4.0.0]", mavenVersion);
+        Assertions.assertEquals("[1.2.7],[1.2.9,2.0.0),(3.3.2,4.0.0]", mavenVersion);
     }
 
     // Partial version in range
