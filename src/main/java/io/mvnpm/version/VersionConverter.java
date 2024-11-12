@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.jboss.logging.Logger;
 
@@ -69,8 +70,22 @@ public class VersionConverter {
     private static String convertMultiple(String[] versions) {
         List<String> versionList = new ArrayList<>();
         for (String v : versions) {
-            versionList.add(convertMultiplePart(v.trim()).trim());
+            String result = convertMultiplePart(v.trim()).trim();
+            versionList.add(result);
         }
+
+        // If multiple, it has to be in brackets
+        if (versionList.size() > 1) {
+            versionList = versionList.stream()
+                    .map(element -> {
+                        if (!element.contains("[") && !element.contains("(") && !element.contains("]")
+                                && !element.contains(")")) {
+                            return "[" + element + "]";
+                        }
+                        return element;
+                    }).collect(Collectors.toList());
+        }
+
         return String.join(COMMA, versionList);
     }
 
@@ -81,6 +96,7 @@ public class VersionConverter {
      * @return
      */
     private static String convertMultiplePart(String version) {
+
         // Hyphen range
         if (version.contains(SPACE + HYPHEN + SPACE)) {
             return convertHyphen(version);
@@ -98,18 +114,18 @@ public class VersionConverter {
             return convertCaret(version);
         }
 
+        // Operator range
+        if (version.startsWith(LESS_THAN) || version.startsWith(GREATER_THAN)) {
+            version = cleanOperatorVersion(version);
+            return convertOperator(version);
+        }
+
         // X range
         if (!version.contains(SPACE)) {
             String numberPart = version.split(HYPHEN)[0];
             if (numberPart.contains(STAR) || numberPart.contains(EX) || numberPart.contains(EX.toUpperCase())) {
                 return convertX(version);
             }
-        }
-
-        // Operator range
-        if (version.startsWith(LESS_THAN) || version.startsWith(GREATER_THAN)) {
-            version = cleanOperatorVersion(version);
-            return convertOperator(version);
         }
 
         // Partial semver
