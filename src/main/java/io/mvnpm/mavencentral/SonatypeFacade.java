@@ -102,7 +102,7 @@ public class SonatypeFacade {
 
             if (authorization.isPresent()) {
                 String a = "Basic " + authorization.get();
-                //byte[] b = Files.readAllBytes(path);
+
                 Response uploadResponse = sonatypeClient.uploadBundle(a, path);
 
                 if (uploadResponse.getStatus() == 201) {

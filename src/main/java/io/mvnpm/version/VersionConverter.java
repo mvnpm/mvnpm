@@ -48,7 +48,6 @@ public class VersionConverter {
     }
 
     public static String convert(String versionString) {
-        System.out.println("> CONVERT " + versionString);
         try {
             if (null == versionString || versionString.startsWith("git:/") || versionString.startsWith("git+http")) { // We do not support git repos as version. Maybe something we can add later
                 versionString = EMPTY;
@@ -71,9 +70,7 @@ public class VersionConverter {
     private static String convertMultiple(String[] versions) {
         List<String> versionList = new ArrayList<>();
         for (String v : versions) {
-            System.out.println(">> MULTIPLE " + v);
             String result = convertMultiplePart(v.trim()).trim();
-            System.out.println("<< result " + result);
             versionList.add(result);
         }
 
@@ -102,34 +99,29 @@ public class VersionConverter {
 
         // Hyphen range
         if (version.contains(SPACE + HYPHEN + SPACE)) {
-            System.out.println(">>> Hyphen " + version);
             return convertHyphen(version);
         }
 
         // Tilde range
         if (version.startsWith(TILDE)) {
-            System.out.println(">>> Tilde " + version);
             version = cleanTildeVersion(version);
             return convertTilde(version);
         }
 
         // Caret range
         if (version.startsWith(CARET)) {
-            System.out.println(">>> Caret " + version);
             version = cleanCaretVersion(version);
             return convertCaret(version);
         }
 
         // Operator range
         if (version.startsWith(LESS_THAN) || version.startsWith(GREATER_THAN)) {
-            System.out.println(">>> Operator " + version);
             version = cleanOperatorVersion(version);
             return convertOperator(version);
         }
 
         // X range
         if (!version.contains(SPACE)) {
-            System.out.println(">>> Xrange " + version);
             String numberPart = version.split(HYPHEN)[0];
             if (numberPart.contains(STAR) || numberPart.contains(EX) || numberPart.contains(EX.toUpperCase())) {
                 return convertX(version);
@@ -138,7 +130,6 @@ public class VersionConverter {
 
         // Partial semver
         long numberOfDots = version.chars().filter(ch -> ch == '.').count();
-        System.out.println(">>> Partial " + version);
         if (!version.startsWith(EQUAL_TO) && numberOfDots < 2) {
             return convertPartialSemver(version);
         }

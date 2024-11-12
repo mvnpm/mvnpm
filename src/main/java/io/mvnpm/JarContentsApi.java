@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
@@ -33,6 +35,8 @@ import io.mvnpm.maven.UrlPathParser;
  */
 @Path("/api")
 public class JarContentsApi {
+
+    private static final Logger LOGGER = Logger.getLogger(JarContentsApi.class.getName());
 
     @Inject
     MavenRepositoryService mavenRepositoryService;
@@ -77,17 +81,15 @@ public class JarContentsApi {
         library.setVersion(nameVersionType.version());
         library.setType(filetype.getPostString());
 
+        Map<String, JarAsset> assetMap = new HashMap<>();
+        JarAsset rootAsset = new JarAsset();
+        rootAsset.setName("/");
+        rootAsset.setFileAsset(false);
+        rootAsset.setChildren(new ArrayList<>());
+        assetMap.put("/", rootAsset);
+
+        // Iterate through the entries of the jar file
         try (JarFile jarFile = new JarFile(path.toString())) {
-            Map<String, JarAsset> assetMap = new HashMap<>();
-
-            // Create a root asset
-            JarAsset rootAsset = new JarAsset();
-            rootAsset.setName("/");
-            rootAsset.setFileAsset(false);
-            rootAsset.setChildren(new ArrayList<>());
-            assetMap.put("/", rootAsset);
-
-            // Iterate through the entries of the jar file
             jarFile.stream().forEach(entry -> {
                 String name = entry.getName();
                 boolean isFile = !entry.isDirectory();
@@ -129,7 +131,7 @@ public class JarContentsApi {
             library.setRootAsset(rootAsset);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to load JAR file: " + path, e);
         }
 
         return library;
@@ -157,9 +159,9 @@ public class JarContentsApi {
             ArchiveEntry entry;
 
             while ((entry = tarIn.getNextEntry()) != null) {
-                if (!tarIn.canReadEntryData(entry)) {
+                if (!tarIn.canReadEntryData(entry))
                     continue;
-                }
+
                 String name = entry.getName();
                 boolean isFile = !((TarArchiveEntry) entry).isDirectory();
                 String[] parts = name.split("/");
@@ -198,7 +200,7 @@ public class JarContentsApi {
             }
             library.setRootAsset(rootAsset);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Failed to load TAR.GZ file: " + path, e);
         }
 
         return library;
