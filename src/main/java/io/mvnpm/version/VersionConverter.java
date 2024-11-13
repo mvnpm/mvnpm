@@ -179,6 +179,22 @@ public class VersionConverter {
         return OPEN_BLOCK + lowerBoundary + COMMA + upperBoundary + CLOSE_ROUND;
     }
 
+    private static String convertCaret(String version) {
+        if (version.contains(SPACE)) {
+            return convertCaretRange(version);
+        } else {
+            return convertCaretOpenEnded(version);
+        }
+    }
+
+    private static String convertCaretRange(String version) {
+        String[] boundaries = version.split(SPACE);
+        if (boundaries.length > 2)
+            throw new RuntimeException("Error while converting version [" + version + "], boundary set to big ["
+                    + boundaries.length + "] - expecting 2 (lower and upper)");
+        return getLowerBoundary(boundaries[0].trim()) + COMMA + getUpperBoundary(boundaries[1].trim());
+    }
+
     /**
      * Translate caret ranges
      * see https://github.com/npm/node-semver#caret-ranges-123-025-004
@@ -186,7 +202,7 @@ public class VersionConverter {
      * @param version
      * @return
      */
-    private static String convertCaret(String version) {
+    private static String convertCaretOpenEnded(String version) {
         version = version.substring(1);
         if (version.equalsIgnoreCase(Constants.LATEST)) {
             return convert(version);
@@ -262,6 +278,8 @@ public class VersionConverter {
             return OPEN_BLOCK + Version.fromString(s.substring(2));
         } else if (s.startsWith(GREATER_THAN)) {
             return OPEN_ROUND + Version.fromString(s.substring(1));
+        } else if (s.startsWith(CARET)) {
+            return OPEN_BLOCK + Version.fromString(s.substring(1));
         } else {
             // Equal. If no operator is specified, then equality is assumed, so this operator is optional, but MAY be included.
             return cleanVersion(s);
@@ -301,7 +319,7 @@ public class VersionConverter {
     }
 
     private static String cleanVersion(String version) {
-        if (version.startsWith(VEE) || version.startsWith(EQUAL_TO)) {
+        if (version.startsWith(VEE) || version.startsWith(EQUAL_TO) || version.startsWith(CARET)) {
             version = version.substring(1); // Remove v or =
         }
         return version;

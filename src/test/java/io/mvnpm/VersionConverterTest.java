@@ -289,6 +289,12 @@ public class VersionConverterTest {
     }
 
     @Test
+    public void testCaretWithRangeAndLessThan() {
+        String mavenVersion = VersionConverter.convert("^3.0.11 <3.1.7");
+        Assertions.assertEquals("[3.0.11,3.1.7)", mavenVersion);
+    }
+
+    @Test
     public void testGreaterThanOrEqualToAndLessThanOrEqualToVersion() {
         String mavenVersion = VersionConverter.convert(">=1.2.3 <=3.2.1");
         Assertions.assertEquals("[1.2.3,3.2.1]", mavenVersion);
