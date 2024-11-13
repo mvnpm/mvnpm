@@ -32,7 +32,7 @@ _Use `org.mvnpm.at.{namespace}` as **groupId** for a particular namespace (i.e. 
 
 ### How to sync a missing package?
 
-A lot of packages are already synced on Central, which mean they can directly be used from you pom.xml or build.gradle. You may check if a package version is available by looking at the "Maven central" badge on the [Browse page](/).  
+A lot of packages are already synced on Central, which mean they can directly be used from you pom.xml or build.gradle. You may check if a package version is available by looking at the "Maven central" badge on the [Browse page](https://mvnpm.org/).
 **If it's not:**
 
 *   Click on the "Maven Central" badge to trigger a sync with Maven Central
@@ -107,10 +107,10 @@ repositories {
 *   The developer's Maven build continues to the next repository (as configured above) and requests the npm package from mvnpm.
 *   mvnpm requests the NPM Registry for the package (tgz) and converts it to a JAR. It also generates and includes an import map and pom for this package.
 *   mvnpm returns this JAR to the developer, and the developer can continue with the build.
-*   In the background, mvnpm kicks off a process to create all the files needed to release this package to Maven Central. This includes:  
-    \- source  
-    \- javadoc  
-    \- signatures for all of the files (sha1, md5, asc)  
+*   In the background, mvnpm kicks off a process to create all the files needed to release this package to Maven Central. This includes:
+    \- source
+    \- javadoc
+    \- signatures for all of the files (sha1, md5, asc)
     \- bundling all the above to upload to Central.
 *   Once the bundle exists, it gets uploaded and released to Maven Central.
 *   This means that by the time the CI/CD pipeline of the developer runs, the package is available in Maven Central.
