@@ -7,10 +7,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.zip.GZIPInputStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -25,10 +23,7 @@ import org.apache.commons.compress.utils.IOUtils;
 
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
-import io.mvnpm.file.FileStoreEvent;
 import io.quarkus.logging.Log;
-import io.quarkus.vertx.ConsumeEvent;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * Create source jar file from tgz
@@ -38,43 +33,33 @@ import io.smallrye.common.annotation.Blocking;
 @ApplicationScoped
 public class SourceService {
 
-    private final PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:*.tgz");
-
     @Inject
     FileStore fileStore;
 
-    @ConsumeEvent("new-file-created")
-    @Blocking
-    public void consumeNewFileCreatedEvent(FileStoreEvent fse) {
-        if (matcher.matches(fse.filePath().getFileName())) {
-            Path tgzFile = fse.filePath();
-
-            Path sourceFile = Path.of(tgzFile.toString().replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR));
-            boolean ok = createJar(tgzFile, sourceFile);
-            if (ok) {
-                fileStore.touch(fse.name(), fse.version(), sourceFile);
-            }
-            Log.debug("source created " + fse.filePath() + "[" + ok + "]");
+    public Path createSource(Path tgzFile) {
+        Path sourceFile = Path.of(tgzFile.toString().replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR));
+        boolean ok = createJar(tgzFile, sourceFile);
+        if (!ok) {
+            throw new RuntimeException("Error while creating Source jar for: %s".formatted(tgzFile));
         }
+        Log.debug("source created for " + tgzFile + "[ok]");
+        return sourceFile;
     }
 
     private boolean createJar(Path tgzFile, Path sourceFile) {
-
         if (!Files.exists(sourceFile)) {
-            synchronized (sourceFile) {
-                try {
-                    Files.createDirectories(sourceFile.getParent());
-                } catch (IOException ex) {
-                    throw new UncheckedIOException(ex);
-                }
-                try (OutputStream fileOutput = Files.newOutputStream(sourceFile);
-                        JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
-                    tgzToJar(tgzFile, jarOutput);
-                    jarOutput.finish();
-                    return true;
-                } catch (IOException ex) {
-                    throw new UncheckedIOException(ex);
-                }
+            try {
+                Files.createDirectories(sourceFile.getParent());
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
+            }
+            try (OutputStream fileOutput = Files.newOutputStream(sourceFile);
+                    JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
+                tgzToJar(tgzFile, jarOutput);
+                jarOutput.finish();
+                return true;
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
             }
         }
         return false;

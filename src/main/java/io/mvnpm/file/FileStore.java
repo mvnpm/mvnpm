@@ -16,13 +16,11 @@ import java.util.List;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.mvnpm.Constants;
 import io.mvnpm.npm.model.Name;
-import io.vertx.mutiny.core.eventbus.EventBus;
 
 /**
  * Store for local files.
@@ -31,9 +29,6 @@ import io.vertx.mutiny.core.eventbus.EventBus;
  */
 @ApplicationScoped
 public class FileStore {
-
-    @Inject
-    EventBus bus;
 
     @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = ".m2")
     String localM2Directory;
@@ -56,10 +51,6 @@ public class FileStore {
         }
     }
 
-    public void touch(Name name, String version, Path localFilePath) {
-        bus.publish("new-file-created", new FileStoreEvent(localFilePath, name, version));
-    }
-
     public boolean exist(Path localFileName) {
         return Files.exists(localFileName);
     }
@@ -75,10 +66,12 @@ public class FileStore {
     }
 
     public Path getGroupRoot(String groupId) {
-        return Paths.get(localUserDirectory.orElse(Constants.CACHE_DIR),
-                localM2Directory,
-                Constants.REPOSITORY,
-                groupId);
+        return getCacheDir().resolve(
+                Constants.REPOSITORY).resolve(groupId);
+    }
+
+    public Path getCacheDir() {
+        return Paths.get(localUserDirectory.orElse(Constants.CACHE_DIR)).resolve(localM2Directory);
     }
 
     public Path getArtifactRoot(Name name) {

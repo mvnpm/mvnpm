@@ -19,7 +19,6 @@ import jakarta.inject.Inject;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
-import io.mvnpm.file.FileUtil;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.quarkus.logging.Log;
 
@@ -92,26 +91,22 @@ public class BundleCreator {
 
     private List<Path> getFiles(String groupId, String artifactId, String version) {
         // Files that needs to be in the bundle
-        try {
-            Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
-            String base = artifactId + Constants.HYPHEN + version;
-            List<Path> fileNames = getFileNamesInBundle(parent, base);
-            List<String> notReady = new ArrayList<>();
-            for (Path fileName : fileNames) {
-                boolean ready = FileUtil.isReadyForUse(fileName);
-                Log.debug("\tbundle: " + fileName + " [" + ready + "]");
-                if (!ready) {
-                    notReady.add(fileName.toString());
-                }
+        Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
+        String base = artifactId + Constants.HYPHEN + version;
+        List<Path> fileNames = getFileNamesInBundle(parent, base);
+        List<String> notReady = new ArrayList<>();
+        for (Path fileName : fileNames) {
+            boolean ready = Files.exists(fileName);
+            Log.debug("\tbundle: " + fileName + " [" + ready + "]");
+            if (!ready) {
+                notReady.add(fileName.toString());
             }
-
-            if (notReady.isEmpty())
-                return fileNames;
-
-            throw new RuntimeException("Files " + notReady + " not ready to bundle. Gave up after multiple attempts");
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
         }
+
+        if (notReady.isEmpty())
+            return fileNames;
+
+        throw new RuntimeException("Files " + notReady + " not ready to bundle. Gave up after multiple attempts");
     }
 
     private List<Path> getFileNamesInBundle(Path parent, String base) {

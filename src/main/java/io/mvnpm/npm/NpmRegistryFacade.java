@@ -9,7 +9,9 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
+import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.SearchResults;
 import io.quarkus.cache.CacheResult;
@@ -47,13 +49,11 @@ public class NpmRegistryFacade {
             // We do not support git repos as version. Maybe something we can add later
             version = "*";
         }
-
-        Response response = npmRegistryClient.getPackage(project, version);
-        if (response.getStatus() < 300) {
+        try {
+            Response response = npmRegistryClient.getPackage(project, version);
             return response.readEntity(io.mvnpm.npm.model.Package.class);
-        } else {
-            throw new WebApplicationException("Error while getting Package for [" + project + "] version [" + version + "]",
-                    response);
+        } catch (ClientWebApplicationException e) {
+            throw new GetPackageException(project, version, e);
         }
     }
 

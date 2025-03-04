@@ -70,6 +70,7 @@ public class CentralSyncApi {
             s.getAsyncRemote().sendObject(centralSyncItem, result -> {
                 if (result.getException() != null) {
                     Log.error("Unable to send message: " + result.getException());
+                    sessions.remove(s);
                 }
             });
         });

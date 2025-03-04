@@ -5,6 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.mvnpm.Constants;
+import io.mvnpm.maven.exceptions.InvalidUrlPathException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 
@@ -35,7 +36,7 @@ public class UrlPathParser {
 
         // We need at least 3 (name / version / filename)
         if (parts.length < 3) {
-            throw new RuntimeException("Invalid Url Path [" + urlPath + "]");
+            throw new InvalidUrlPathException(urlPath);
         }
 
         // Start from the back
