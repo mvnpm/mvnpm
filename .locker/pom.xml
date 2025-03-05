@@ -14,7 +14,7 @@
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>autocomplete</artifactId>
-        <version>6.18.0</version>
+        <version>6.18.6</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -86,7 +86,7 @@
       <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>language</artifactId>
-        <version>6.10.2</version>
+        <version>6.10.8</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -170,7 +170,7 @@
       <dependency>
         <groupId>org.mvnpm.at.lezer</groupId>
         <artifactId>javascript</artifactId>
-        <version>1.4.17</version>
+        <version>1.4.21</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -212,7 +212,7 @@
       <dependency>
         <groupId>org.mvnpm.at.lit-labs</groupId>
         <artifactId>ssr-dom-shim</artifactId>
-        <version>1.2.0</version>
+        <version>1.2.1</version>
         <scope>runtime</scope>
       </dependency>
       <dependency>
@@ -224,7 +224,7 @@
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
-        <version>24.4.5</version>
+        <version>24.5.3</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -260,7 +260,7 @@
       <dependency>
         <groupId>org.mvnpm.at.qomponent</groupId>
         <artifactId>qui-icons</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -268,6 +268,42 @@
         <artifactId>trusted-types</artifactId>
         <version>2.0.7</version>
         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>a11y-base</artifactId>
+        <version>24.5.5</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>component-base</artifactId>
+        <version>24.5.5</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>icon</artifactId>
+        <version>24.5.5</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>lit-renderer</artifactId>
+        <version>24.6.0-alpha7</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>overlay</artifactId>
+        <version>24.6.0-alpha7</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>popover</artifactId>
+        <version>24.5.3</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
@@ -280,6 +316,24 @@
         <artifactId>vaadin-development-mode-detector</artifactId>
         <version>2.0.7</version>
         <scope>runtime</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>vaadin-lumo-styles</artifactId>
+        <version>24.5.5</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>vaadin-material-styles</artifactId>
+        <version>24.6.0-alpha7</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.vaadin</groupId>
+        <artifactId>vaadin-themable-mixin</artifactId>
+        <version>24.5.5</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
@@ -296,7 +350,7 @@
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>compare-versions</artifactId>
-        <version>6.1.0</version>
+        <version>6.1.1</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -314,25 +368,25 @@
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit-element</artifactId>
-        <version>4.0.6</version>
+        <version>4.1.1</version>
         <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit-html</artifactId>
-        <version>3.1.4</version>
+        <version>3.2.1</version>
         <scope>runtime</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit</artifactId>
-        <version>3.2.0</version>
+        <version>3.2.1</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>marked</artifactId>
-        <version>12.0.1</version>
+        <version>15.0.0</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
