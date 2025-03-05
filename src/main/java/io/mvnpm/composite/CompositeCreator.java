@@ -84,13 +84,13 @@ public class CompositeCreator {
     @RestClient
     GitHubService gitHubService;
 
-    private Vertx vertx = Vertx.vertx();
+    private final Vertx vertx = Vertx.vertx();
 
     private final WebClient webClient = WebClient.create(vertx);
 
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
-    private Map<String, GitHubContent> compositesMap = new HashMap<>();
+    private final Map<String, GitHubContent> compositesMap = new HashMap<>();
 
     @PostConstruct
     public void loadAllComposites() {
@@ -249,7 +249,9 @@ public class CompositeCreator {
                 }
 
                 commonTgzOut.finish();
-                if (countMvnpmMoreTgz > 0) {
+                commonTgzGzos.finish();
+                commonTgzBaos.flush();
+                if (countMvnpmMoreTgz > 0 && commonTgzBaos.size() > 0) {
                     writeEntry(mergedJar, MVNPM_MORE_ARCHIVE, commonTgzBaos.toByteArray());
                 }
 
