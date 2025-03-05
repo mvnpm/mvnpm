@@ -224,7 +224,7 @@
       <dependency>
         <groupId>org.mvnpm.at.mvnpm</groupId>
         <artifactId>vaadin-webcomponents</artifactId>
-        <version>24.5.3</version>
+        <version>24.6.2</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -254,7 +254,7 @@
       <dependency>
         <groupId>org.mvnpm.at.qomponent</groupId>
         <artifactId>qui-code-block</artifactId>
-        <version>1.0.16</version>
+        <version>1.0.19</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -271,42 +271,6 @@
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>a11y-base</artifactId>
-        <version>24.5.5</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>component-base</artifactId>
-        <version>24.5.5</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>icon</artifactId>
-        <version>24.5.5</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>lit-renderer</artifactId>
-        <version>24.6.0-alpha7</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>overlay</artifactId>
-        <version>24.6.0-alpha7</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>popover</artifactId>
-        <version>24.5.3</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
         <artifactId>router</artifactId>
         <version>1.7.5</version>
         <scope>provided</scope>
@@ -316,24 +280,6 @@
         <artifactId>vaadin-development-mode-detector</artifactId>
         <version>2.0.7</version>
         <scope>runtime</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>vaadin-lumo-styles</artifactId>
-        <version>24.5.5</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>vaadin-material-styles</artifactId>
-        <version>24.6.0-alpha7</version>
-        <scope>provided</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mvnpm.at.vaadin</groupId>
-        <artifactId>vaadin-themable-mixin</artifactId>
-        <version>24.5.5</version>
-        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.mvnpm.at.vaadin</groupId>
