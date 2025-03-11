@@ -1,10 +1,5 @@
 package io.mvnpm.file;
 
-import io.mvnpm.Constants;
-import io.mvnpm.npm.model.Name;
-import jakarta.enterprise.context.ApplicationScoped;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -20,6 +15,13 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+
+import jakarta.enterprise.context.ApplicationScoped;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
+import io.mvnpm.Constants;
+import io.mvnpm.npm.model.Name;
 
 /**
  * Store for local files.
