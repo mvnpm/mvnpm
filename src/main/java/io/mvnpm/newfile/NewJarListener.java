@@ -51,6 +51,7 @@ public class NewJarListener {
             Log.warn("Target directory already exists on new jar event: " + fse.targetDirectory());
             return;
         }
+        Log.infof("'%s' has been created.", fse.jarFile());
         List<Path> toHash = new ArrayList<>();
         toHash.add(fse.pomFile());
         toHash.add(fse.jarFile());
@@ -78,6 +79,8 @@ public class NewJarListener {
             }
             Files.createDirectories(fse.targetDirectory().getParent());
             Files.move(fse.tempDirectory(), fse.targetDirectory(), StandardCopyOption.ATOMIC_MOVE);
+            Log.infof("'%s' has been moved to target directory '%s'.", fse.jarFile().getFileName().toString(),
+                    fse.targetDirectory());
         } catch (IOException e) {
             FileUtils.deleteQuietly(fse.targetDirectory().toFile());
             throw new RuntimeException("Error while moving '%s' to '%s'.".formatted(fse.tempDirectory(), fse.targetDirectory()),
