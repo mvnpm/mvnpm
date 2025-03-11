@@ -3,6 +3,8 @@ package io.mvnpm.newfile;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -76,7 +78,7 @@ public class NewJarListener {
                 return;
             }
             Files.createDirectories(fse.targetDirectory().getParent());
-            Files.move(fse.tempDirectory(), fse.targetDirectory());
+            Files.move(fse.tempDirectory(), fse.targetDirectory(), StandardCopyOption.ATOMIC_MOVE);
         } catch (IOException e) {
             FileUtils.deleteQuietly(fse.targetDirectory().toFile());
             throw new RuntimeException("Error while moving '%s' to '%s'.".formatted(fse.tempDirectory(), fse.targetDirectory()),
