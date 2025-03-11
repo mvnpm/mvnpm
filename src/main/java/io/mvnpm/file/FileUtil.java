@@ -1,27 +1,24 @@
 package io.mvnpm.file;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.math.BigInteger;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.TimeUnit;
 
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.pgpainless.sop.SOPImpl;
 
 import io.mvnpm.Constants;
-import io.quarkus.logging.Log;
+import io.mvnpm.file.exceptions.NoSecretRingAscException;
 import sop.ByteArrayAndResult;
 import sop.ReadyWithResult;
 import sop.SOP;
@@ -41,57 +38,21 @@ public class FileUtil {
         }
     }
 
-    public static StreamingOutput toStreamingOutput(Path localFilePath) {
+    public static StreamingOutput toStreamingOutput(Path filePath) {
         return outputStream -> {
-            try (InputStream fileInputStream = Files.newInputStream(localFilePath)) {
+            try (InputStream fileStream = Files.newInputStream(filePath)) {
+                byte[] buffer = new byte[8192]; // 8 KB chunks
                 int bytesRead;
-                byte[] buffer = new byte[4096];
-                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                while ((bytesRead = fileStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, bytesRead);
+                    outputStream.flush();
                 }
+            } catch (NoSuchFileException e) {
+                throw new WebApplicationException("File was moved or deleted", 410);
             } catch (IOException e) {
-                throw new UncheckedIOException("Error streaming file content", e);
+                throw new WebApplicationException("Error streaming file", 500);
             }
         };
-    }
-
-    public static boolean isReadyForUse(Path fileName) throws FileNotFoundException {
-        return FileUtil.isReadyForUse(fileName, 0);
-    }
-
-    /**
-     * Check if a file exist and it's not being written to
-     *
-     * @param fileName
-     * @param tryCount
-     * @return
-     */
-    private static boolean isReadyForUse(Path fileName, int tryCount) throws FileNotFoundException {
-        boolean isReady = Files.exists(fileName) && !FileUtil.isFileBeingWritten(fileName);
-        if (isReady)
-            return true;
-        if (tryCount > 9)
-            throw new FileNotFoundException(fileName.toString());
-        try {
-            TimeUnit.SECONDS.sleep(3);
-        } catch (InterruptedException ex) {
-            Log.error(ex);
-        }
-        tryCount = tryCount + 1;
-        return isReadyForUse(fileName, tryCount);
-    }
-
-    private static boolean isFileBeingWritten(Path filePath) {
-        try (FileChannel fileChannel = FileChannel.open(filePath, StandardOpenOption.WRITE)) {
-            // Try to acquire a lock on the entire file.
-            FileLock fileLock = fileChannel.tryLock();
-            // If the lock is null, then the file is being written by another process.
-            return fileLock == null;
-        } catch (java.nio.channels.OverlappingFileLockException lockException) {
-            return true;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
     public static Path createSha1(Path forFile) {
@@ -105,9 +66,7 @@ public class FileUtil {
             String sha1 = FileUtil.getSha1(inputStream);
 
             if (!Files.exists(localSha1File) || force) {
-                synchronized (localSha1File) {
-                    Files.writeString(localSha1File, sha1);
-                }
+                Files.writeString(localSha1File, sha1);
             }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
@@ -137,11 +96,8 @@ public class FileUtil {
         Path localMd5File = Paths.get(localMd5FileName);
         try (InputStream inputStream = Files.newInputStream(forFile)) {
             String md5 = FileUtil.getMd5(inputStream);
-
             if (!Files.exists(localMd5File) || force) {
-                synchronized (localMd5File) {
-                    Files.writeString(localMd5File, md5);
-                }
+                Files.writeString(localMd5File, md5);
             }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
@@ -158,36 +114,33 @@ public class FileUtil {
         }
     }
 
-    public static boolean createAsc(PGPSecretKeyRing secretKeyRing, Path localFilePath) {
+    public static Path createAsc(PGPSecretKeyRing secretKeyRing, Path fileToSign) throws NoSecretRingAscException {
         if (secretKeyRing != null) {
-            String outputFile = localFilePath.toString() + Constants.DOT_ASC;
+            String outputFile = fileToSign.toString() + Constants.DOT_ASC;
             Path ascFileOutput = Paths.get(outputFile);
-            synchronized (ascFileOutput) {
-                if (!Files.exists(ascFileOutput)) {
+            if (!Files.exists(ascFileOutput)) {
+                try {
+                    byte[] jarFileBytes = Files.readAllBytes(fileToSign);
 
-                    try {
-                        byte[] jarFileBytes = Files.readAllBytes(localFilePath);
+                    SOP sop = new SOPImpl();
+                    ReadyWithResult<SigningResult> readyWithResult = sop.detachedSign()
+                            .key(secretKeyRing.getSecretKey().getEncoded())
+                            .data(jarFileBytes);
 
-                        SOP sop = new SOPImpl();
-                        ReadyWithResult<SigningResult> readyWithResult = sop.detachedSign()
-                                .key(secretKeyRing.getSecretKey().getEncoded())
-                                .data(jarFileBytes);
+                    ByteArrayAndResult<SigningResult> bytesAndResult = readyWithResult.toByteArrayAndResult();
 
-                        ByteArrayAndResult<SigningResult> bytesAndResult = readyWithResult.toByteArrayAndResult();
+                    byte[] detachedSignature = bytesAndResult.getBytes();
 
-                        byte[] detachedSignature = bytesAndResult.getBytes();
-
-                        Files.write(ascFileOutput, detachedSignature);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return false;
-                    }
+                    Files.write(ascFileOutput, detachedSignature);
+                } catch (IOException e) {
+                    throw new UncheckedIOException("Error while signing: '%s'".formatted(fileToSign), e);
                 }
             }
+            return ascFileOutput;
         } else {
-            return false;
+            throw new NoSecretRingAscException(
+                    "No secret ring, impossible to generate ASC for file: '%s'".formatted(fileToSign));
         }
-        return true;
     }
 
     private static byte[] getMessageDigest(InputStream inputStream, String algorithm)

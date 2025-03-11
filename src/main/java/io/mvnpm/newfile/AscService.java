@@ -1,14 +1,14 @@
 package io.mvnpm.newfile;
 
+import java.nio.file.Path;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import io.mvnpm.file.FileStoreEvent;
 import io.mvnpm.file.FileUtil;
 import io.mvnpm.file.KeyHolder;
+import io.mvnpm.file.exceptions.NoSecretRingAscException;
 import io.quarkus.logging.Log;
-import io.quarkus.vertx.ConsumeEvent;
-import io.smallrye.common.annotation.Blocking;
 
 /**
  * Sign newly created file
@@ -21,13 +21,13 @@ public class AscService {
     @Inject
     KeyHolder keyHolder;
 
-    @ConsumeEvent("new-file-created")
-    @Blocking
-    public void newFileCreated(FileStoreEvent fse) {
-        boolean success = FileUtil.createAsc(keyHolder.getSecretKeyRing(), fse.filePath());
-        if (!success) {
-            Log.warn("file signed " + fse.filePath() + ".asc [failed] trying again");
+    public Path createAsc(Path filePath) {
+        try {
+            Log.debug("file signed " + filePath + " [ok]");
+            return FileUtil.createAsc(keyHolder.getSecretKeyRing(), filePath);
+        } catch (NoSecretRingAscException e) {
+            Log.warn(e.getMessage());
         }
-        Log.debug("file signed " + fse.filePath() + " [ok]");
+        return null;
     }
 }

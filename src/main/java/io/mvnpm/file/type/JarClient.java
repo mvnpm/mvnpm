@@ -31,11 +31,11 @@ import org.apache.commons.io.IOUtils;
 
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
-import io.mvnpm.file.FileType;
 import io.mvnpm.file.FileUtil;
 import io.mvnpm.file.ImportMapUtil;
 import io.mvnpm.importmap.Location;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.npm.model.Package;
 
 /**
  * Create the jar from the npm content
@@ -56,14 +56,12 @@ public class JarClient {
     public Path createEmptyJar(Path forJar, String replaceJarWith) {
         Path emptyFile = Paths.get(forJar.toString().replace(Constants.DOT_JAR, replaceJarWith));
         if (!Files.exists(emptyFile)) {
-            synchronized (emptyFile) {
-                try (OutputStream fileOutput = Files.newOutputStream(emptyFile);
-                        JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
-                    emptyJar(jarOutput);
-                    jarOutput.finish();
-                } catch (IOException ex) {
-                    throw new UncheckedIOException(ex);
-                }
+            try (OutputStream fileOutput = Files.newOutputStream(emptyFile);
+                    JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
+                emptyJar(jarOutput);
+                jarOutput.finish();
+            } catch (IOException ex) {
+                throw new UncheckedIOException(ex);
             }
         }
         return emptyFile;
@@ -78,15 +76,14 @@ public class JarClient {
         jarOutput.closeArchiveEntry();
     }
 
-    public void createAndSaveJar(io.mvnpm.npm.model.Package p, Path localFilePath) {
-        Path pomPath = mavenRepositoryService.getPath(p.name(), p.version(), FileType.pom);
-        Path tgzPath = mavenRepositoryService.getPath(p.name(), p.version(), FileType.tgz);
-        jarInput(p, localFilePath, pomPath, tgzPath);
+    public void createAndSaveJar(Package p, Path jarOutputPath, Path pomPath,
+            Path tgzPath) {
+        jarInput(p, jarOutputPath, pomPath, tgzPath);
     }
 
-    private void jarInput(io.mvnpm.npm.model.Package p, Path localFilePath, Path pomPath, Path tgzPath) {
-        FileUtil.createDirectories(localFilePath);
-        try (OutputStream fileOutput = Files.newOutputStream(localFilePath);
+    private void jarInput(io.mvnpm.npm.model.Package p, Path jarOutputPath, Path pomPath, Path tgzPath) {
+        FileUtil.createDirectories(jarOutputPath);
+        try (OutputStream fileOutput = Files.newOutputStream(jarOutputPath);
                 JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
 
             // Pom details
@@ -102,8 +99,6 @@ public class JarClient {
             tgzToJar(p, tgzPath, jarOutput);
 
             jarOutput.finish();
-
-            fileStore.touch(p.name(), p.version(), localFilePath);
 
         } catch (IOException ex) {
             throw new RuntimeException(ex);

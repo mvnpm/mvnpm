@@ -56,7 +56,6 @@ public class PomClient {
 
     public void createAndSavePom(io.mvnpm.npm.model.Package p, Path localFilePath) {
         writePomToFileSystem(p, localFilePath);
-        fileCreator.touch(p.name(), p.version(), localFilePath);
     }
 
     private void writePomToFileSystem(io.mvnpm.npm.model.Package p, Path localFilePath) {

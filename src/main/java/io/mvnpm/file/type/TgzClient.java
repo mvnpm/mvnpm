@@ -35,7 +35,6 @@ public class TgzClient {
         try {
             FileUtil.createDirectories(localFileName);
             downloadFileTo(tarball, localFileName);
-            fileStore.touch(p.name(), p.version(), localFileName);
         } catch (IOException ex) {
             throw new RuntimeException("Error download tar from NPM " + tarball + " [" + ex.getMessage() + "]");
         }

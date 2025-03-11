@@ -32,8 +32,7 @@ public class CompositeService {
     FileStore fileStore;
 
     public Path getPath(Name fullName, String version, FileType type) {
-        compositeCreator.buildComposite(fullName.mvnArtifactId, version);
-        return fileStore.getLocalFullPath(type, fullName, version, Optional.empty());
+        return compositeCreator.getOrBuildComposite(fullName.mvnArtifactId, version);
     }
 
     public Path getSha1Path(Name fullName, String version, FileType type) {
