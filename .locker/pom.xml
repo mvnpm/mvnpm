@@ -9,6 +9,8 @@
   <artifactId>mvnpm-locker</artifactId>
   <packaging>pom</packaging>
 
+  <!-- Locked dependencies (Update with 'mvn io.mvnpm:locker-maven-plugin:LATEST:lock -Dunlocked') -->
+
   <dependencyManagement>
     <dependencies>
       <dependency>

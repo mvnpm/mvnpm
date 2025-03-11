@@ -195,54 +195,63 @@
     <dependency>
         <groupId>org.mvnpm</groupId>
         <artifactId>lit</artifactId>
+        <version>${lit.version}</version>
         <scope>provided</scope>
     </dependency>
     <!-- Vaadin Web components -->
     <dependency>
       <groupId>org.mvnpm.at.mvnpm</groupId>
       <artifactId>vaadin-webcomponents</artifactId>
+      <version>${vaadin.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- Loaders -->
     <dependency>
 	<groupId>org.mvnpm</groupId>
 	<artifactId>ldrs</artifactId>
+	<version>${ldrs.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Router -->
     <dependency>
       <groupId>org.mvnpm.at.vaadin</groupId>
       <artifactId>router</artifactId>
+      <version>${vaadin-router.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- Codeblock -->
     <dependency>
 	<groupId>org.mvnpm.at.qomponent</groupId>
 	<artifactId>qui-code-block</artifactId>
+	<version>${codeblock.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- To compare versions -->
     <dependency>
       <groupId>org.mvnpm</groupId>
       <artifactId>compare-versions</artifactId>
+      <version>${compare-versions.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- To render Markdown -->
     <dependency>
 	<groupId>org.mvnpm</groupId>
 	<artifactId>marked</artifactId>
+	<version>${marked.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Cards for display -->
     <dependency>
 	<groupId>org.mvnpm.at.qomponent</groupId>
 	<artifactId>qui-card</artifactId>
+	<version>${card.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Badges for display -->
     <dependency>
 	<groupId>org.mvnpm.at.qomponent</groupId>
 	<artifactId>qui-badge</artifactId>
+	<version>${badge.version}</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Testing -->
