@@ -1,5 +1,10 @@
 package io.mvnpm.file;
 
+import io.mvnpm.Constants;
+import io.mvnpm.npm.model.Name;
+import jakarta.enterprise.context.ApplicationScoped;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -10,17 +15,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
-
-import jakarta.enterprise.context.ApplicationScoped;
-
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import io.mvnpm.Constants;
-import io.mvnpm.npm.model.Name;
 
 /**
  * Store for local files.
@@ -32,6 +31,9 @@ public class FileStore {
 
     @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = ".m2")
     String localM2Directory;
+
+    @ConfigProperty(name = "mvnpm.temp-directory", defaultValue = "/tmp")
+    String tempDirectory;
 
     @ConfigProperty(name = "mvnpm.local-user-directory")
     Optional<String> localUserDirectory;
@@ -46,6 +48,17 @@ public class FileStore {
             Files.createDirectories(localFilePath.getParent());
             Files.write(localFilePath, content);
             return content;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public Path createTempDirectory(String prefix) {
+        try {
+            SecureRandom random = new SecureRandom();
+            long n = random.nextLong();
+            String s = prefix + Long.toUnsignedString(n);
+            return Files.createDirectory(Path.of(tempDirectory).resolve(prefix + s));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

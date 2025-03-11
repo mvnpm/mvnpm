@@ -203,7 +203,7 @@ public class CompositeCreator {
         Path sourceJar = fileStore.getLocalFullPath(FileType.source, model.getGroupId(), model.getArtifactId(),
                 model.getVersion());
         if (!Files.exists(jar)) {
-            final Path tempDirectory = Files.createTempDirectory("composite-jar");
+            final Path tempDirectory = fileStore.createTempDirectory("composite-jar");
             final Path outputJar = tempDirectory.resolve(jar.getFileName().toString());
             final Path outputSourceJar = tempDirectory.resolve(sourceJar.getFileName().toString());
             final Path outputPom = getPomPath(outputJar);

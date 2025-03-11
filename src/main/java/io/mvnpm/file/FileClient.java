@@ -79,15 +79,10 @@ public class FileClient {
             return localFilePath;
         } else {
             Log.debug("Serving remotely [" + localFilePath + "]");
-            try {
-                final Path tempDirectory = Files.createTempDirectory("jar-" + name.toPathString(version));
-                final Path tempPath = tempDirectory.resolve(localFilePath.getFileName().toString());
-                final Path targetDirectory = localFilePath.getParent();
-                return fetchRemoteAndStore(tempDirectory, targetDirectory, type, name, version, tempPath);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
+            final Path tempDirectory = fileStore.createTempDirectory("jar-" + name.toPathString(version));
+            final Path tempPath = tempDirectory.resolve(localFilePath.getFileName().toString());
+            final Path targetDirectory = localFilePath.getParent();
+            return fetchRemoteAndStore(tempDirectory, targetDirectory, type, name, version, tempPath);
         }
     }
 
