@@ -28,7 +28,7 @@ public class UrlPathParser {
         return NameParser.fromNpmProject(fullName);
     }
 
-    public static NameVersionType parseMavenFile(String urlPath) {
+    public static NameVersion parseMavenFile(String urlPath) {
         if (urlPath.contains("/git:/") || urlPath.contains("/git+http:/") || urlPath.contains("/git+https:/")) { // We do not support git repos as version. Maybe something we can add later
             urlPath = cleanUrlPath(urlPath);
         }
@@ -50,7 +50,7 @@ public class UrlPathParser {
 
         // Make sure the version is in the correct format
         version = fixVersion(version);
-        return new NameVersionType(NameParser.fromNpmProject(fullName), version);
+        return new NameVersion(NameParser.fromNpmProject(fullName), version);
     }
 
     private static String cleanUrlPath(String urlPath) {

@@ -5,10 +5,9 @@ import static io.mvnpm.Constants.COMMA;
 import static io.mvnpm.Constants.OPEN_BLOCK;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,8 +98,9 @@ public class PomClient {
         }
 
         FileUtil.createDirectories(localFilePath);
-        try (OutputStream out = Files.newOutputStream(localFilePath)) {
+        try (StringWriter out = new StringWriter()) {
             mavenXpp3Writer.write(out, model);
+            FileUtil.writeAtomic(localFilePath, out.toString());
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
         }

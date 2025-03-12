@@ -10,7 +10,7 @@ import io.mvnpm.npm.model.Name;
  *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
-public record NewJarEvent(Path tempDirectory, Path pomFile, Path jarFile, Path tgzFile, List<Path> others, Path targetDirectory,
+public record NewJarEvent(Path pomFile, Path jarFile, Path tgzFile, List<Path> others,
         Name name,
         String version) {
     public static final String EVENT_NAME = "NewJarEvent";

@@ -1,10 +1,7 @@
 package io.mvnpm.composite;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -18,6 +15,8 @@ import org.jboss.resteasy.reactive.NoCache;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import io.mvnpm.file.metadata.MetadataClient;
+import io.mvnpm.maven.exceptions.NotFoundInMavenCentralException;
 import io.mvnpm.npm.model.Name;
 
 /**
@@ -33,6 +32,9 @@ public class CompositeApi {
 
     @Inject
     CompositeService compositeService;
+
+    @Inject
+    MetadataClient metadataClient;
 
     @GET
     public Collection<GitHubContent> listComposites() {
@@ -51,12 +53,12 @@ public class CompositeApi {
     @Path("/versions/{name}")
     public List<String> versions(@PathParam("name") String name) {
         Name n = new Name("@mvnpm/" + name);
-        Map<String, Date> versions = compositeService.getVersions(n);
-        if (versions == null || versions.isEmpty()) {
+        try {
+            return metadataClient.getMetadata(n).getVersioning().getVersions();
+        } catch (NotFoundInMavenCentralException e) {
             return List.of();
-        } else {
-            return new ArrayList<>(versions.keySet());
         }
+
     }
 
     @POST

@@ -18,10 +18,6 @@ import jakarta.ws.rs.QueryParam;
 
 import org.jboss.resteasy.reactive.NoCache;
 
-import io.mvnpm.npm.NpmRegistryFacade;
-import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.NameParser;
-import io.mvnpm.npm.model.Project;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
@@ -39,8 +35,7 @@ public class CentralSyncApi {
 
     @Inject
     CentralSyncService centralSyncService;
-    @Inject
-    NpmRegistryFacade npmRegistryFacade;
+
     @Inject
     ContinuousSyncService continuousSyncService;
     @Inject
@@ -88,18 +83,7 @@ public class CentralSyncApi {
     public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
 
-        if (version.equalsIgnoreCase("latest")) {
-            version = getLatestVersion(groupId, artifactId);
-        }
-
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
-
-        // Check the status
-        if (!centralSyncItem.alreadyRealeased() && centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
-            centralSyncItem.stage = Stage.RELEASED;
-            centralSyncItemService.merge(centralSyncItem);
-        }
-        return centralSyncItem;
+        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version);
     }
 
     @GET
@@ -109,17 +93,18 @@ public class CentralSyncApi {
             @DefaultValue("latest") @QueryParam("version") String version) {
 
         if (version.equalsIgnoreCase("latest")) {
-            version = getLatestVersion(groupId, artifactId);
+            version = centralSyncService.getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version, true);
 
         // Already being synced
         if (centralSyncItem.isInProgress() || centralSyncItem.stage.equals(Stage.INIT))
             return centralSyncItem;
 
         // Check the remote status
-        if (!centralSyncItem.alreadyRealeased() && centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
+        if (!centralSyncItem.alreadyReleased()
+                && centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
             centralSyncItem.stage = Stage.RELEASED;
             centralSyncItemService.merge(centralSyncItem);
             return centralSyncItem;
@@ -141,7 +126,7 @@ public class CentralSyncApi {
         //                requestFullSync(dep.getKey().mvnGroupId, dep.getKey().mvnArtifactId, dep.getValue());
         //            }
         //        }
-        return centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        return centralSyncItemService.findOrCreate(groupId, artifactId, version, false);
     }
 
     @GET
@@ -151,23 +136,28 @@ public class CentralSyncApi {
             @DefaultValue("latest") @QueryParam("version") String version) {
 
         if (version.equalsIgnoreCase("latest")) {
-            version = getLatestVersion(groupId, artifactId);
+            version = centralSyncService.getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        final CentralSyncItem centralSyncItem = getSyncItem(groupId, artifactId, version);
 
         // Already being synced
         if (centralSyncItem.isInProgress() || centralSyncItem.stage.equals(Stage.INIT))
             return centralSyncItem;
 
         // Check the remote status
-        if (!centralSyncItem.alreadyRealeased() && centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
+        if (!centralSyncItem.alreadyReleased()
+                && centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
             centralSyncItem.stage = Stage.RELEASED;
             centralSyncItemService.merge(centralSyncItem);
             return centralSyncItem;
         }
 
         return continuousSyncService.tryErroredItemAgain(centralSyncItem);
+    }
+
+    private CentralSyncItem getSyncItem(String groupId, String artifactId, String version) {
+        return centralSyncItemService.find(groupId, artifactId, version);
     }
 
     @GET
@@ -184,13 +174,4 @@ public class CentralSyncApi {
         return CentralSyncItem.findAll().list();
     }
 
-    private String getLatestVersion(String groupId, String artifactId) {
-        Name name = NameParser.fromMavenGA(groupId, artifactId);
-        return getLatestVersion(name);
-    }
-
-    private String getLatestVersion(Name fullName) {
-        Project project = npmRegistryFacade.getProject(fullName.npmFullName);
-        return project.distTags().latest();
-    }
 }

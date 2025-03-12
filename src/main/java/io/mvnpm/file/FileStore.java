@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -18,10 +17,16 @@ import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.mvnpm.Constants;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.mavencentral.sync.Stage;
 import io.mvnpm.npm.model.Name;
+import io.quarkus.logging.Log;
+import io.quarkus.vertx.ConsumeEvent;
+import io.smallrye.common.annotation.Blocking;
 
 /**
  * Store for local files.
@@ -34,9 +39,6 @@ public class FileStore {
     @ConfigProperty(name = "mvnpm.local-m2-directory", defaultValue = ".m2")
     String localM2Directory;
 
-    @ConfigProperty(name = "mvnpm.temp-directory", defaultValue = "/tmp")
-    String tempDirectory;
-
     @ConfigProperty(name = "mvnpm.local-user-directory")
     Optional<String> localUserDirectory;
 
@@ -45,22 +47,21 @@ public class FileStore {
         return findArtifactRoots(mvnpmRoot);
     }
 
-    public byte[] createFile(Path localFilePath, byte[] content) {
-        try {
-            Files.createDirectories(localFilePath.getParent());
-            Files.write(localFilePath, content);
-            return content;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+    @ConsumeEvent("central-sync-item-stage-change")
+    @Blocking
+    public void artifactReleased(CentralSyncItem centralSyncItem) {
+        if (centralSyncItem.stage.equals(Stage.RELEASED)) {
+            Log.infof("Deleting cache directory for: %s", centralSyncItem);
+            Path dir = getLocalDirectory(centralSyncItem.groupId, centralSyncItem.artifactId, centralSyncItem.version);
+            FileUtils.deleteQuietly(dir.toFile());
         }
     }
 
-    public Path createTempDirectory(String prefix) {
+    public byte[] createFileAtomic(Path localFilePath, byte[] content) {
         try {
-            SecureRandom random = new SecureRandom();
-            long n = random.nextLong();
-            String s = prefix + Long.toUnsignedString(n);
-            return Files.createDirectory(Path.of(tempDirectory).resolve(prefix + s));
+            Files.createDirectories(localFilePath.getParent());
+            FileUtil.writeAtomic(localFilePath, content);
+            return content;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

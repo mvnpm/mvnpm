@@ -42,6 +42,7 @@ public class TgzClient {
 
     private void downloadFileTo(URL url, Path localFileName) throws FileNotFoundException {
         try {
+            final Path tempFile = FileUtil.getTempFilePathFor(localFileName);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             int responseCode = connection.getResponseCode();
@@ -50,7 +51,7 @@ public class TgzClient {
             }
 
             try (InputStream in = connection.getInputStream();
-                    OutputStream out = Files.newOutputStream(localFileName)) {
+                    OutputStream out = Files.newOutputStream(tempFile)) {
 
                 byte[] buffer = new byte[4096];
                 int bytesRead;
@@ -62,6 +63,7 @@ public class TgzClient {
             } finally {
                 connection.disconnect();
             }
+            FileUtil.forceMoveAtomic(tempFile, localFileName);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

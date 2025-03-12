@@ -1,18 +1,19 @@
 package io.mvnpm.composite;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -20,7 +21,11 @@ import jakarta.inject.Inject;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileType;
+import io.mvnpm.file.FileUtil;
+import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.npm.model.Name;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
 
 @ApplicationScoped
 public class CompositeService {
@@ -30,6 +35,9 @@ public class CompositeService {
 
     @Inject
     FileStore fileStore;
+
+    @Inject
+    MavenCentralService mavenCentralService;
 
     public Path getPath(Name fullName, String version, FileType type) {
         return compositeCreator.getOrBuildComposite(fullName.mvnArtifactId, version);
@@ -47,28 +55,6 @@ public class CompositeService {
         return fileStore.getLocalFullPath(type, fullName, version, Optional.of(Constants.DOT_ASC));
     }
 
-    public Map<String, Date> getVersions(Name name) {
-        try {
-            Path groupRoute = fileStore.getGroupRoot(name.mvnGroupIdPath()).resolve(name.mvnArtifactId);
-            List<Path> versionDirs = Files.walk(groupRoute)
-                    .filter(Files::isDirectory)
-                    .collect(Collectors.toList());
-            Map<String, Date> nameTimeMap = new HashMap<>();
-            for (Path versionDir : versionDirs) {
-                String v = versionDir.getFileName().toString();
-                if (!v.equalsIgnoreCase(name.mvnArtifactId)) {
-                    BasicFileAttributes attr = Files.readAttributes(versionDir, BasicFileAttributes.class);
-                    Date lastModified = Date.from(attr.lastModifiedTime().toInstant());
-                    nameTimeMap.put(versionDir.getFileName().toString(), lastModified);
-                }
-            }
-            return sort(nameTimeMap);
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
-
-    }
-
     public Map<String, Date> sort(Map<String, Date> map) {
         List<Map.Entry<String, Date>> list = new ArrayList<>(map.entrySet());
         list.sort(Map.Entry.comparingByValue());
@@ -80,6 +66,31 @@ public class CompositeService {
     }
 
     public Path getImportMap(Name name, String version) {
-        return compositeCreator.getImportMapPath(name, version);
+        final Path importMapPath = compositeCreator.getImportMapPath(name, version);
+        if (!Files.exists(importMapPath)) {
+            final HttpResponse<Buffer> response = mavenCentralService.getFromMavenCentral(name, version,
+                    fileStore.getLocalFileName(FileType.jar, name, version, Optional.empty()))
+                    .await().atMost(Duration.ofSeconds(10));
+            createImportMapFromJar(response.bodyAsBuffer().getBytes(), importMapPath);
+        }
+        return importMapPath;
+    }
+
+    private void createImportMapFromJar(byte[] jar, Path importMapPath) {
+        try (InputStream inputStream = new ByteArrayInputStream(jar);
+                JarInputStream inputJar = new JarInputStream(inputStream)) {
+            // Add all entries from the input JAR to the merged JAR
+            JarEntry entry;
+            while ((entry = inputJar.getNextJarEntry()) != null) {
+                if ("META-INF/importmap.json".equals(entry.getName())) {
+                    final String importMap = compositeCreator.getEntryContent(inputJar);
+                    Files.createDirectories(importMapPath.getParent());
+                    FileUtil.writeAtomic(importMapPath, importMap);
+                    break;
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

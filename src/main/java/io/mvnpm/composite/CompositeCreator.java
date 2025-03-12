@@ -21,8 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -60,10 +58,11 @@ import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
 import io.quarkus.logging.Log;
-import io.vertx.core.Vertx;
-import io.vertx.ext.web.client.HttpResponse;
-import io.vertx.ext.web.client.WebClient;
+import io.vertx.mutiny.core.Vertx;
+import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.eventbus.EventBus;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
+import io.vertx.mutiny.ext.web.client.WebClient;
 
 /**
  * This group a set of artifacts into one
@@ -92,13 +91,18 @@ public class CompositeCreator {
     @Inject
     EventBus bus;
 
-    private final Vertx vertx = Vertx.vertx();
+    @Inject
+    Vertx vertx;
 
-    private final WebClient webClient = WebClient.create(vertx);
+    private final AtomicReference<WebClient> webClient = new AtomicReference<>();
 
     private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
 
     private final Map<String, GitHubContent> compositesMap = new HashMap<>();
+
+    private WebClient webClient() {
+        return webClient.updateAndGet(webClient -> webClient == null ? WebClient.create(vertx) : webClient);
+    }
 
     @PostConstruct
     public void loadAllComposites() {
@@ -203,30 +207,25 @@ public class CompositeCreator {
         Path sourceJar = fileStore.getLocalFullPath(FileType.source, model.getGroupId(), model.getArtifactId(),
                 model.getVersion());
         if (!Files.exists(jar)) {
-            final Path tempDirectory = fileStore.createTempDirectory("composite-jar");
-            final Path outputJar = tempDirectory.resolve(jar.getFileName().toString());
-            final Path outputSourceJar = tempDirectory.resolve(sourceJar.getFileName().toString());
-            final Path outputPom = getPomPath(outputJar);
-            Name outputJarName = NameParser.fromMavenGA(model.getGroupId(), model.getArtifactId());
-            Model pom = mergeJar(outputJar, outputPom, outputJarName, model, dependencies);
-            mergeSource(outputSourceJar, pom, dependencies);
+            final Path outputPom = getPomPath(jar);
+            Name name = NameParser.fromMavenGA(model.getGroupId(), model.getArtifactId());
+            Model pom = mergeJar(jar, outputPom, model, dependencies);
+            mergeSource(jar, pom, dependencies);
             bus.send(NewJarEvent.EVENT_NAME,
-                    new NewJarEvent(tempDirectory, outputPom, outputJar, null, List.of(outputSourceJar), jar.getParent(),
-                            outputJarName,
-                            pom.getVersion()));
-            return outputJar;
-        } else {
-            return jar;
+                    new NewJarEvent(outputPom, jar, null, List.of(sourceJar), name, pom.getVersion()));
+
         }
+        return jar;
 
     }
 
-    private Model mergeJar(Path outputJar, Path outputPom, Name outputJarName, Model model, List<Dependency> dependencies)
+    private Model mergeJar(Path outputJar, Path outputPom, Model model, List<Dependency> dependencies)
             throws IOException, XmlPullParserException {
         Model pom = model.clone();
         Files.createDirectories(outputJar.getParent());
         // Create a new JAR file to merge the others into
-        try (OutputStream jarFile = Files.newOutputStream(outputJar);
+        final Path tempJar = FileUtil.getTempFilePathFor(outputJar);
+        try (OutputStream jarFile = Files.newOutputStream(tempJar);
                 JarOutputStream mergedJar = new JarOutputStream(jarFile);
                 ByteArrayOutputStream commonTgzBaos = new ByteArrayOutputStream();
                 GZIPOutputStream commonTgzGzos = new GZIPOutputStream(commonTgzBaos);
@@ -283,7 +282,7 @@ public class CompositeCreator {
             String aggregatedImportMap = aggregator.aggregateAsJson(false);
             writeEntry(mergedJar, "META-INF/importmap.json", aggregatedImportMap);
             Path importmapPath = outputJar.getParent().resolve("importmap.json");
-            fileStore.createFile(importmapPath, aggregatedImportMap.getBytes());
+            fileStore.createFileAtomic(importmapPath, aggregatedImportMap.getBytes());
 
             // Add pom (in jar and on disk)
             pom.setDependencies(List.copyOf(newDependencies.values()));
@@ -292,8 +291,9 @@ public class CompositeCreator {
             MavenXpp3Writer mxw = new MavenXpp3Writer();
 
             FileUtil.createDirectories(outputPom);
-            try (OutputStream outputStream = Files.newOutputStream(outputPom)) {
-                mxw.write(outputStream, pom);
+            try (StringWriter stringWriter = new StringWriter()) {
+                mxw.write(stringWriter, pom);
+                FileUtil.writeAtomic(outputPom, stringWriter.toString());
                 writeEntry(mergedJar, "META-INF/maven/" + pom.getGroupId() + "/" + pom.getArtifactId() + "/pom.xml",
                         outputPom);
 
@@ -315,6 +315,7 @@ public class CompositeCreator {
         } catch (IOException e) {
             throw new RuntimeException("Error creating JAR output: " + outputJar, e);
         }
+        FileUtil.forceMoveAtomic(tempJar, outputJar);
         return pom;
     }
 
@@ -345,8 +346,9 @@ public class CompositeCreator {
     private void mergeSource(Path outputSourceJar, Model pom, List<Dependency> dependencies)
             throws IOException, XmlPullParserException {
         Files.createDirectories(outputSourceJar.getParent());
+        final Path tempJar = FileUtil.getTempFilePathFor(outputSourceJar);
         // Create a new JAR file to merge the others into
-        try (OutputStream jarFile = Files.newOutputStream(outputSourceJar);
+        try (OutputStream jarFile = Files.newOutputStream(tempJar);
                 JarOutputStream mergedJar = new JarOutputStream(jarFile)) {
 
             // Create new merged pom.xml
@@ -384,6 +386,7 @@ public class CompositeCreator {
 
             Log.info(pom.getGroupId() + ":" + pom.getArtifactId() + ":" + pom.getVersion() + " source created");
         }
+        FileUtil.forceMoveAtomic(tempJar, outputSourceJar);
     }
 
     private String modelToString(Model model) {
@@ -497,7 +500,7 @@ public class CompositeCreator {
         return ImportsDataBinding.toImports(json).getImports();
     }
 
-    private String getEntryContent(JarInputStream inputJar) throws IOException {
+    public String getEntryContent(JarInputStream inputJar) throws IOException {
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
             // Read the content of the entry and write it to a String
             byte[] buffer = new byte[4096];
@@ -511,21 +514,9 @@ public class CompositeCreator {
     }
 
     private String downloadFileContent(String downloadUrl) throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<String> result = new AtomicReference<>();
-
-        webClient.getAbs(downloadUrl)
-                .send(ar -> {
-                    if (ar.succeeded()) {
-                        HttpResponse<io.vertx.core.buffer.Buffer> response = ar.result();
-                        result.set(response.bodyAsString());
-                    } else {
-                        ar.cause().printStackTrace();
-                    }
-                    latch.countDown();
-                });
-
-        latch.await(2, TimeUnit.MINUTES);
-        return result.get();
+        final HttpResponse<Buffer> response = webClient().getAbs(downloadUrl)
+                .send()
+                .await().indefinitely();
+        return response.bodyAsString();
     }
 }

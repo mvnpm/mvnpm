@@ -12,6 +12,8 @@ import io.mvnpm.file.exceptions.PackageNotCreatedException;
 import io.mvnpm.file.type.JarClient;
 import io.mvnpm.file.type.PomClient;
 import io.mvnpm.file.type.TgzClient;
+import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
@@ -41,7 +43,16 @@ public class FileClient {
     EventBus bus;
 
     @Inject
+    MavenRepositoryService mavenRepositoryService;
+
+    @Inject
     NpmRegistryFacade npmRegistryFacade;
+
+    public PackageAlreadySyncedException newPackageAlreadySyncedException(Name name, String version, FileType type,
+            Optional<String> dotSigned) {
+        return new PackageAlreadySyncedException(fileStore.getLocalFileName(type, name, version, dotSigned), name, version,
+                type);
+    }
 
     public Path getFilePath(FileType type, Name name, String version) {
         Path localFilePath = fileStore.getLocalFullPath(type, name, version);
@@ -78,35 +89,28 @@ public class FileClient {
             return localFilePath;
         } else {
             Log.debug("Serving remotely [" + localFilePath + "]");
-            final Path tempDirectory = fileStore.createTempDirectory("jar-" + name.toPathString(version));
-            final Path tempPath = tempDirectory.resolve(localFilePath.getFileName().toString());
-            final Path targetDirectory = localFilePath.getParent();
-            return fetchRemoteAndStore(tempDirectory, targetDirectory, type, name, version, tempPath);
+            return fetchRemoteAndStore(type, name, version, localFilePath);
         }
     }
 
-    private Path fetchRemoteAndStore(Path tempDirectory, Path targetDirectory, FileType type, Name name, String version,
+    private Path fetchRemoteAndStore(FileType type, Name name, String version,
             Path localFilePath) {
         io.mvnpm.npm.model.Package p = npmRegistryFacade.getPackage(name.npmFullName, version);
         switch (type) {
-            case tgz, jar -> createPomTgzAndJar(tempDirectory, targetDirectory, name, version, localFilePath, p);
+            case tgz -> tgzClient.fetchRemoteAndSave(p, localFilePath);
+            case jar -> createAndSaveJar(localFilePath, p);
             case pom -> pomClient.createAndSavePom(p, localFilePath); // Only create the POM to avoid extra processing
+            default -> throw new PackageNotCreatedException(name, type, version);
         }
         return localFilePath;
     }
 
-    private void createPomTgzAndJar(Path tempDirectory, Path targetDirectory, Name name, String version, Path localFilePath,
-            io.mvnpm.npm.model.Package p) {
-        Path jarPath = tempDirectory.resolve(
-                fileStore.getLocalFileName(FileType.jar, name.mvnArtifactId, version, Optional.empty()));
-        Path pomPath = tempDirectory.resolve(
-                fileStore.getLocalFileName(FileType.pom, name.mvnArtifactId, version, Optional.empty()));
-        Path tgzPath = tempDirectory.resolve(
-                fileStore.getLocalFileName(FileType.tgz, name.mvnArtifactId, version, Optional.empty()));
-        pomClient.createAndSavePom(p, pomPath);
-        tgzClient.fetchRemoteAndSave(p, tgzPath);
+    private void createAndSaveJar(Path jarPath, io.mvnpm.npm.model.Package p) {
+        Path pomPath = mavenRepositoryService.getPath(p.name(), p.version(), FileType.pom);
+        Path tgzPath = mavenRepositoryService.getPath(p.name(), p.version(), FileType.tgz);
         jarClient.createAndSaveJar(p, jarPath, pomPath, tgzPath);
         bus.send(NewJarEvent.EVENT_NAME,
-                new NewJarEvent(tempDirectory, pomPath, jarPath, tgzPath, List.of(), targetDirectory, p.name(), p.version()));
+                new NewJarEvent(pomPath, jarPath, tgzPath, List.of(), p.name(), p.version()));
+
     }
 }
