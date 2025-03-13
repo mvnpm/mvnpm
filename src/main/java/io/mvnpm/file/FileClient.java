@@ -14,6 +14,7 @@ import io.mvnpm.file.type.PomClient;
 import io.mvnpm.file.type.TgzClient;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
+import io.mvnpm.newfile.HashService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
@@ -38,6 +39,9 @@ public class FileClient {
 
     @Inject
     FileStore fileStore;
+
+    @Inject
+    HashService hashService;
 
     @Inject
     EventBus bus;
@@ -109,6 +113,7 @@ public class FileClient {
         Path pomPath = mavenRepositoryService.getPath(p.name(), p.version(), FileType.pom);
         Path tgzPath = mavenRepositoryService.getPath(p.name(), p.version(), FileType.tgz);
         jarClient.createAndSaveJar(p, jarPath, pomPath, tgzPath);
+        hashService.createHashes(jarPath);
         bus.send(NewJarEvent.EVENT_NAME,
                 new NewJarEvent(pomPath, jarPath, tgzPath, List.of(), p.name(), p.version()));
 

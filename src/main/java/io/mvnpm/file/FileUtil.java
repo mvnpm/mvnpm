@@ -64,14 +64,15 @@ public class FileUtil {
     public static Path createSha1(Path forFile, boolean force) {
         String localSha1FileName = forFile.toString() + Constants.DOT_SHA1;
         Path localSha1File = Paths.get(localSha1FileName);
-        try (InputStream inputStream = Files.newInputStream(forFile)) {
-            String sha1 = FileUtil.getSha1(inputStream);
-            if (!Files.exists(localSha1File) || force) {
+        if (!Files.exists(localSha1File) || force) {
+            try (InputStream inputStream = Files.newInputStream(forFile)) {
+                String sha1 = FileUtil.getSha1(inputStream);
                 writeAtomic(localSha1File, sha1);
+            } catch (IOException ex) {
+                throw new IllegalStateException(ex);
             }
-        } catch (IOException ex) {
-            throw new IllegalStateException(ex);
         }
+
         return localSha1File;
     }
 
@@ -127,13 +128,13 @@ public class FileUtil {
     public static Path createMd5(Path forFile, boolean force) {
         String localMd5FileName = forFile.toString() + Constants.DOT_MD5;
         Path localMd5File = Paths.get(localMd5FileName);
-        try (InputStream inputStream = Files.newInputStream(forFile)) {
-            String md5 = FileUtil.getMd5(inputStream);
-            if (!Files.exists(localMd5File) || force) {
+        if (!Files.exists(localMd5File) || force) {
+            try (InputStream inputStream = Files.newInputStream(forFile)) {
+                String md5 = FileUtil.getMd5(inputStream);
                 writeAtomic(localMd5File, md5);
+            } catch (IOException ex) {
+                throw new IllegalStateException(ex);
             }
-        } catch (IOException ex) {
-            throw new IllegalStateException(ex);
         }
         return localMd5File;
     }
