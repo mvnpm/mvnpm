@@ -56,10 +56,12 @@ public class JarClient {
     public Path createEmptyJar(Path forJar, String replaceJarWith) {
         Path emptyFile = Paths.get(forJar.toString().replace(Constants.DOT_JAR, replaceJarWith));
         if (!Files.exists(emptyFile)) {
-            try (OutputStream fileOutput = Files.newOutputStream(emptyFile);
+            final Path temp = FileUtil.getTempFilePathFor(emptyFile);
+            try (OutputStream fileOutput = Files.newOutputStream(temp);
                     JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
                 emptyJar(jarOutput);
                 jarOutput.finish();
+                FileUtil.forceMoveAtomic(temp, emptyFile);
             } catch (IOException ex) {
                 throw new UncheckedIOException(ex);
             }
@@ -83,7 +85,8 @@ public class JarClient {
 
     private void jarInput(io.mvnpm.npm.model.Package p, Path jarOutputPath, Path pomPath, Path tgzPath) {
         FileUtil.createDirectories(jarOutputPath);
-        try (OutputStream fileOutput = Files.newOutputStream(jarOutputPath);
+        final Path tempFile = FileUtil.getTempFilePathFor(jarOutputPath);
+        try (OutputStream fileOutput = Files.newOutputStream(tempFile);
                 JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
 
             // Pom details
@@ -99,7 +102,7 @@ public class JarClient {
             tgzToJar(p, tgzPath, jarOutput);
 
             jarOutput.finish();
-
+            FileUtil.forceMoveAtomic(tempFile, jarOutputPath);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }

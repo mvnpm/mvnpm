@@ -92,7 +92,7 @@ public class ContinuousSyncService {
      * Sync a certain version of a artifact with central
      */
     public boolean initializeSync(String groupId, String artifactId, String version) {
-        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version, true);
 
         if (centralSyncService.canProcessSync(itemToSync)) { // Check if this is already synced or in progess
             itemToSync = centralSyncItemService.changeStage(itemToSync, Stage.INIT);
@@ -139,7 +139,7 @@ public class ContinuousSyncService {
         // Check if this is in central, and update the status
         List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findNotReleased();
         for (CentralSyncItem centralSyncItem : uploadedToSonatype) {
-            centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem);
+            centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem);
         }
     }
 
@@ -199,7 +199,7 @@ public class ContinuousSyncService {
     }
 
     private void processNextUpload(CentralSyncItem centralSyncItem) {
-        if (!centralSyncService.isInMavenCentralRemoteCheck(centralSyncItem)) {
+        if (!centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
             try {
                 String repoId = centralSyncService.sync(centralSyncItem);
                 centralSyncItem.stagingRepoId = repoId;

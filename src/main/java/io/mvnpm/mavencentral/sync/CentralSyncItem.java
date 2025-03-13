@@ -12,6 +12,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Index;
+import jakarta.persistence.LockModeType;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
@@ -56,6 +57,23 @@ public class CentralSyncItem extends PanacheEntityBase {
         this.stageChangeTime = LocalDateTime.now();
     }
 
+    public static CentralSyncItem findOrCreate(Gav gav, boolean writeLock) {
+        insertIfNotPresent(gav);
+        return findById(gav, writeLock ? LockModeType.PESSIMISTIC_WRITE : LockModeType.NONE);
+    }
+
+    private static int insertIfNotPresent(Gav gav) {
+        return getEntityManager().createQuery(
+                "insert into CentralSyncItem (groupId, artifactId, version, startTime, stage, stageChangeTime, uploadAttempts, promotionAttempts) values (:groupId, :artifactId, :version, :now, :stage, :now, 0, 0)\n"
+                        + "  on conflict(groupId, artifactId, version) do nothing")
+                .setParameter("groupId", gav.getGroupId())
+                .setParameter("artifactId", gav.getArtifactId())
+                .setParameter("version", gav.getVersion())
+                .setParameter("now", LocalDateTime.now())
+                .setParameter("stage", Stage.NONE)
+                .executeUpdate();
+    }
+
     public static List<CentralSyncItem> findByStage(Stage stage) {
         return find("#CentralSyncItem.findByStage", stage).list();
     }
@@ -85,7 +103,7 @@ public class CentralSyncItem extends PanacheEntityBase {
         return this.stage.equals(Stage.ERROR);
     }
 
-    public boolean alreadyRealeased() {
+    public boolean alreadyReleased() {
         return this.stage.equals(Stage.RELEASED);
     }
 

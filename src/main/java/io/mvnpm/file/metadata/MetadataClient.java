@@ -1,7 +1,8 @@
 package io.mvnpm.file.metadata;
 
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,19 +20,24 @@ import jakarta.ws.rs.core.StreamingOutput;
 
 import org.apache.maven.artifact.repository.metadata.Metadata;
 import org.apache.maven.artifact.repository.metadata.Versioning;
+import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Reader;
 import org.apache.maven.artifact.repository.metadata.io.xpp3.MetadataXpp3Writer;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.mvnpm.Constants;
 import io.mvnpm.composite.CompositeService;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileUtil;
+import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.version.InvalidVersionException;
 import io.mvnpm.version.Version;
 import io.quarkus.logging.Log;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
 
 /**
  * Creates a maven-metadata.xml from the NPM Project
@@ -41,6 +47,7 @@ import io.quarkus.logging.Log;
 @ApplicationScoped
 public class MetadataClient {
     private final MetadataXpp3Writer metadataXpp3Writer = new MetadataXpp3Writer();
+    private final MetadataXpp3Reader metadataXpp3Reader = new MetadataXpp3Reader();
 
     @Inject
     NpmRegistryFacade npmRegistryFacade;
@@ -49,27 +56,48 @@ public class MetadataClient {
     CompositeService compositeService;
 
     @Inject
+    MavenCentralService mavenCentralService;
+
+    @Inject
     FileStore fileStore;
 
     @ConfigProperty(name = "mvnpm.metadata-timeout.minutes")
     int timeout;
 
-    public StreamingOutput getMetadataXml(Name name) {
-        Path localFilePath = fileStore.getLocalMetadataXmlFullPath(name);
-        // Create if if does not exist.
-        if (!Files.exists(localFilePath) || !Files.isRegularFile(localFilePath) || isOlderThanTimeout(localFilePath)) {
-            createDir(localFilePath);
-            try (OutputStream os = Files.newOutputStream(localFilePath)) {
-                Metadata metadata = getMetadata(name);
-                metadataXpp3Writer.write(os, metadata);
-                FileUtil.createSha1(localFilePath, true);
-                FileUtil.createMd5(localFilePath, true);
-            } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
-            }
+    public Metadata getMetadata(Name name) {
+        final Path metadataXml = getMetadataXml(name);
+        try (InputStream is = Files.newInputStream(metadataXml)) {
+            return metadataXpp3Reader.read(is);
+        } catch (IOException | XmlPullParserException e) {
+            throw new RuntimeException(e);
         }
 
-        return FileUtil.toStreamingOutput(localFilePath);
+    }
+
+    public Path getMetadataXml(Name name) {
+        Path localFilePath = fileStore.getLocalMetadataXmlFullPath(name);
+        // Create if does not exist.
+        if (!Files.exists(localFilePath) || !Files.isRegularFile(localFilePath) || isOlderThanTimeout(localFilePath)) {
+            createDir(localFilePath);
+            if (name.isInternal()) {
+                final Buffer buffer = mavenCentralService.getFromMavenCentral(name, null, Constants.MAVEN_METADATA_XML)
+                        .map(HttpResponse::bodyAsBuffer)
+                        .await().atMost(Duration.ofSeconds(10));
+                FileUtil.writeAtomic(localFilePath, buffer.getBytes());
+            } else {
+                try (StringWriter stringWriter = new StringWriter()) {
+                    Metadata metadata = buildMetadata(name);
+                    metadataXpp3Writer.write(stringWriter, metadata);
+                    FileUtil.writeAtomic(localFilePath, stringWriter.toString());
+                    FileUtil.createSha1(localFilePath, true);
+                    FileUtil.createMd5(localFilePath, true);
+                } catch (IOException ex) {
+                    throw new UncheckedIOException(ex);
+                }
+            }
+
+        }
+        return localFilePath;
     }
 
     public StreamingOutput getMetadataSha1(Name name) {
@@ -97,7 +125,7 @@ public class MetadataClient {
         return FileUtil.toStreamingOutput(localMd5Path);
     }
 
-    private Metadata getMetadata(Name name) {
+    private Metadata buildMetadata(Name name) {
         Metadata metadata = new Metadata();
         metadata.setGroupId(name.mvnGroupId);
         metadata.setArtifactId(name.mvnArtifactId);
@@ -107,41 +135,7 @@ public class MetadataClient {
     }
 
     private Versioning getVersioning(Name name) {
-        if (name.isInternal()) {
-            return getInternalVersioning(name);
-        } else {
-            return getNpmVersioning(name);
-        }
-    }
-
-    private Versioning getInternalVersioning(Name name) {
-        Versioning versioning = new Versioning();
-
-        Map<String, Date> versions = compositeService.getVersions(name);
-        if (versions.isEmpty())
-            throw new RuntimeException("No version found for " + name.displayName);
-
-        boolean isFirst = true;
-        for (Map.Entry<String, Date> version : versions.entrySet()) {
-            if (isFirst) {
-                isFirst = false;
-                versioning.setLatest(version.getKey());
-                versioning.setRelease(version.getKey());
-                versioning.setLastUpdatedTimestamp(version.getValue());
-            }
-
-            try {
-                Version v = Version.fromString(version.getKey());
-                // Ignore pre release
-                if (v.qualifier() == null) {
-                    versioning.addVersion(v.toString());
-                }
-            } catch (InvalidVersionException ive) {
-                Log.warn("Ignoring version [" + ive.getVersion() + "] for " + name.displayName);
-            }
-        }
-
-        return versioning;
+        return getNpmVersioning(name);
     }
 
     private Versioning getNpmVersioning(Name name) {

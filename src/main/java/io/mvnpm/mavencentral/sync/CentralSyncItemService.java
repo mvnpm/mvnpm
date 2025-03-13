@@ -41,20 +41,13 @@ public class CentralSyncItemService {
     }
 
     @Transactional
-    public CentralSyncItem findOrCreate(String groupId, String artifactId, String version) {
-        return findOrCreate(new Gav(groupId, artifactId, version));
+    public CentralSyncItem find(String groupId, String artifactId, String version) {
+        return CentralSyncItem.findById(new Gav(groupId, artifactId, version));
     }
 
     @Transactional
-    public CentralSyncItem findOrCreate(Gav gav) {
-        CentralSyncItem existing = CentralSyncItem.findById(gav);
-        if (existing != null)
-            return existing;
-
-        CentralSyncItem newCentralSyncItem = new CentralSyncItem(gav.getGroupId(), gav.getArtifactId(), gav.getVersion());
-        newCentralSyncItem.persist();
-
-        return newCentralSyncItem;
+    public CentralSyncItem findOrCreate(String groupId, String artifactId, String version, boolean writeLock) {
+        return CentralSyncItem.findOrCreate(new Gav(groupId, artifactId, version), writeLock);
     }
 
 }

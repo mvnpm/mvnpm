@@ -23,6 +23,7 @@ import org.apache.commons.compress.utils.IOUtils;
 
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
+import io.mvnpm.file.FileUtil;
 import io.quarkus.logging.Log;
 
 /**
@@ -53,10 +54,12 @@ public class SourceService {
             } catch (IOException ex) {
                 throw new UncheckedIOException(ex);
             }
-            try (OutputStream fileOutput = Files.newOutputStream(sourceFile);
+            final Path tempFile = FileUtil.getTempFilePathFor(sourceFile);
+            try (OutputStream fileOutput = Files.newOutputStream(tempFile);
                     JarArchiveOutputStream jarOutput = new JarArchiveOutputStream(fileOutput)) {
                 tgzToJar(tgzFile, jarOutput);
                 jarOutput.finish();
+                FileUtil.forceMoveAtomic(tempFile, sourceFile);
                 return true;
             } catch (IOException ex) {
                 throw new UncheckedIOException(ex);

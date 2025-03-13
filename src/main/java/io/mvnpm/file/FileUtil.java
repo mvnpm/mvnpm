@@ -8,8 +8,10 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -64,14 +66,45 @@ public class FileUtil {
         Path localSha1File = Paths.get(localSha1FileName);
         try (InputStream inputStream = Files.newInputStream(forFile)) {
             String sha1 = FileUtil.getSha1(inputStream);
-
             if (!Files.exists(localSha1File) || force) {
-                Files.writeString(localSha1File, sha1);
+                writeAtomic(localSha1File, sha1);
             }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
         }
         return localSha1File;
+    }
+
+    public static void writeAtomic(Path file, String content) {
+        final Path tempFile = getTempFilePathFor(file);
+        try {
+            Files.writeString(tempFile, content);
+            forceMoveAtomic(tempFile, file);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void writeAtomic(Path file, byte[] content) {
+        final Path tempFile = getTempFilePathFor(file);
+        try {
+            Files.write(tempFile, content);
+            forceMoveAtomic(tempFile, file);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public static void forceMoveAtomic(Path source, Path target) throws IOException {
+        Files.move(source, target, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+    }
+
+    public static Path getTempFilePathFor(Path file) {
+        SecureRandom random = new SecureRandom();
+        long n = random.nextLong();
+        String s = Long.toUnsignedString(n);
+        final Path tempFile = file.getParent().resolve(file.getFileName() + ".creating-" + s);
+        return tempFile;
     }
 
     private static String getSha1(java.io.InputStream inputStream) {
@@ -97,7 +130,7 @@ public class FileUtil {
         try (InputStream inputStream = Files.newInputStream(forFile)) {
             String md5 = FileUtil.getMd5(inputStream);
             if (!Files.exists(localMd5File) || force) {
-                Files.writeString(localMd5File, md5);
+                writeAtomic(localMd5File, md5);
             }
         } catch (IOException ex) {
             throw new IllegalStateException(ex);

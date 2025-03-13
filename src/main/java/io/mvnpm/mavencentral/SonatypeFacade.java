@@ -88,7 +88,7 @@ public class SonatypeFacade {
                         String groupId = item.getString("groupId");
                         String artifactId = item.getString("artifactId");
                         String version = item.getString("version");
-                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version));
+                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version, false));
                     }
                 }
             }

@@ -14,7 +14,7 @@ import jakarta.ws.rs.ext.Provider;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @Provider
-public class NotFoundExeptionMapper implements ExceptionMapper<NotFoundException> {
+public class NotFoundExceptionMapper implements ExceptionMapper<NotFoundException> {
 
     @Context
     HttpHeaders headers;

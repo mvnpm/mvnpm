@@ -88,6 +88,12 @@
     </dependencies>
   </dependencyManagement>
   <dependencies>
+    <!-- web client -->
+    <dependency>
+      <groupId>io.smallrye.reactive</groupId>
+      <artifactId>smallrye-mutiny-vertx-web-client</artifactId>
+    </dependency>
+
     <!-- Health check -->
     <dependency>
         <groupId>io.quarkus</groupId>

@@ -3,12 +3,16 @@ package io.mvnpm;
 import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
 import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
 
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,9 +28,14 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.jboss.resteasy.reactive.ResponseHeader;
 
 import io.mvnpm.file.FileType;
+import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.maven.NameVersionType;
+import io.mvnpm.maven.NameVersion;
 import io.mvnpm.maven.UrlPathParser;
+import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
+import io.smallrye.mutiny.Uni;
+import io.vertx.mutiny.core.buffer.Buffer;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
 
 /**
  * Get the file listing for a jar file
@@ -41,45 +50,68 @@ public class JarContentsApi {
     @Inject
     MavenRepositoryService mavenRepositoryService;
 
+    @Inject
+    MavenCentralService mavenCentralService;
+
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}.jar")
     public JarLibrary getJar(@PathParam("gavt") String gavt) {
-        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return loadJarLibrary(nameVersionType, FileType.jar);
+        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
+        return loadJarLibrary(nameVersion, FileType.jar);
     }
 
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}-sources.jar")
     public JarLibrary getSourcesJar(@PathParam("gavt") String gavt) {
-        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return loadJarLibrary(nameVersionType, FileType.source);
+        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
+        return loadJarLibrary(nameVersion, FileType.source);
     }
 
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}-javadoc.jar")
     public JarLibrary getJavadocJar(@PathParam("gavt") String gavt) {
-        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return loadJarLibrary(nameVersionType, FileType.javadoc);
+        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
+        return loadJarLibrary(nameVersion, FileType.javadoc);
     }
 
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     @Path("/org/mvnpm/{gavt : (.+)?}.tgz")
     public JarLibrary getTgz(@PathParam("gavt") String gavt) {
-        NameVersionType nameVersionType = UrlPathParser.parseMavenFile(gavt);
-        return loadTarGzLibrary(nameVersionType);
+        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
+        return loadTarGzLibrary(nameVersion);
     }
 
-    private JarLibrary loadJarLibrary(NameVersionType nameVersionType, FileType filetype) {
-        java.nio.file.Path path = mavenRepositoryService.getPath(nameVersionType.name(), nameVersionType.version(),
-                filetype);
+    private JarLibrary loadJarLibrary(NameVersion nameVersion, FileType filetype) {
+        try {
+            java.nio.file.Path path = mavenRepositoryService.getPath(nameVersion.name(), nameVersion.version(),
+                    filetype);
+            try (InputStream inputStream = Files.newInputStream(path)) {
+                return loadJarLibrary(nameVersion, filetype, inputStream);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (PackageAlreadySyncedException e) {
+            final Uni<HttpResponse<Buffer>> fromMavenCentral = mavenCentralService.getFromMavenCentral(
+                    nameVersion.name(), nameVersion.version(), e.fileName());
+            final HttpResponse<Buffer> response = fromMavenCentral.await().indefinitely();
+            try (final InputStream is = new ByteArrayInputStream(response.body().getBytes())) {
+                return loadJarLibrary(nameVersion, filetype, is);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
 
-        JarLibrary library = new JarLibrary(nameVersionType.name().displayName);
-        library.setVersion(nameVersionType.version());
-        library.setType(filetype.getPostString());
+        }
+    }
+
+    private JarLibrary loadJarLibrary(NameVersion nameVersion, FileType type, InputStream stream) {
+
+        JarLibrary library = new JarLibrary(nameVersion.name().displayName);
+        library.setVersion(nameVersion.version());
+        library.setType(type.getPostString());
 
         Map<String, JarAsset> assetMap = new HashMap<>();
         JarAsset rootAsset = new JarAsset();
@@ -88,9 +120,11 @@ public class JarContentsApi {
         rootAsset.setChildren(new ArrayList<>());
         assetMap.put("/", rootAsset);
 
-        // Iterate through the entries of the jar file
-        try (JarFile jarFile = new JarFile(path.toString())) {
-            jarFile.stream().forEach(entry -> {
+        // Open the JAR file using JarInputStream
+        try (JarInputStream jarInputStream = new JarInputStream(stream)) {
+            JarEntry entry;
+
+            while ((entry = jarInputStream.getNextJarEntry()) != null) {
                 String name = entry.getName();
                 boolean isFile = !entry.isDirectory();
                 String[] parts = name.split("/");
@@ -126,23 +160,22 @@ public class JarContentsApi {
                     fileAsset.setUrlPart(name);
                     currentParent.getChildren().add(fileAsset);
                 }
-            });
-
-            library.setRootAsset(rootAsset);
-
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Failed to load JAR file: " + path, e);
+            }
+        } catch (IOException ex) {
+            LOGGER.log(Level.SEVERE, "Failed to load JAR file: " + nameVersion, ex);
         }
+
+        library.setRootAsset(rootAsset);
 
         return library;
     }
 
-    private JarLibrary loadTarGzLibrary(NameVersionType nameVersionType) {
-        java.nio.file.Path path = mavenRepositoryService.getPath(nameVersionType.name(), nameVersionType.version(),
+    private JarLibrary loadTarGzLibrary(NameVersion nameVersion) {
+        java.nio.file.Path path = mavenRepositoryService.getPath(nameVersion.name(), nameVersion.version(),
                 FileType.tgz);
 
-        JarLibrary library = new JarLibrary(nameVersionType.name().displayName);
-        library.setVersion(nameVersionType.version());
+        JarLibrary library = new JarLibrary(nameVersion.name().displayName);
+        library.setVersion(nameVersion.version());
         library.setType(FileType.tgz.getPostString());
 
         Map<String, JarAsset> assetMap = new HashMap<>();
