@@ -29,6 +29,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import io.mvnpm.Constants;
 import io.mvnpm.file.FileStore;
 import io.mvnpm.file.FileUtil;
+import io.mvnpm.newfile.HashService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Bugs;
 import io.mvnpm.npm.model.Maintainer;
@@ -51,10 +52,14 @@ public class PomClient {
     @Inject
     NpmRegistryFacade npmRegistryFacade;
 
+    @Inject
+    HashService hashService;
+
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
 
     public void createAndSavePom(io.mvnpm.npm.model.Package p, Path localFilePath) {
         writePomToFileSystem(p, localFilePath);
+        hashService.createHashes(localFilePath);
     }
 
     private void writePomToFileSystem(io.mvnpm.npm.model.Package p, Path localFilePath) {
