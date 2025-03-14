@@ -12,10 +12,13 @@ export class MvnpmDoc extends LitElement {
     static styles = css`
         :host {
             width: 100%;
+            height: 100%;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
-            padding: 15px;
+            padding: 30px;
             gap: 30px;
+            background-color: rgba(2, 2, 2, 50%);
         }
 
         @media (min-width: 900px) {
@@ -98,7 +101,7 @@ export class MvnpmDoc extends LitElement {
     render() {
         return html`
             <section>
-                <h3>Use npm like any other Maven dependency...</h3>
+                <h3>Use NPM package like any other Maven/Gradle dependency...</h3>
                 <p><b>mvnpm</b> (Maven NPM) allows to consume the <a href="https://www.npmjs.com/" target="_blank">NPM
                     Registry</a> packages as dependencies directly from a Maven or Gradle project:
                 </p>
