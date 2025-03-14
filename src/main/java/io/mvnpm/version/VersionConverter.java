@@ -49,8 +49,9 @@ public class VersionConverter {
 
     public static String convert(String versionString) {
         try {
-            if (null == versionString || versionString.startsWith("git:/") || versionString.startsWith(
-                    "git+http")) { // We do not support git repos as version. Maybe something we can add later
+            if (null == versionString || versionString.startsWith("github:") || versionString.startsWith("git:/")
+                    || versionString.startsWith(
+                            "git+http")) { // We do not support git repos as version. Maybe something we can add later
                 versionString = EMPTY;
             }
 

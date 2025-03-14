@@ -395,7 +395,7 @@ export class MvnpmHome extends LitElement {
       return this._renderSearchResults();
     } else {
       return html`
-        <div class="emptyScreen">Use NPM package like any other Maven/Gradle dependency</div>`;
+        <div class="emptyScreen">Use NPM package like any other Maven/Gradle dependency...</div>`;
     }
   }
 
