@@ -33,6 +33,13 @@ public class CentralSyncItemService {
     }
 
     @Transactional
+    public CentralSyncItem increaseCreationAttempt(CentralSyncItem centralSyncItem) {
+        centralSyncItem.increaseCreationAttempt();
+        centralSyncItem.persist();
+        return centralSyncItem;
+    }
+
+    @Transactional
     public CentralSyncItem merge(CentralSyncItem centralSyncItem) {
         if (centralSyncItem.isPersistent()) {
             return centralSyncItem;
@@ -46,8 +53,8 @@ public class CentralSyncItemService {
     }
 
     @Transactional
-    public CentralSyncItem findOrCreate(String groupId, String artifactId, String version, boolean writeLock) {
-        return CentralSyncItem.findOrCreate(new Gav(groupId, artifactId, version), writeLock);
+    public CentralSyncItem findOrCreate(String groupId, String artifactId, String version) {
+        return CentralSyncItem.findOrCreate(new Gav(groupId, artifactId, version));
     }
 
 }

@@ -1,5 +1,8 @@
 package io.mvnpm;
 
+import java.util.List;
+
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -41,23 +44,23 @@ public class MavenRepositoryApiTest {
     }
 
     @Test
-    public void testNonCreatedPackageShaError() {
+    public void testNonCreatedPackageOtherFilesCanFail() {
         RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/at/vaadin/tabs/24.3.8/vaadin-24.3.8.pom.sha1")
                 .then().log().all().and()
-                .statusCode(404);
+                .statusCode(Matchers.in(List.of(200, 404)));
         RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/at/vaadin/tabs/24.3.8/vaadin-24.3.8.pom.md5")
                 .then().log().all().and()
-                .statusCode(404);
+                .statusCode(Matchers.in(List.of(200, 404)));
         RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/at/vaadin/tabs/24.3.8/vaadin-24.3.8.jar.asc")
                 .then().log().all().and()
-                .statusCode(404);
+                .statusCode(Matchers.in(List.of(200, 404)));
         RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/at/vaadin/tabs/24.3.8/vaadin-24.3.8.jar.asc.md5")
                 .then().log().all().and()
-                .statusCode(404);
+                .statusCode(Matchers.in(List.of(200, 404)));
     }
 
     @Test

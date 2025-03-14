@@ -17,9 +17,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import io.mvnpm.Constants;
-import io.mvnpm.file.FileStore;
-import io.mvnpm.file.FileType;
+import io.mvnpm.creator.PackageFileLocator;
+import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
 import io.quarkus.logging.Log;
 
 /**
@@ -31,31 +32,28 @@ import io.quarkus.logging.Log;
 public class BundleCreator {
 
     @Inject
-    FileStore fileStore;
+    PackageFileLocator packageFileLocator;
 
     @Inject
     MavenRepositoryService mavenRepositoryService;
 
-    public Path bundle(String groupId, String artifactId, String version) {
+    public Path bundle(String groupId, String artifactId, String version) throws MissingFilesForBundleException {
         Log.debug("====== mvnpm: Nexus Bundler ======");
-        // First get the jar, as the jar will create the pom, and
-        // other files are being created once the pom and jar is downloaded
-        mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
-        Log.debug("\tbundle: Got initial Jar file");
         return buildBundle(groupId, artifactId, version);
     }
 
-    private Path buildBundle(String groupId, String artifactId, String version) {
+    private Path buildBundle(String groupId, String artifactId, String version) throws MissingFilesForBundleException {
         List<Path> files = getFiles(groupId, artifactId, version);
 
-        Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
+        Path parent = packageFileLocator.getLocalDirectory(groupId, artifactId, version);
         String bundlelocation = artifactId + Constants.HYPHEN + version + "-bundle.jar";
         Path bundlePath = parent.resolve(bundlelocation);
 
         Log.debug("\tBuilding bundle " + bundlePath + "...");
 
-        if (!fileExist(bundlePath)) {
-            File bundleFile = bundlePath.toFile();
+        if (!Files.exists(bundlePath)) {
+            final Path temp = FileUtil.getTempFilePathFor(bundlePath);
+            File bundleFile = temp.toFile();
             try (FileOutputStream fos = new FileOutputStream(bundleFile);
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     ZipOutputStream zos = new ZipOutputStream(bos)) {
@@ -74,6 +72,12 @@ public class BundleCreator {
                     }
                     zos.closeEntry();
                 }
+
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            try {
+                FileUtil.forceMoveAtomic(temp, bundlePath);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -89,9 +93,9 @@ public class BundleCreator {
         }
     }
 
-    private List<Path> getFiles(String groupId, String artifactId, String version) {
+    private List<Path> getFiles(String groupId, String artifactId, String version) throws MissingFilesForBundleException {
         // Files that needs to be in the bundle
-        Path parent = fileStore.getLocalDirectory(groupId, artifactId, version);
+        Path parent = packageFileLocator.getLocalDirectory(groupId, artifactId, version);
         String base = artifactId + Constants.HYPHEN + version;
         List<Path> fileNames = getFileNamesInBundle(parent, base);
         List<String> notReady = new ArrayList<>();
@@ -106,7 +110,9 @@ public class BundleCreator {
         if (notReady.isEmpty())
             return fileNames;
 
-        throw new RuntimeException("Files " + notReady + " not ready to bundle. Gave up after multiple attempts");
+        throw new MissingFilesForBundleException(
+                "Some files (%s) are not available yet to build the bundle for '%s:%s:%s' (waiting for next batch)".formatted(
+                        notReady, groupId, artifactId, version));
     }
 
     private List<Path> getFileNamesInBundle(Path parent, String base) {

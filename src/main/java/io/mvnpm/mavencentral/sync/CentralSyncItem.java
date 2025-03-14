@@ -12,7 +12,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Index;
-import jakarta.persistence.LockModeType;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
@@ -41,6 +40,7 @@ public class CentralSyncItem extends PanacheEntityBase {
     public String stagingRepoId;
     public Stage stage;
 
+    public int creationAttempts = 0;
     public int uploadAttempts = 0;
     public int promotionAttempts = 0;
 
@@ -57,14 +57,14 @@ public class CentralSyncItem extends PanacheEntityBase {
         this.stageChangeTime = LocalDateTime.now();
     }
 
-    public static CentralSyncItem findOrCreate(Gav gav, boolean writeLock) {
+    public static CentralSyncItem findOrCreate(Gav gav) {
         insertIfNotPresent(gav);
-        return findById(gav, writeLock ? LockModeType.PESSIMISTIC_WRITE : LockModeType.NONE);
+        return findById(gav);
     }
 
     private static int insertIfNotPresent(Gav gav) {
         return getEntityManager().createQuery(
-                "insert into CentralSyncItem (groupId, artifactId, version, startTime, stage, stageChangeTime, uploadAttempts, promotionAttempts) values (:groupId, :artifactId, :version, :now, :stage, :now, 0, 0)\n"
+                "insert into CentralSyncItem (groupId, artifactId, version, startTime, stage, stageChangeTime, creationAttempts, uploadAttempts, promotionAttempts) values (:groupId, :artifactId, :version, :now, :stage, :now, 0, 0, 0)\n"
                         + "  on conflict(groupId, artifactId, version) do nothing")
                 .setParameter("groupId", gav.getGroupId())
                 .setParameter("artifactId", gav.getArtifactId())
@@ -78,7 +78,7 @@ public class CentralSyncItem extends PanacheEntityBase {
         return find("#CentralSyncItem.findByStage", stage).list();
     }
 
-    public static List<CentralSyncItem> findNotReleased() {
+    public static List<CentralSyncItem> findUpdloadedButNotReleased() {
         List<Stage> uploadedButNotReleased = Arrays.asList(Stage.UPLOADED, Stage.CLOSED, Stage.RELEASING);
         return find("#CentralSyncItem.findUploadedButNotReleased", uploadedButNotReleased).list();
     }
@@ -105,6 +105,10 @@ public class CentralSyncItem extends PanacheEntityBase {
 
     public boolean alreadyReleased() {
         return this.stage.equals(Stage.RELEASED);
+    }
+
+    public void increaseCreationAttempt() {
+        this.creationAttempts = this.creationAttempts + 1;
     }
 
     public void increaseUploadAttempt() {
