@@ -2,6 +2,7 @@ package io.mvnpm.mavencentral.sync;
 
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,16 +11,24 @@ import java.util.Set;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 
-import io.mvnpm.composite.CompositeCreator;
+import org.apache.commons.io.FileUtils;
+
+import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.PackageCreator;
+import io.mvnpm.creator.PackageFileLocator;
+import io.mvnpm.creator.composite.CompositeCreator;
+import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.log.EventLogApi;
-import io.mvnpm.mavencentral.PromotionException;
 import io.mvnpm.mavencentral.RepoStatus;
 import io.mvnpm.mavencentral.SonatypeFacade;
-import io.mvnpm.mavencentral.StatusCheckException;
-import io.mvnpm.mavencentral.UploadFailedException;
+import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
+import io.mvnpm.mavencentral.exceptions.PromotionException;
+import io.mvnpm.mavencentral.exceptions.StatusCheckException;
+import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -53,9 +62,14 @@ public class ContinuousSyncService {
     @Inject
     CentralSyncItemService centralSyncItemService;
     @Inject
+    PackageFileLocator packageFileLocator;
+    @Inject
     EventLogApi eventLogApi;
     @Inject
     CompositeCreator compositeCreator;
+
+    @Inject
+    PackageCreator packageCreator;
 
     /**
      * Check for version updates, and if a new version is out, do a sync
@@ -92,13 +106,49 @@ public class ContinuousSyncService {
      * Sync a certain version of a artifact with central
      */
     public boolean initializeSync(String groupId, String artifactId, String version) {
-        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version, true);
-
-        if (centralSyncService.canProcessSync(itemToSync)) { // Check if this is already synced or in progess
+        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        if (itemToSync.stage == Stage.INIT) {
+            // Already started
+            return false;
+        }
+        if (centralSyncService.canProcessSync(itemToSync)) { // Check if this is already synced or in progress
             itemToSync = centralSyncItemService.changeStage(itemToSync, Stage.INIT);
             return true;
         }
         return false;
+    }
+
+    /**
+     * This just check if there is an artifact is stuck at creation
+     */
+    @Scheduled(every = "5m", concurrentExecution = SKIP)
+    @Blocking
+    @Transactional
+    void checkCreation() {
+        List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.NONE);
+        if (!initQueue.isEmpty()) {
+            CentralSyncItem itemToBeCreated = initQueue.get(0);
+            if (centralSyncService.canProcessSync(itemToBeCreated)) {
+                final Name name = NameParser.fromMavenGA(itemToBeCreated.groupId, itemToBeCreated.artifactId);
+                final Path jar = packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
+                if (FileUtil.isOlderThanTimeout(jar, 60)) {
+                    centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
+                    if (itemToBeCreated.creationAttempts > 10) {
+                        Log.errorf("Package creation attempts exceeded maximum 10 attempts for:" + itemToBeCreated);
+                        return;
+                    }
+                    // A jar which stays more than 60 minutes in NONE stage needs to be recreated
+                    Log.warnf("Re-creating package (attempt: %d): %s",
+                            itemToBeCreated.creationAttempts, itemToBeCreated);
+                    Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId, itemToBeCreated.artifactId,
+                            itemToBeCreated.version);
+                    FileUtils.deleteQuietly(dir.toFile());
+                    packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
+                }
+            }
+        } else {
+            Log.debug("Nothing in the queue to sync");
+        }
     }
 
     /**
@@ -137,7 +187,7 @@ public class ContinuousSyncService {
     @Blocking
     void cleanSonatypeStatuses() {
         // Check if this is in central, and update the status
-        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findNotReleased();
+        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findUpdloadedButNotReleased();
         for (CentralSyncItem centralSyncItem : uploadedToSonatype) {
             centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem);
         }
@@ -146,7 +196,7 @@ public class ContinuousSyncService {
     @Scheduled(every = "60s", concurrentExecution = SKIP)
     @Blocking
     void processSonatypeStatuses() {
-        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findNotReleased();
+        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findUpdloadedButNotReleased();
         if (!uploadedToSonatype.isEmpty()) {
             Map<String, CentralSyncItem> uploadedToSonatypeMap = mapByRepoId(uploadedToSonatype);
             if (!uploadedToSonatypeMap.isEmpty()) {
@@ -205,11 +255,14 @@ public class ContinuousSyncService {
                 centralSyncItem.stagingRepoId = repoId;
                 centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
             } catch (UploadFailedException exception) {
-                exception.printStackTrace();
+                Log.warnf("Upload failed for '%'s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
                 retryUpload(centralSyncItem, exception);
             } catch (UnauthorizedException unauthorizedException) {
                 unauthorizedException.printStackTrace();
                 errorHandlingService.handle(centralSyncItem, unauthorizedException);
+            } catch (MissingFilesForBundleException e) {
+                Log.info(e.getMessage());
+                retryUpload(centralSyncItem, e);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
                 retryUpload(centralSyncItem, throwable);

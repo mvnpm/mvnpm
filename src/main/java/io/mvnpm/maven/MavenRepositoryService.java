@@ -9,16 +9,17 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import io.mvnpm.Constants;
-import io.mvnpm.composite.CompositeService;
-import io.mvnpm.file.FileClient;
-import io.mvnpm.file.FileType;
-import io.mvnpm.file.ImportMapUtil;
+import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.PackageCreator;
+import io.mvnpm.creator.composite.CompositeService;
+import io.mvnpm.creator.utils.ImportMapUtil;
 import io.mvnpm.mavencentral.sync.CentralSyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Package;
 import io.mvnpm.npm.model.Project;
+import io.vertx.mutiny.core.eventbus.EventBus;
 
 /**
  * The maven repository as a service
@@ -38,10 +39,13 @@ public class MavenRepositoryService {
     CompositeService compositeService;
 
     @Inject
-    FileClient fileClient;
+    PackageCreator packageCreator;
 
     @Inject
     ImportMapUtil importMapUtil;
+
+    @Inject
+    EventBus bus;
 
     public byte[] getImportMap(NameVersion nameVersion) {
         if (nameVersion.name().isInternal()) {
@@ -67,12 +71,12 @@ public class MavenRepositoryService {
             return getPath(name, latestVersion, type);
         } else {
             if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
-                throw fileClient.newPackageAlreadySyncedException(name, version, type, Optional.empty());
+                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.empty());
             }
             if (name.isInternal()) {
                 return compositeService.getPath(name, version, type);
             } else {
-                return fileClient.getFilePath(type, name, version);
+                return packageCreator.getFromCacheOrCreate(type, name, version);
             }
         }
     }
@@ -88,12 +92,12 @@ public class MavenRepositoryService {
             return getSha1(name, latestVersion, type);
         } else {
             if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
-                throw fileClient.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_SHA1));
+                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_SHA1));
             }
             if (name.isInternal()) {
                 return compositeService.getSha1Path(name, version, type);
             } else {
-                return fileClient.getFileSha1(type, name, version);
+                return packageCreator.getSha1FromCacheOrCreate(type, name, version);
             }
         }
     }
@@ -109,12 +113,12 @@ public class MavenRepositoryService {
             return getMd5(name, latestVersion, type);
         } else {
             if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
-                throw fileClient.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_MD5));
+                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_MD5));
             }
             if (name.isInternal()) {
                 return compositeService.getMd5Path(name, version, type);
             } else {
-                return fileClient.getFileMd5(type, name, version);
+                return packageCreator.getMd5FromCacheOrCreate(type, name, version);
             }
         }
     }
@@ -130,12 +134,12 @@ public class MavenRepositoryService {
             return getAsc(name, latestVersion, type);
         } else {
             if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
-                throw fileClient.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_ASC));
+                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_ASC));
             }
             if (name.isInternal()) {
                 return compositeService.getAscPath(name, version, type);
             } else {
-                return fileClient.getFileAsc(type, name, version);
+                return packageCreator.getAscFromCacheOrCreate(type, name, version);
             }
         }
     }

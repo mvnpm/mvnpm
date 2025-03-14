@@ -6,8 +6,10 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.mavencentral.SonatypeFacade;
-import io.mvnpm.mavencentral.UploadFailedException;
+import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
+import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -24,6 +26,9 @@ public class CentralSyncService {
     BundleCreator bundleCreator;
 
     @Inject
+    MavenRepositoryService mavenRepositoryService;
+
+    @Inject
     SonatypeFacade sonatypeFacade;
 
     @Inject
@@ -38,7 +43,7 @@ public class CentralSyncService {
             version = getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version, true);
+        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
 
         // Check the status
         if (!centralSyncItem.alreadyReleased() && checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
@@ -74,13 +79,14 @@ public class CentralSyncService {
         return false;
     }
 
-    public String sync(CentralSyncItem centralSyncItem) throws UploadFailedException {
+    public String sync(CentralSyncItem centralSyncItem) throws UploadFailedException, MissingFilesForBundleException {
         return sync(centralSyncItem.groupId,
                 centralSyncItem.artifactId,
                 centralSyncItem.version);
     }
 
-    public String sync(String groupId, String artifactId, String version) throws UploadFailedException {
+    public String sync(String groupId, String artifactId, String version)
+            throws UploadFailedException, MissingFilesForBundleException {
         Path bundlePath = bundleCreator.bundle(groupId, artifactId, version);
         return sonatypeFacade.upload(bundlePath);
     }

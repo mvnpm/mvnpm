@@ -96,7 +96,7 @@ public class CentralSyncApi {
             version = centralSyncService.getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version, true);
+        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
 
         // Already being synced
         if (centralSyncItem.isInProgress() || centralSyncItem.stage.equals(Stage.INIT))
@@ -126,7 +126,7 @@ public class CentralSyncApi {
         //                requestFullSync(dep.getKey().mvnGroupId, dep.getKey().mvnArtifactId, dep.getValue());
         //            }
         //        }
-        return centralSyncItemService.findOrCreate(groupId, artifactId, version, false);
+        return centralSyncItemService.findOrCreate(groupId, artifactId, version);
     }
 
     @GET

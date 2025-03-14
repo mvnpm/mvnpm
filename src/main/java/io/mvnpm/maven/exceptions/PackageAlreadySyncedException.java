@@ -3,7 +3,7 @@ package io.mvnpm.maven.exceptions;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import io.mvnpm.file.FileType;
+import io.mvnpm.creator.FileType;
 import io.mvnpm.npm.model.Name;
 
 public class PackageAlreadySyncedException extends RuntimeException {

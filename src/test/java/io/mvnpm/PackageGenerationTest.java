@@ -19,11 +19,11 @@ import org.apache.http.params.CoreConnectionPNames;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.esbuild.install.MvnpmInfo;
 import io.mvnpm.esbuild.install.WebDepsInstaller;
 import io.mvnpm.esbuild.model.WebDependency;
-import io.mvnpm.file.FileStore;
-import io.mvnpm.file.FileType;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.config.HttpClientConfig;
@@ -34,13 +34,14 @@ import io.vertx.mutiny.core.Vertx;
 @QuarkusTest
 public class PackageGenerationTest {
     @Inject
-    FileStore fileStore;
+    PackageFileLocator packageFileLocator;
     @Inject
     Vertx vertx;
 
     @BeforeEach
     void setUp() {
-        vertx.fileSystem().deleteRecursive(fileStore.getCacheDir().toString(), true).onFailure().recoverWithNull().await()
+        vertx.fileSystem().deleteRecursive(packageFileLocator.getCacheDir().toString(), true).onFailure().recoverWithNull()
+                .await()
                 .indefinitely();
     }
 
@@ -72,7 +73,7 @@ public class PackageGenerationTest {
         assertTrue(Files.exists(result.nodeModules().resolve("lit/decorators/custom-element.d.ts.map")),
                 "more extraction failed");
         assertEquals(1, result.dep().dirs().size());
-        final Path pomFile = fileStore.getLocalFullPath(FileType.pom, "org.mvnpm", "lit", "3.2.1");
+        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm", "lit", "3.2.1");
         waitForPom(pomFile);
         // check generated hashes
         checkFiles("/maven2/org/mvnpm/lit/3.2.1/lit-3.2.1");
@@ -124,7 +125,8 @@ public class PackageGenerationTest {
                 "vaadin-lit-avatar.d.ts missing");
 
         // Test other files
-        final Path pomFile = fileStore.getLocalFullPath(FileType.pom, "org.mvnpm.at.mvnpm", "vaadin-webcomponents", "24.6.6");
+        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm.at.mvnpm", "vaadin-webcomponents",
+                "24.6.6");
         waitForPom(pomFile);
 
     }
@@ -138,7 +140,7 @@ public class PackageGenerationTest {
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts")), "more extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts.map")), "more extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/decorators/custom-element.d.ts.map")));
-        final Path pomFile = fileStore.getLocalFullPath(FileType.pom, "org.mvnpm.at.mvnpm", "lit", "3.2.0");
+        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm.at.mvnpm", "lit", "3.2.0");
         waitForPom(pomFile);
     }
 

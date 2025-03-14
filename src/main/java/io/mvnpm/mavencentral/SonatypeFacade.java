@@ -15,6 +15,9 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.mvnpm.error.ErrorHandlingService;
+import io.mvnpm.mavencentral.exceptions.PromotionException;
+import io.mvnpm.mavencentral.exceptions.StatusCheckException;
+import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
 import io.mvnpm.npm.model.Name;
@@ -88,7 +91,7 @@ public class SonatypeFacade {
                         String groupId = item.getString("groupId");
                         String artifactId = item.getString("artifactId");
                         String version = item.getString("version");
-                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version, false));
+                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version));
                     }
                 }
             }

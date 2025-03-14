@@ -1,11 +1,51 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>mvnpm</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="shortcut icon" type="image/svg" href="/static/logo.svg">
         {#bundle /}
+        {#let title="mvnpm - The Best Tool to Use NPM Packages in the Java ecosystem as Maven/Gradle dependencies"}
+        {#let description="Seamlessly integrate NPM packages into Java through Maven, and Gradle dependencies. The best tool for Java developers using frontend libraries."}
+
+        <title>{title}</title>
+
+        <meta name="description" content="{description}">
+        <meta name="keywords" content="mvnpm, npm in Java, Maven NPM, Gradle NPM, Java frontend integration, use npm with Java, JavaScript in Maven, best npm tool for Java">
+        <meta name="author" content="mvnpm Team">
+
+        <!-- Open Graph / Facebook -->
+        <meta property="og:title" content="{title}">
+        <meta property="og:description" content="{description}">
+        <meta property="og:image" content="https://mvnpm.org/static/logo.svg">
+        <meta property="og:url" content="https://mvnpm.org/">
+        <meta property="og:type" content="website">
+
+        <!-- Twitter Cards -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{title}">
+        <meta name="twitter:description" content="{description}">
+        <meta name="twitter:image" content="https://mvnpm.org/static/logo.svg">
+
+        <!-- Canonical URL -->
+        <link rel="canonical" href="https://mvnpm.org/">
+
+        <!-- Favicon -->
+        <link rel="icon" type="image/svg" href="https://mvnpm.org/static/logo.svg">
+
+        <!-- Schema Markup -->
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "mvnpm",
+                "description": "{description}",
+                "url": "https://mvnpm.org/",
+                "image": "https://mvnpm.org/static/logo.svg",
+                "applicationCategory": "DeveloperTool",
+                "operatingSystem": "Cross-platform"
+            }
+        </script>
     </head>
 
     <body>

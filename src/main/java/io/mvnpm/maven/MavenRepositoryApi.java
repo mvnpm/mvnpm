@@ -15,9 +15,9 @@ import jakarta.ws.rs.core.StreamingOutput;
 
 import org.jboss.resteasy.reactive.NoCache;
 
-import io.mvnpm.file.FileType;
-import io.mvnpm.file.FileUtil;
-import io.mvnpm.file.metadata.MetadataClient;
+import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.type.MetadataService;
+import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 
@@ -36,7 +36,7 @@ public class MavenRepositoryApi {
     NpmRegistryFacade npmRegistryFacade;
 
     @Inject
-    MetadataClient metadataClient;
+    MetadataService metadataService;
 
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
@@ -45,7 +45,7 @@ public class MavenRepositoryApi {
     public Response getMavenMetadata(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
         try {
-            StreamingOutput streamingOutput = FileUtil.toStreamingOutput(metadataClient.getMetadataXml(name));
+            StreamingOutput streamingOutput = FileUtil.toStreamingOutput(metadataService.getMetadataXml(name));
             return Response.ok(streamingOutput).build();
         } catch (WebApplicationException wae) {
             return wae.getResponse();
@@ -60,7 +60,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataSha1(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-        StreamingOutput streamingOutput = metadataClient.getMetadataSha1(name);
+        StreamingOutput streamingOutput = metadataService.getMetadataSha1(name);
         return Response.ok(streamingOutput).build();
     }
 
@@ -70,7 +70,7 @@ public class MavenRepositoryApi {
     @Produces(MediaType.TEXT_PLAIN)
     public Response getMavenMetadataMd5(@PathParam("ga") String ga) {
         Name name = UrlPathParser.parseMavenMetaDataXml(ga);
-        StreamingOutput streamingOutput = metadataClient.getMetadataMd5(name);
+        StreamingOutput streamingOutput = metadataService.getMetadataMd5(name);
         return Response.ok(streamingOutput).build();
     }
 

@@ -27,7 +27,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.jboss.resteasy.reactive.ResponseHeader;
 
-import io.mvnpm.file.FileType;
+import io.mvnpm.creator.FileType;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.NameVersion;
