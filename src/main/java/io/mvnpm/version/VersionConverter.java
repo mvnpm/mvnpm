@@ -36,7 +36,7 @@ import io.mvnpm.Constants;
  * Convert a npm version to a maven version
  *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
- *
+ *         <p>
  *         see https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
  *         see https://github.com/npm/node-semver
  *         see https://semver.org/
@@ -49,7 +49,8 @@ public class VersionConverter {
 
     public static String convert(String versionString) {
         try {
-            if (null == versionString || versionString.startsWith("git:/") || versionString.startsWith("git+http")) { // We do not support git repos as version. Maybe something we can add later
+            if (null == versionString || versionString.startsWith("git:/") || versionString.startsWith(
+                    "git+http")) { // We do not support git repos as version. Maybe something we can add later
                 versionString = EMPTY;
             }
 
@@ -70,8 +71,11 @@ public class VersionConverter {
     private static String convertMultiple(String[] versions) {
         List<String> versionList = new ArrayList<>();
         for (String v : versions) {
-            String result = convertMultiplePart(v.trim()).trim();
-            versionList.add(result);
+            final String s = convertMultiplePart(v.trim());
+            if (s != null) {
+                versionList.add(s.trim());
+            }
+
         }
 
         // If multiple, it has to be in brackets
@@ -131,6 +135,9 @@ public class VersionConverter {
         // Partial semver
         long numberOfDots = version.chars().filter(ch -> ch == '.').count();
         if (!version.startsWith(EQUAL_TO) && numberOfDots < 2) {
+            if (!version.matches("(v\\s*)?[0-9.]+")) {
+                return null;
+            }
             return convertPartialSemver(version);
         }
 

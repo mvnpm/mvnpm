@@ -518,6 +518,13 @@ public class VersionConverterTest {
         Assertions.assertEquals("[1.2.7],[1.2.9,2.0.0),(3.3.2,4.0.0]", mavenVersion);
     }
 
+    @Test
+    // Issue https://github.com/mvnpm/mvnpm/issues/12006
+    public void testStringVersion() {
+        String mavenVersion = VersionConverter.convert(">=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1");
+        Assertions.assertEquals("[3.0.0,),[4.0.0-alpha.20,),[4.0.0-beta.1,)", mavenVersion);
+    }
+
     // Partial version in range
     @Test
     public void testPartialRange() {
