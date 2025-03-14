@@ -18,6 +18,8 @@ import jakarta.ws.rs.QueryParam;
 
 import org.jboss.resteasy.reactive.NoCache;
 
+import io.mvnpm.creator.FileType;
+import io.mvnpm.maven.MavenRepositoryService;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
@@ -42,6 +44,8 @@ public class CentralSyncApi {
     CentralSyncItemService centralSyncItemService;
 
     private final Set<Session> sessions = new ConcurrentHashSet<>();
+    @Inject
+    private MavenRepositoryService mavenRepositoryService;
 
     @OnOpen
     public void onOpen(Session session) {
@@ -82,7 +86,6 @@ public class CentralSyncApi {
     @Path("/info/{groupId}/{artifactId}")
     public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
-
         return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version);
     }
 
@@ -91,42 +94,8 @@ public class CentralSyncApi {
     @Path("/request/{groupId}/{artifactId}")
     public CentralSyncItem requestFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
-
-        if (version.equalsIgnoreCase("latest")) {
-            version = centralSyncService.getLatestVersion(groupId, artifactId);
-        }
-
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
-
-        // Already being synced
-        if (centralSyncItem.isInProgress() || centralSyncItem.stage.equals(Stage.INIT))
-            return centralSyncItem;
-
-        // Check the remote status
-        if (!centralSyncItem.alreadyReleased()
-                && centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
-            centralSyncItem.stage = Stage.RELEASED;
-            centralSyncItemService.merge(centralSyncItem);
-            return centralSyncItem;
-        }
-
-        // Else kick off sync
-        // TODO: We need to resolve version ranges before we can do this.
-        //        Set<Map.Entry<Name, String>> deps = null;
-        //        try {
-        //            Package npmPackage = npmRegistryFacade.getPackage(name.npmFullName, version);
-        //            deps = npmPackage.dependencies().entrySet();
-        //        }catch (WebApplicationException wae){
-        //            Log.error("Could not kick off sync of dependencendies " + wae.getMessage());
-        //        }
-        continuousSyncService.initializeSync(groupId, artifactId, version);
-        // Also request sync for dependencies.
-        //        if(deps!=null){
-        //            for (Map.Entry<Name, String> dep : deps) {
-        //                requestFullSync(dep.getKey().mvnGroupId, dep.getKey().mvnArtifactId, dep.getValue());
-        //            }
-        //        }
-        return centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
+        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version);
     }
 
     @GET
@@ -141,19 +110,11 @@ public class CentralSyncApi {
 
         final CentralSyncItem centralSyncItem = getSyncItem(groupId, artifactId, version);
 
-        // Already being synced
-        if (centralSyncItem.isInProgress() || centralSyncItem.stage.equals(Stage.INIT))
-            return centralSyncItem;
-
-        // Check the remote status
-        if (!centralSyncItem.alreadyReleased()
-                && centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
-            centralSyncItem.stage = Stage.RELEASED;
-            centralSyncItemService.merge(centralSyncItem);
-            return centralSyncItem;
+        if (centralSyncItem != null && centralSyncItem.isInError()) {
+            return continuousSyncService.tryErroredItemAgain(centralSyncItem);
         }
+        return centralSyncItem;
 
-        return continuousSyncService.tryErroredItemAgain(centralSyncItem);
     }
 
     private CentralSyncItem getSyncItem(String groupId, String artifactId, String version) {

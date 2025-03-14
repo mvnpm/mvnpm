@@ -23,6 +23,8 @@ import io.mvnpm.creator.composite.CompositeCreator;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.log.EventLogApi;
+import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.RepoStatus;
 import io.mvnpm.mavencentral.SonatypeFacade;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
@@ -70,6 +72,8 @@ public class ContinuousSyncService {
 
     @Inject
     PackageCreator packageCreator;
+    @Inject
+    private MavenRepositoryService mavenRepositoryService;
 
     /**
      * Check for version updates, and if a new version is out, do a sync
@@ -84,7 +88,12 @@ public class ContinuousSyncService {
                 Project project = npmRegistryFacade.getProject(name.npmFullName);
                 if (project != null) {
                     String latest = project.distTags().latest();
-                    initializeSync(name, latest);
+                    try {
+                        mavenRepositoryService.getPath(name, latest, FileType.jar);
+                        Log.infof("Continuous Updater: New package %s found", name.npmFullName);
+                    } catch (PackageAlreadySyncedException e) {
+                        Log.debugf("Continuous Updater: Package %s already synced", name.npmFullName);
+                    }
                 }
             } catch (WebApplicationException wae) {
                 Log.error("Could not do update for [" + groupId + ":" + artifactId + "] - " + wae.getMessage());
@@ -362,7 +371,7 @@ public class ContinuousSyncService {
         if (centralSyncItem.promotionAttempts > 0) {
             centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
         }
-        return centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+        return centralSyncItemService.changeStage(centralSyncItem, Stage.NONE);
     }
 
     /**
