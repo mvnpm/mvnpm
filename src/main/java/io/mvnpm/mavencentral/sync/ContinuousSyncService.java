@@ -371,7 +371,7 @@ public class ContinuousSyncService {
         if (centralSyncItem.promotionAttempts > 0) {
             centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
         }
-        return centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+        return centralSyncItemService.changeStage(centralSyncItem, Stage.NONE);
     }
 
     /**
