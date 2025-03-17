@@ -59,6 +59,7 @@ export class MvnpmReleases extends LitElement {
     private _renderStageRadioBar() {
         return html`
             <vaadin-radio-group theme="horizontal" ?disabled=${this._disabled}>
+                <vaadin-radio-button value="PACKAGING" label="Packaging" @change=${this._stageChange}></vaadin-radio-button>
                 <vaadin-radio-button value="INIT" label="Pending" @change=${this._stageChange}></vaadin-radio-button>
                 <vaadin-radio-button value="UPLOADING" label="Uploading" @change=${this._stageChange}></vaadin-radio-button>
                 <vaadin-radio-button value="UPLOADED" label="Uploaded" @change=${this._stageChange}></vaadin-radio-button>

@@ -91,7 +91,7 @@ public class PackageListener {
     public void newJarCreated(NewJarEvent fse) {
         Log.infof("'%s' has been created.", fse.jarFile());
         eventBus.send(DependencyVersionCheckRequest.NAME,
-                new DependencyVersionCheckRequest(fse.pomFile(), fse.tgzFile(), fse.name(), fse.version()));
+                new DependencyVersionCheckRequest(fse.pomFile(), fse.name(), fse.version()));
         List<Path> toHash = new ArrayList<>();
         toHash.add(fse.pomFile());
         toHash.add(fse.jarFile());

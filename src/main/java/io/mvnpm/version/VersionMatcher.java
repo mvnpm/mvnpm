@@ -1,5 +1,7 @@
 package io.mvnpm.version;
 
+import static java.util.function.Predicate.not;
+
 import java.util.Comparator;
 import java.util.Set;
 
@@ -16,6 +18,8 @@ public final class VersionMatcher {
             }
             VersionRange range = VersionRange.createFromVersionSpec(mavenRange);
             return versions.stream()
+                    // We only match versions without qualifier
+                    .filter(not(Version::hasQualifier))
                     .filter(v -> range.containsVersion(new DefaultArtifactVersion(v.toString())))
                     .max(Comparator.naturalOrder())
                     .orElse(null);

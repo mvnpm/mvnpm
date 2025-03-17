@@ -21,7 +21,6 @@ public record Version(Integer major,
             String numberPart = version;
             String qualifier = null;
             if (version.contains(HYPHEN)) {
-
                 int indexOfFirstHyphen = version.indexOf(HYPHEN);
                 numberPart = version.substring(0, indexOfFirstHyphen);
                 qualifier = version.substring(indexOfFirstHyphen + 1);
@@ -107,8 +106,18 @@ public record Version(Integer major,
             cmp = minor.compareTo(o.minor);
         if (cmp == 0)
             cmp = patch.compareTo(o.patch);
-        if (cmp == 0 && qualifier != null && o.qualifier != null) {
-            cmp = qualifier.compareTo(o.qualifier);
+        if (cmp == 0) {
+            // One version has a qualifier, the other does not
+            if (qualifier == null && o.qualifier != null) {
+                return 1; // Version without a qualifier is greater
+            }
+            if (qualifier != null && o.qualifier == null) {
+                return -1; // Version with a qualifier is lesser
+            }
+            // If both have qualifiers, compare them lexicographically
+            if (qualifier != null && o.qualifier != null) {
+                cmp = qualifier.compareTo(o.qualifier);
+            }
         }
         return cmp;
     }
