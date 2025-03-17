@@ -5,9 +5,12 @@ import static io.mvnpm.Constants.COMMA;
 import static io.mvnpm.Constants.OPEN_BLOCK;
 
 import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,10 +27,11 @@ import org.apache.maven.model.License;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Scm;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import io.mvnpm.Constants;
-import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Bugs;
@@ -46,19 +50,66 @@ import io.mvnpm.version.VersionConverter;
 public class PomService {
 
     @Inject
-    PackageFileLocator fileCreator;
-
-    @Inject
     NpmRegistryFacade npmRegistryFacade;
 
     @Inject
     HashService hashService;
-
+    private final MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
+
+    public Model readPom(Path path) {
+        try (Reader reader = Files.newBufferedReader(path)) {
+            return mavenXpp3Reader.read(reader);
+        } catch (XmlPullParserException ex) {
+            throw new RuntimeException("Invalid pom xml for '%s'".formatted(path));
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
+
+    public Model readPom(String pom) {
+        try (Reader reader = new StringReader(pom)) {
+            return mavenXpp3Reader.read(reader);
+        } catch (XmlPullParserException ex) {
+            throw new RuntimeException(ex);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
+    }
 
     public void createAndSavePom(io.mvnpm.npm.model.Package p, Path localFilePath) {
         writePomToFileSystem(p, localFilePath);
         hashService.createHashes(localFilePath);
+    }
+
+    public static List<Dependency> resolveDependencies(Model model) {
+        Properties properties = model.getProperties();
+        List<Dependency> resolvedDependencies = new ArrayList<>();
+
+        List<Dependency> dependencies = model.getDependencies();
+
+        for (Dependency dependency : dependencies) {
+            String version = dependency.getVersion();
+            if (version != null && version.startsWith("${") && version.endsWith("}")) {
+                // If the version is a property reference, resolve it
+                String propertyName = version.substring(2, version.length() - 1);
+                String resolvedVersion = resolveVersion(properties, propertyName, model.getVersion());
+
+                if (resolvedVersion != null) {
+                    dependency.setVersion(resolvedVersion);
+                }
+            }
+            resolvedDependencies.add(dependency);
+        }
+        return resolvedDependencies;
+    }
+
+    private static String resolveVersion(Properties properties, String propertyName, String projectVersion) {
+        if (propertyName.equals("project.version")) {
+            return projectVersion;
+        } else {
+            return properties.getProperty(propertyName);
+        }
     }
 
     private void writePomToFileSystem(io.mvnpm.npm.model.Package p, Path localFilePath) {

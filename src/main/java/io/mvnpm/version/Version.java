@@ -11,7 +11,7 @@ import static io.mvnpm.Constants.STAR;
 public record Version(Integer major,
         Integer minor,
         Integer patch,
-        String qualifier) {
+        String qualifier) implements Comparable<Version> {
 
     private static final String DEFAULT_QUALIFIER = null;//"alpha00000000";
 
@@ -99,4 +99,18 @@ public record Version(Integer major,
         }
         return true;
     }
+
+    @Override
+    public int compareTo(Version o) {
+        int cmp = major.compareTo(o.major);
+        if (cmp == 0)
+            cmp = minor.compareTo(o.minor);
+        if (cmp == 0)
+            cmp = patch.compareTo(o.patch);
+        if (cmp == 0 && qualifier != null && o.qualifier != null) {
+            cmp = qualifier.compareTo(o.qualifier);
+        }
+        return cmp;
+    }
+
 }
