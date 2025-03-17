@@ -108,9 +108,9 @@ public class CentralSyncApi {
             version = centralSyncService.getLatestVersion(groupId, artifactId);
         }
 
-        final CentralSyncItem centralSyncItem = getSyncItem(groupId, artifactId, version);
-
-        if (centralSyncItem != null && centralSyncItem.isInError()) {
+        mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
+        final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version);
+        if (centralSyncItem.isInError()) {
             return continuousSyncService.tryErroredItemAgain(centralSyncItem);
         }
         return centralSyncItem;

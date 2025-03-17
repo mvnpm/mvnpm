@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Response;
 
+import io.mvnpm.maven.exceptions.MavenCentralRequestError;
 import io.mvnpm.maven.exceptions.NotFoundInMavenCentralException;
 import io.mvnpm.npm.model.Name;
 import io.smallrye.mutiny.Uni;
@@ -31,17 +32,24 @@ public class MavenCentralService {
         return webClient.updateAndGet(webClient -> webClient == null ? WebClient.create(vertx) : webClient);
     }
 
-    public Uni<HttpResponse<Buffer>> getFromMavenCentral(Name name, String version, String fileName) {
+    public URI getUri(Name name, String version, String fileName) {
         String file = fileName;
         if (version != null) {
             file = "%s/%s".formatted(version, file);
         }
-        final URI uri = URI.create(
+        return URI.create(
                 (MAVEN_CENTRAL_REPO_URL + "/%s/%s/%s").formatted(name.mvnGroupIdPath(),
                         name.mvnArtifactId, file));
+    }
+
+    public Uni<HttpResponse<Buffer>> getFromMavenCentral(Name name, String version, String fileName) {
+        final URI uri = getUri(name, version, fileName);
         return webClient().getAbs(uri.toString()).send().map(Unchecked.function(r -> {
-            if (r.statusCode() != 200) {
+            if (r.statusCode() == 404) {
                 throw new NotFoundInMavenCentralException(uri.toString());
+            }
+            if (r.statusCode() != 200) {
+                throw new MavenCentralRequestError(uri.toString(), r.statusCode());
             }
             return r;
         }));

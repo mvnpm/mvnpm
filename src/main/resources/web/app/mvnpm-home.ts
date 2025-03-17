@@ -689,13 +689,13 @@ export class MvnpmHome extends LitElement {
   }
 
   _renderAnyFile(fileName, fileExt, icon) {
-    let url =  this._baseUrl + fileName + fileExt + "?proxy=true";
+    let url =  this._baseUrl + fileName + fileExt;
     return html`
       <div class="line">
         <a @click="${this._showFile}" data-file="${url}">
           <vaadin-icon icon="vaadin:${icon}"></vaadin-icon>
           ${fileName + fileExt}</a>
-        <a href="${url}" target="_blank">
+        <a href="${url + "?redirect=true"}" target="_blank">
           <vaadin-icon class="outIcon" icon="vaadin:external-link"></vaadin-icon>
         </a>
       </div>
@@ -705,10 +705,10 @@ export class MvnpmHome extends LitElement {
   _renderCodeView() {
     if (this._codeViewMode) {
       return html`
-        <qui-code-block mode="${this._codeViewMode}" src='${this._codeViewSrc}'></qui-code-block>`;
+        <qui-code-block mode="${this._codeViewMode}" src='${this._codeViewSrc}?proxy=true'></qui-code-block>`;
     } else {
       return html`
-        <mvnpm-jar-view jarName="${this._codeViewSrc}"></mvnpm-jar-view>`;
+        <mvnpm-jar-view jarName="${this._codeViewSrc}?proxy=true"></mvnpm-jar-view>`;
     }
   }
 
@@ -719,11 +719,11 @@ export class MvnpmHome extends LitElement {
 
   _changeCodeView(src) {
     this._codeViewSrc = src;
-    if (this._codeViewSrc.indexOf('.jar') > 0 || this._codeViewSrc.indexOf('.tgz') > 0) {
+    if (this._codeViewSrc.endsWith('.jar') || this._codeViewSrc.endsWith('.tgz')) {
       this._codeViewMode = null;
-    } else if (this._codeViewSrc.indexOf('.pom') > 0) {
+    } else if (this._codeViewSrc.endsWith('.pom')) {
       this._codeViewMode = "xml";
-    } else if (this._codeViewSrc.indexOf('.asc') > 0) {
+    } else if (this._codeViewSrc.endsWith('.asc')) {
       this._codeViewMode = "asc";
     } else {
       this._codeViewMode = "default";
@@ -990,7 +990,7 @@ export class MvnpmHome extends LitElement {
     this._baseFile = artifactId + "-" + version;
     this._baseUrl = "/maven2/" + groupId + "/" + artifactId + "/" + version + "/";
 
-    this._changeCodeView(this._baseUrl + this._baseFile + this._codeViewSelection + "?proxy=true");
+    this._changeCodeView(this._baseUrl + this._baseFile + this._codeViewSelection);
 
     fetch(getCentralSyncItemUrl)
       .then(response => response.json())

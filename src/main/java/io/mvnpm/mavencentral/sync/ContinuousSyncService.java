@@ -139,21 +139,28 @@ public class ContinuousSyncService {
             CentralSyncItem itemToBeCreated = initQueue.get(0);
             if (centralSyncService.canProcessSync(itemToBeCreated)) {
                 final Name name = NameParser.fromMavenGA(itemToBeCreated.groupId, itemToBeCreated.artifactId);
-                final Path jar = packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
-                if (FileUtil.isOlderThanTimeout(jar, 60)) {
-                    centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
-                    if (itemToBeCreated.creationAttempts > 10) {
-                        Log.errorf("Package creation attempts exceeded maximum 10 attempts for:" + itemToBeCreated);
-                        return;
+                try {
+                    final Path jar = packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
+                    if (FileUtil.isOlderThanTimeout(jar, 60)) {
+                        centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
+                        if (itemToBeCreated.creationAttempts > 10) {
+                            Log.errorf("Package creation attempts exceeded maximum 10 attempts for:" + itemToBeCreated);
+                            return;
+                        }
+                        // A jar which stays more than 60 minutes in NONE stage needs to be recreated
+                        Log.warnf("Re-creating package (attempt: %d): %s",
+                                itemToBeCreated.creationAttempts, itemToBeCreated);
+                        Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId, itemToBeCreated.artifactId,
+                                itemToBeCreated.version);
+                        FileUtils.deleteQuietly(dir.toFile());
+                        packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
                     }
-                    // A jar which stays more than 60 minutes in NONE stage needs to be recreated
-                    Log.warnf("Re-creating package (attempt: %d): %s",
-                            itemToBeCreated.creationAttempts, itemToBeCreated);
-                    Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId, itemToBeCreated.artifactId,
-                            itemToBeCreated.version);
-                    FileUtils.deleteQuietly(dir.toFile());
-                    packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
+                } catch (PackageAlreadySyncedException e) {
+                    // Do nothing
+                } catch (WebApplicationException e) {
+                    Log.error(e);
                 }
+
             }
         } else {
             Log.debug("Nothing in the queue to sync");
@@ -264,7 +271,7 @@ public class ContinuousSyncService {
                 centralSyncItem.stagingRepoId = repoId;
                 centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
             } catch (UploadFailedException exception) {
-                Log.warnf("Upload failed for '%'s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
+                Log.warnf("Upload failed for '%s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
                 retryUpload(centralSyncItem, exception);
             } catch (UnauthorizedException unauthorizedException) {
                 unauthorizedException.printStackTrace();
