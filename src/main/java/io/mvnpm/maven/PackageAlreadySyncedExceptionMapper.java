@@ -26,7 +26,8 @@ public class PackageAlreadySyncedExceptionMapper implements ExceptionMapper<Pack
         final List<String> proxy = routingContext.queryParam("proxy");
         final List<String> redirect = routingContext.queryParam("redirect");
         if (redirect.size() == 1 && redirect.get(0).equals("true")) {
-            return Response.seeOther(mavenCentralService.getUri(exception.name(), exception.version(), exception.fileName())).build();
+            return Response.seeOther(mavenCentralService.getUri(exception.name(), exception.version(), exception.fileName()))
+                    .build();
         }
         if (proxy.size() == 1 && proxy.get(0).equals("true")) {
             return mavenCentralService.proxyMavenRequest(exception.name(), exception.version(), exception.fileName()).await()

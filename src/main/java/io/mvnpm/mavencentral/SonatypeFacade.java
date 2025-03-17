@@ -20,6 +20,7 @@ import io.mvnpm.mavencentral.exceptions.StatusCheckException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
+import io.mvnpm.mavencentral.sync.Stage;
 import io.mvnpm.npm.model.Name;
 import io.quarkus.cache.CacheResult;
 import io.quarkus.logging.Log;
@@ -91,7 +92,7 @@ public class SonatypeFacade {
                         String groupId = item.getString("groupId");
                         String artifactId = item.getString("artifactId");
                         String version = item.getString("version");
-                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version));
+                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.NONE));
                     }
                 }
             }

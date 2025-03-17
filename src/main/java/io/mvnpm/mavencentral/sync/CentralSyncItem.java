@@ -57,12 +57,12 @@ public class CentralSyncItem extends PanacheEntityBase {
         this.stageChangeTime = LocalDateTime.now();
     }
 
-    public static CentralSyncItem findOrCreate(Gav gav) {
-        insertIfNotPresent(gav);
+    public static CentralSyncItem findOrCreate(Gav gav, Stage stage) {
+        insertIfNotPresent(gav, stage);
         return findById(gav);
     }
 
-    private static int insertIfNotPresent(Gav gav) {
+    private static int insertIfNotPresent(Gav gav, Stage stage) {
         return getEntityManager().createQuery(
                 "insert into CentralSyncItem (groupId, artifactId, version, startTime, stage, stageChangeTime, creationAttempts, uploadAttempts, promotionAttempts) values (:groupId, :artifactId, :version, :now, :stage, :now, 0, 0, 0)\n"
                         + "  on conflict(groupId, artifactId, version) do nothing")
@@ -70,7 +70,7 @@ public class CentralSyncItem extends PanacheEntityBase {
                 .setParameter("artifactId", gav.getArtifactId())
                 .setParameter("version", gav.getVersion())
                 .setParameter("now", LocalDateTime.now())
-                .setParameter("stage", Stage.NONE)
+                .setParameter("stage", stage)
                 .executeUpdate();
     }
 
@@ -97,6 +97,10 @@ public class CentralSyncItem extends PanacheEntityBase {
                 || this.stage.equals(Stage.RELEASING)
                 || this.stage.equals(Stage.UPLOADED)
                 || this.stage.equals(Stage.UPLOADING);
+    }
+
+    public boolean isStarted() {
+        return this.isInProgress() || this.stage.equals(Stage.INIT) || this.stage.equals(Stage.PACKAGING);
     }
 
     public boolean isInError() {

@@ -86,7 +86,7 @@ public class CentralSyncApi {
     @Path("/info/{groupId}/{artifactId}")
     public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
-        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version);
+        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version, false);
     }
 
     @GET
@@ -95,7 +95,7 @@ public class CentralSyncApi {
     public CentralSyncItem requestFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
         mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
-        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version);
+        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version, true);
     }
 
     @GET
@@ -109,7 +109,8 @@ public class CentralSyncApi {
         }
 
         mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
-        final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version);
+        final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version,
+                true);
         if (centralSyncItem.isInError()) {
             return continuousSyncService.tryErroredItemAgain(centralSyncItem);
         }

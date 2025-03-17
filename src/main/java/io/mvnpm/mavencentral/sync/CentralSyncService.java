@@ -38,17 +38,20 @@ public class CentralSyncService {
     CentralSyncItemService centralSyncItemService;
 
     @Transactional
-    public CentralSyncItem checkReleaseInDbAndCentral(String groupId, String artifactId, String version) {
+    public CentralSyncItem checkReleaseInDbAndCentral(String groupId, String artifactId, String version, boolean startSync) {
         if ("latest".equalsIgnoreCase(version)) {
             version = getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version,
+                startSync ? Stage.PACKAGING : Stage.NONE);
 
         // Check the status
         if (!centralSyncItem.alreadyReleased() && checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
             centralSyncItem.stage = Stage.RELEASED;
             centralSyncItemService.merge(centralSyncItem);
+        } else if (startSync && centralSyncItem.stage == Stage.NONE) {
+            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.PACKAGING);
         }
         return centralSyncItem;
     }

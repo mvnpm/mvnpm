@@ -42,6 +42,12 @@ export class MvnpmHome extends LitElement {
           align-items: center;
       }
 
+      input:-webkit-autofill,
+      input:-webkit-autofill:focus {
+          // Fixes autofill css issue
+          transition: background-color 0s 600000s, color 0s 600000s !important;
+      }
+
       .coordinates-pane {
           width: 100%;
           display: flex;
@@ -513,7 +519,7 @@ export class MvnpmHome extends LitElement {
       if (this._centralSyncItem.stage === "RELEASED") {
         return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-success-color)"
                                        icon="vaadin:check-circle"></vaadin-icon> Maven central</span>`;
-      } else if (this._centralSyncItem.inProgress || this._centralSyncItem.stage === "INIT") {
+      } else if (this._centralSyncItem.started) {
         return html`<span><vaadin-icon title="Stage: ${this._centralSyncItem.stage}" style="color:var(--lumo-warning-color)"
                                        icon="vaadin:progressbar"></vaadin-icon> Maven central</span>`;
       } else {

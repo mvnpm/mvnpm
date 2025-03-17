@@ -3,12 +3,22 @@ package io.mvnpm.creator;
 import io.mvnpm.Constants;
 
 public enum FileType {
-    jar,
-    tgz,
-    pom,
-    source,
-    javadoc,
-    importmap;
+    jar(true),
+    tgz(true),
+    pom(false),
+    source(true),
+    javadoc(true),
+    importmap(false);
+
+    private final boolean triggerSync;
+
+    FileType(boolean triggerSync) {
+        this.triggerSync = triggerSync;
+    }
+
+    public boolean triggerSync() {
+        return triggerSync;
+    }
 
     public static FileType fromFileName(String fileName) {
         if (fileName.endsWith(Constants.DOT_SHA1)) {
