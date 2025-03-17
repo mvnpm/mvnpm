@@ -100,7 +100,7 @@ public class ContinuousSyncService {
             }
         } else {
             // Handle internal compositions
-            compositeCreator.getOrBuildComposite(artifactId, groupId);
+            compositeCreator.getOrBuildComposite(artifactId, null);
         }
     }
 
