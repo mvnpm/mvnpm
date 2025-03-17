@@ -70,7 +70,8 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getPath(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
+            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
+                    .alreadyReleased()) {
                 throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.empty());
             }
             if (name.isInternal()) {
@@ -91,7 +92,8 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getSha1(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
+            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
+                    .alreadyReleased()) {
                 throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_SHA1));
             }
             if (name.isInternal()) {
@@ -112,7 +114,8 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getMd5(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
+            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
+                    .alreadyReleased()) {
                 throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_MD5));
             }
             if (name.isInternal()) {
@@ -133,7 +136,8 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getAsc(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version).alreadyReleased()) {
+            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
+                    .alreadyReleased()) {
                 throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_ASC));
             }
             if (name.isInternal()) {

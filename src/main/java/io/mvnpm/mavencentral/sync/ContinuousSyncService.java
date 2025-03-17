@@ -100,7 +100,7 @@ public class ContinuousSyncService {
             }
         } else {
             // Handle internal compositions
-            compositeCreator.getOrBuildComposite(artifactId, groupId);
+            compositeCreator.getOrBuildComposite(artifactId, null);
         }
     }
 
@@ -115,7 +115,7 @@ public class ContinuousSyncService {
      * Sync a certain version of a artifact with central
      */
     public boolean initializeSync(String groupId, String artifactId, String version) {
-        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version);
+        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
         if (itemToSync.stage == Stage.INIT) {
             // Already started
             return false;
@@ -128,32 +128,39 @@ public class ContinuousSyncService {
     }
 
     /**
-     * This just check if there is an artifact is stuck at creation
+     * This just check if there is an artifact is stuck at packaging
      */
-    @Scheduled(every = "5m", concurrentExecution = SKIP)
+    @Scheduled(every = "60s", concurrentExecution = SKIP)
     @Blocking
     @Transactional
-    void checkCreation() {
-        List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.NONE);
+    void checkPackaging() {
+        List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING);
         if (!initQueue.isEmpty()) {
             CentralSyncItem itemToBeCreated = initQueue.get(0);
             if (centralSyncService.canProcessSync(itemToBeCreated)) {
                 final Name name = NameParser.fromMavenGA(itemToBeCreated.groupId, itemToBeCreated.artifactId);
-                final Path jar = packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
-                if (FileUtil.isOlderThanTimeout(jar, 60)) {
-                    centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
-                    if (itemToBeCreated.creationAttempts > 10) {
-                        Log.errorf("Package creation attempts exceeded maximum 10 attempts for:" + itemToBeCreated);
-                        return;
+                try {
+                    final Path jar = packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
+                    if (FileUtil.isOlderThanTimeout(jar, 60)) {
+                        centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
+                        if (itemToBeCreated.creationAttempts > 10) {
+                            Log.errorf("Package creation attempts exceeded maximum 10 attempts for:" + itemToBeCreated);
+                            return;
+                        }
+                        // A jar which stays more than 60 minutes in NONE stage needs to be recreated
+                        Log.warnf("Re-creating package (attempt: %d): %s",
+                                itemToBeCreated.creationAttempts, itemToBeCreated);
+                        Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId, itemToBeCreated.artifactId,
+                                itemToBeCreated.version);
+                        FileUtils.deleteQuietly(dir.toFile());
+                        packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
                     }
-                    // A jar which stays more than 60 minutes in NONE stage needs to be recreated
-                    Log.warnf("Re-creating package (attempt: %d): %s",
-                            itemToBeCreated.creationAttempts, itemToBeCreated);
-                    Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId, itemToBeCreated.artifactId,
-                            itemToBeCreated.version);
-                    FileUtils.deleteQuietly(dir.toFile());
-                    packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
+                } catch (PackageAlreadySyncedException e) {
+                    // Do nothing
+                } catch (WebApplicationException e) {
+                    Log.error(e);
                 }
+
             }
         } else {
             Log.debug("Nothing in the queue to sync");
@@ -264,7 +271,7 @@ public class ContinuousSyncService {
                 centralSyncItem.stagingRepoId = repoId;
                 centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
             } catch (UploadFailedException exception) {
-                Log.warnf("Upload failed for '%'s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
+                Log.warnf("Upload failed for '%s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
                 retryUpload(centralSyncItem, exception);
             } catch (UnauthorizedException unauthorizedException) {
                 unauthorizedException.printStackTrace();
@@ -371,7 +378,7 @@ public class ContinuousSyncService {
         if (centralSyncItem.promotionAttempts > 0) {
             centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
         }
-        return centralSyncItemService.changeStage(centralSyncItem, Stage.NONE);
+        return centralSyncItemService.changeStage(centralSyncItem, Stage.PACKAGING);
     }
 
     /**

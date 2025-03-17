@@ -53,8 +53,8 @@ public class CentralSyncItemService {
     }
 
     @Transactional
-    public CentralSyncItem findOrCreate(String groupId, String artifactId, String version) {
-        return CentralSyncItem.findOrCreate(new Gav(groupId, artifactId, version));
+    public CentralSyncItem findOrCreate(String groupId, String artifactId, String version, Stage stage) {
+        return CentralSyncItem.findOrCreate(new Gav(groupId, artifactId, version), stage);
     }
 
 }

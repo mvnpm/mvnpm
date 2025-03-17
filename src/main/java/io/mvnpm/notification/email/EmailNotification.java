@@ -7,6 +7,7 @@ import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.Stage;
 import io.mvnpm.notification.Notification;
 import io.mvnpm.notification.NotificationFormatter;
+import io.quarkus.logging.Log;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 import io.quarkus.vertx.ConsumeEvent;
@@ -28,7 +29,16 @@ public class EmailNotification {
     public void artifactReleased(CentralSyncItem centralSyncItem) {
         if (centralSyncItem.stage.equals(Stage.RELEASED)) {
             Notification notification = NotificationFormatter.getNotificationAsHTML(centralSyncItem);
-            mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
+            try {
+                mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
+            } catch (Exception e) {
+                if (Log.isDebugEnabled()) {
+                    Log.error("Failed to send release notification.", e);
+                } else {
+                    Log.warn("Failed to send release notification.");
+                }
+            }
+
         }
     }
 }
