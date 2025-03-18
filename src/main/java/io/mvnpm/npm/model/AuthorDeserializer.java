@@ -28,7 +28,7 @@ public class AuthorDeserializer extends StdDeserializer<Author> {
             return jp.readValueAs(Author.class);
         } catch (Throwable t) {
             // Let try with String
-            String name = jp.readValueAs(String.class);
+            String name = jp.getValueAsString("invalid");
             return new Author(name);
         }
     }
