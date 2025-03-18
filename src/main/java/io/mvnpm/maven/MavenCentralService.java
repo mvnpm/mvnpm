@@ -1,13 +1,21 @@
 package io.mvnpm.maven;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Response;
 
+import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.maven.exceptions.MavenCentralRequestError;
 import io.mvnpm.maven.exceptions.NotFoundInMavenCentralException;
 import io.mvnpm.npm.model.Name;
@@ -27,6 +35,8 @@ public class MavenCentralService {
     private Vertx vertx;
 
     private final AtomicReference<WebClient> webClient = new AtomicReference<>();
+    @Inject
+    private PackageFileLocator packageFileLocator;
 
     private WebClient webClient() {
         return webClient.updateAndGet(webClient -> webClient == null ? WebClient.create(vertx) : webClient);
@@ -40,6 +50,24 @@ public class MavenCentralService {
         return URI.create(
                 (MAVEN_CENTRAL_REPO_URL + "/%s/%s/%s").formatted(name.mvnGroupIdPath(),
                         name.mvnArtifactId, file));
+    }
+
+    public Path downloadFromMavenCentral(Name name, String version, FileType type) {
+        final HttpResponse<Buffer> response = getFromMavenCentral(name, version,
+                packageFileLocator.getLocalFileName(type, name, version, Optional.empty())).await().atMost(
+                        Duration.ofSeconds(5));
+        try {
+            Path downloaded = Files.createTempFile(name.toGavString(version), type.toString().toLowerCase());
+            Files.write(downloaded, response.body().getBytes());
+            return downloaded;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+
+    }
+
+    public Uni<HttpResponse<Buffer>> getFromMavenCentral(Name name, String version, FileType type) {
+        return getFromMavenCentral(name, version, packageFileLocator.getLocalFileName(type, name, version, Optional.empty()));
     }
 
     public Uni<HttpResponse<Buffer>> getFromMavenCentral(Name name, String version, String fileName) {

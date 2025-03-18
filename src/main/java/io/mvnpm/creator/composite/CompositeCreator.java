@@ -48,7 +48,9 @@ import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
+import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -92,6 +94,8 @@ public class CompositeCreator {
     private final Map<String, GitHubContent> compositesMap = new HashMap<>();
     @Inject
     private PomService pomService;
+    @Inject
+    private MavenCentralService mavenCentralService;
 
     private WebClient webClient() {
         return webClient.updateAndGet(webClient -> webClient == null ? WebClient.create(vertx) : webClient);
@@ -202,7 +206,12 @@ public class CompositeCreator {
 
             for (Dependency dependency : dependencies) {
                 Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                Path jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
+                Path jarPath;
+                try {
+                    jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
+                } catch (PackageAlreadySyncedException e) {
+                    jarPath = mavenCentralService.downloadFromMavenCentral(jarName, dependency.getVersion(), FileType.jar);
+                }
 
                 try (InputStream inputStream = Files.newInputStream(jarPath);
                         JarInputStream inputJar = new JarInputStream(inputStream)) {

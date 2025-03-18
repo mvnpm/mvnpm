@@ -68,8 +68,7 @@ public class CompositeService {
     public Path getImportMap(Name name, String version) {
         final Path importMapPath = compositeCreator.getImportMapPath(name, version);
         if (!Files.exists(importMapPath)) {
-            final HttpResponse<Buffer> response = mavenCentralService.getFromMavenCentral(name, version,
-                    packageFileLocator.getLocalFileName(FileType.jar, name, version, Optional.empty()))
+            final HttpResponse<Buffer> response = mavenCentralService.getFromMavenCentral(name, version, FileType.jar)
                     .await().atMost(Duration.ofSeconds(10));
             createImportMapFromJar(response.bodyAsBuffer().getBytes(), importMapPath);
         }

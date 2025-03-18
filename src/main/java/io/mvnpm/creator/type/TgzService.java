@@ -15,6 +15,7 @@ import jakarta.inject.Inject;
 
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
+import io.quarkus.logging.Log;
 
 /**
  * Downloads or stream the tar files from npm
@@ -32,6 +33,10 @@ public class TgzService {
 
     public void fetchRemoteAndSave(io.mvnpm.npm.model.Package p, Path localFileName) {
         URL tarball = p.dist().tarball();
+        if (Files.exists(localFileName)) {
+            Log.warnf("%s was already downloaded.", localFileName);
+            return;
+        }
         try {
             FileUtil.createDirectories(localFileName);
             downloadFileTo(tarball, localFileName);
