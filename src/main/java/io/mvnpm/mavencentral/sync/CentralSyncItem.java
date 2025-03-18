@@ -24,7 +24,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
         @Index(columnList = "stage, stageChangeTime DESC")
 })
 @NamedQueries({
-        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT 999"),
+        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT 50"),
         @NamedQuery(name = "CentralSyncItem.findUploadedButNotReleased", query = "from CentralSyncItem where stage IN ?1 order by stageChangeTime DESC")
 })
 public class CentralSyncItem extends PanacheEntityBase {
@@ -76,6 +76,13 @@ public class CentralSyncItem extends PanacheEntityBase {
 
     public static List<CentralSyncItem> findByStage(Stage stage) {
         return find("#CentralSyncItem.findByStage", stage).list();
+    }
+
+    // TEMPORARY
+    public static List<CentralSyncItem> toDepCheck(int page) {
+        return find("from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT 20 OFFSET ?2", Stage.RELEASED,
+                page)
+                .list();
     }
 
     public static List<CentralSyncItem> findUpdloadedButNotReleased() {

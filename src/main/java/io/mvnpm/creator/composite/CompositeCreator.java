@@ -1,21 +1,18 @@
 package io.mvnpm.creator.composite;
 
 import static io.mvnpm.creator.type.JarService.MVNPM_MORE_ARCHIVE;
+import static io.mvnpm.creator.type.PomService.resolveDependencies;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
 import java.io.StringWriter;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -40,7 +37,6 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.License;
 import org.apache.maven.model.Model;
-import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
@@ -48,6 +44,7 @@ import org.eclipse.microprofile.rest.client.inject.RestClient;
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.events.NewJarEvent;
+import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
@@ -92,9 +89,9 @@ public class CompositeCreator {
 
     private final AtomicReference<WebClient> webClient = new AtomicReference<>();
 
-    private final MavenXpp3Reader mavenXpp3Writer = new MavenXpp3Reader();
-
     private final Map<String, GitHubContent> compositesMap = new HashMap<>();
+    @Inject
+    private PomService pomService;
 
     private WebClient webClient() {
         return webClient.updateAndGet(webClient -> webClient == null ? WebClient.create(vertx) : webClient);
@@ -129,22 +126,18 @@ public class CompositeCreator {
     private Path build(String downloadUrl, String version) {
         try {
             String content = downloadFileContent(downloadUrl);
-            try (Reader reader = new StringReader(content)) {
-                Model model = mavenXpp3Writer.read(reader);
-
-                if (version == null) {
-                    version = getLatestVersionOfFirstDependency(model); // Used in auto update
-                }
-
-                if (version != null) {
-                    model.setVersion(version);
-                    List<Dependency> dependencies = resolveDependencies(model);
+            Model model = pomService.readPom(content);
+            if (version == null) {
+                version = getLatestVersionOfFirstDependency(model); // Used in auto update
+            }
+            if (version != null) {
+                model.setVersion(version);
+                List<Dependency> dependencies = resolveDependencies(model);
+                try {
                     return merge(model, dependencies);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
-            } catch (XmlPullParserException ex) {
-                throw new RuntimeException("Invalid pom xml for " + downloadUrl);
-            } catch (IOException ex) {
-                throw new UncheckedIOException(ex);
             }
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
@@ -167,37 +160,7 @@ public class CompositeCreator {
         return this.compositesMap.values();
     }
 
-    private List<Dependency> resolveDependencies(Model model) {
-        Properties properties = model.getProperties();
-        List<Dependency> resolvedDependencies = new ArrayList<>();
-
-        List<Dependency> dependencies = model.getDependencies();
-
-        for (Dependency dependency : dependencies) {
-            String version = dependency.getVersion();
-            if (version != null && version.startsWith("${") && version.endsWith("}")) {
-                // If the version is a property reference, resolve it
-                String propertyName = version.substring(2, version.length() - 1);
-                String resolvedVersion = resolveVersion(properties, propertyName, model.getVersion());
-
-                if (resolvedVersion != null) {
-                    dependency.setVersion(resolvedVersion);
-                }
-            }
-            resolvedDependencies.add(dependency);
-        }
-        return resolvedDependencies;
-    }
-
-    private String resolveVersion(Properties properties, String propertyName, String projectVersion) {
-        if (propertyName.equals("project.version")) {
-            return projectVersion;
-        } else {
-            return properties.getProperty(propertyName);
-        }
-    }
-
-    private Path merge(Model model, List<Dependency> dependencies) throws IOException, XmlPullParserException {
+    private Path merge(Model model, List<Dependency> dependencies) throws IOException {
         Path jar = packageFileLocator.getLocalFullPath(FileType.jar, model.getGroupId(), model.getArtifactId(),
                 model.getVersion());
         Path sourceJar = packageFileLocator.getLocalFullPath(FileType.source, model.getGroupId(), model.getArtifactId(),
@@ -216,7 +179,7 @@ public class CompositeCreator {
     }
 
     private Model mergeJar(Path outputJar, Path outputPom, Model model, List<Dependency> dependencies)
-            throws IOException, XmlPullParserException {
+            throws IOException {
         Model pom = model.clone();
         Files.createDirectories(outputJar.getParent());
         // Create a new JAR file to merge the others into
@@ -340,7 +303,7 @@ public class CompositeCreator {
     }
 
     private void mergeSource(Path outputSourceJar, Model pom, List<Dependency> dependencies)
-            throws IOException, XmlPullParserException {
+            throws IOException {
         Files.createDirectories(outputSourceJar.getParent());
         final Path tempJar = FileUtil.getTempFilePathFor(outputSourceJar);
         // Create a new JAR file to merge the others into
@@ -404,26 +367,24 @@ public class CompositeCreator {
             List<String> ignoreListGA) throws IOException, XmlPullParserException {
         if (name.endsWith("pom.xml")) {
             String jarPom = getEntryContent(inputJar);
-            try (StringReader sr = new StringReader(jarPom)) {
-                Model jarPomModel = mavenXpp3Writer.read(sr);
-                List<Dependency> resolveDependencies = resolveDependencies(jarPomModel);
-                Map<String, Dependency> thisJarDeps = mapByGA(resolveDependencies);
-                for (String ga : thisJarDeps.keySet()) {
-                    if (!ignoreListGA.contains(ga)) {
-                        newDependencies.put(ga, thisJarDeps.get(ga));
-                    }
+            final Model jarPomModel = pomService.readPom(jarPom);
+            List<Dependency> resolveDependencies = resolveDependencies(jarPomModel);
+            Map<String, Dependency> thisJarDeps = mapByGA(resolveDependencies);
+            for (String ga : thisJarDeps.keySet()) {
+                if (!ignoreListGA.contains(ga)) {
+                    newDependencies.put(ga, thisJarDeps.get(ga));
                 }
+            }
 
-                for (Developer jarDev : jarPomModel.getDevelopers()) {
-                    if (!newDevelopers.containsKey(jarDev.toString())) {
-                        newDevelopers.put(jarDev.toString(), jarDev);
-                    }
+            for (Developer jarDev : jarPomModel.getDevelopers()) {
+                if (!newDevelopers.containsKey(jarDev.toString())) {
+                    newDevelopers.put(jarDev.toString(), jarDev);
                 }
+            }
 
-                for (License jarLic : jarPomModel.getLicenses()) {
-                    if (!newLicences.containsKey(jarLic.toString())) {
-                        newLicences.put(jarLic.toString(), jarLic);
-                    }
+            for (License jarLic : jarPomModel.getLicenses()) {
+                if (!newLicences.containsKey(jarLic.toString())) {
+                    newLicences.put(jarLic.toString(), jarLic);
                 }
             }
         }

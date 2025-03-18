@@ -2,11 +2,16 @@ package io.mvnpm.mavencentral.sync;
 
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -20,9 +25,11 @@ import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageCreator;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.composite.CompositeCreator;
+import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.log.EventLogApi;
+import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.RepoStatus;
@@ -41,7 +48,9 @@ import io.quarkus.scheduler.Scheduled;
 import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
+import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.eventbus.EventBus;
+import io.vertx.mutiny.ext.web.client.HttpResponse;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -72,8 +81,13 @@ public class ContinuousSyncService {
 
     @Inject
     PackageCreator packageCreator;
+
+    AtomicInteger depCheckCounter = new AtomicInteger();
+
     @Inject
     private MavenRepositoryService mavenRepositoryService;
+    @Inject
+    private MavenCentralService mavenCentralService;
 
     /**
      * Check for version updates, and if a new version is out, do a sync
@@ -125,6 +139,38 @@ public class ContinuousSyncService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * TEMPORARY
+     * This check is to auto-sync dependencies on existing packages
+     */
+    @Scheduled(every = "${mvnpm.check-versions.every:off}", concurrentExecution = SKIP)
+    @Blocking
+    void checkVersions() {
+        final List<CentralSyncItem> byStage = CentralSyncItem.toDepCheck(depCheckCounter.getAndIncrement());
+        if (!byStage.isEmpty()) {
+            for (CentralSyncItem item : byStage) {
+                final Name name = NameParser.fromMavenGA(item.groupId, item.artifactId);
+                Log.infof("Checking versions for %s", name.toGavString(item.version));
+                final HttpResponse<Buffer> r = mavenCentralService.getFromMavenCentral(name, item.version,
+                        packageFileLocator.getLocalFileName(FileType.pom, name, item.version, Optional.empty()))
+                        .await().atMost(
+                                Duration.ofSeconds(5));
+                final Path pom;
+                try {
+                    pom = Files.createTempFile("pom", name.toGavString(item.version));
+                    Files.writeString(pom, r.bodyAsString());
+                    bus.send(DependencyVersionCheckRequest.NAME,
+                            new DependencyVersionCheckRequest(
+                                    pom, name,
+                                    item.version));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        }
     }
 
     /**
@@ -350,8 +396,10 @@ public class ContinuousSyncService {
     private boolean isInternal(String groupId, String artifactId) {
         return groupId.equals("org.mvnpm.at.mvnpm") ||
                 (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit")) || // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm.locked.at.vaadin") && artifactId.equals("router")) || // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm") && artifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
+                (groupId.equals("org.mvnpm.locked.at.vaadin") && artifactId.equals("router")) ||
+                // Failed attempt at hardcoding versions
+                (groupId.equals("org.mvnpm") && artifactId.equals(
+                        "vaadin-web-components")); // Before we used the @mvnpm namespave
     }
 
     @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
