@@ -2,7 +2,6 @@ package io.mvnpm.mavencentral.sync;
 
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -152,23 +151,23 @@ public class ContinuousSyncService {
         if (!byStage.isEmpty()) {
             for (CentralSyncItem item : byStage) {
                 final Name name = NameParser.fromMavenGA(item.groupId, item.artifactId);
-                Log.infof("Checking versions for %s", name.toGavString(item.version));
-                final HttpResponse<Buffer> r = mavenCentralService.getFromMavenCentral(name, item.version,
-                        packageFileLocator.getLocalFileName(FileType.pom, name, item.version, Optional.empty()))
-                        .await().atMost(
-                                Duration.ofSeconds(5));
-                final Path pom;
+                final String gavString = name.toGavString(item.version);
                 try {
-                    pom = Files.createTempFile("pom", name.toGavString(item.version));
+                    Log.infof("Checking versions for %s", gavString);
+                    final HttpResponse<Buffer> r = mavenCentralService.getFromMavenCentral(name, item.version,
+                            packageFileLocator.getLocalFileName(FileType.pom, name, item.version, Optional.empty()))
+                            .await().atMost(
+                                    Duration.ofSeconds(5));
+                    final Path pom;
+                    pom = Files.createTempFile("pom", gavString);
                     Files.writeString(pom, r.bodyAsString());
                     bus.send(DependencyVersionCheckRequest.NAME,
                             new DependencyVersionCheckRequest(
                                     pom, name,
                                     item.version));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                } catch (Exception e) {
+                    Log.warnf("Error while checking versions for %s because: %s", gavString, e.getMessage());
                 }
-
             }
         }
     }

@@ -21,6 +21,7 @@ import io.mvnpm.creator.type.JavaDocService;
 import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.type.SourceService;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.AutoSyncService;
 import io.mvnpm.mavencentral.sync.CentralSyncApi;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
@@ -128,9 +129,17 @@ public class PackageListener {
                 final Set<Version> versions = project.versions().stream().map(Version::fromString).collect(Collectors.toSet());
                 final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
                 if (version != null) {
+                    final String gavString = name.toGavString(version.toString());
                     Log.infof("Verifying matching dependency version of %s -> %s", req.name().toGavString(req.version()),
-                            name.toGavString(version.toString()));
-                    mavenRepositoryService.getPath(name, version.toString(), FileType.jar);
+                            gavString);
+                    try {
+                        mavenRepositoryService.getPath(name, version.toString(), FileType.jar);
+                    } catch (PackageAlreadySyncedException e) {
+                        // Do nothing
+                    } catch (Exception e) {
+                        Log.warnf("Error while syncing matching dependency '%s'  because: %s", gavString, e.getMessage());
+                    }
+
                 }
             }
         }
