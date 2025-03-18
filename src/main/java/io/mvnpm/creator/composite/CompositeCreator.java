@@ -169,11 +169,11 @@ public class CompositeCreator {
                 model.getVersion());
         Path sourceJar = packageFileLocator.getLocalFullPath(FileType.source, model.getGroupId(), model.getArtifactId(),
                 model.getVersion());
-        if (!Files.exists(jar)) {
+        if (!Files.exists(jar) || !Files.exists(sourceJar)) {
             final Path outputPom = getPomPath(jar);
             Name name = NameParser.fromMavenGA(model.getGroupId(), model.getArtifactId());
             Model pom = mergeJar(jar, outputPom, model, dependencies);
-            mergeSource(jar, pom, dependencies);
+            mergeSource(sourceJar, pom, dependencies);
             bus.send(NewJarEvent.EVENT_NAME,
                     new NewJarEvent(outputPom, jar, null, List.of(sourceJar), name, pom.getVersion()));
 
@@ -206,12 +206,7 @@ public class CompositeCreator {
 
             for (Dependency dependency : dependencies) {
                 Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                Path jarPath;
-                try {
-                    jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.jar);
-                } catch (PackageAlreadySyncedException e) {
-                    jarPath = mavenCentralService.downloadFromMavenCentral(jarName, dependency.getVersion(), FileType.jar);
-                }
+                final Path jarPath = getJar(dependency, jarName, FileType.jar);
 
                 try (InputStream inputStream = Files.newInputStream(jarPath);
                         JarInputStream inputJar = new JarInputStream(inputStream)) {
@@ -287,6 +282,14 @@ public class CompositeCreator {
         return pom;
     }
 
+    private Path getJar(Dependency dependency, Name jarName, FileType type) {
+        try {
+            return mavenRepositoryService.getPath(jarName, dependency.getVersion(), type);
+        } catch (PackageAlreadySyncedException e) {
+            return mavenCentralService.downloadFromMavenCentral(jarName, dependency.getVersion(), type);
+        }
+    }
+
     private static Path getPomPath(Path outputJar) {
         String jarName = outputJar.toString();
         String pomName = jarName.substring(0, jarName.length() - 3) + "pom";
@@ -322,7 +325,7 @@ public class CompositeCreator {
             // Create new merged pom.xml
             for (Dependency dependency : dependencies) {
                 Name jarName = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-                Path jarPath = mavenRepositoryService.getPath(jarName, dependency.getVersion(), FileType.source);
+                Path jarPath = getJar(dependency, jarName, FileType.source);
 
                 try (InputStream inputStream = Files.newInputStream(jarPath);
                         JarInputStream inputJar = new JarInputStream(inputStream)) {
