@@ -40,6 +40,7 @@ import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.Repository;
 import io.mvnpm.version.VersionConverter;
+import io.quarkus.logging.Log;
 
 /**
  * Creates a pom.xml from the NPM Package
@@ -113,7 +114,10 @@ public class PomService {
     }
 
     private void writePomToFileSystem(io.mvnpm.npm.model.Package p, Path localFilePath) {
-
+        if (Files.exists(localFilePath)) {
+            Log.warnf("%s was already created.", localFilePath);
+            return;
+        }
         List<Dependency> deps = toDependencies(p);
 
         Model model = new Model();

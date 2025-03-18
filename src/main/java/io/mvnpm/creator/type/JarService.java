@@ -36,6 +36,7 @@ import io.mvnpm.creator.utils.ImportMapUtil;
 import io.mvnpm.importmap.Location;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.model.Package;
+import io.quarkus.logging.Log;
 
 /**
  * Create the jar from the npm content
@@ -84,6 +85,10 @@ public class JarService {
     }
 
     private void jarInput(io.mvnpm.npm.model.Package p, Path jarOutputPath, Path pomPath, Path tgzPath) {
+        if (Files.exists(jarOutputPath)) {
+            Log.warnf("Jar %s was already created.", jarOutputPath);
+            return;
+        }
         FileUtil.createDirectories(jarOutputPath);
         final Path tempFile = FileUtil.getTempFilePathFor(jarOutputPath);
         try (OutputStream fileOutput = Files.newOutputStream(tempFile);
