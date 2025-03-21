@@ -86,6 +86,11 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.codemirror</groupId>
+        <artifactId>view</artifactId>
+        <version>6.26.3</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
