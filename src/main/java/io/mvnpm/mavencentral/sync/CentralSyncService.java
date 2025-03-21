@@ -6,7 +6,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
-import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.mavencentral.SonatypeFacade;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
@@ -24,9 +23,6 @@ import io.mvnpm.npm.model.Project;
 public class CentralSyncService {
     @Inject
     BundleCreator bundleCreator;
-
-    @Inject
-    MavenRepositoryService mavenRepositoryService;
 
     @Inject
     SonatypeFacade sonatypeFacade;

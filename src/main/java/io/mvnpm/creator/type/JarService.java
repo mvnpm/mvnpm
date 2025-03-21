@@ -30,11 +30,9 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.IOUtils;
 
 import io.mvnpm.Constants;
-import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.creator.utils.ImportMapUtil;
 import io.mvnpm.importmap.Location;
-import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.model.Package;
 import io.quarkus.logging.Log;
 
@@ -45,11 +43,6 @@ import io.quarkus.logging.Log;
  */
 @ApplicationScoped
 public class JarService {
-    @Inject
-    PackageFileLocator packageFileLocator;
-
-    @Inject
-    MavenRepositoryService mavenRepositoryService;
 
     @Inject
     ImportMapUtil importMapUtil;
@@ -175,11 +168,8 @@ public class JarService {
 
     private boolean isRelativeLink(final String jarEntryPath, final String tarEntryPath, final boolean shouldTgz) {
         // paths that include "/./" or "/../" as path element are invalid
-        if (jarEntryPath.startsWith("./") || jarEntryPath.contains("/./")
-                || (shouldTgz && (tarEntryPath.startsWith(".") || tarEntryPath.contains("/./")))) {
-            return true;
-        }
-        return false;
+        return jarEntryPath.startsWith("./") || jarEntryPath.contains("/./")
+                || (shouldTgz && (tarEntryPath.startsWith(".") || tarEntryPath.contains("/./")));
     }
 
     private byte[] tarGz(Map<String, byte[]> toCompress) throws IOException {

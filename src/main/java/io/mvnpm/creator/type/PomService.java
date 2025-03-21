@@ -55,6 +55,7 @@ public class PomService {
 
     @Inject
     HashService hashService;
+
     private final MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
 

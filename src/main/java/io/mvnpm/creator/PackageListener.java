@@ -9,7 +9,6 @@ import java.util.stream.Collectors;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 
@@ -23,10 +22,6 @@ import io.mvnpm.creator.type.SourceService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.AutoSyncService;
-import io.mvnpm.mavencentral.sync.CentralSyncApi;
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.CentralSyncService;
-import io.mvnpm.mavencentral.sync.Stage;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -62,30 +57,16 @@ public class PackageListener {
     AutoSyncService autoSyncService;
 
     @Inject
-    PackageFileLocator packageFileLocator;
-    @Inject
-    private PomService pomService;
-    @Inject
-    private NpmRegistryFacade npmRegistryFacade;
-    @Inject
-    private CentralSyncApi centralSyncApi;
-    @Inject
-    private CentralSyncService centralSyncService;
-    @Inject
-    private EventBus eventBus;
-    @Inject
-    private MavenRepositoryService mavenRepositoryService;
+    PomService pomService;
 
-    @ConsumeEvent("central-sync-item-stage-change")
-    @Blocking
-    public void artifactReleased(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.stage.equals(Stage.RELEASED)) {
-            Log.infof("Deleting cache directory for: %s", centralSyncItem);
-            Path dir = packageFileLocator.getLocalDirectory(centralSyncItem.groupId, centralSyncItem.artifactId,
-                    centralSyncItem.version);
-            FileUtils.deleteQuietly(dir.toFile());
-        }
-    }
+    @Inject
+    NpmRegistryFacade npmRegistryFacade;
+
+    @Inject
+    EventBus eventBus;
+
+    @Inject
+    MavenRepositoryService mavenRepositoryService;
 
     @ConsumeEvent(NewJarEvent.EVENT_NAME)
     @Blocking

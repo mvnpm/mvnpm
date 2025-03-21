@@ -50,6 +50,12 @@ public interface SonatypeClient {
     public Response releaseToCentral(@HeaderParam("Authorization") String authorization,
             @PathParam("profileId") String profileId, JsonObject promoteRequest);
 
+    @POST
+    @Path("/service/local/staging/profiles/{profileId}/drop")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response drop(@HeaderParam("Authorization") String authorization,
+            @PathParam("profileId") String profileId, JsonObject promoteRequest);
+
     @GET
     @Path("/service/local/staging/profile_repositories/{profileId}")
     @Produces(MediaType.APPLICATION_JSON)

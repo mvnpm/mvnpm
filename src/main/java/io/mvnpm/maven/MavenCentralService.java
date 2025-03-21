@@ -39,7 +39,7 @@ public class MavenCentralService {
     private PackageFileLocator packageFileLocator;
 
     private WebClient webClient() {
-        return webClient.updateAndGet(webClient -> webClient == null ? WebClient.create(vertx) : webClient);
+        return webClient.updateAndGet(wc -> wc == null ? WebClient.create(vertx) : wc);
     }
 
     public URI getUri(Name name, String version, String fileName) {

@@ -47,15 +47,16 @@
     <url>https://github.com/mvnpm/mvnpm/issues</url>
   </issueManagement>
   <properties>
-    <compiler-plugin.version>3.12.1</compiler-plugin.version>
+    <compiler-plugin.version>3.14.0</compiler-plugin.version>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.19.2</quarkus.platform.version>
+    <quarkus.platform.version>3.19.4</quarkus.platform.version>
     <skipITs>true</skipITs>
-    <surefire-plugin.version>3.2.5</surefire-plugin.version>
+    <surefire-plugin.version>3.5.2</surefire-plugin.version>
+    
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
     <impsort.plugin.version>1.9.0</impsort.plugin.version>
     <quarkus.ide-config.version>${quarkus.platform.version}</quarkus.ide-config.version>
@@ -64,14 +65,14 @@
     <!-- UI Libs -->
     <quarkus-web-bundler.version>1.8.1</quarkus-web-bundler.version>
     <lit.version>3.2.1</lit.version>
-    <vaadin.version>24.6.2</vaadin.version>
+    <vaadin.version>24.7.1</vaadin.version>
     <ldrs.version>1.0.2</ldrs.version>
     <vaadin-router.version>1.7.5</vaadin-router.version>
     <codeblock.version>1.0.19</codeblock.version>
     <compare-versions.version>6.1.1</compare-versions.version>
     <marked.version>15.0.0</marked.version>
-    <card.version>1.0.1</card.version>
-    <badge.version>1.0.2</badge.version>
+    <card.version>1.0.2</card.version>
+    <badge.version>1.0.4</badge.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
     <esbuild-java.version>1.5.2</esbuild-java.version>
