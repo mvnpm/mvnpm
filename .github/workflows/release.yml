@@ -23,8 +23,8 @@ jobs:
         RELEASE_VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/^v//')
         mvn versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false
 
-    - name: Update the lock
-      run: mvn io.mvnpm:locker-maven-plugin:0.0.6:lock
+    # - name: Update the lock
+    #   run: mvn io.mvnpm:locker-maven-plugin:0.0.6:lock
     
     - name: Build with Maven
       run: mvn clean install -Dnative -DskipTests
