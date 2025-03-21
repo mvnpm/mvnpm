@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -87,68 +86,50 @@ public class ContinuousSyncService {
     @Inject
     MavenCentralService mavenCentralService;
 
-    AtomicInteger depCheckCounter = new AtomicInteger();
+    @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
+    @Blocking
+    public void checkError() {
+        try {
+            Log.debug("Starting error retry...");
+            List<CentralSyncItem> error = CentralSyncItem.findByStage(Stage.ERROR, 50);
 
-    /**
-     * Check for version updates, and if a new version is out, do a sync
-     */
-    public void update(String groupId, String artifactId) {
-        Log.debug("====== mvnpm: Continuous Updater ======");
-        Log.debug("\tChecking " + groupId + ":" + artifactId);
-        if (!isInternal(groupId, artifactId)) {
-            // Get latest in NPM TODO: Later make this per patch release...
-            try {
-                Name name = NameParser.fromMavenGA(groupId, artifactId);
-                Project project = npmRegistryFacade.getProject(name.npmFullName);
-                if (project != null) {
-                    String latest = project.distTags().latest();
-                    try {
-                        mavenRepositoryService.getPath(name, latest, FileType.jar);
-                        Log.infof("Continuous Updater: New package %s found", name.npmFullName);
-                    } catch (PackageAlreadySyncedException e) {
-                        Log.debugf("Continuous Updater: Package %s already synced", name.npmFullName);
-                    }
+            if (error != null && !error.isEmpty()) {
+                for (CentralSyncItem centralSyncItem : error) {
+                    centralSyncItemService.tryErroredItemAgain(centralSyncItem);
                 }
-            } catch (WebApplicationException wae) {
-                Log.error("Could not do update for [" + groupId + ":" + artifactId + "] - " + wae.getMessage());
             }
-        } else {
-            // Handle internal compositions
-            compositeCreator.getOrBuildComposite(artifactId, null);
+        } catch (Throwable t) {
+            Log.error(t.getMessage());
         }
     }
 
     /**
-     * Sync a certain version of a artifact with central
+     * Check all known artifacts for updates
      */
-    public boolean initializeSync(Name name, String version) {
-        return initializeSync(name.mvnGroupId, name.mvnArtifactId, version);
+    @Scheduled(cron = "{mvnpm.checkall.cron.expr}", concurrentExecution = SKIP)
+    @Blocking
+    public void checkAll() {
+        try {
+            Log.debug("Starting full update check...");
+            List<CentralSyncItem> distinct = CentralSyncItem.findDistinctGA();
+
+            if (distinct != null && !distinct.isEmpty()) {
+                for (CentralSyncItem centralSyncItem : distinct) {
+                    update(centralSyncItem.groupId, centralSyncItem.artifactId);
+                }
+            }
+        } catch (Throwable t) {
+            Log.error(t.getMessage());
+        }
     }
 
     /**
-     * Sync a certain version of a artifact with central
+     * This check is to auto-sync matching dependencies on existing packages
      */
-    public boolean initializeSync(String groupId, String artifactId, String version) {
-        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
-        if (itemToSync.stage == Stage.INIT) {
-            // Already started
-            return false;
-        }
-        if (centralSyncService.canProcessSync(itemToSync)) { // Check if this is already synced or in progress
-            itemToSync = centralSyncItemService.changeStage(itemToSync, Stage.INIT);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * TEMPORARY
-     * This check is to auto-sync dependencies on existing packages
-     */
-    @Scheduled(every = "${mvnpm.check-versions.every:off}", concurrentExecution = SKIP)
+    @Scheduled(every = "${mvnpm.check-versions.every:5m}", concurrentExecution = SKIP)
     @Blocking
     void checkVersions() {
-        final List<CentralSyncItem> byStage = CentralSyncItem.toDepCheck(depCheckCounter.getAndIncrement());
+        final List<CentralSyncItem> byStage = CentralSyncItem.findPackageWithUncheckedDependencies(1);
         if (!byStage.isEmpty()) {
             for (CentralSyncItem item : byStage) {
                 final Name name = NameParser.fromMavenGA(item.groupId, item.artifactId);
@@ -168,11 +149,11 @@ public class ContinuousSyncService {
     /**
      * This just check if there is an artifact is stuck at packaging
      */
-    @Scheduled(every = "60s", concurrentExecution = SKIP)
+    @Scheduled(every = "${mvnpm.check-packaging.every:60s}", concurrentExecution = SKIP)
     @Blocking
     @Transactional
     void checkPackaging() {
-        List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING);
+        List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING, 1);
         if (!initQueue.isEmpty()) {
             CentralSyncItem itemToBeCreated = initQueue.get(0);
             if (centralSyncService.canProcessSync(itemToBeCreated)) {
@@ -208,12 +189,12 @@ public class ContinuousSyncService {
     /**
      * This just check if there is an artifact being uploaded, and if not change the status and fire an event
      */
-    @Scheduled(every = "60s", concurrentExecution = SKIP)
+    @Scheduled(every = "${mvnpm.next-upload.every:3m}", concurrentExecution = SKIP)
     @Blocking
     void nextToUploadStatusChange() {
         // We only process one at a time, so first check that there is not another process in progress
         if (!isCurrentlyUploading()) {
-            List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.INIT);
+            List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.INIT, 1);
             if (!initQueue.isEmpty()) {
                 CentralSyncItem itemToBeUploaded = initQueue.get(0);
                 if (centralSyncService.canProcessSync(itemToBeUploaded)) {
@@ -231,13 +212,7 @@ public class ContinuousSyncService {
         }
     }
 
-    public boolean isCurrentlyUploading() {
-        // We only process one at a time, so first check that there is not another process in progress
-        long uploadingCount = CentralSyncItem.count("stage", Stage.UPLOADING);
-        return uploadingCount != 0;
-    }
-
-    @Scheduled(every = "150s", concurrentExecution = SKIP)
+    @Scheduled(every = "${mvnpm.clean-release.every:3m}", concurrentExecution = SKIP)
     @Blocking
     void cleanSonatypeStatuses() {
         // Check if this is in central, and update the status
@@ -247,7 +222,7 @@ public class ContinuousSyncService {
         }
     }
 
-    @Scheduled(every = "60s", concurrentExecution = SKIP)
+    @Scheduled(every = "${mvnpm.release.every:60s}", concurrentExecution = SKIP)
     @Blocking
     void processSonatypeStatuses() {
         List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findUpdloadedButNotReleased();
@@ -282,6 +257,16 @@ public class ContinuousSyncService {
         }
     }
 
+    @ConsumeEvent("central-sync-item-stage-change")
+    @Blocking
+    public void processNextAction(CentralSyncItem centralSyncItem) {
+        if (centralSyncItem.stage.equals(Stage.UPLOADING)) {
+            processNextUpload(centralSyncItem);
+        } else if (centralSyncItem.stage.equals(Stage.CLOSED)) {
+            processRelease(centralSyncItem);
+        }
+    }
+
     private Map<String, CentralSyncItem> mapByRepoId(List<CentralSyncItem> uploadedToSonatype) {
         Map<String, CentralSyncItem> mapByRepoId = new HashMap<>();
         for (CentralSyncItem csi : uploadedToSonatype) {
@@ -292,13 +277,38 @@ public class ContinuousSyncService {
         return mapByRepoId;
     }
 
-    @ConsumeEvent("central-sync-item-stage-change")
-    @Blocking
-    public void processNextAction(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.stage.equals(Stage.UPLOADING)) {
-            processNextUpload(centralSyncItem);
-        } else if (centralSyncItem.stage.equals(Stage.CLOSED)) {
-            processRelease(centralSyncItem);
+    private boolean isCurrentlyUploading() {
+        // We only process one at a time, so first check that there is not another process in progress
+        long uploadingCount = CentralSyncItem.count("stage", Stage.UPLOADING);
+        return uploadingCount != 0;
+    }
+
+    /**
+     * Check for version updates, and if a new version is out, do a sync
+     */
+    private void update(String groupId, String artifactId) {
+        Log.debug("====== mvnpm: Continuous Updater ======");
+        Log.debug("\tChecking " + groupId + ":" + artifactId);
+        if (!isInternal(groupId, artifactId)) {
+            // Get latest in NPM TODO: Later make this per patch release...
+            try {
+                Name name = NameParser.fromMavenGA(groupId, artifactId);
+                Project project = npmRegistryFacade.getProject(name.npmFullName);
+                if (project != null) {
+                    String latest = project.distTags().latest();
+                    try {
+                        mavenRepositoryService.getPath(name, latest, FileType.jar);
+                        Log.infof("Continuous Updater: New package %s found", name.npmFullName);
+                    } catch (PackageAlreadySyncedException e) {
+                        Log.debugf("Continuous Updater: Package %s already synced", name.npmFullName);
+                    }
+                }
+            } catch (WebApplicationException wae) {
+                Log.error("Could not do update for [" + groupId + ":" + artifactId + "] - " + wae.getMessage());
+            }
+        } else {
+            // Handle internal compositions
+            compositeCreator.getOrBuildComposite(artifactId, null);
         }
     }
 
@@ -368,7 +378,7 @@ public class ContinuousSyncService {
     }
 
     private void resetUpload() {
-        List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADING);
+        List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADING, 50);
         for (CentralSyncItem centralSyncItem : uploading) {
             centralSyncItem.increaseUploadAttempt();
             Log.info("Resetting upload for " + centralSyncItem + " after restart");
@@ -377,7 +387,7 @@ public class ContinuousSyncService {
     }
 
     private void resetPromotion() {
-        List<CentralSyncItem> closed = CentralSyncItem.findByStage(Stage.CLOSED);
+        List<CentralSyncItem> closed = CentralSyncItem.findByStage(Stage.CLOSED, 50);
         for (CentralSyncItem centralSyncItem : closed) {
             centralSyncItem.increasePromotionAttempt();
             Log.info("Resetting promotion for " + centralSyncItem + " after restart");
@@ -394,50 +404,4 @@ public class ContinuousSyncService {
                         "vaadin-web-components")); // Before we used the @mvnpm namespave
     }
 
-    @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
-    @Blocking
-    public void checkError() {
-        try {
-            Log.debug("Starting error retry...");
-            List<CentralSyncItem> error = CentralSyncItem.findByStage(Stage.ERROR);
-
-            if (error != null && !error.isEmpty()) {
-                for (CentralSyncItem centralSyncItem : error) {
-                    tryErroredItemAgain(centralSyncItem);
-                }
-            }
-        } catch (Throwable t) {
-            Log.error(t.getMessage());
-        }
-    }
-
-    public CentralSyncItem tryErroredItemAgain(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.uploadAttempts > 0) {
-            centralSyncItem.uploadAttempts = centralSyncItem.uploadAttempts - 1;
-        }
-        if (centralSyncItem.promotionAttempts > 0) {
-            centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
-        }
-        return centralSyncItemService.changeStage(centralSyncItem, Stage.PACKAGING);
-    }
-
-    /**
-     * Check all known artifacts for updates
-     */
-    @Scheduled(cron = "{mvnpm.checkall.cron.expr}", concurrentExecution = SKIP)
-    @Blocking
-    public void checkAll() {
-        try {
-            Log.debug("Starting full update check...");
-            List<CentralSyncItem> distinct = CentralSyncItem.findDistinctGA();
-
-            if (distinct != null && !distinct.isEmpty()) {
-                for (CentralSyncItem centralSyncItem : distinct) {
-                    update(centralSyncItem.groupId, centralSyncItem.artifactId);
-                }
-            }
-        } catch (Throwable t) {
-            Log.error(t.getMessage());
-        }
-    }
 }

@@ -39,12 +39,11 @@ public class CentralSyncApi {
     CentralSyncService centralSyncService;
 
     @Inject
-    ContinuousSyncService continuousSyncService;
-
-    @Inject
     private MavenRepositoryService mavenRepositoryService;
 
     private final Set<Session> sessions = new ConcurrentHashSet<>();
+    @Inject
+    private CentralSyncItemService centralSyncItemService;
 
     @OnOpen
     public void onOpen(Session session) {
@@ -111,7 +110,7 @@ public class CentralSyncApi {
         final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version,
                 true);
         if (centralSyncItem.isInError()) {
-            return continuousSyncService.tryErroredItemAgain(centralSyncItem);
+            return centralSyncItemService.tryErroredItemAgain(centralSyncItem);
         }
         return centralSyncItem;
 
@@ -121,7 +120,7 @@ public class CentralSyncApi {
     @NoCache
     @Path("/item/{stage}")
     public List<CentralSyncItem> getItems(@PathParam("stage") Stage stage) {
-        return CentralSyncItem.findByStage(stage);
+        return CentralSyncItem.findByStage(stage, 150);
     }
 
     @GET

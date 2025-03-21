@@ -33,7 +33,27 @@ public class CentralSyncItemService {
     }
 
     @Transactional
+    public CentralSyncItem dependenciesChecked(CentralSyncItem centralSyncItem) {
+        centralSyncItem = merge(centralSyncItem);
+        centralSyncItem.dependenciesChecked = true;
+        centralSyncItem.persist();
+        return centralSyncItem;
+    }
+
+    @Transactional
+    public CentralSyncItem tryErroredItemAgain(CentralSyncItem centralSyncItem) {
+        if (centralSyncItem.uploadAttempts > 0) {
+            centralSyncItem.uploadAttempts = centralSyncItem.uploadAttempts - 1;
+        }
+        if (centralSyncItem.promotionAttempts > 0) {
+            centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
+        }
+        return changeStage(centralSyncItem, Stage.PACKAGING);
+    }
+
+    @Transactional
     public CentralSyncItem increaseCreationAttempt(CentralSyncItem centralSyncItem) {
+        centralSyncItem = merge(centralSyncItem);
         centralSyncItem.increaseCreationAttempt();
         centralSyncItem.persist();
         return centralSyncItem;

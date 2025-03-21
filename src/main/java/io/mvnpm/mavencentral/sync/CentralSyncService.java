@@ -52,6 +52,27 @@ public class CentralSyncService {
         return centralSyncItem;
     }
 
+    @Transactional
+    public boolean initializeSync(Name name, String version) {
+        return initializeSync(name.mvnGroupId, name.mvnArtifactId, version);
+    }
+
+    /**
+     * Sync a certain version of a artifact with central
+     */
+    private boolean initializeSync(String groupId, String artifactId, String version) {
+        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
+        if (itemToSync.stage == Stage.INIT) {
+            // Already started
+            return false;
+        }
+        if (canProcessSync(itemToSync)) { // Check if this is already synced or in progress
+            itemToSync = centralSyncItemService.changeStage(itemToSync, Stage.INIT);
+            return true;
+        }
+        return false;
+    }
+
     /**
      * Check if this is not already in Central, or in the process of being synced
      */

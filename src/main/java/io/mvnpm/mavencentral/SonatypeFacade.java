@@ -219,6 +219,9 @@ public class SonatypeFacade {
     }
 
     public void drop(CentralSyncItem centralSyncItem) {
+        if (centralSyncItem.stagingRepoId == null) {
+            return;
+        }
         if (authorization.isPresent()) {
             String a = "Basic " + authorization.get();
 
