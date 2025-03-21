@@ -21,7 +21,9 @@ import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.type.SourceService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.mvnpm.mavencentral.AutoSyncService;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.mavencentral.sync.CentralSyncItemService;
+import io.mvnpm.mavencentral.sync.CentralSyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -31,7 +33,6 @@ import io.mvnpm.version.VersionMatcher;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
-import io.vertx.core.eventbus.EventBus;
 
 /**
  * Create different files when a new jar has been created
@@ -54,26 +55,22 @@ public class PackageListener {
     SourceService sourceService;
 
     @Inject
-    AutoSyncService autoSyncService;
-
-    @Inject
     PomService pomService;
 
     @Inject
     NpmRegistryFacade npmRegistryFacade;
 
     @Inject
-    EventBus eventBus;
-
-    @Inject
     MavenRepositoryService mavenRepositoryService;
+    @Inject
+    private CentralSyncItemService centralSyncItemService;
+    @Inject
+    private CentralSyncService centralSyncService;
 
     @ConsumeEvent(NewJarEvent.EVENT_NAME)
     @Blocking
     public void newJarCreated(NewJarEvent fse) {
         Log.infof("'%s' has been created.", fse.jarFile());
-        eventBus.send(DependencyVersionCheckRequest.NAME,
-                new DependencyVersionCheckRequest(fse.pomFile(), fse.name(), fse.version()));
         List<Path> toHash = new ArrayList<>();
         toHash.add(fse.pomFile());
         toHash.add(fse.jarFile());
@@ -94,14 +91,24 @@ public class PackageListener {
             hashService.createHashes(path);
         }
         Log.infof("Package %s is ready for Sync", fse.name().displayName);
-        autoSyncService.triggerSync(fse.name(), fse.version());
+        boolean queued = centralSyncService.initializeSync(fse.name(), fse.version());
+        if (queued) {
+            Log.info(fse.name().displayName + " " + fse.version() + " added to the sync queue");
+        }
 
     }
 
     @ConsumeEvent(DependencyVersionCheckRequest.NAME)
     @Blocking
     public void checkDependencies(DependencyVersionCheckRequest req) {
+        final CentralSyncItem item = centralSyncItemService.find(req.name().mvnGroupId, req.name().mvnArtifactId,
+                req.version());
+        if (item == null || !item.alreadyReleased() || item.dependenciesChecked) {
+            return;
+        }
         Model model = pomService.readPom(req.pomFile());
+        boolean error = false;
+        final String reqGavString = req.name().toGavString(req.version());
         for (Dependency dependency : PomService.resolveDependencies(model)) {
             final String range = dependency.getVersion();
             final Name name = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
@@ -110,20 +117,26 @@ public class PackageListener {
                 final Set<Version> versions = project.versions().stream().map(Version::fromString).collect(Collectors.toSet());
                 final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
                 if (version != null) {
-                    final String gavString = name.toGavString(version.toString());
-                    Log.infof("Verifying matching dependency version of %s -> %s", req.name().toGavString(req.version()),
-                            gavString);
+                    final String depGavString = name.toGavString(version.toString());
+                    Log.infof("Matching dependency version found for package %s -> %s", reqGavString,
+                            depGavString);
                     try {
                         mavenRepositoryService.getPath(name, version.toString(), FileType.jar);
                     } catch (PackageAlreadySyncedException e) {
                         // Do nothing
                     } catch (Exception e) {
-                        Log.warnf("Error while syncing matching dependency '%s'  because: %s", gavString, e.getMessage());
+                        Log.warnf("Error while syncing matching dependency '%s'  because: %s", depGavString, e.getMessage());
+                        error = true;
                     }
 
                 }
             }
         }
+        if (!error) {
+            Log.infof("Package %s dependencies have been checked.", reqGavString);
+            centralSyncItemService.dependenciesChecked(item);
+        }
+
     }
 
 }

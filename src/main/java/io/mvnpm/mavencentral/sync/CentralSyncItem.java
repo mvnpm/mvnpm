@@ -24,7 +24,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
         @Index(columnList = "stage, stageChangeTime DESC")
 })
 @NamedQueries({
-        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT 50"),
+        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT ?2"),
         @NamedQuery(name = "CentralSyncItem.findUploadedButNotReleased", query = "from CentralSyncItem where stage IN ?1 order by stageChangeTime DESC")
 })
 public class CentralSyncItem extends PanacheEntityBase {
@@ -40,6 +40,7 @@ public class CentralSyncItem extends PanacheEntityBase {
     public String stagingRepoId;
     public Stage stage;
 
+    public boolean dependenciesChecked = false;
     public int creationAttempts = 0;
     public int uploadAttempts = 0;
     public int promotionAttempts = 0;
@@ -64,7 +65,7 @@ public class CentralSyncItem extends PanacheEntityBase {
 
     private static int insertIfNotPresent(Gav gav, Stage stage) {
         return getEntityManager().createQuery(
-                "insert into CentralSyncItem (groupId, artifactId, version, startTime, stage, stageChangeTime, creationAttempts, uploadAttempts, promotionAttempts) values (:groupId, :artifactId, :version, :now, :stage, :now, 0, 0, 0)\n"
+                "insert into CentralSyncItem (groupId, artifactId, version, startTime, stage, stageChangeTime, dependenciesChecked, creationAttempts, uploadAttempts, promotionAttempts) values (:groupId, :artifactId, :version, :now, :stage, :now, false, 0, 0, 0)\n"
                         + "  on conflict(groupId, artifactId, version) do nothing")
                 .setParameter("groupId", gav.getGroupId())
                 .setParameter("artifactId", gav.getArtifactId())
@@ -74,15 +75,15 @@ public class CentralSyncItem extends PanacheEntityBase {
                 .executeUpdate();
     }
 
-    public static List<CentralSyncItem> findByStage(Stage stage) {
-        return find("#CentralSyncItem.findByStage", stage).list();
+    public static List<CentralSyncItem> findByStage(Stage stage, int limit) {
+        return find("#CentralSyncItem.findByStage", stage, limit).list();
     }
 
     // TEMPORARY
-    public static List<CentralSyncItem> toDepCheck(int page) {
-        return find("from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT 20 OFFSET ?2", Stage.RELEASED,
-                page)
-                .list();
+    public static List<CentralSyncItem> findPackageWithUncheckedDependencies(int limit) {
+        return find(
+                "from CentralSyncItem where stage = ?1 and dependenciesChecked = false order by stageChangeTime DESC LIMIT ?2",
+                Stage.RELEASED, limit).list();
     }
 
     public static List<CentralSyncItem> findUpdloadedButNotReleased() {
