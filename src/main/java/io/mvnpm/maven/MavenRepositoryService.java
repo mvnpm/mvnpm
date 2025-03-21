@@ -19,7 +19,6 @@ import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Package;
 import io.mvnpm.npm.model.Project;
-import io.vertx.mutiny.core.eventbus.EventBus;
 
 /**
  * The maven repository as a service
@@ -43,9 +42,6 @@ public class MavenRepositoryService {
 
     @Inject
     ImportMapUtil importMapUtil;
-
-    @Inject
-    EventBus bus;
 
     public byte[] getImportMap(NameVersion nameVersion) {
         if (nameVersion.name().isInternal()) {

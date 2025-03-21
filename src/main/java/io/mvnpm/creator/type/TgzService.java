@@ -11,9 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
-import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
 import io.quarkus.logging.Log;
 
@@ -27,9 +25,6 @@ import io.quarkus.logging.Log;
  */
 @ApplicationScoped
 public class TgzService {
-
-    @Inject
-    PackageFileLocator packageFileLocator;
 
     public void fetchRemoteAndSave(io.mvnpm.npm.model.Package p, Path localFileName) {
         URL tarball = p.dist().tarball();

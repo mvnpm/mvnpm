@@ -218,6 +218,17 @@ public class SonatypeFacade {
         }
     }
 
+    public void drop(CentralSyncItem centralSyncItem) {
+        if (authorization.isPresent()) {
+            String a = "Basic " + authorization.get();
+
+            sonatypeClient.drop(a, profileId,
+                    toPromoteRequest(centralSyncItem.stagingRepoId));
+        } else {
+            throw new UnauthorizedException("Authorization not present for " + centralSyncItem);
+        }
+    }
+
     public JsonObject getStagingProfileRepos() {
         if (authorization.isPresent()) {
             String a = "Basic " + authorization.get();

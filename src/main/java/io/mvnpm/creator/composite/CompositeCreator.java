@@ -89,16 +89,17 @@ public class CompositeCreator {
     @Inject
     Vertx vertx;
 
-    private final AtomicReference<WebClient> webClient = new AtomicReference<>();
+    @Inject
+    PomService pomService;
 
+    @Inject
+    MavenCentralService mavenCentralService;
+
+    private final AtomicReference<WebClient> webClient = new AtomicReference<>();
     private final Map<String, GitHubContent> compositesMap = new HashMap<>();
-    @Inject
-    private PomService pomService;
-    @Inject
-    private MavenCentralService mavenCentralService;
 
     private WebClient webClient() {
-        return webClient.updateAndGet(webClient -> webClient == null ? WebClient.create(vertx) : webClient);
+        return webClient.updateAndGet(wc -> wc == null ? WebClient.create(vertx) : wc);
     }
 
     @PostConstruct

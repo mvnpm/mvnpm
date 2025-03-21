@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
@@ -22,7 +21,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.utils.IOUtils;
 
 import io.mvnpm.Constants;
-import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
 import io.quarkus.logging.Log;
 
@@ -33,9 +31,6 @@ import io.quarkus.logging.Log;
  */
 @ApplicationScoped
 public class SourceService {
-
-    @Inject
-    PackageFileLocator packageFileLocator;
 
     public Path createSource(Path tgzFile) {
         Path sourceFile = Path.of(tgzFile.toString().replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR));

@@ -19,7 +19,6 @@ import jakarta.inject.Inject;
 import io.mvnpm.Constants;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
-import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
 import io.quarkus.logging.Log;
 
@@ -33,9 +32,6 @@ public class BundleCreator {
 
     @Inject
     PackageFileLocator packageFileLocator;
-
-    @Inject
-    MavenRepositoryService mavenRepositoryService;
 
     public Path bundle(String groupId, String artifactId, String version) throws MissingFilesForBundleException {
         Log.debug("====== mvnpm: Nexus Bundler ======");
@@ -83,14 +79,6 @@ public class BundleCreator {
             }
         }
         return bundlePath;
-    }
-
-    private boolean fileExist(Path bundlePath) {
-        try {
-            return Files.exists(bundlePath) && Files.size(bundlePath) > 0;
-        } catch (IOException ex) {
-            throw new UncheckedIOException(ex);
-        }
     }
 
     private List<Path> getFiles(String groupId, String artifactId, String version) throws MissingFilesForBundleException {

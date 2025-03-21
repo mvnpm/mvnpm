@@ -24,7 +24,6 @@ import io.mvnpm.creator.composite.CompositeCreator;
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
-import io.mvnpm.log.EventLogApi;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
@@ -54,34 +53,41 @@ import io.vertx.mutiny.core.eventbus.EventBus;
  */
 @ApplicationScoped
 public class ContinuousSyncService {
+
     @Inject
     NpmRegistryFacade npmRegistryFacade;
+
     @Inject
     CentralSyncService centralSyncService;
+
     @Inject
     SonatypeFacade sonatypeFacade;
+
     @Inject
     EventBus bus;
+
     @Inject
     ErrorHandlingService errorHandlingService;
+
     @Inject
     CentralSyncItemService centralSyncItemService;
+
     @Inject
     PackageFileLocator packageFileLocator;
-    @Inject
-    EventLogApi eventLogApi;
+
     @Inject
     CompositeCreator compositeCreator;
 
     @Inject
     PackageCreator packageCreator;
 
-    AtomicInteger depCheckCounter = new AtomicInteger();
+    @Inject
+    MavenRepositoryService mavenRepositoryService;
 
     @Inject
-    private MavenRepositoryService mavenRepositoryService;
-    @Inject
-    private MavenCentralService mavenCentralService;
+    MavenCentralService mavenCentralService;
+
+    AtomicInteger depCheckCounter = new AtomicInteger();
 
     /**
      * Check for version updates, and if a new version is out, do a sync

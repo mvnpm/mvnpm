@@ -31,9 +31,6 @@ public class CompositeApi {
     CompositeCreator compositeCreator;
 
     @Inject
-    CompositeService compositeService;
-
-    @Inject
     MetadataService metadataService;
 
     @GET

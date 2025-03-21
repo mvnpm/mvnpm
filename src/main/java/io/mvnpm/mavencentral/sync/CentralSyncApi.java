@@ -40,12 +40,11 @@ public class CentralSyncApi {
 
     @Inject
     ContinuousSyncService continuousSyncService;
-    @Inject
-    CentralSyncItemService centralSyncItemService;
 
-    private final Set<Session> sessions = new ConcurrentHashSet<>();
     @Inject
     private MavenRepositoryService mavenRepositoryService;
+
+    private final Set<Session> sessions = new ConcurrentHashSet<>();
 
     @OnOpen
     public void onOpen(Session session) {
@@ -116,10 +115,6 @@ public class CentralSyncApi {
         }
         return centralSyncItem;
 
-    }
-
-    private CentralSyncItem getSyncItem(String groupId, String artifactId, String version) {
-        return centralSyncItemService.find(groupId, artifactId, version);
     }
 
     @GET
