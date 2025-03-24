@@ -128,7 +128,6 @@ public class PackageListener {
                         Log.warnf("Error while syncing matching dependency '%s'  because: %s", depGavString, e.getMessage());
                         error = true;
                     }
-
                 }
             }
         }
