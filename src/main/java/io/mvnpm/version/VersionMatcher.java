@@ -24,7 +24,7 @@ public final class VersionMatcher {
                     .max(Comparator.naturalOrder())
                     .orElse(null);
         } catch (InvalidVersionSpecificationException e) {
-            throw new IllegalArgumentException("Invalid Maven version range: " + mavenRange, e);
+            return null;
         }
     }
 
