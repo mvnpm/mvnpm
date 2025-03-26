@@ -29,7 +29,6 @@ public class NpmRegistryFacade {
     @RestClient
     NpmRegistryClient npmRegistryClient;
 
-    @CacheResult(cacheName = "npm-project-cache")
     @Timeout(unit = ChronoUnit.SECONDS, value = 10)
     @Retry(maxRetries = 3)
     @Blocking

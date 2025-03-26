@@ -3,6 +3,7 @@ package io.mvnpm.mavencentral.sync;
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,8 +138,8 @@ public class ContinuousSyncService {
                 try {
                     Log.infof("Checking versions for %s", gavString);
                     final Path pom = mavenCentralService.downloadFromMavenCentral(name, item.version, FileType.pom);
-                    bus.send(DependencyVersionCheckRequest.NAME,
-                            new DependencyVersionCheckRequest(pom, name, item.version));
+                    mavenRepositoryService.checkDependencies(new DependencyVersionCheckRequest(pom, name, item.version))
+                            .await().atMost(Duration.ofHours(1));
                 } catch (Exception e) {
                     Log.warnf("Error while checking versions for %s because: %s", gavString, e.getMessage());
                 }
