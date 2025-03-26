@@ -13,6 +13,7 @@ import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageCreator;
 import io.mvnpm.creator.composite.CompositeService;
 import io.mvnpm.creator.utils.ImportMapUtil;
+import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.sync.CentralSyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
@@ -42,6 +43,8 @@ public class MavenRepositoryService {
 
     @Inject
     ImportMapUtil importMapUtil;
+    @Inject
+    private MavenCentralService mavenCentralService;
 
     public byte[] getImportMap(NameVersion nameVersion) {
         if (nameVersion.name().isInternal()) {
@@ -59,6 +62,14 @@ public class MavenRepositoryService {
     public Path getPath(String groupId, String artifactId, String version, FileType type) {
         Name name = NameParser.fromMavenGA(groupId, artifactId);
         return getPath(name, version, type);
+    }
+
+    public Path getOrDownloadFromMavenCentral(Name name, String version, FileType type) {
+        try {
+            return getPath(name, version, type);
+        } catch (PackageAlreadySyncedException e) {
+            return mavenCentralService.downloadFromMavenCentral(name, version, type);
+        }
     }
 
     public Path getPath(Name name, String version, FileType type) {

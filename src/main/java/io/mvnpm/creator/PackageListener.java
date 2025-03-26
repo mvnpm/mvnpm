@@ -3,13 +3,14 @@ package io.mvnpm.creator;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
@@ -20,6 +21,7 @@ import io.mvnpm.creator.type.JavaDocService;
 import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.type.SourceService;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.NameVersion;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
@@ -107,31 +109,38 @@ public class PackageListener {
             return;
         }
         Model model = pomService.readPom(req.pomFile());
-        boolean error = false;
+        AtomicBoolean error = new AtomicBoolean(false);
         final String reqGavString = req.name().toGavString(req.version());
-        for (Dependency dependency : PomService.resolveDependencies(model)) {
-            final String range = dependency.getVersion();
-            final Name name = NameParser.fromMavenGA(dependency.getGroupId(), dependency.getArtifactId());
-            final Project project = npmRegistryFacade.getProject(name.npmFullName);
-            if (project != null) {
-                final Set<Version> versions = project.versions().stream().map(Version::fromString).collect(Collectors.toSet());
-                final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
-                if (version != null) {
-                    final String depGavString = name.toGavString(version.toString());
+        PomService.resolveDependencies(model).stream()
+                .map(d -> {
+                    final String range = d.getVersion();
+                    final Name name = NameParser.fromMavenGA(d.getGroupId(), d.getArtifactId());
+                    Project project = npmRegistryFacade.getProject(name.npmFullName);
+                    if (project == null) {
+                        return null;
+                    }
+                    final Set<Version> versions = project.versions().stream().map(Version::fromString)
+                            .collect(Collectors.toSet());
+                    final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
+                    if (version == null) {
+                        return null;
+                    }
+                    return new NameVersion(name, version.toString());
+                }).filter(Objects::nonNull)
+                .forEach(n -> {
+                    final String depGavString = n.name().toGavString(n.version());
                     Log.infof("Matching dependency version found for package %s -> %s", reqGavString,
                             depGavString);
                     try {
-                        mavenRepositoryService.getPath(name, version.toString(), FileType.jar);
+                        mavenRepositoryService.getPath(n.name(), n.version(), FileType.jar);
                     } catch (PackageAlreadySyncedException e) {
                         // Do nothing
                     } catch (Exception e) {
                         Log.warnf("Error while syncing matching dependency '%s'  because: %s", depGavString, e.getMessage());
-                        error = true;
+                        error.set(true);
                     }
-                }
-            }
-        }
-        if (!error) {
+                });
+        if (!error.get()) {
             Log.infof("Package %s dependencies have been checked.", reqGavString);
             centralSyncItemService.dependenciesChecked(item);
         }
