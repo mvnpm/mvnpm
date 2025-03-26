@@ -1,9 +1,9 @@
 package io.mvnpm;
 
+import static io.mvnpm.Constants.CENTRAL_TMP_PREFIX;
 import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
 import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
 
-import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,10 +32,7 @@ import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.NameVersion;
 import io.mvnpm.maven.UrlPathParser;
-import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.smallrye.mutiny.Uni;
-import io.vertx.mutiny.core.buffer.Buffer;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
+import io.quarkus.logging.Log;
 
 /**
  * Get the file listing for a jar file
@@ -86,24 +83,20 @@ public class JarContentsApi {
     }
 
     private JarLibrary loadJarLibrary(NameVersion nameVersion, FileType filetype) {
-        try {
-            java.nio.file.Path path = mavenRepositoryService.getPath(nameVersion.name(), nameVersion.version(),
-                    filetype);
-            try (InputStream inputStream = Files.newInputStream(path)) {
-                return loadJarLibrary(nameVersion, filetype, inputStream);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        final java.nio.file.Path jar = mavenRepositoryService.getOrDownloadFromMavenCentral(
+                nameVersion.name(), nameVersion.version(), filetype);
+        try (InputStream inputStream = Files.newInputStream(jar)) {
+            return loadJarLibrary(nameVersion, filetype, inputStream);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (jar.toString().contains(CENTRAL_TMP_PREFIX)) {
+                try {
+                    Files.deleteIfExists(jar);
+                } catch (IOException e) {
+                    Log.error(e.getMessage());
+                }
             }
-        } catch (PackageAlreadySyncedException e) {
-            final Uni<HttpResponse<Buffer>> fromMavenCentral = mavenCentralService.getFromMavenCentral(
-                    nameVersion.name(), nameVersion.version(), e.fileName());
-            final HttpResponse<Buffer> response = fromMavenCentral.await().indefinitely();
-            try (final InputStream is = new ByteArrayInputStream(response.body().getBytes())) {
-                return loadJarLibrary(nameVersion, filetype, is);
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
-            }
-
         }
     }
 

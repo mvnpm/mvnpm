@@ -98,4 +98,6 @@ public interface Constants {
      * - change Z it's a non-breaking patch in the archive format
      */
     String MVNPM_PACKAGING_VERSION = "1.0.0";
+
+    String CENTRAL_TMP_PREFIX = "central-temp-";
 }

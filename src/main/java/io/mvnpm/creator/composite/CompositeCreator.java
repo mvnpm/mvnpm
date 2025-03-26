@@ -1,5 +1,6 @@
 package io.mvnpm.creator.composite;
 
+import static io.mvnpm.Constants.CENTRAL_TMP_PREFIX;
 import static io.mvnpm.creator.type.JarService.MVNPM_MORE_ARCHIVE;
 import static io.mvnpm.creator.type.PomService.resolveDependencies;
 
@@ -50,7 +51,6 @@ import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -231,6 +231,10 @@ public class CompositeCreator {
                     }
                 } catch (IOException | XmlPullParserException e) {
                     throw new RuntimeException("Error processing JAR entry: " + jarPath, e);
+                } finally {
+                    if (jarPath.toString().contains(CENTRAL_TMP_PREFIX)) {
+                        Files.deleteIfExists(jarPath);
+                    }
                 }
             }
 
@@ -284,11 +288,7 @@ public class CompositeCreator {
     }
 
     private Path getJar(Dependency dependency, Name jarName, FileType type) {
-        try {
-            return mavenRepositoryService.getPath(jarName, dependency.getVersion(), type);
-        } catch (PackageAlreadySyncedException e) {
-            return mavenCentralService.downloadFromMavenCentral(jarName, dependency.getVersion(), type);
-        }
+        return mavenRepositoryService.getOrDownloadFromMavenCentral(jarName, dependency.getVersion(), type);
     }
 
     private static Path getPomPath(Path outputJar) {
@@ -337,6 +337,10 @@ public class CompositeCreator {
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
+                } finally {
+                    if (jarPath.toString().contains(CENTRAL_TMP_PREFIX)) {
+                        Files.deleteIfExists(jarPath);
+                    }
                 }
             }
 

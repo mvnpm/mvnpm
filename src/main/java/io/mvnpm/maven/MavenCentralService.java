@@ -1,5 +1,7 @@
 package io.mvnpm.maven;
 
+import static io.mvnpm.Constants.CENTRAL_TMP_PREFIX;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
@@ -57,8 +59,9 @@ public class MavenCentralService {
                 packageFileLocator.getLocalFileName(type, name, version, Optional.empty())).await().atMost(
                         Duration.ofSeconds(5));
         try {
-            Path downloaded = Files.createTempFile(name.toGavString(version), type.toString().toLowerCase());
-            Files.write(downloaded, response.body().getBytes());
+            Path downloaded = Files.createTempFile(CENTRAL_TMP_PREFIX + name.toGavString(version),
+                    type.toString().toLowerCase());
+            vertx.fileSystem().writeFile(downloaded.toString(), response.body()).await().atMost(Duration.ofSeconds(1));
             return downloaded;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
