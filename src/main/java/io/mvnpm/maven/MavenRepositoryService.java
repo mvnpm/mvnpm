@@ -3,23 +3,40 @@ package io.mvnpm.maven;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+
+import org.apache.maven.model.Model;
 
 import io.mvnpm.Constants;
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageCreator;
 import io.mvnpm.creator.composite.CompositeService;
+import io.mvnpm.creator.events.DependencyVersionCheckRequest;
+import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.utils.ImportMapUtil;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.mavencentral.sync.CentralSyncItemService;
 import io.mvnpm.mavencentral.sync.CentralSyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Package;
 import io.mvnpm.npm.model.Project;
+import io.mvnpm.version.Version;
+import io.mvnpm.version.VersionMatcher;
+import io.quarkus.logging.Log;
+import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.mutiny.infrastructure.Infrastructure;
 
 /**
  * The maven repository as a service
@@ -45,6 +62,11 @@ public class MavenRepositoryService {
     ImportMapUtil importMapUtil;
     @Inject
     private MavenCentralService mavenCentralService;
+
+    @Inject
+    private PomService pomService;
+    @Inject
+    private CentralSyncItemService centralSyncItemService;
 
     public byte[] getImportMap(NameVersion nameVersion) {
         if (nameVersion.name().isInternal()) {
@@ -87,6 +109,53 @@ public class MavenRepositoryService {
                 return packageCreator.getFromCacheOrCreate(type, name, version);
             }
         }
+    }
+
+    public Uni<Void> checkDependencies(DependencyVersionCheckRequest req) {
+        final CentralSyncItem item = centralSyncItemService.find(req.name().mvnGroupId, req.name().mvnArtifactId,
+                req.version());
+        if (item == null || !item.alreadyReleased() || item.dependenciesChecked) {
+            return Uni.createFrom().nullItem();
+        }
+        Model model = pomService.readPom(req.pomFile());
+        AtomicBoolean error = new AtomicBoolean(false);
+        final String reqGavString = req.name().toGavString(req.version());
+        return Multi.createFrom().iterable(PomService.resolveDependencies(model))
+                .onItem().transformToUniAndConcatenate(d -> Uni.createFrom().item(() -> {
+                    final String range = d.getVersion();
+                    final Name name = NameParser.fromMavenGA(d.getGroupId(), d.getArtifactId());
+                    Project project = npmRegistryFacade.getProject(name.npmFullName);
+                    if (project == null) {
+                        return null;
+                    }
+                    final Set<Version> versions = project.versions().stream()
+                            .map(Version::fromString)
+                            .collect(Collectors.toSet());
+                    final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
+                    return version != null ? new NameVersion(name, version.toString()) : null;
+                }).onItem().delayIt().by(Duration.ofSeconds(3)))
+                .filter(Objects::nonNull)
+                .invoke(n -> {
+                    final String depGavString = n.name().toGavString(n.version());
+                    Log.infof("Matching dependency version found for package %s -> %s", reqGavString, depGavString);
+                    try {
+                        getPath(n.name(), n.version(), FileType.jar);
+                    } catch (PackageAlreadySyncedException e) {
+                        // Do nothing
+                    } catch (Exception e) {
+                        Log.warnf("Error while syncing matching dependency '%s' because: %s",
+                                n.name().toGavString(n.version()), e.getMessage());
+                        error.set(true);
+                    }
+                })
+                .runSubscriptionOn(Infrastructure.getDefaultWorkerPool()) // Runs on worker thread
+                .collect().asList()
+                .invoke(() -> {
+                    if (!error.get()) {
+                        Log.infof("Package %s dependencies have been checked.", req.name().toGavString(req.version()));
+                        centralSyncItemService.dependenciesChecked(item);
+                    }
+                }).replaceWithVoid();
     }
 
     public Path getSha1(String groupId, String artifactId, String version, FileType type) {
