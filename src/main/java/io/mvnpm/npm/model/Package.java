@@ -11,7 +11,7 @@ public record Package(
         @JsonProperty("_id") String id,
         Name name,
         String version,
-        String description,
+        @JsonDeserialize(using = DescriptionDeserializer.class) String description,
         @JsonDeserialize(using = LicenseDeserializer.class) License license,
         @JsonDeserialize(using = AuthorDeserializer.class) Author author,
         @JsonDeserialize(using = URLDeserializer.class) URL homepage,
