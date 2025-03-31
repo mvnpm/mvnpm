@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="100%" height="100%" viewBox="0 0 500 500" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-    <rect x="0" y="0" width="500" height="500" style="fill:white;fill-rule:nonzero;"/>
     <g id="mvnpm">
         <g>
             <path d="M284.291,251.16L284.291,350.313L307.537,350.313L307.537,251.16L354.028,251.16L354.028,350.313L377.273,350.313L377.273,251.16L423.764,251.16L423.764,350.313L447.009,350.313L447.009,251.16L423.764,226.327L307.537,226.327L284.291,251.16Z" style="fill-rule:nonzero;"/>

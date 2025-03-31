@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Created with Vectornator (http://vectornator.io/) -->
+<svg height="100%" stroke-miterlimit="10" style="fill-rule:nonzero;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;" version="1.1" viewBox="0 0 500 500" width="100%" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:vectornator="http://vectornator.io" xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs/>
+<g id="mvnpm" vectornator:layerName="mvnpm">
+<g opacity="1" vectornator:layerName="mvnpm">
+<path d="M284.291 251.16L284.291 350.313L307.537 350.313L307.537 251.16L354.028 251.16L354.028 350.313L377.273 350.313L377.273 251.16L423.764 251.16L423.764 350.313L447.009 350.313L447.009 251.16L423.764 226.327L307.537 226.327L284.291 251.16Z" fill="#ffffff" fill-rule="nonzero" opacity="1" stroke="none"/>
+<path d="M171.075 226.327L147.829 251.16L147.829 399.801L171.075 399.801L171.075 251.16L240.811 251.16L240.811 325.48L182.781 325.48L182.781 350.313L240.811 350.313L264.056 325.48L264.056 251.16L240.811 226.327L171.075 226.327Z" fill="#ffffff" fill-rule="nonzero" opacity="1" stroke="none"/>
+<path d="M34.6126 226.327L11.3672 251.16L11.3672 350.313L34.6126 350.313L34.6126 251.16L104.349 251.16L104.349 350.313L127.594 350.313L127.594 251.16L104.349 226.327L34.6126 226.327Z" fill="#ffffff" fill-rule="nonzero" opacity="1" stroke="none"/>
+<path d="M306.547 100.199L332.446 224.417L352.113 250.381L423.337 250.25L446.91 222.583L488.633 145.69L449.03 145.945L406.267 214.331L374.459 226.115L374.004 225.937L349.787 126.977L306.547 100.199Z" fill="#ffffff" fill-rule="nonzero" opacity="1" stroke="none" vectornator:layerName="Curve"/>
+<path d="M53.9564 126.854L53.9564 233.243L96.3753 233.243L96.3753 126.854L181.213 126.854L181.213 233.243L223.632 233.243L223.632 126.854L308.47 126.854L330.853 232.566L375.892 232.703L350.889 126.854L308.47 100.209L96.3753 100.209L53.9564 126.854Z" fill="#ffffff" fill-rule="nonzero" opacity="1" stroke="none"/>
+</g>
+</g>
+</svg>
