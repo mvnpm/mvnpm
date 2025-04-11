@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -25,7 +24,6 @@ import io.mvnpm.creator.utils.ImportMapUtil;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
-import io.mvnpm.mavencentral.sync.CentralSyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -48,9 +46,6 @@ public class MavenRepositoryService {
 
     @Inject
     NpmRegistryFacade npmRegistryFacade;
-
-    @Inject
-    CentralSyncService centralSyncService;
 
     @Inject
     CompositeService compositeService;
@@ -99,10 +94,6 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getPath(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
-                    .alreadyReleased()) {
-                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.empty());
-            }
             if (name.isInternal()) {
                 return compositeService.getPath(name, version, type);
             } else {
@@ -168,10 +159,6 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getSha1(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
-                    .alreadyReleased()) {
-                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_SHA1));
-            }
             if (name.isInternal()) {
                 return compositeService.getSha1Path(name, version, type);
             } else {
@@ -190,10 +177,6 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getMd5(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
-                    .alreadyReleased()) {
-                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_MD5));
-            }
             if (name.isInternal()) {
                 return compositeService.getMd5Path(name, version, type);
             } else {
@@ -212,10 +195,6 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getAsc(name, latestVersion, type);
         } else {
-            if (centralSyncService.checkReleaseInDbAndCentral(name.mvnGroupId, name.mvnArtifactId, version, type.triggerSync())
-                    .alreadyReleased()) {
-                throw packageCreator.newPackageAlreadySyncedException(name, version, type, Optional.of(Constants.DOT_ASC));
-            }
             if (name.isInternal()) {
                 return compositeService.getAscPath(name, version, type);
             } else {

@@ -3,6 +3,8 @@ package io.mvnpm.maven;
 import static io.mvnpm.Constants.HEADER_CACHE_CONTROL;
 import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
 
+import java.util.Optional;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -15,9 +17,12 @@ import jakarta.ws.rs.core.StreamingOutput;
 
 import org.jboss.resteasy.reactive.NoCache;
 
+import io.mvnpm.Constants;
 import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.PackageCreator;
 import io.mvnpm.creator.type.MetadataService;
 import io.mvnpm.creator.utils.FileUtil;
+import io.mvnpm.mavencentral.sync.CentralSyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 
@@ -37,6 +42,12 @@ public class MavenRepositoryApi {
 
     @Inject
     MetadataService metadataService;
+
+    @Inject
+    CentralSyncService centralSyncService;
+
+    @Inject
+    PackageCreator packageCreator;
 
     @GET
     @Path("/org/mvnpm/{ga : (.+)?}/maven-metadata.xml")
@@ -261,18 +272,39 @@ public class MavenRepositoryApi {
     }
 
     private Response toResponse(Name fullName, String version, FileType type) {
+        if (centralSyncService
+                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
+                .alreadyReleased()) {
+            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.empty());
+        }
+
         return streamPath(mavenRepositoryService.getPath(fullName, version, type));
     }
 
     private Response toSha1Response(Name fullName, String version, FileType type) {
+        if (centralSyncService
+                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
+                .alreadyReleased()) {
+            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.of(Constants.DOT_SHA1));
+        }
         return streamPath(mavenRepositoryService.getSha1(fullName, version, type));
     }
 
     private Response toMd5Response(Name fullName, String version, FileType type) {
+        if (centralSyncService
+                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
+                .alreadyReleased()) {
+            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.of(Constants.DOT_MD5));
+        }
         return streamPath(mavenRepositoryService.getMd5(fullName, version, type));
     }
 
     private Response toAscResponse(Name fullName, String version, FileType type) {
+        if (centralSyncService
+                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
+                .alreadyReleased()) {
+            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.of(Constants.DOT_ASC));
+        }
         return streamPath(mavenRepositoryService.getAsc(fullName, version, type));
     }
 

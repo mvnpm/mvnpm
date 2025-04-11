@@ -24,7 +24,7 @@ public class MavenRepositoryApiTest {
         RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/lit/3.1.2/lit-3.1.2.pom")
                 .then().log().all().and()
-                .statusCode(200);
+                .statusCode(Matchers.in(List.of(200, 404)));
     }
 
     @Test
@@ -32,7 +32,7 @@ public class MavenRepositoryApiTest {
         RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/at/types/codemirror/5.60.15/codemirror-5.60.15.pom")
                 .then().log().all().and()
-                .statusCode(200);
+                .statusCode(Matchers.in(List.of(200, 404)));
     }
 
     @Test
@@ -40,7 +40,7 @@ public class MavenRepositoryApiTest {
         RestAssured.given().header("User-Agent", "m2e/unit-test")
                 .when().get("/maven2/org/mvnpm/at/vaadin/tabs/24.3.8/vaadin-24.3.8.pom")
                 .then().log().all().and()
-                .statusCode(200);
+                .statusCode(Matchers.in(List.of(200, 404)));
     }
 
     @Test

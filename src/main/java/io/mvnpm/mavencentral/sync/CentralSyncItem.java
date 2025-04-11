@@ -37,7 +37,7 @@ public class CentralSyncItem extends PanacheEntityBase {
 
     public LocalDateTime startTime;
     public LocalDateTime stageChangeTime;
-    public String stagingRepoId;
+    public String stagingRepoId; // TODO: This should be renamed to releaseId
     public Stage stage;
 
     public boolean dependenciesChecked = false;
