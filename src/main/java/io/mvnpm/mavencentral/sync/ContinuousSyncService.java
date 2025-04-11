@@ -7,7 +7,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -27,10 +26,8 @@ import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.mvnpm.mavencentral.RepoStatus;
-import io.mvnpm.mavencentral.SonatypeFacade;
+import io.mvnpm.mavencentral.MavenCentralFacade;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
-import io.mvnpm.mavencentral.exceptions.PromotionException;
 import io.mvnpm.mavencentral.exceptions.StatusCheckException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
@@ -43,7 +40,6 @@ import io.quarkus.scheduler.Scheduled;
 import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
-import io.vertx.mutiny.core.eventbus.EventBus;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -61,10 +57,7 @@ public class ContinuousSyncService {
     CentralSyncService centralSyncService;
 
     @Inject
-    SonatypeFacade sonatypeFacade;
-
-    @Inject
-    EventBus bus;
+    MavenCentralFacade mavenCentralFacade;
 
     @Inject
     ErrorHandlingService errorHandlingService;
@@ -230,30 +223,36 @@ public class ContinuousSyncService {
         if (!uploadedToSonatype.isEmpty()) {
             Map<String, CentralSyncItem> uploadedToSonatypeMap = mapByRepoId(uploadedToSonatype);
             if (!uploadedToSonatypeMap.isEmpty()) {
-                try {
-                    Set<Map.Entry<String, RepoStatus>> statuses = sonatypeFacade.statuses().entrySet();
-                    for (Map.Entry<String, RepoStatus> statusEntry : statuses) {
-                        String repoId = statusEntry.getKey();
-                        if (uploadedToSonatypeMap.containsKey(repoId)) {
-                            CentralSyncItem uploadedItem = uploadedToSonatypeMap.get(repoId);
-                            RepoStatus status = statusEntry.getValue();
-                            if (status.equals(RepoStatus.open)) {
-                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.UPLOADED);
-                            } else if (status.equals(RepoStatus.closed)) {
-                                if (!uploadedItem.stage.equals(Stage.RELEASING)) {
-                                    uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.CLOSED);
-                                }
-                            } else if (status.equals(RepoStatus.released)) {
-                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.RELEASED);
-                            } else if (status.equals(RepoStatus.error)) {
-                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.ERROR);
-                            }
-                        }
-                    }
-                } catch (Throwable exception) {
-                    // TODO ?
-                    exception.printStackTrace();
+
+                for (Map.Entry<String, CentralSyncItem> itemToCheck : uploadedToSonatypeMap.entrySet()) {
+                    System.out
+                            .println("We should check " + itemToCheck.getKey() + " | " + itemToCheck.getValue().toGavString());
                 }
+
+                //                try {
+                //                    Set<Map.Entry<String, RepoStatus>> statuses = sonatypeFacade.statuses().entrySet();
+                //                    for (Map.Entry<String, RepoStatus> statusEntry : statuses) {
+                //                        String repoId = statusEntry.getKey();
+                //                        if (uploadedToSonatypeMap.containsKey(repoId)) {
+                //                            CentralSyncItem uploadedItem = uploadedToSonatypeMap.get(repoId);
+                //                            RepoStatus status = statusEntry.getValue();
+                //                            if (status.equals(RepoStatus.open)) {
+                //                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.UPLOADED);
+                //                            } else if (status.equals(RepoStatus.closed)) {
+                //                                if (!uploadedItem.stage.equals(Stage.RELEASING)) {
+                //                                    uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.CLOSED);
+                //                                }
+                //                            } else if (status.equals(RepoStatus.released)) {
+                //                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.RELEASED);
+                //                            } else if (status.equals(RepoStatus.error)) {
+                //                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.ERROR);
+                //                            }
+                //                        }
+                //                    }
+                //                } catch (Throwable exception) {
+                //                    // TODO ?
+                //                    exception.printStackTrace();
+                //                }
             }
         }
     }
@@ -338,10 +337,10 @@ public class ContinuousSyncService {
     private void processRelease(CentralSyncItem centralSyncItem) {
         try {
             centralSyncItem.increasePromotionAttempt();
-            sonatypeFacade.release(centralSyncItem);
+            //sonatypeFacade.release(centralSyncItem);
             centralSyncItemService.changeStage(centralSyncItem, Stage.RELEASING);
-        } catch (PromotionException exception) {
-            retryPromotion(centralSyncItem, exception);
+            //} catch (PromotionException exception) {
+            //    retryPromotion(centralSyncItem, exception);
         } catch (UnauthorizedException unauthorizedException) {
             errorHandlingService.handle(centralSyncItem, unauthorizedException);
         } catch (Throwable throwable) {
@@ -374,8 +373,6 @@ public class ContinuousSyncService {
         resetUpload();
         // Reset promotion if the server restarts
         resetPromotion();
-
-        //eventLogApi.clearLog();
     }
 
     private void resetUpload() {

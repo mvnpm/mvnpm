@@ -6,7 +6,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
-import io.mvnpm.mavencentral.SonatypeFacade;
+import io.mvnpm.mavencentral.MavenCentralFacade;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
@@ -25,7 +25,7 @@ public class CentralSyncService {
     BundleCreator bundleCreator;
 
     @Inject
-    SonatypeFacade sonatypeFacade;
+    MavenCentralFacade mavenCentralFacade;
 
     @Inject
     NpmRegistryFacade npmRegistryFacade;
@@ -90,13 +90,12 @@ public class CentralSyncService {
     }
 
     public boolean checkCentralStatusAndUpdateStageIfNeeded(CentralSyncItem csi) {
-        CentralSyncItem searchResult = sonatypeFacade.search(csi.groupId,
+        boolean isPublishedInCentral = mavenCentralFacade.isInCentral(csi.groupId,
                 csi.artifactId, csi.version);
-        if (searchResult != null) {
+        if (isPublishedInCentral) {
             csi = centralSyncItemService.changeStage(csi, Stage.RELEASED);
-            return true;
         }
-        return false;
+        return isPublishedInCentral;
     }
 
     public String sync(CentralSyncItem centralSyncItem) throws UploadFailedException, MissingFilesForBundleException {
@@ -108,7 +107,7 @@ public class CentralSyncService {
     public String sync(String groupId, String artifactId, String version)
             throws UploadFailedException, MissingFilesForBundleException {
         Path bundlePath = bundleCreator.bundle(groupId, artifactId, version);
-        return sonatypeFacade.upload(bundlePath);
+        return mavenCentralFacade.upload(bundlePath);
     }
 
     public String getLatestVersion(String groupId, String artifactId) {
