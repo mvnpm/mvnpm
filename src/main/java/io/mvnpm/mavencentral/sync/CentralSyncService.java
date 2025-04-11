@@ -85,7 +85,7 @@ public class CentralSyncService {
             checkCentralStatusAndUpdateStageIfNeeded(csi); // Clear the queue
             return false;
         }
-        // Next try remote (might have been synced before we stored
+        // Next try remote (might have been synced before we stored)
         return !checkCentralStatusAndUpdateStageIfNeeded(csi);
     }
 

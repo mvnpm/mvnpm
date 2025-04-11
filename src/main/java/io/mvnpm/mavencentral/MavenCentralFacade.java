@@ -19,7 +19,6 @@ import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
 import io.mvnpm.mavencentral.sync.Stage;
-import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
 import io.quarkus.security.UnauthorizedException;
 import io.vertx.core.json.JsonArray;
@@ -76,7 +75,7 @@ public class MavenCentralFacade {
                 MavenCentralClient.BundleUploadForm form = new MavenCentralClient.BundleUploadForm();
                 form.bundle = Files.newInputStream(path);
                 Response uploadResponse = mavenCentralClient.uploadBundle(a, path.getFileName().toString(),
-                        MavenCentralClient.PublishingType.USER_MANAGED, form);
+                        MavenCentralClient.PublishingType.AUTOMATIC, form); // TODO: Make this a config ?
 
                 if (uploadResponse.getStatus() == 201) {
                     String releaseId = uploadResponse.readEntity(String.class);
@@ -93,7 +92,7 @@ public class MavenCentralFacade {
         }
     }
 
-    public ReleaseStatus status(Name name, String version, String releaseId) throws StatusCheckException {
+    public ReleaseStatus status(String gav, String releaseId) throws StatusCheckException {
         try {
             if (authorization.isPresent()) {
                 String a = "Bearer " + authorization.get();
@@ -110,10 +109,10 @@ public class MavenCentralFacade {
                 }
             } else {
                 throw new UnauthorizedException(
-                        "Authorization not present for " + name.toGavString(version) + " [" + releaseId + "]");
+                        "Authorization not present for " + gav + " [" + releaseId + "]");
             }
         } catch (Throwable ex) {
-            throw new StatusCheckException("Status check for " + name.toGavString(version) + " failed", ex);
+            throw new StatusCheckException("Status check for " + gav + " failed", ex);
         }
     }
 

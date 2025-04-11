@@ -57,7 +57,7 @@ public class MavenCentralService {
     public Path downloadFromMavenCentral(Name name, String version, FileType type) {
         final HttpResponse<Buffer> response = getFromMavenCentral(name, version,
                 packageFileLocator.getLocalFileName(type, name, version, Optional.empty())).await().atMost(
-                        Duration.ofSeconds(5));
+                        Duration.ofSeconds(15));
         try {
             Path downloaded = Files.createTempFile(CENTRAL_TMP_PREFIX + name.toGavString(version),
                     type.toString().toLowerCase());
