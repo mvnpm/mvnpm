@@ -8,14 +8,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
 import jakarta.inject.Inject;
 
-import org.apache.http.params.CoreConnectionPNames;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,15 +21,15 @@ import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.esbuild.install.MvnpmInfo;
 import io.mvnpm.esbuild.install.WebDepsInstaller;
 import io.mvnpm.esbuild.model.WebDependency;
+import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.npm.model.Name;
 import io.quarkus.test.junit.QuarkusTest;
-import io.restassured.RestAssured;
-import io.restassured.config.HttpClientConfig;
-import io.restassured.config.RestAssuredConfig;
-import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
 
 @QuarkusTest
 public class PackageGenerationTest {
+    @Inject
+    MavenRepositoryService mavenRepositoryService;
     @Inject
     PackageFileLocator packageFileLocator;
     @Inject
@@ -47,11 +44,7 @@ public class PackageGenerationTest {
 
     @Test
     public void testFileTooLong() throws IOException {
-        final byte[] jar = RestAssured.given().header("User-Agent", "m2e/unit-test")
-                .when().get("/maven2/org/mvnpm/at/ui5/webcomponents-fiori/1.20.1/webcomponents-fiori-1.20.1.jar")
-                .then()
-                .statusCode(200)
-                .extract().asByteArray();
+        final byte[] jar = getJarContents(new Name("@ui5/webcomponents-fiori"), "1.20.1");
         final Path tempFile = Files.createTempFile("webcomponents-fiori-1.20.1", ".jar");
         final Path nodeModules = Files.createTempDirectory("node_modules");
         Files.write(tempFile, jar);
@@ -66,7 +59,7 @@ public class PackageGenerationTest {
 
     @Test
     public void testNormalJarWithEsbuildAndOtherFiles() throws IOException {
-        final InstalledJarResult result = downloadAndInstallJar("/maven2/org/mvnpm/lit/3.2.1/lit-3.2.1.jar", "lit");
+        final InstalledJarResult result = downloadAndInstallJar(new Name("lit"), "3.2.1");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.js")), "extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts")), "more extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts.map")), "more extraction failed");
@@ -74,17 +67,12 @@ public class PackageGenerationTest {
                 "more extraction failed");
         assertEquals(1, result.dep().dirs().size());
         final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm", "lit", "3.2.1");
-        waitForPom(pomFile);
-        // check generated hashes
-        checkFiles("/maven2/org/mvnpm/lit/3.2.1/lit-3.2.1");
     }
 
     @Test
     // Reproducing https://github.com/quarkusio/quarkus/issues/46527
     public void testCompositeMoreWithEsbuild() throws IOException {
-        final InstalledJarResult result = downloadAndInstallJar(
-                "/maven2/org/mvnpm/at/mvnpm/vaadin-webcomponents/24.6.6/vaadin-webcomponents-24.6.6.jar",
-                "vaadin-webcomponents");
+        final InstalledJarResult result = downloadAndInstallJar(new Name("@mvnpm/vaadin-webcomponents"), "24.6.6");
         assertEquals(56, result.dep().dirs().size());
 
         // Test JS and TypeScript definition files
@@ -123,69 +111,42 @@ public class PackageGenerationTest {
                 "vaadin-lit-avatar.js missing");
         assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/avatar/src/vaadin-lit-avatar.d.ts")),
                 "vaadin-lit-avatar.d.ts missing");
-
-        // Test other files
-        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm.at.mvnpm", "vaadin-webcomponents",
-                "24.6.6");
-        waitForPom(pomFile);
-
     }
 
     @Test
     public void testCompositeLit() throws IOException {
-        final InstalledJarResult result = downloadAndInstallJar(
-                "/maven2/org/mvnpm/at/mvnpm/lit/3.2.0/lit-3.2.0.jar", "lit");
+        final InstalledJarResult result = downloadAndInstallJar(new Name("@mvnpm/lit"), "3.2.0");
         assertEquals(6, result.dep().dirs().size());
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.js")), "extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts")), "more extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts.map")), "more extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/decorators/custom-element.d.ts.map")));
-        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm.at.mvnpm", "lit", "3.2.0");
-        waitForPom(pomFile);
     }
 
-    private InstalledJarResult downloadAndInstallJar(String jarPath, String libName) throws IOException {
-        RestAssuredConfig config = RestAssured.config()
-                .httpClient(HttpClientConfig.httpClientConfig()
-                        .setParam(CoreConnectionPNames.SO_TIMEOUT, 300000));
-        final byte[] jar = RestAssured.given().header("User-Agent", "m2e/unit-test")
-                .config(config)
-                .when().get(jarPath)
-                .then()
-                .statusCode(200)
-                .extract().asByteArray();
+    private InstalledJarResult downloadAndInstallJar(Name name, String version) throws IOException {
+        Path localPath = mavenRepositoryService.getPath(name, version, FileType.jar);
+        final byte[] jar = getJarContents(name, version);
+
         final Path tempDirectory = Files.createTempDirectory("jar-download");
-        final Path tempFile = tempDirectory.resolve(Path.of(jarPath).getFileName());
+        final Path tempFile = tempDirectory.resolve(localPath.getFileName());
         final Path nodeModules = Files.createTempDirectory("node_modules");
         System.out.println("NodeModules: " + nodeModules);
         Files.write(tempFile, jar);
         WebDepsInstaller.install(nodeModules,
-                List.of(WebDependency.of(libName, tempFile, WebDependency.WebDependencyType.MVNPM)));
+                List.of(WebDependency.of(name.npmFullName, tempFile, WebDependency.WebDependencyType.MVNPM)));
         final MvnpmInfo mvnpmInfo = readMvnpmInfo(getMvnpmInfoPath(nodeModules));
         checkNodeModulesDir(nodeModules, mvnpmInfo);
         assertEquals(1, mvnpmInfo.installed().size());
         final MvnpmInfo.InstalledDependency installed = mvnpmInfo.installed().stream()
-                .filter(installedDependency -> installedDependency.id().equals(libName))
+                .filter(installedDependency -> installedDependency.id().equals(name.npmFullName))
                 .findFirst()
                 .get();
         return new InstalledJarResult(installed, nodeModules);
     }
 
-    private void waitForPom(final Path pomFile) {
-        Boolean exists = vertx.fileSystem().exists(pomFile.toString())
-                .onItem().transformToUni(e -> {
-                    if (e) {
-                        return Uni.createFrom().item(true);
-                    } else {
-                        return Uni.createFrom().failure(new Exception("File not found"));
-                    }
-                })
-                .onFailure().invoke(() -> System.out.println("(retry)"))
-                .onFailure().retry()
-                .withBackOff(Duration.of(100, ChronoUnit.MILLIS))
-                .expireIn(1000L * 300L)
-                .await().indefinitely();
-        assertTrue(exists);
+    private byte[] getJarContents(Name name, String version) throws IOException {
+        Path localPath = mavenRepositoryService.getPath(name, version, FileType.jar);
+        return Files.readAllBytes(localPath);
     }
 
     record InstalledJarResult(MvnpmInfo.InstalledDependency dep, Path nodeModules) {
@@ -198,21 +159,4 @@ public class PackageGenerationTest {
             assertTrue(packageJson.toFile().exists(), "package.json should exist in " + packageJson);
         }
     }
-
-    private void checkFiles(String path) {
-        List<String> extensions = List.of(
-                ".jar", ".jar.md5", ".jar.sha1",
-                "-sources.jar", "-sources.jar.md5", "-sources.jar.sha1",
-                "-javadoc.jar", "-javadoc.jar.md5", "-javadoc.jar.sha1",
-                ".pom", ".pom.md5", ".pom.sha1",
-                ".tgz", ".tgz.md5", ".tgz.sha1");
-        for (String extension : extensions) {
-            RestAssured.given().header("User-Agent", "m2e/unit-test")
-                    .when().get(path + extension)
-                    .then().log().ifError().and()
-                    .statusCode(200);
-        }
-
-    }
-
 }

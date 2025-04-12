@@ -1,5 +1,7 @@
 package io.mvnpm.mavencentral.sync;
 
+import static io.mvnpm.mavencentral.ReleaseStatus.VALIDATED;
+import static io.mvnpm.mavencentral.ReleaseStatus.VALIDATING;
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
 import java.nio.file.Path;
@@ -7,7 +9,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -27,10 +30,9 @@ import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.mvnpm.mavencentral.RepoStatus;
-import io.mvnpm.mavencentral.SonatypeFacade;
+import io.mvnpm.mavencentral.MavenCentralFacade;
+import io.mvnpm.mavencentral.ReleaseStatus;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
-import io.mvnpm.mavencentral.exceptions.PromotionException;
 import io.mvnpm.mavencentral.exceptions.StatusCheckException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
@@ -43,7 +45,6 @@ import io.quarkus.scheduler.Scheduled;
 import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
-import io.vertx.mutiny.core.eventbus.EventBus;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -61,10 +62,7 @@ public class ContinuousSyncService {
     CentralSyncService centralSyncService;
 
     @Inject
-    SonatypeFacade sonatypeFacade;
-
-    @Inject
-    EventBus bus;
+    MavenCentralFacade mavenCentralFacade;
 
     @Inject
     ErrorHandlingService errorHandlingService;
@@ -215,44 +213,49 @@ public class ContinuousSyncService {
 
     @Scheduled(every = "${mvnpm.clean-release.every:3m}", concurrentExecution = SKIP)
     @Blocking
-    void cleanSonatypeStatuses() {
+    void cleanCentralStatuses() {
         // Check if this is in central, and update the status
-        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findUpdloadedButNotReleased();
-        for (CentralSyncItem centralSyncItem : uploadedToSonatype) {
+        List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
+        for (CentralSyncItem centralSyncItem : uploadedToCentral) {
             centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem);
         }
     }
 
     @Scheduled(every = "${mvnpm.release.every:60s}", concurrentExecution = SKIP)
     @Blocking
-    void processSonatypeStatuses() {
-        List<CentralSyncItem> uploadedToSonatype = CentralSyncItem.findUpdloadedButNotReleased();
-        if (!uploadedToSonatype.isEmpty()) {
-            Map<String, CentralSyncItem> uploadedToSonatypeMap = mapByRepoId(uploadedToSonatype);
-            if (!uploadedToSonatypeMap.isEmpty()) {
-                try {
-                    Set<Map.Entry<String, RepoStatus>> statuses = sonatypeFacade.statuses().entrySet();
-                    for (Map.Entry<String, RepoStatus> statusEntry : statuses) {
-                        String repoId = statusEntry.getKey();
-                        if (uploadedToSonatypeMap.containsKey(repoId)) {
-                            CentralSyncItem uploadedItem = uploadedToSonatypeMap.get(repoId);
-                            RepoStatus status = statusEntry.getValue();
-                            if (status.equals(RepoStatus.open)) {
+    void processCentralStatuses() {
+        List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
+        if (!uploadedToCentral.isEmpty()) {
+            Map<String, CentralSyncItem> uploadedToCentralMap = mapByReleaseId(uploadedToCentral);
+            if (!uploadedToCentralMap.isEmpty()) {
+
+                for (Map.Entry<String, CentralSyncItem> itemToCheck : uploadedToCentralMap.entrySet()) {
+                    try {
+                        CentralSyncItem uploadedItem = itemToCheck.getValue();
+                        String releaseId = itemToCheck.getKey();
+                        ReleaseStatus releaseStatus = mavenCentralFacade.status(uploadedItem.toGavString(), releaseId);
+                        switch (releaseStatus) {
+                            case PENDING:
+                            case VALIDATING:
                                 uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.UPLOADED);
-                            } else if (status.equals(RepoStatus.closed)) {
-                                if (!uploadedItem.stage.equals(Stage.RELEASING)) {
-                                    uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.CLOSED);
-                                }
-                            } else if (status.equals(RepoStatus.released)) {
+                                break;
+                            case VALIDATED:
+                            case PUBLISHING:
+                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.CLOSED);
+                                break;
+                            case PUBLISHED:
                                 uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.RELEASED);
-                            } else if (status.equals(RepoStatus.error)) {
+                                break;
+                            case FAILED:
                                 uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.ERROR);
-                            }
+                                break;
+                            default:
+                                throw new AssertionError();
                         }
+                    } catch (StatusCheckException ex) {
+                        // Nothing really. We will catch this with the next one
+                        Logger.getLogger(ContinuousSyncService.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                } catch (Throwable exception) {
-                    // TODO ?
-                    exception.printStackTrace();
                 }
             }
         }
@@ -263,19 +266,17 @@ public class ContinuousSyncService {
     public void processNextAction(CentralSyncItem centralSyncItem) {
         if (centralSyncItem.stage.equals(Stage.UPLOADING)) {
             processNextUpload(centralSyncItem);
-        } else if (centralSyncItem.stage.equals(Stage.CLOSED)) {
-            processRelease(centralSyncItem);
         }
     }
 
-    private Map<String, CentralSyncItem> mapByRepoId(List<CentralSyncItem> uploadedToSonatype) {
-        Map<String, CentralSyncItem> mapByRepoId = new HashMap<>();
-        for (CentralSyncItem csi : uploadedToSonatype) {
+    private Map<String, CentralSyncItem> mapByReleaseId(List<CentralSyncItem> uploadedToCentral) {
+        Map<String, CentralSyncItem> mapByReleaseId = new HashMap<>();
+        for (CentralSyncItem csi : uploadedToCentral) {
             if (csi.stagingRepoId != null && !csi.stagingRepoId.isEmpty()) {
-                mapByRepoId.put(csi.stagingRepoId, csi);
+                mapByReleaseId.put(csi.stagingRepoId, csi);
             }
         }
-        return mapByRepoId;
+        return mapByReleaseId;
     }
 
     private boolean isCurrentlyUploading() {
@@ -316,8 +317,8 @@ public class ContinuousSyncService {
     private void processNextUpload(CentralSyncItem centralSyncItem) {
         if (!centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
             try {
-                String repoId = centralSyncService.sync(centralSyncItem);
-                centralSyncItem.stagingRepoId = repoId;
+                String releaseId = centralSyncService.sync(centralSyncItem);
+                centralSyncItem.stagingRepoId = releaseId;
                 centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
             } catch (UploadFailedException exception) {
                 Log.warnf("Upload failed for '%s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
@@ -335,33 +336,9 @@ public class ContinuousSyncService {
         }
     }
 
-    private void processRelease(CentralSyncItem centralSyncItem) {
-        try {
-            centralSyncItem.increasePromotionAttempt();
-            sonatypeFacade.release(centralSyncItem);
-            centralSyncItemService.changeStage(centralSyncItem, Stage.RELEASING);
-        } catch (PromotionException exception) {
-            retryPromotion(centralSyncItem, exception);
-        } catch (UnauthorizedException unauthorizedException) {
-            errorHandlingService.handle(centralSyncItem, unauthorizedException);
-        } catch (Throwable throwable) {
-            retryPromotion(centralSyncItem, throwable);
-        }
-    }
-
     private void retryUpload(CentralSyncItem centralSyncItem, Throwable t) {
         if (centralSyncItem.uploadAttempts < 10) {
             centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
-        } else {
-            t.printStackTrace();
-            errorHandlingService.handle(centralSyncItem, t);
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
-        }
-    }
-
-    private void retryPromotion(CentralSyncItem centralSyncItem, Throwable t) {
-        if (centralSyncItem.promotionAttempts < 10) {
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
         } else {
             t.printStackTrace();
             errorHandlingService.handle(centralSyncItem, t);
@@ -374,8 +351,6 @@ public class ContinuousSyncService {
         resetUpload();
         // Reset promotion if the server restarts
         resetPromotion();
-
-        //eventLogApi.clearLog();
     }
 
     private void resetUpload() {
