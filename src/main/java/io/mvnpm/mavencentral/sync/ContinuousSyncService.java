@@ -248,6 +248,7 @@ public class ContinuousSyncService {
                                 break;
                             case FAILED:
                                 uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.ERROR);
+                                break;
                             default:
                                 throw new AssertionError();
                         }
