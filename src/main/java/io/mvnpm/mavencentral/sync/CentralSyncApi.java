@@ -5,6 +5,7 @@ import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.websocket.OnClose;
 import jakarta.websocket.OnError;
 import jakarta.websocket.OnOpen;
@@ -114,6 +115,24 @@ public class CentralSyncApi {
         }
         return centralSyncItem;
 
+    }
+
+    @GET
+    @NoCache
+    @Path("/remove/{groupId}/{artifactId}")
+    @Transactional
+    public CentralSyncItem remove(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+            @DefaultValue("latest") @QueryParam("version") String version) {
+
+        if (version.equalsIgnoreCase("latest")) {
+            version = centralSyncService.getLatestVersion(groupId, artifactId);
+        }
+
+        mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
+        final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version,
+                false);
+        centralSyncItem.delete();
+        return centralSyncItem;
     }
 
     @GET

@@ -9,8 +9,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
@@ -230,10 +228,10 @@ public class ContinuousSyncService {
             if (!uploadedToCentralMap.isEmpty()) {
 
                 for (Map.Entry<String, CentralSyncItem> itemToCheck : uploadedToCentralMap.entrySet()) {
+                    CentralSyncItem uploadedItem = itemToCheck.getValue();
+                    String releaseId = itemToCheck.getKey();
                     try {
-                        CentralSyncItem uploadedItem = itemToCheck.getValue();
-                        String releaseId = itemToCheck.getKey();
-                        ReleaseStatus releaseStatus = mavenCentralFacade.status(uploadedItem.toGavString(), releaseId);
+                        ReleaseStatus releaseStatus = mavenCentralFacade.status(uploadedItem, releaseId);
                         switch (releaseStatus) {
                             case PENDING:
                             case VALIDATING:
@@ -248,13 +246,14 @@ public class ContinuousSyncService {
                                 break;
                             case FAILED:
                                 uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.ERROR);
+                                // TODO: Here we should get more details, and do a drop maybe ?
                                 break;
                             default:
                                 throw new AssertionError();
                         }
                     } catch (StatusCheckException ex) {
                         // Nothing really. We will catch this with the next one
-                        Logger.getLogger(ContinuousSyncService.class.getName()).log(Level.SEVERE, null, ex);
+                        Log.warn("Could not get status for " + uploadedItem.toGavString() + " (release Id: " + releaseId + ")");
                     }
                 }
             }

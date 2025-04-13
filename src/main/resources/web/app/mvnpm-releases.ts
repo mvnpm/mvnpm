@@ -33,6 +33,19 @@ export class MvnpmReleases extends LitElement {
             transform: rotate(360deg);
         }
     }
+    
+    .flicker {
+        animation: flickerAnimation 0.15s infinite;
+    }
+    
+    @keyframes flickerAnimation {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+    }
     `;
 
     @state({ type: Array })
@@ -79,7 +92,8 @@ export class MvnpmReleases extends LitElement {
                 <vaadin-grid-sort-column header="Last modified" path="stageChangeTime"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Release Id" path="stagingRepoId"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Upload attempts" path="uploadAttempts"></vaadin-grid-sort-column>
-                ${this._renderRetryCol()}
+                ${this._renderActionCol()}
+                
             </vaadin-grid>`;
         } else if(!this._itemList){
             return html`<vaadin-progress-bar class="progressBar" indeterminate></vaadin-progress-bar>`;
@@ -88,22 +102,42 @@ export class MvnpmReleases extends LitElement {
         }
     }
 
-    private _renderRetryCol(){
-        if(this._selectedState === "ERROR"){
+    private _renderActionCol(){
+        if(this._selectedState !== "RELEASED"){
             return html`<vaadin-grid-sort-column resizable
-                                    header="Retry"
-                                    ${columnBodyRenderer(this._retryRenderer, [])}>`;
+                                    header="Action"
+                                    ${columnBodyRenderer(this._actionRenderer, [])}>`;
         }
     }
 
-    private _retryRenderer(item) {
+    private _actionRenderer(item) {
+        if(this._selectedState === "ERROR"){
+            return html`${this._renderRetryButton(item)} ${this._renderRemoveButton(item)}`;
+        } else {
+            return html`${this._renderRemoveButton(item)}`;
+        } 
+    }
+
+    private _renderRetryButton(item){
         return html`<span style="cursor: pointer;" @click="${(e) => this._requestFullSync(e, item)}"><vaadin-icon style="color:var(--lumo-success-color)" icon="vaadin:refresh"></vaadin-icon></span>`;
+    }
+
+    private _renderRemoveButton(item){
+        return html`<span style="cursor: pointer;" @click="${(e) => this._requestRemove(e, item)}"><vaadin-icon style="color:var(--lumo-error-color)" icon="vaadin:trash"></vaadin-icon></span>`;
     }
 
     private _requestFullSync(e, item){
         e.target.className = "rotate";
         var fullSyncRequest = "/api/sync/retry/" + item.groupId + "/" + item.artifactId + "?version=" + item.version;
         fetch(fullSyncRequest)
+            .then(response => response.json())
+            .then(response => this._fetchSelectedItemList());
+    }
+
+    private _requestRemove(e, item){
+        e.target.className = "flicker";
+        var removeRequest = "/api/sync/remove/" + item.groupId + "/" + item.artifactId + "?version=" + item.version;
+        fetch(removeRequest)
             .then(response => response.json())
             .then(response => this._fetchSelectedItemList());
     }

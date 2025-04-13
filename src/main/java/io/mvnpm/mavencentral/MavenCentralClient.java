@@ -1,6 +1,5 @@
 package io.mvnpm.mavencentral;
 
-import java.io.InputStream;
 import java.time.temporal.ChronoUnit;
 
 import jakarta.ws.rs.BeanParam;
@@ -10,7 +9,6 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -44,7 +42,7 @@ public interface MavenCentralClient {
     @Produces(MediaType.APPLICATION_JSON)
     Response getReleaseStatus(
             @HeaderParam("Authorization") String authorization,
-            @PathParam("releaseId") String releaseId);
+            @QueryParam("id") String releaseId);
 
     @GET
     @Path("/api/v1/publisher/published")
@@ -58,7 +56,7 @@ public interface MavenCentralClient {
     static class BundleUploadForm {
         @FormParam("bundle")
         @PartType(MediaType.APPLICATION_OCTET_STREAM)
-        public InputStream bundle;
+        public byte[] bundle;
     }
 
     static enum PublishingType {
