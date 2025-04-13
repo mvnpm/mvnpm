@@ -54,8 +54,13 @@ public class BundleCreator {
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     ZipOutputStream zos = new ZipOutputStream(bos)) {
 
+                String basePath = groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+
                 for (Path path : files) {
-                    ZipEntry zipEntry = new ZipEntry(path.getFileName().toString());
+                    String zipEntryName = basePath + path.getFileName();
+                    Log.debug("\tAdding to bundle: " + zipEntryName);
+
+                    ZipEntry zipEntry = new ZipEntry(zipEntryName);
                     zos.putNextEntry(zipEntry);
                     try (InputStream fileInputStream = Files.newInputStream(path)) {
                         int bytesRead;
@@ -64,7 +69,7 @@ public class BundleCreator {
                             zos.write(buffer, 0, bytesRead);
                         }
                     } catch (IOException e) {
-                        throw new RuntimeException("Error streaming file content", e);
+                        throw new RuntimeException("Error streaming file content: " + path, e);
                     }
                     zos.closeEntry();
                 }
@@ -107,12 +112,20 @@ public class BundleCreator {
         List<Path> fileNames = List.of(
                 parent.resolve(base + Constants.DOT_POM),
                 parent.resolve(base + Constants.DOT_POM + Constants.DOT_ASC),
+                parent.resolve(base + Constants.DOT_POM + Constants.DOT_MD5),
+                parent.resolve(base + Constants.DOT_POM + Constants.DOT_SHA1),
                 parent.resolve(base + Constants.DOT_JAR),
                 parent.resolve(base + Constants.DOT_JAR + Constants.DOT_ASC),
+                parent.resolve(base + Constants.DOT_JAR + Constants.DOT_MD5),
+                parent.resolve(base + Constants.DOT_JAR + Constants.DOT_SHA1),
                 parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR),
                 parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_ASC),
+                parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_MD5),
+                parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_SHA1),
                 parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR),
-                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_ASC));
+                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_ASC),
+                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_MD5),
+                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_SHA1));
 
         return fileNames;
     }

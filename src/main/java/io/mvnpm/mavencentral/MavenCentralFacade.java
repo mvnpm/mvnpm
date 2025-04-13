@@ -2,8 +2,6 @@ package io.mvnpm.mavencentral;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -18,10 +16,8 @@ import io.mvnpm.mavencentral.exceptions.StatusCheckException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
-import io.mvnpm.mavencentral.sync.Stage;
 import io.quarkus.logging.Log;
 import io.quarkus.security.UnauthorizedException;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -43,6 +39,9 @@ public class MavenCentralFacade {
 
     @ConfigProperty(name = "mvnpm.mavencentral.authorization")
     Optional<String> authorization;
+
+    @ConfigProperty(name = "mvnpm.mavencentral.autorelease")
+    boolean autorelease;
 
     public boolean isInCentral(String groupId, String artifactId, String version) {
         try {
@@ -73,9 +72,14 @@ public class MavenCentralFacade {
                 String a = "Bearer " + authorization.get();
 
                 MavenCentralClient.BundleUploadForm form = new MavenCentralClient.BundleUploadForm();
-                form.bundle = Files.newInputStream(path);
+                form.bundle = Files.readAllBytes(path);
+
+                MavenCentralClient.PublishingType publishingType = MavenCentralClient.PublishingType.USER_MANAGED;
+                if (autorelease)
+                    publishingType = MavenCentralClient.PublishingType.AUTOMATIC;
+
                 Response uploadResponse = mavenCentralClient.uploadBundle(a, path.getFileName().toString(),
-                        MavenCentralClient.PublishingType.AUTOMATIC, form); // TODO: Make this a config ?
+                        publishingType, form);
 
                 if (uploadResponse.getStatus() == 201) {
                     String releaseId = uploadResponse.readEntity(String.class);
@@ -92,7 +96,7 @@ public class MavenCentralFacade {
         }
     }
 
-    public ReleaseStatus status(String gav, String releaseId) throws StatusCheckException {
+    public ReleaseStatus status(CentralSyncItem csi, String releaseId) throws StatusCheckException {
         try {
             if (authorization.isPresent()) {
                 String a = "Bearer " + authorization.get();
@@ -109,30 +113,15 @@ public class MavenCentralFacade {
                 }
             } else {
                 throw new UnauthorizedException(
-                        "Authorization not present for " + gav + " [" + releaseId + "]");
+                        "Authorization not present for " + csi.toGavString() + " [" + releaseId + "]");
             }
         } catch (Throwable ex) {
-            throw new StatusCheckException("Status check for " + gav + " failed", ex);
-        }
-    }
-
-    private List<CentralSyncItem> toCentralSyncItemList(JsonObject pageJson) {
-        List<CentralSyncItem> items = new ArrayList<>();
-        if (pageJson != null) {
-            JsonObject response = pageJson.getJsonObject("response");
-            if (response != null) {
-                JsonArray docs = response.getJsonArray("docs");
-                if (docs != null && !docs.isEmpty()) {
-                    for (int i = 0; i < docs.size(); i++) {
-                        JsonObject doc = docs.getJsonObject(i);
-                        String groupId = doc.getString("g");
-                        String artifactId = doc.getString("a");
-                        String version = doc.getString("v");
-                        items.add(centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.NONE));
-                    }
-                }
+            // Since we moved over to the new api, the old repoId in the DB does not work, so here we can try another way
+            if (isInCentral(csi.groupId, csi.artifactId, csi.version)) {
+                return ReleaseStatus.PUBLISHED;
             }
+            throw new StatusCheckException("Status check for " + csi.toGavString() + " failed (releaseId " + releaseId + ")",
+                    ex);
         }
-        return items;
     }
 }
