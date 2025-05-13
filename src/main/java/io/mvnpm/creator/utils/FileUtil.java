@@ -143,10 +143,10 @@ public final class FileUtil {
         return localMd5File;
     }
 
-    private static String getMd5(java.io.InputStream inputStream) {
+    private static String getMd5(InputStream inputStream) {
         try {
             byte[] digest = FileUtil.getMessageDigest(inputStream, Constants.MD5);
-            return new BigInteger(1, digest).toString(16);
+            return String.format("%032x", new BigInteger(1, digest));
         } catch (NoSuchAlgorithmException | IOException e) {
             throw new IllegalStateException(e);
         }
