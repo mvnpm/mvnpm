@@ -49,11 +49,7 @@ public class VersionConverter {
 
     public static String convert(String versionString) {
         try {
-            if (null == versionString || versionString.startsWith("github:") || versionString.startsWith("git:/")
-                    || versionString.startsWith(
-                            "git+http")) { // We do not support git repos as version. Maybe something we can add later
-                versionString = EMPTY;
-            }
+            versionString = removeIllegalVersion(versionString);
 
             versionString = versionString.trim();
             String[] orSet;
@@ -94,6 +90,18 @@ public class VersionConverter {
         return String.join(COMMA, versionList);
     }
 
+    private static String removeIllegalVersion(String versionString) {
+        if (null == versionString ||
+                versionString.startsWith("github:") ||
+                versionString.startsWith("git:/") ||
+                versionString.startsWith("git+http") ||
+                versionString.startsWith("http://") ||
+                versionString.startsWith("https://")) { // We do not support git repos as version. Maybe something we can add later
+            versionString = EMPTY;
+        }
+        return versionString;
+    }
+
     /**
      * This convert parts to maven format
      *
@@ -101,6 +109,8 @@ public class VersionConverter {
      * @return
      */
     private static String convertMultiplePart(String version) {
+
+        version = removeIllegalVersion(version);
 
         // Hyphen range
         if (version.contains(SPACE + HYPHEN + SPACE)) {
