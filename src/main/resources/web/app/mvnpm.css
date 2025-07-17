@@ -90,7 +90,7 @@ main {
 footer {
     display: flex;
     flex-direction: row;
-    justify-content: space-between
+    justify-content: space-between;
     font-size: smaller;
     background-color: rgb(2,0,36);
     padding-top: 8px;
@@ -102,6 +102,10 @@ footer {
 footer a {
     color: var(--lumo-body-text-color);
     text-decoration: none;
+}
+
+footer img {
+    padding-bottom: 5px;
 }
 
 footer .copyright {
