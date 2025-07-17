@@ -33,12 +33,12 @@ class MavenRepositoryServiceTest {
 
     @Test
     void testGetPath() throws Exception {
-        testCreatedFiles(new Name("lit"), "3.2.1");
+        testCreatedFiles(new Name("lit"), "3.3.1");
     }
 
     @Test
     void testCompositeVaadinGetPath() throws Exception {
-        testCreatedFiles(new Name("@mvnpm/vaadin-webcomponents"), "24.6.6");
+        testCreatedFiles(new Name("@mvnpm/vaadin-webcomponents"), "24.8.3");
     }
 
     @Test

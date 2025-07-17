@@ -56,7 +56,7 @@ html, body {
     font-family: var(--lumo-font-family);
     font-size: var(--lumo-font-size-m);
     line-height: var(--lumo-line-height-m);
-    color: var(--lumo-body-text-color);                        
+    color: var(--lumo-body-text-color);
     background: rgb(2,0,36);
     background: linear-gradient(180deg, rgba(2,0,36,1) 0%, rgba(50,103,113,1) 54%, rgba(103,167,179,1) 97%);
 }
@@ -90,7 +90,25 @@ main {
 footer {
     display: flex;
     flex-direction: row;
-    justify-content: center;
-    width: 100%;
+    justify-content: space-between
     font-size: smaller;
+    background-color: rgb(2,0,36);
+    padding-top: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+    gap: 50px;
+}
+
+footer a {
+    color: var(--lumo-body-text-color);
+    text-decoration: none;
+}
+
+footer .copyright {
+    display: flex;
+    flex-direction: column;
+}
+
+.smalltext{
+    font-size: x-small;
 }
