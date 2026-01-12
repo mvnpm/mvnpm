@@ -127,8 +127,6 @@ public class CentralSyncApi {
         if (version.equalsIgnoreCase("latest")) {
             version = centralSyncService.getLatestVersion(groupId, artifactId);
         }
-
-        mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
         final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version,
                 false);
         centralSyncItem.delete();

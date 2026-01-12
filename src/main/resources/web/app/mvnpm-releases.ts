@@ -6,6 +6,11 @@ import '@vaadin/grid';
 import '@vaadin/grid/vaadin-grid-sort-column.js';
 import { columnBodyRenderer } from '@vaadin/grid/lit.js';
 
+
+const params = new URLSearchParams(window.location.search);
+const isAdmin = params.get('admin') === 'true';
+
+
 /**
  * This component shows the Item stage screen
  */
@@ -51,7 +56,7 @@ export class MvnpmReleases extends LitElement {
     @state({ type: Array })
     private _itemList: any[] | null = null;
 
-    @state() 
+    @state()
     private _selectedState?: string = "RELEASED";
 
     @state({ type: Boolean})
@@ -103,6 +108,9 @@ export class MvnpmReleases extends LitElement {
     }
 
     private _renderActionCol(){
+        if (!isAdmin) {
+          return null;
+        }
         if(this._selectedState !== "RELEASED"){
             return html`<vaadin-grid-sort-column resizable
                                     header="Action"
@@ -115,20 +123,20 @@ export class MvnpmReleases extends LitElement {
             return html`${this._renderRetryButton(item)} ${this._renderRemoveButton(item)}`;
         } else {
             return html`${this._renderRemoveButton(item)}`;
-        } 
+        }
     }
 
     private _renderRetryButton(item){
-        return html`<span style="cursor: pointer;" @click="${(e) => this._requestFullSync(e, item)}"><vaadin-icon style="color:var(--lumo-success-color)" icon="vaadin:refresh"></vaadin-icon></span>`;
+      return html`<span style="cursor: pointer;" @click="${(e) => this._requestFullSync(e, item)}"><vaadin-icon style="color:var(--lumo-success-color)" icon="vaadin:refresh"></vaadin-icon></span>`;
     }
 
     private _renderRemoveButton(item){
-        return html`<span style="cursor: pointer;" @click="${(e) => this._requestRemove(e, item)}"><vaadin-icon style="color:var(--lumo-error-color)" icon="vaadin:trash"></vaadin-icon></span>`;
+      return html`<span style="cursor: pointer;" @click="${(e) => this._requestRemove(e, item)}"><vaadin-icon style="color:var(--lumo-error-color)" icon="vaadin:trash"></vaadin-icon></span>`;
     }
 
     private _requestFullSync(e, item){
         e.target.className = "rotate";
-        var fullSyncRequest = "/api/sync/retry/" + item.groupId + "/" + item.artifactId + "?version=" + item.version;
+        var fullSyncRequest = "/api/sync/retry/" + item.groupId + "/" + item.artifactId + "?version=" + encodeURIComponent(item.version);
         fetch(fullSyncRequest)
             .then(response => response.json())
             .then(response => this._fetchSelectedItemList());
@@ -136,7 +144,7 @@ export class MvnpmReleases extends LitElement {
 
     private _requestRemove(e, item){
         e.target.className = "flicker";
-        var removeRequest = "/api/sync/remove/" + item.groupId + "/" + item.artifactId + "?version=" + item.version;
+        var removeRequest = "/api/sync/remove/" + item.groupId + "/" + item.artifactId + "?version=" + encodeURIComponent(item.version);
         fetch(removeRequest)
             .then(response => response.json())
             .then(response => this._fetchSelectedItemList());
@@ -146,7 +154,7 @@ export class MvnpmReleases extends LitElement {
         this._selectedState = e.target.value;
         this._fetchSelectedItemList();
     }
-    
+
     private _fetchSelectedItemList(){
         this._itemList = null;
         this._disabled = true;
