@@ -95,8 +95,8 @@ public class VersionConverter {
                 versionString.contains("{") ||
                 versionString.contains("}") ||
                 versionString.contains("@") ||
-                versionString.startsWith("npm:") |
-                        versionString.startsWith("github:")
+                versionString.startsWith("npm:") ||
+                versionString.startsWith("github:")
                 ||
                 versionString.startsWith("git:/") ||
                 versionString.startsWith("git+http") ||
