@@ -279,7 +279,7 @@ public class PomService {
     private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies) {
         if (dependencies != null && !dependencies.isEmpty()) {
             for (Map.Entry<Name, String> e : dependencies.entrySet()) {
-                if (e.getValue().startsWith("file")) {
+                if (e.getValue().startsWith("file:")) {
                     continue;
                 }
                 Name name = e.getKey();
