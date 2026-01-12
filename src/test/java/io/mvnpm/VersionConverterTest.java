@@ -532,6 +532,20 @@ public class VersionConverterTest {
         Assertions.assertEquals("", mavenVersion);
     }
 
+    @Test
+    // Issue https://github.com/mvnpm/mvnpm/issues/36027
+    public void testNpmVersion() {
+        String mavenVersion = VersionConverter.convert("npm:string-width@^4.2.0");
+        Assertions.assertEquals("", mavenVersion);
+    }
+
+    @Test
+    // Issue https://github.com/mvnpm/mvnpm/issues/36027
+    public void testInvalidVersions() {
+        Assertions.assertEquals("", VersionConverter.convert("${org.mvnpm-d3-time.version}"));
+        Assertions.assertEquals("", VersionConverter.convert("${redoc.version}.0"));
+    }
+
     // Partial version in range
     @Test
     public void testPartialRange() {

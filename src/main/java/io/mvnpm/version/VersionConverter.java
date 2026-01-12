@@ -92,7 +92,12 @@ public class VersionConverter {
 
     private static String removeIllegalVersion(String versionString) {
         if (null == versionString ||
-                versionString.startsWith("github:") ||
+                versionString.contains("{") ||
+                versionString.contains("}") ||
+                versionString.contains("@") ||
+                versionString.startsWith("npm:") |
+                        versionString.startsWith("github:")
+                ||
                 versionString.startsWith("git:/") ||
                 versionString.startsWith("git+http") ||
                 versionString.startsWith("http://") ||
