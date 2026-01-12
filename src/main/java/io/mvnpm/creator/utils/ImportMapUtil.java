@@ -104,13 +104,16 @@ public class ImportMapUtil {
     }
 
     public String getImportMapRoot(io.mvnpm.npm.model.Package p) {
-        String root = STATIC_ROOT + p.name().npmName;
+        final String nameSpaceRoot = p.name().npmNamespace != null && !p.name().npmNamespace.isEmpty()
+                ? "at/" + p.name().npmNamespace.replace("@", "") + Constants.SLASH
+                : "";
+        String root = STATIC_ROOT + nameSpaceRoot + p.name().npmName;
         if (p.repository() != null && p.repository().directory() != null && !p.repository().directory().isEmpty()) {
             String d = p.repository().directory();
             if (d.startsWith(PACKAGES + Constants.SLASH)) {
-                root = d.replaceFirst(PACKAGES + Constants.SLASH, STATIC_ROOT);
+                root = d.replaceFirst(PACKAGES + Constants.SLASH, STATIC_ROOT + nameSpaceRoot);
             } else if (d.startsWith(PACKAGE + Constants.SLASH)) {
-                root = d.replaceFirst(PACKAGE + Constants.SLASH, STATIC_ROOT);
+                root = d.replaceFirst(PACKAGE + Constants.SLASH, STATIC_ROOT + nameSpaceRoot);
             }
         }
         if (!root.endsWith(Constants.SLASH)) {

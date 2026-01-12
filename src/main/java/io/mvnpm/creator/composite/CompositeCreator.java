@@ -333,7 +333,8 @@ public class CompositeCreator {
                     // Add all entries from the input JAR to the merged JAR
                     JarEntry entry;
                     while ((entry = inputJar.getNextJarEntry()) != null) {
-                        writeEntry(inputJar, mergedJar, dependency.getArtifactId(), entry);
+                        writeEntry(inputJar, mergedJar, dependency.getGroupId() + "/" + dependency.getArtifactId() + "/",
+                                entry);
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);

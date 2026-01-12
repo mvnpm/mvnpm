@@ -53,7 +53,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.25.0.CR1</quarkus.platform.version>
+    <quarkus.platform.version>3.27.1</quarkus.platform.version>
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.5.2</surefire-plugin.version>
     
@@ -63,7 +63,7 @@
     
     <pgpainless.version>1.5.5</pgpainless.version>
     <!-- UI Libs -->
-    <quarkus-web-bundler.version>1.9.0</quarkus-web-bundler.version>
+    <quarkus-web-bundler.version>2.1.0</quarkus-web-bundler.version>
     <lit.version>3.3.1</lit.version>
     <vaadin.version>24.8.3</vaadin.version>
     <ldrs.version>1.1.7</ldrs.version>
@@ -75,7 +75,7 @@
     <badge.version>1.0.4</badge.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
-    <esbuild-java.version>1.5.3</esbuild-java.version>
+    <esbuild-java.version>2.1.0</esbuild-java.version>
   </properties>
   <dependencyManagement>
     <dependencies>
