@@ -10,6 +10,11 @@ import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
 import { Router } from '@vaadin/router';
 
+const params = new URLSearchParams(window.location.search);
+const isAdmin = params.get('admin') === 'true';
+
+
+
 /**
  * This component shows the composites
  */
@@ -111,6 +116,9 @@ export class MvnpmComposites extends LitElement {
         if(this._isPublishing){
             return html`<vaadin-progress-bar style="width: 200px;" class="progressBar" indeterminate></vaadin-progress-bar>`;
         }else{
+            if (!isAdmin) {
+              return null;
+            }
             return html`<div class="version">
                         <vaadin-combo-box id="version"
                             allow-custom-value
