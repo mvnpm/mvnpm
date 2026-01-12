@@ -70,6 +70,14 @@ public class PackageGenerationTest {
     }
 
     @Test
+    public void testNamespacedJarWithEsbuildAndOtherFiles() throws IOException {
+        final InstalledJarResult result = downloadAndInstallJar(new Name("@tiptap/core"), "3.12.1");
+        assertTrue(Files.exists(result.nodeModules().resolve("@tiptap/core/dist/index.cjs.map")), "extraction failed");
+        assertEquals(1, result.dep().dirs().size());
+        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm.at.tiptap", "core", "3.12.1");
+    }
+
+    @Test
     // Reproducing https://github.com/quarkusio/quarkus/issues/46527
     public void testCompositeMoreWithEsbuild() throws IOException {
         final InstalledJarResult result = downloadAndInstallJar(new Name("@mvnpm/vaadin-webcomponents"), "24.8.3");
