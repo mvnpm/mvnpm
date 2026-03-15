@@ -23,13 +23,12 @@ export class MvnpmComposites extends LitElement {
     static styles = css`
     :host {
         display: flex;
-        gap: 10px;
+        gap: 16px;
         width: 100%;
-        padding: 20px;
-        padding-top: 60px;
+        padding: 24px;
     }
     .selected {
-        display: flex:
+        display: flex;
         flex-direction: column;
         width: 100%;
     }
@@ -40,16 +39,25 @@ export class MvnpmComposites extends LitElement {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        width: 400px;
+        width: 280px;
+        min-width: 280px;
+        border-right: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+        padding-right: 16px;
     }
     .header {
-        display:flex;
+        display: flex;
         width: 100%;
         justify-content: space-between;
+        align-items: center;
+    }
+    .header h3 {
+        margin: 0;
+        font-weight: 600;
     }
     .version {
-        display:flex;
-        gap: 5px;
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
     }
     `;
 

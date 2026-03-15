@@ -14,7 +14,9 @@ export class MvnpmEventLog extends LitElement {
           gap: 10px;
           width: 100%;
           max-height: 40vh;
-          background: black;
+          background: var(--mvnpm-code-bg, #151722);
+          border-radius: var(--mvnpm-radius-md, 10px);
+          border: 1px solid var(--mvnpm-border, rgba(255,255,255,0.1));
       }
 
       .console {
@@ -22,12 +24,9 @@ export class MvnpmEventLog extends LitElement {
           flex-direction: column;
           width: 100%;
           height: 100%;
-          padding-left: 20px;
-          padding-right: 20px;
-          background: black;
-          font-family: 'Courier New', monospace;
-          font-size: small;
-          filter: brightness(0.85);
+          padding: 16px 20px;
+          font-family: var(--mvnpm-font-mono, 'Courier New', monospace);
+          font-size: 13px;
       }
 
       .line {
@@ -114,7 +113,7 @@ export class MvnpmEventLog extends LitElement {
           <l-dot-stream
               size="20"
               speed="2.5"
-              color="#66a5b1"
+              color="#F59E0B"
           ></l-dot-stream>
         </p>`: ''}
         ${this._renderInitEventLog()}

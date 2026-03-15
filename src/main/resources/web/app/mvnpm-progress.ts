@@ -17,7 +17,7 @@ export class MvnpmProgress extends LitElement {
   static styles = css`
       :host {
           display: flex;
-          gap: 10px;
+          gap: 0;
           width: 100%;
       }
 
@@ -27,9 +27,17 @@ export class MvnpmProgress extends LitElement {
           flex-direction: column;
           width: 100%;
           height: 100%;
-          padding-left: 20px;
-          padding-right: 20px;
+          padding: 16px 20px;
           align-items: center;
+      }
+
+      .lane h3 {
+          font-size: 0.85rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+          margin: 0 0 4px;
       }
 
       .maven-central {
@@ -39,8 +47,6 @@ export class MvnpmProgress extends LitElement {
           flex-direction: column;
           width: 100%;
           height: 100%;
-          padding-left: 20px;
-          padding-right: 20px;
           align-items: center;
           overflow-y: scroll;
       }
@@ -51,8 +57,8 @@ export class MvnpmProgress extends LitElement {
       }
 
       .uploading {
-          border-right: 2px solid var(--lumo-contrast-10pct);
-          border-left: 2px solid var(--lumo-contrast-10pct);
+          border-right: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+          border-left: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
       }
 
       .progressBar {
@@ -185,7 +191,7 @@ export class MvnpmProgress extends LitElement {
         ${this.liveSync ? html`<l-dot-stream
             size="30"
             speed="2.5"
-            color="#66a5b1"
+            color="#F59E0B"
         ></l-dot-stream>`:''}
         ${this._renderInitQueue()}
       </div>

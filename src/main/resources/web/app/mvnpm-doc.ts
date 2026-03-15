@@ -12,57 +12,78 @@ export class MvnpmDoc extends LitElement {
     static styles = css`
         :host {
             width: 100%;
-            height: 100%;
-            overflow-y: auto;
             display: flex;
             flex-direction: column;
             padding: 30px;
             gap: 30px;
-            background-color: rgba(2, 2, 2, 50%);
         }
 
-        @media (min-width: 900px) {
+        @media (min-width: 1100px) {
             :host {
-                width: 800px;   
+                width: 960px;
                 margin: 0 auto;
             }
         }
+
+        section {
+            background-color: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
+            border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+            border-radius: var(--mvnpm-radius-md, 10px);
+            padding: 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        qui-code-block {
+            width: 100%;
+        }
+
+        h3 {
+            margin-top: 0;
+            font-weight: 600;
+        }
+
         .use {
-            width: 800px;
-            border: 2px solid var(--lumo-contrast-10pct);
-            border-radius: 15px;
+            width: 100%;
+            border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+            border-radius: var(--mvnpm-radius-md, 10px);
             padding: 20px;
         }
         .url {
-            font-family: monospace;
+            font-family: var(--mvnpm-font-mono, monospace);
+            background-color: var(--mvnpm-code-bg, var(--lumo-contrast-5pct));
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
-        a{
-            color:var(--lumo-contrast-60pct);
+        code {
+            font-family: var(--mvnpm-font-mono, monospace);
+            background-color: var(--mvnpm-code-bg, var(--lumo-contrast-5pct));
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
         }
-        a:link{ 
-            text-decoration: none; 
-            color:var(--lumo-contrast-60pct);
+        a {
+            color: var(--mvnpm-text-link, var(--lumo-contrast-60pct));
+            text-decoration: none;
+            transition: color 0.15s ease;
         }
-        a:visited { 
-            text-decoration: none; 
-            color:var(--lumo-contrast-60pct);
+        a:hover {
+            color: var(--mvnpm-text-link-hover, var(--lumo-body-text-color));
         }
-        a:hover { 
-            text-decoration: none; 
-            color:var(--lumo-body-text-color);
-        }
-        .how{
+        .how {
             width: 100%;
+            border-radius: var(--mvnpm-radius-md, 10px);
         }
     `;
-    @state() _dep: string = `
-    <dependency>
-        <groupId>org.mvnpm</groupId>
-        <artifactId>{package-name}</artifactId>
-        <version>{package-version}</version>
-        <scope>{runtime/provided}</scope>
-    </dependency>
-    `;
+    @state() _dep: string = `<dependency>
+    <groupId>org.mvnpm</groupId>
+    <artifactId>{package-name}</artifactId>
+    <version>{package-version}</version>
+    <scope>{runtime/provided}</scope>
+</dependency>`;
+
+    @state() _gradleDep: string = `implementation 'org.mvnpm:{package-name}:{package-version}'`;
     @state() _settings: string = `
 <settings>
     <profiles>
@@ -101,125 +122,68 @@ export class MvnpmDoc extends LitElement {
     render() {
         return html`
             <section>
-                <h3>Use NPM package like any other Maven/Gradle dependency...</h3>
-                <p><b>mvnpm</b> (Maven NPM) allows to consume the <a href="https://www.npmjs.com/" target="_blank">NPM
-                    Registry</a> packages as dependencies directly from a Maven or Gradle project:
-                </p>
+                <h3>Add an NPM dependency</h3>
+                <p><b>mvnpm</b> lets you consume <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a> packages as dependencies directly from a Maven or Gradle project.</p>
+                <p><strong>Maven</strong></p>
+                <qui-code-block mode="xml" content="${this._dep}"></qui-code-block>
+                <p><strong>Gradle</strong></p>
+                <qui-code-block mode="groovy" content="${this._gradleDep}"></qui-code-block>
                 <p>
-                    <qui-code-block mode="xml" content="${this._dep}"></qui-code-block>
-                </p>
-                <p>
-                    <i>Use <code>org.mvnpm.at.{namespace}</code> as groupId for a particular
-                        namespace (i.e. <code>@hotwired/stimulus</code> becomes <code>org.mvnpm.at.hotwired:stimulus</code>).</i>
+                    <i>For scoped packages, use <code>org.mvnpm.at.{namespace}</code> as groupId
+                    (e.g. <code>@hotwired/stimulus</code> becomes <code>org.mvnpm.at.hotwired:stimulus</code>).</i>
                 </p>
             </section>
             <section>
-                <h3>How to consume?</h3>
+                <h3>Ways to consume</h3>
                 <ul>
-                    <li>Packaged and served with the <a
-                            href="https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html"
-                            target="_blank">Quarkus Web Bundler extension</a> using scope "provided".
-                    </li>
-                    <li>Directly Served by Quarkus with scope "runtime"</li>
-                    <li>In any Java application with <a href="https://github.com/mvnpm/importmap" target="_blank">importmaps</a>
-                        or <a href="https://github.com/mvnpm/esbuild-java" target="_blank">esbuild-java</a></li>
-                    <li>In any Java application like you would have done with <a href="https://www.webjars.org/"
-                                                                                 target="_blank">webjars</a></li>
+                    <li>Packaged and served with the <a href="https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html" target="_blank">Quarkus Web Bundler extension</a> using scope "provided"</li>
+                    <li>Directly served by Quarkus with scope "runtime"</li>
+                    <li>In any Java application with <a href="https://github.com/mvnpm/importmap" target="_blank">importmaps</a> or <a href="https://github.com/mvnpm/esbuild-java" target="_blank">esbuild-java</a></li>
+                    <li>In any Java application as you would with <a href="https://www.webjars.org/" target="_blank">webjars</a></li>
                 </ul>
             </section>
             <section>
-                <h3>How to sync a missing package?</h3>
-                <p>
-                    A lot of packages are already synced on Central, which mean they can directly be used from you
-                    pom.xml or build.gradle.
-                    You may check if a package version is available by looking at the "Maven central" badge on the <a
-                        href="/">Browse page</a>.<br/>
-                    <b>If it's not:</b>
-                <ul>
-                    <li>Click on the "Maven Central" badge to trigger a sync with Maven Central</li>
-                    <li>Configure your local Maven settings to use the <a href="#configure-fallback-repo">MVNPM Maven
-                        Repository as a fallback</a>. When a
-                        package is
-                        missing, it will fetch it from the fallback repository and automatically trigger a sync with
-                        Maven Central.
-                    </li>
-                </ul>
-                <b>You should use the Maven Central repository for production builds.</b>
-                </p>
+                <h3>How it works</h3>
+                <img class="how" src="/static/how-does-mvnpm-work.png"/>
+                <ol>
+                    <li>Your Maven/Gradle build requests an NPM package from Maven Central.</li>
+                    <li>If the package doesn't exist on Central yet, the build falls through to the mvnpm repository (if configured as a fallback).</li>
+                    <li>mvnpm fetches the package from the NPM Registry, converts the tgz into a JAR, and generates a POM and import map.</li>
+                    <li>The JAR is returned to your build immediately so you can continue working.</li>
+                    <li>In the background, mvnpm creates all the files needed for Maven Central (source, javadoc, SHA1/MD5/ASC signatures) and uploads a release bundle.</li>
+                    <li>By the time your CI/CD pipeline runs, the package is available on Maven Central.</li>
+                </ol>
             </section>
             <section>
-                <h3 id="configure-fallback-repo">How to configure the fallback repository?</h3>
-                <p>
-                    The <b>mvnpm</b> Maven repository is a facade on top of the <a href="https://www.npmjs.com/"
-                                                                                   target="_blank">NPM Registry</a>, it
-                    is
-                    handy when starting (or updating versions) on a project with many non synchronised packages (which
-                    will
-                    become more and more unlikely in the future).<br/>
-                    to use it in your local Maven settings add the following to your settings.xml (typically <span
-                        class="url">/home/your-username/.m2/settings.xml</span>)<br/>
-                </p>
+                <h3>Syncing a missing package</h3>
+                <p>Most popular packages are already synced to Maven Central and can be used directly. Check the "Maven Central" badge on the <a href="/">Browse page</a> to see if a package version is available.</p>
+                <p>If it's not synced yet:</p>
+                <ul>
+                    <li>Click the "Maven Central" badge on the Browse page to trigger a sync.</li>
+                    <li>Or configure your Maven settings to use the <a href="#configure-fallback-repo">mvnpm repository as a fallback</a>. Missing packages will be fetched automatically and synced to Central.</li>
+                </ul>
+                <p><strong>Use Maven Central for production builds.</strong> The fallback repository is for development and initial sync only.</p>
+            </section>
+            <section>
+                <h3 id="configure-fallback-repo">Configuring the fallback repository</h3>
+                <p>The mvnpm Maven repository is a facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>. It's useful when starting a project or updating versions with many unsynced packages.</p>
+                <p>Add the following to your <span class="url">~/.m2/settings.xml</span>:</p>
                 <qui-code-block mode="xml" content="${this._settings}"></qui-code-block>
             </section>
             <section>
-                <h3>How does the mvnpm Maven repository work ?</h3>
-                <img class="how" src="/static/how-does-mvnpm-work.png"/>
-
-                <ul>
-                    <li>Developer's Maven build requests an npm package from Maven Central.</li>
-                    <li>Maven Central returns a 404 if the package does not exist.</li>
-                    <li>The developer's Maven build continues to the next repository (as configured above) and requests
-                        the npm package from mvnpm.
-                    </li>
-                    <li>mvnpm requests the NPM Registry for the package (tgz) and converts it to a JAR. It also
-                        generates and includes an import map and pom for this package.
-                    </li>
-                    <li>mvnpm returns this JAR to the developer, and the developer can continue with the build.</li>
-                    <li>In the background, mvnpm kicks off a process to create all the files needed to release this
-                        package to Maven Central. This includes:<br/>
-                        - source <br/>
-                        - javadoc <br/>
-                        - signatures for all of the files (sha1, md5, asc) <br/>
-                        - bundling all the above to upload to Central.
-                    </li>
-                    <li>Once the bundle exists, it gets uploaded and released to Maven Central.</li>
-                    <li>This means that by the time the CI/CD pipeline of the developer runs, the package is available
-                        in Maven Central.
-                    </li>
-                </ul>
+                <h3>Version updates</h3>
+                <p>mvnpm continuously monitors the NPM Registry for previously synchronized packages. When a new version is detected, it's automatically synced to Maven Central. Tools like Dependabot and Renovate will be able to propose version updates in your pull requests.</p>
             </section>
             <section>
-                <h3>How to update versions?</h3>
-                <p>
-                    <b>mvnpm</b> continuously monitor the NPM Registry for any previously synchronized packages.
-                    When it detects a new version, a synchronization process will be initiated. So tools like dependabot
-                    will be able to
-                    propose the new version in your pull requests.
-                </p>
-            </section>
-            <section>
-                <h3 id="how-to-lock-dependencies-">How to lock dependencies?</h3>
-                <p><strong>Locking with Maven</strong></p>
-                <p>The <a href="https://github.com/mvnpm/locker" target="_blank">mvnpm locker Maven Plugin</a> will
-                    create a version
-                    locker profile for your org.mvnpm and org.webjars dependencies. Allowing you to mimick the
-                    package-lock.json and yarn.lock files in a Maven world.</p>
-                <p>It is essential as NPM dependencies are typically deployed using version ranges, without locking your
-                    builds will use different versions of dependencies between builds if any of your transitive NPM
-                    based dependencies are updated.</p>
-                <p>In addition when using the locker, the number of files Maven need to download is considerably reduced
-                    as it no longer need to check all possible version ranges (better for reproducibility, contributors
-                    and CI).</p>
-                <p><strong>Locking with Gradle</strong></p>
-                <p>Gradle provides a native version locking system, to install it, add this:</p>
-                <p>build.gradle</p>
-                <p>
-                    <qui-code-block mode="groovy" content="${this._gradleLocking}"></qui-code-block>
-                </p>
+                <h3 id="how-to-lock-dependencies-">Locking dependencies</h3>
+                <p><strong>Maven</strong></p>
+                <p>The <a href="https://github.com/mvnpm/locker" target="_blank">mvnpm locker Maven Plugin</a> creates a version locker profile for your <code>org.mvnpm</code> and <code>org.webjars</code> dependencies, similar to <code>package-lock.json</code> or <code>yarn.lock</code>.</p>
+                <p>This is essential because NPM dependencies use version ranges. Without locking, your builds may pull different versions between runs. The locker also reduces the number of files Maven needs to download (better for reproducibility and CI).</p>
+                <p><strong>Gradle</strong></p>
+                <p>Gradle has native dependency locking. Enable it in your <code>build.gradle</code>:</p>
+                <qui-code-block mode="groovy" content="${this._gradleLocking}"></qui-code-block>
                 <p>Then run <code>gradle dependencies --write-locks</code> to generate the lockfile.</p>
-
             </section>
-
         `;
     }
 

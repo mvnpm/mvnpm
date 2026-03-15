@@ -44,10 +44,10 @@ export class MvnpmHome extends LitElement {
 
       input:-webkit-autofill,
       input:-webkit-autofill:focus {
-          // Fixes autofill css issue
           transition: background-color 0s 600000s, color 0s 600000s !important;
       }
 
+      /* --- Coordinates Bar --- */
       .coordinates-pane {
           width: 100%;
           display: flex;
@@ -65,42 +65,205 @@ export class MvnpmHome extends LitElement {
           column-gap: 15px;
       }
 
+      /* --- Hero Section --- */
+      .hero {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          padding: 60px 24px 20px;
+          gap: 16px;
+      }
+
+      .hero-title {
+          font-size: 2.4rem;
+          font-weight: 700;
+          text-align: center;
+          line-height: 1.2;
+          margin: 0;
+          letter-spacing: -0.02em;
+      }
+
+      .hero-title .accent {
+          background: linear-gradient(135deg, var(--mvnpm-amber, #F59E0B), var(--mvnpm-indigo, #6366F1));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+      }
+
+      .hero-subtitle {
+          font-size: 1.1rem;
+          color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
+          text-align: center;
+          max-width: 560px;
+          margin: 0;
+          line-height: 1.6;
+      }
+
+      /* --- How It Works --- */
+      .how-it-works {
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 0;
+          padding: 40px 24px 16px;
+          width: 100%;
+          max-width: 700px;
+      }
+
+      .how-step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          flex: 1;
+          min-width: 0;
+      }
+
+      .how-step-icon {
+          width: 56px;
+          height: 56px;
+          border-radius: var(--mvnpm-radius-md, 10px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          font-weight: 700;
+          border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+          background: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
+          font-family: var(--mvnpm-font-mono, monospace);
+          color: var(--mvnpm-text-primary);
+      }
+
+      .how-step-icon.npm {
+          border-color: #CB3837;
+          color: #CB3837;
+      }
+
+      .how-step-icon.mvnpm {
+          border-color: var(--mvnpm-amber, #F59E0B);
+          color: var(--mvnpm-amber, #F59E0B);
+      }
+
+      .how-step-icon.maven {
+          border-color: var(--mvnpm-indigo, #6366F1);
+          color: var(--mvnpm-indigo, #6366F1);
+      }
+
+      .how-step-label {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
+      }
+
+      .how-step-desc {
+          font-size: 0.75rem;
+          color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+          text-align: center;
+          max-width: 140px;
+      }
+
+      .how-arrow {
+          font-size: 28px;
+          font-weight: 700;
+          color: var(--mvnpm-amber, #F59E0B);
+          padding: 0 12px;
+          height: 56px;
+          display: flex;
+          align-items: center;
+      }
+
+      /* --- Recently Synced --- */
+      .recent-section {
+          width: 100%;
+          max-width: 700px;
+          padding: 16px 24px 32px;
+      }
+
+      .recent-header {
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+          margin-bottom: 12px;
+      }
+
+      .recent-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 10px;
+      }
+
+      .recent-item {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          padding: 12px 14px;
+          border-radius: var(--mvnpm-radius-sm, 6px);
+          border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+          background: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
+          cursor: pointer;
+          transition: border-color 0.15s ease;
+          overflow: hidden;
+      }
+
+      .recent-item:hover {
+          border-color: var(--mvnpm-indigo, var(--lumo-primary-color));
+      }
+
+      .recent-item-name {
+          font-size: 0.85rem;
+          font-weight: 600;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+      }
+
+      .recent-item-version {
+          font-size: 0.75rem;
+          color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+          font-family: var(--mvnpm-font-mono, monospace);
+      }
+
+      /* --- Tab/Package Detail --- */
       .tabpane {
           width: 100%;
           display: flex;
           flex-direction: column;
+          padding: 0 16px;
+      }
+
+      .info {
+          padding: 8px 0;
+      }
+
+      .info h1 {
+          font-size: 1.6rem;
+          font-weight: 700;
+          margin: 8px 0 4px;
+          letter-spacing: -0.01em;
       }
 
       .fileList {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          width: 20%;
-          padding-right: 10px;
+          gap: 8px;
+          width: 220px;
+          min-width: 220px;
+          padding-right: 16px;
+          border-right: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+          margin-right: 16px;
       }
 
       a {
-          color: var(--lumo-contrast-60pct);
-      }
-
-      a:link {
+          color: var(--mvnpm-text-link, var(--lumo-contrast-60pct));
           text-decoration: none;
-          color: var(--lumo-contrast-60pct);
-      }
-
-      a:visited {
-          text-decoration: none;
-          color: var(--lumo-contrast-60pct);
+          transition: color 0.15s ease;
       }
 
       a:hover {
-          text-decoration: none;
-          color: var(--lumo-body-text-color);
-      }
-
-      a:active {
-          text-decoration: none;
-          color: var(--lumo-contrast-60pct);
+          color: var(--mvnpm-text-link-hover, var(--lumo-body-text-color));
       }
 
       .block {
@@ -109,9 +272,15 @@ export class MvnpmHome extends LitElement {
       }
 
       .heading {
-          font-weight: bold;
-          background-color: var(--lumo-contrast-10pct);
-          padding: 10px;
+          font-weight: 600;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          background-color: var(--mvnpm-bg-surface, var(--lumo-contrast-10pct));
+          border-radius: var(--mvnpm-radius-sm, 6px);
+          padding: 6px 10px;
+          color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+          margin-top: 4px;
       }
 
       .use {
@@ -125,17 +294,24 @@ export class MvnpmHome extends LitElement {
 
       .fileBrowser {
           display: flex;
-          gap: 5px;
+          gap: 0;
           padding-top: 10px;
       }
 
       .line {
           display: flex;
           justify-content: space-between;
+          padding: 2px 0;
+          font-size: 0.85rem;
       }
 
       .line .outIcon {
-          font-size: 12px;
+          font-size: 11px;
+          opacity: 0.5;
+      }
+
+      .line .outIcon:hover {
+          opacity: 1;
       }
 
       .line a {
@@ -153,7 +329,7 @@ export class MvnpmHome extends LitElement {
 
       .nopreview {
           width: 100%;
-          color: var(--lumo-contrast-60pct);
+          color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
           font-size: 2rem;
           font-weight: bold;
           text-transform: uppercase;
@@ -168,31 +344,58 @@ export class MvnpmHome extends LitElement {
           display: flex;
           justify-content: space-between;
           width: 100%;
+          align-items: flex-start;
       }
 
       .info-buttons {
           display: flex;
-          gap: 20px;
-          font-size: smaller;
+          gap: 12px;
+          font-size: 0.8rem;
+          align-items: center;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+      }
+
+      .info-buttons a, .info-buttons span {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 4px 10px;
+          border-radius: var(--mvnpm-radius-sm, 6px);
+          border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+          background: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
+          transition: border-color 0.15s ease, background-color 0.15s ease;
+          white-space: nowrap;
+      }
+
+      .info-buttons a:hover {
+          border-color: var(--mvnpm-text-tertiary);
+          background: var(--mvnpm-bg-elevated, var(--lumo-contrast-10pct));
       }
 
       .badge {
-          background-color: gray;
-          color: white;
-          padding: 2px 4px;
+          background-color: var(--mvnpm-indigo, #6366F1) !important;
+          color: white !important;
+          border-color: var(--mvnpm-indigo, #6366F1) !important;
+          padding: 4px 10px;
           text-align: center;
-          border-radius: 5px;
-          font-size: small;
+          border-radius: var(--mvnpm-radius-sm, 6px);
+          font-size: 12px;
+          font-weight: 600;
           height: fit-content;
+      }
+
+      .description-line {
+          color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
+          font-size: 0.95rem;
       }
 
       .dependencies {
           padding-top: 20px;
           display: flex;
-          justify-content: space-evenly;
           width: 100%;
           justify-content: center;
-          gap: 20px;
+          gap: 16px;
       }
 
       @media (max-width: 1000px) {
@@ -202,24 +405,26 @@ export class MvnpmHome extends LitElement {
       }
 
       .copy {
-          width: 20px;
+          width: 18px;
           cursor: pointer;
+          opacity: 0.6;
+          transition: opacity 0.15s ease;
       }
 
       .copy:hover {
-          filter: brightness(0.85);
+          opacity: 1;
       }
 
       .gaveventlogconsole {
           display: flex;
           flex-direction: column;
           height: 100%;
-          padding-left: 20px;
-          padding-right: 20px;
-          background: black;
-          font-family: 'Courier New', monospace;
-          font-size: small;
-          filter: brightness(0.85);
+          padding: 16px 20px;
+          background: var(--mvnpm-code-bg, #151722);
+          border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+          border-radius: var(--mvnpm-radius-md, 10px);
+          font-family: var(--mvnpm-font-mono, 'Courier New', monospace);
+          font-size: 13px;
       }
 
       .gaveventlogline {
@@ -228,11 +433,35 @@ export class MvnpmHome extends LitElement {
           gap: 10px;
       }
 
+      .dependencyTable {
+          width: 100%;
+          border-collapse: collapse;
+      }
+
+      .dependencyTable td {
+          padding: 6px 8px;
+          font-size: 0.85rem;
+          font-family: var(--mvnpm-font-mono, monospace);
+          border-bottom: 1px solid var(--mvnpm-border, var(--lumo-contrast-5pct));
+          transition: background-color 0.1s ease;
+      }
+
+      .dependencyTable tr:hover td {
+          background: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
+      }
+
+      .dependencyTable tr:last-child td {
+          border-bottom: none;
+      }
+
+      /* --- Search Results --- */
       .searchResults {
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 12px;
           width: 90%;
+          max-width: 900px;
+          padding: 16px 0;
       }
 
       .searchResultName {
@@ -242,8 +471,13 @@ export class MvnpmHome extends LitElement {
           margin-bottom: 1px;
       }
 
+      .searchResultCard {
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
       .searchResultCard:hover {
-          filter: brightness(0.85);
+          border-color: var(--mvnpm-indigo, var(--lumo-primary-color));
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
           cursor: pointer;
       }
 
@@ -254,12 +488,15 @@ export class MvnpmHome extends LitElement {
       .searchResultDescription {
           padding-right: 10px;
           padding-left: 10px;
+          font-size: 0.9rem;
+          color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
       }
 
       .searchResultKeywords {
           display: flex;
-          gap: 5px;
+          gap: 6px;
           padding: 10px;
+          flex-wrap: wrap;
       }
 
       .searchResultDetails {
@@ -270,7 +507,8 @@ export class MvnpmHome extends LitElement {
       .searchResultLinks {
           padding: 15px;
           display: flex;
-          gap: 15px;
+          gap: 12px;
+          font-size: 0.85rem;
       }
 
       .infoCard {
@@ -284,14 +522,27 @@ export class MvnpmHome extends LitElement {
           align-items: center;
       }
 
-      .emptyScreen {
-          display: flex;
-          align-items: center;
-          height: 70%;
-          font-size: xxx-large;
-          opacity: 0.2;
+      @media (max-width: 600px) {
+          .hero-title {
+              font-size: 1.6rem;
+          }
+          .how-it-works {
+              padding: 24px 16px 8px;
+          }
+          .how-step-desc {
+              display: none;
+          }
+          .recent-grid {
+              grid-template-columns: 1fr 1fr;
+          }
+          .info-buttons {
+              gap: 6px;
+          }
+          .fileList {
+              width: 160px;
+              min-width: 160px;
+          }
       }
-
   `;
 
   @state()
@@ -332,6 +583,9 @@ export class MvnpmHome extends LitElement {
   @state()
   private _theme?: string;
 
+  @state()
+  private _recentReleases?: any[];
+
   constructor() {
     super();
     this._clearCoordinates();
@@ -348,6 +602,20 @@ export class MvnpmHome extends LitElement {
     } else if (currentPath.startsWith("/search/")) {
       this._showGA(currentPath.substring(8));
     }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._fetchRecentReleases();
+  }
+
+  private _fetchRecentReleases() {
+    fetch("/api/sync/item/RELEASED")
+      .then(response => response.json())
+      .then(items => {
+        this._recentReleases = items.slice(0, 12);
+      })
+      .catch(() => {});
   }
 
   render() {
@@ -400,9 +668,63 @@ export class MvnpmHome extends LitElement {
     } else if (this._searchResults) {
       return this._renderSearchResults();
     } else {
-      return html`
-        <div class="emptyScreen">Use NPM package like any other Maven/Gradle dependency...</div>`;
+      return this._renderHero();
     }
+  }
+
+  _renderHero() {
+    return html`
+      <div class="hero">
+        <h1 class="hero-title">NPM packages as <span class="accent">Maven dependencies</span></h1>
+        <p class="hero-subtitle">Search any NPM package and get Maven/Gradle coordinates instantly. Packages are automatically synced to Maven Central.</p>
+      </div>
+
+      <div class="how-it-works">
+        <div class="how-step">
+          <div class="how-step-icon npm">{ }</div>
+          <div class="how-step-label">NPM Registry</div>
+          <div class="how-step-desc">Source packages from npmjs.com</div>
+        </div>
+        <div class="how-arrow">&#10230;</div>
+        <div class="how-step">
+          <div class="how-step-icon mvnpm">mv</div>
+          <div class="how-step-label">mvnpm</div>
+          <div class="how-step-desc">Converts to JARs, POMs &amp; signs</div>
+        </div>
+        <div class="how-arrow">&#10230;</div>
+        <div class="how-step">
+          <div class="how-step-icon maven">&lt;/&gt;</div>
+          <div class="how-step-label">Maven Central</div>
+          <div class="how-step-desc">Use like any Maven dependency</div>
+        </div>
+      </div>
+
+      ${this._renderRecentReleases()}
+    `;
+  }
+
+  _renderRecentReleases() {
+    if (this._recentReleases && this._recentReleases.length > 0) {
+      return html`
+        <div class="recent-section">
+          <div class="recent-header">Recently synced</div>
+          <div class="recent-grid">
+            ${this._recentReleases.map(item => html`
+              <div class="recent-item" @click="${() => this._browseRecent(item)}">
+                <div class="recent-item-name">${item.artifactId}</div>
+                <div class="recent-item-version">${item.version}</div>
+              </div>
+            `)}
+          </div>
+        </div>
+      `;
+    }
+    return html``;
+  }
+
+  _browseRecent(item) {
+    this._coordinates.name = item.groupId + ":" + item.artifactId;
+    this._showGA(this._coordinates.name);
   }
 
   _renderTabPane() {
@@ -567,47 +889,45 @@ export class MvnpmHome extends LitElement {
             </div>
           </div>
           <div class="info-line">
-            ${unsafeHTML(marked(this._info.description))}
+            <div class="description-line">${unsafeHTML(marked(this._info.description))}</div>
             <div>by <a href="${this._info.organizationUrl}">${this._info.organizationName}</a></div>
           </div>
-          <div class="info-line">
-            <div class="dependencies">
-              <qui-card class="infoCard">
-                <div slot="header" style="width:100%;">
-                  <div class="infoCardHeader">
-                    <span>Pom dependency</span>
-                    <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o"
-                                 @click=${this._pomToClipboard}></vaadin-icon>
-                  </div>
+          <div class="dependencies">
+            <qui-card class="infoCard">
+              <div slot="header" style="width:100%;">
+                <div class="infoCardHeader">
+                  <span>Pom dependency</span>
+                  <vaadin-icon class="copy" title="copy to clipboard" icon="vaadin:copy-o"
+                               @click=${this._pomToClipboard}></vaadin-icon>
                 </div>
-                <div slot="content">
-                  <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
-                </div>
-                <div slot="footer">
-                  <vaadin-radio-group @change="${this._scopeChanged}">
-                    <vaadin-radio-button value="runtime" label="runtime"></vaadin-radio-button>
-                    <vaadin-radio-button value="provided" label="provided" checked></vaadin-radio-button>
-                  </vaadin-radio-group>
-                </div>
-              </qui-card>
-              <qui-card class="infoCard" header="Import map (Runtime)">
-                <div slot="content">
-                  <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
-                </div>
-              </qui-card>
-              <qui-card class="infoCard" header="Dependencies">
-                <div slot="content">
-                  <table class="dependencyTable">
-                    ${this._info.dependencies.map((dependency) =>
-                        html`
-                          <tr>
-                            <td style="cursor: pointer;" @click="${() => this._viewDependency(dependency)}">${dependency}</td>
-                          </tr>`
-                    )}
-                  </table>
-                </div>
-              </qui-card>
-            </div>
+              </div>
+              <div slot="content">
+                <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
+              </div>
+              <div slot="footer">
+                <vaadin-radio-group @change="${this._scopeChanged}">
+                  <vaadin-radio-button value="runtime" label="runtime"></vaadin-radio-button>
+                  <vaadin-radio-button value="provided" label="provided" checked></vaadin-radio-button>
+                </vaadin-radio-group>
+              </div>
+            </qui-card>
+            <qui-card class="infoCard" header="Import map (Runtime)">
+              <div slot="content">
+                <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
+              </div>
+            </qui-card>
+            <qui-card class="infoCard" header="Dependencies">
+              <div slot="content">
+                <table class="dependencyTable">
+                  ${this._info.dependencies.map((dependency) =>
+                      html`
+                        <tr>
+                          <td style="cursor: pointer;" @click="${() => this._viewDependency(dependency)}">${dependency}</td>
+                        </tr>`
+                  )}
+                </table>
+              </div>
+            </qui-card>
           </div>
         </div>
       `;
