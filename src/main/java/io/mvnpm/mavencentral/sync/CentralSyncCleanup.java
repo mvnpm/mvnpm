@@ -121,7 +121,16 @@ public class CentralSyncCleanup {
             groupId.append('.').append(relativePath.getName(i));
         }
 
+        String gav = groupId + ":" + artifactId + ":" + version;
         CentralSyncItem item = centralSyncItemService.find(groupId.toString(), artifactId, version);
-        return item == null || item.alreadyReleased();
+        if (item == null) {
+            Log.warnf("No sync item found for %s, skipping", gav);
+            return false;
+        }
+        if (item.alreadyReleased()) {
+            Log.infof("Deleting %s (stage: RELEASED)", gav);
+            return true;
+        }
+        return false;
     }
 }
