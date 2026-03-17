@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /maven2/
+Disallow: /api/
+Disallow: /q/
+
+Sitemap: https://mvnpm.org/sitemap.xml

@@ -136,18 +136,21 @@ export class MvnpmHome extends LitElement {
       }
 
       .how-step-icon.npm {
-          border-color: #CB3837;
-          color: #CB3837;
+          border-color: var(--mvnpm-text-primary, #18181B);
+          color: var(--mvnpm-text-primary, #18181B);
       }
 
       .how-step-icon.mvnpm {
-          border-color: var(--mvnpm-amber, #F59E0B);
-          color: var(--mvnpm-amber, #F59E0B);
+          border-image: linear-gradient(135deg, var(--mvnpm-amber, #F59E0B), var(--mvnpm-indigo, #6366F1)) 1;
+          background: linear-gradient(135deg, var(--mvnpm-amber, #F59E0B), var(--mvnpm-indigo, #6366F1));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
       }
 
       .how-step-icon.maven {
-          border-color: var(--mvnpm-indigo, #6366F1);
-          color: var(--mvnpm-indigo, #6366F1);
+          border-color: var(--mvnpm-amber, #F59E0B);
+          color: var(--mvnpm-amber, #F59E0B);
       }
 
       .how-step-label {
@@ -155,6 +158,8 @@ export class MvnpmHome extends LitElement {
           font-weight: 600;
           color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
       }
+
+
 
       .how-step-desc {
           font-size: 0.75rem;
@@ -687,7 +692,7 @@ export class MvnpmHome extends LitElement {
         </div>
         <div class="how-arrow">&#10230;</div>
         <div class="how-step">
-          <div class="how-step-icon mvnpm">mv</div>
+          <div class="how-step-icon mvnpm">{/&gt;</div>
           <div class="how-step-label">mvnpm</div>
           <div class="how-step-desc">Converts to JARs, POMs &amp; signs</div>
         </div>
@@ -990,12 +995,12 @@ export class MvnpmHome extends LitElement {
 
     return html`
       <div class="gaveventlogline">
-        <span style="color: grey">${formattedTime}</span>
-        <span style="color: lightblue">${entry.groupId}</span>
-        <span style="color: lightyellow">${entry.artifactId}</span>
-        <span style="color: lightpink">${entry.version}</span>
-        <span style="color: lightgrey">[${entry.stage}]</span>
-        <span style="color: ${entry.color}">${entry.message}</span>
+        <span style="color: var(--mvnpm-log-time, grey)">${formattedTime}</span>
+        <span style="color: var(--mvnpm-log-group, lightblue)">${entry.groupId}</span>
+        <span style="color: var(--mvnpm-log-artifact, lightyellow)">${entry.artifactId}</span>
+        <span style="color: var(--mvnpm-log-version, lightpink)">${entry.version}</span>
+        <span style="color: var(--mvnpm-log-stage, lightgrey)">[${entry.stage}]</span>
+        <span style="color: var(--mvnpm-log-${entry.color}, ${entry.color})">${entry.message}</span>
       </div>`;
   }
 
