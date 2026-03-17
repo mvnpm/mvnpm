@@ -38,7 +38,13 @@ export class MvnpmDoc extends LitElement {
             width: 100%;
         }
 
-        h3 {
+        h1 {
+            margin-top: 0;
+            font-weight: 700;
+            font-size: 1.6em;
+        }
+
+        h2 {
             margin-top: 0;
             font-weight: 600;
         }
@@ -121,8 +127,9 @@ export class MvnpmDoc extends LitElement {
 
     render() {
         return html`
+            <h1>Getting Started with mvnpm</h1>
             <section>
-                <h3>Add an NPM dependency</h3>
+                <h2>Add an NPM dependency</h2>
                 <p><b>mvnpm</b> lets you consume <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a> packages as dependencies directly from a Maven or Gradle project.</p>
                 <p><strong>Maven</strong></p>
                 <qui-code-block mode="xml" content="${this._dep}"></qui-code-block>
@@ -134,7 +141,7 @@ export class MvnpmDoc extends LitElement {
                 </p>
             </section>
             <section>
-                <h3>Ways to consume</h3>
+                <h2>Ways to consume</h2>
                 <ul>
                     <li>Packaged and served with the <a href="https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html" target="_blank">Quarkus Web Bundler extension</a> using scope "provided"</li>
                     <li>Directly served by Quarkus with scope "runtime"</li>
@@ -143,8 +150,8 @@ export class MvnpmDoc extends LitElement {
                 </ul>
             </section>
             <section>
-                <h3>How it works</h3>
-                <img class="how" src="/static/how-does-mvnpm-work.png"/>
+                <h2>How it works</h2>
+                <img class="how" src="/static/how-does-mvnpm-work.png" alt="Diagram showing how mvnpm converts NPM packages to Maven artifacts and syncs them to Maven Central"/>
                 <ol>
                     <li>Your Maven/Gradle build requests an NPM package from Maven Central.</li>
                     <li>If the package doesn't exist on Central yet, the build falls through to the mvnpm repository (if configured as a fallback).</li>
@@ -155,7 +162,7 @@ export class MvnpmDoc extends LitElement {
                 </ol>
             </section>
             <section>
-                <h3>Syncing a missing package</h3>
+                <h2>Syncing a missing package</h2>
                 <p>Most popular packages are already synced to Maven Central and can be used directly. Check the "Maven Central" badge on the <a href="/">Browse page</a> to see if a package version is available.</p>
                 <p>If it's not synced yet:</p>
                 <ul>
@@ -165,17 +172,17 @@ export class MvnpmDoc extends LitElement {
                 <p><strong>Use Maven Central for production builds.</strong> The fallback repository is for development and initial sync only.</p>
             </section>
             <section>
-                <h3 id="configure-fallback-repo">Configuring the fallback repository</h3>
+                <h2 id="configure-fallback-repo">Configuring the fallback repository</h2>
                 <p>The mvnpm Maven repository is a facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>. It's useful when starting a project or updating versions with many unsynced packages.</p>
                 <p>Add the following to your <span class="url">~/.m2/settings.xml</span>:</p>
                 <qui-code-block mode="xml" content="${this._settings}"></qui-code-block>
             </section>
             <section>
-                <h3>Version updates</h3>
+                <h2>Version updates</h2>
                 <p>mvnpm continuously monitors the NPM Registry for previously synchronized packages. When a new version is detected, it's automatically synced to Maven Central. Tools like Dependabot and Renovate will be able to propose version updates in your pull requests.</p>
             </section>
             <section>
-                <h3 id="how-to-lock-dependencies-">Locking dependencies</h3>
+                <h2 id="how-to-lock-dependencies-">Locking dependencies</h2>
                 <p><strong>Maven</strong></p>
                 <p>The <a href="https://github.com/mvnpm/locker" target="_blank">mvnpm locker Maven Plugin</a> creates a version locker profile for your <code>org.mvnpm</code> and <code>org.webjars</code> dependencies, similar to <code>package-lock.json</code> or <code>yarn.lock</code>.</p>
                 <p>This is essential because NPM dependencies use version ranges. Without locking, your builds may pull different versions between runs. The locker also reduces the number of files Maven needs to download (better for reproducibility and CI).</p>

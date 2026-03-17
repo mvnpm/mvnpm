@@ -1,21 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" fill="none">
   <defs>
     <linearGradient id="bridge" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#F59E0B"/>
       <stop offset="100%" stop-color="#6366F1"/>
     </linearGradient>
   </defs>
-  <!-- Bridge icon: { } connected to < > -->
-  <g transform="translate(0, 18)">
-    <path d="M12 20 Q4 20 4 28 L4 38 Q4 44 0 44 Q4 44 4 50 L4 60 Q4 68 12 68" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-    <path d="M30 20 Q38 20 38 28 L38 38 Q38 44 42 44 Q38 44 38 50 L38 60 Q38 68 30 68" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-    <line x1="46" y1="44" x2="68" y2="44" stroke="url(#bridge)" stroke-width="3" stroke-linecap="round"/>
-    <polyline points="62,38 68,44 62,50" stroke="url(#bridge)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="88,28 76,44 88,60" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <polyline points="92,28 104,44 92,60" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  </g>
+  <!-- {/> prefix -->
+  <text x="10" y="82" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace" font-size="64" font-weight="700" fill="url(#bridge)">{/&gt;</text>
   <!-- Wordmark - white text for dark backgrounds -->
-  <text x="120" y="80" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace" font-size="64" font-weight="700" letter-spacing="-1">
+  <text x="175" y="82" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace" font-size="64" font-weight="700" letter-spacing="-1">
     <tspan fill="#F0F0F0">mvn</tspan><tspan fill="#F59E0B">pm</tspan>
   </text>
 </svg>

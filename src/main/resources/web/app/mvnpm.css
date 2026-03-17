@@ -44,6 +44,15 @@ html[data-theme="dark"], html:not([data-theme]) {
 
     --mvnpm-code-bg: #151722;
 
+    /* Log entry colors */
+    --mvnpm-log-time: grey;
+    --mvnpm-log-group: lightblue;
+    --mvnpm-log-artifact: lightyellow;
+    --mvnpm-log-version: lightpink;
+    --mvnpm-log-stage: lightgrey;
+    --mvnpm-log-lightgreen: lightgreen;
+    --mvnpm-log-red: red;
+
     /* Lumo overrides */
     --lumo-clickable-cursor: pointer;
     --lumo-base-color: var(--mvnpm-bg-primary);
@@ -95,12 +104,21 @@ html[data-theme="light"] {
     --mvnpm-border-subtle: #F0F0F2;
 
     --mvnpm-text-primary: #18181B;
-    --mvnpm-text-secondary: #52525B;
-    --mvnpm-text-tertiary: #A1A1AA;
+    --mvnpm-text-secondary: #3F3F46;
+    --mvnpm-text-tertiary: #71717A;
     --mvnpm-text-link: #4F46E5;
     --mvnpm-text-link-hover: #6366F1;
 
     --mvnpm-code-bg: #F4F4F5;
+
+    /* Log entry colors */
+    --mvnpm-log-time: #71717A;
+    --mvnpm-log-group: #2563EB;
+    --mvnpm-log-artifact: #A16207;
+    --mvnpm-log-version: #DB2777;
+    --mvnpm-log-stage: #52525B;
+    --mvnpm-log-lightgreen: #16A34A;
+    --mvnpm-log-red: #DC2626;
 
     /* Lumo overrides */
     --lumo-clickable-cursor: pointer;
@@ -225,6 +243,7 @@ main {
     justify-content: flex-start;
     overflow-x: hidden;
     overflow-y: auto;
+    padding-top: 16px;
 }
 
 /* --- Footer --- */

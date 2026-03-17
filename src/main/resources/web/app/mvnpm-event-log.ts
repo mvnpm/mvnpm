@@ -138,12 +138,12 @@ export class MvnpmEventLog extends LitElement {
 
     return html`
       <div class="line">
-        <span style="color: grey">${formattedTime}</span>
-        <span style="color: lightblue">${entry.groupId}</span>
-        <span style="color: lightyellow">${entry.artifactId}</span>
-        <span style="color: lightpink">${entry.version}</span>
-        <span style="color: lightgrey">[${entry.stage}]</span>
-        <span style="color: ${entry.color}">${entry.message}</span>
+        <span style="color: var(--mvnpm-log-time, grey)">${formattedTime}</span>
+        <span style="color: var(--mvnpm-log-group, lightblue)">${entry.groupId}</span>
+        <span style="color: var(--mvnpm-log-artifact, lightyellow)">${entry.artifactId}</span>
+        <span style="color: var(--mvnpm-log-version, lightpink)">${entry.version}</span>
+        <span style="color: var(--mvnpm-log-stage, lightgrey)">[${entry.stage}]</span>
+        <span style="color: var(--mvnpm-log-${entry.color}, ${entry.color})">${entry.message}</span>
       </div>`;
   }
 

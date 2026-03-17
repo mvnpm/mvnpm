@@ -45,3 +45,6 @@ nbactions.xml
 
 # Quarkus
 .quarkus
+
+# CacheBro
+.cachebro/

@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html data-theme="dark">
+<html lang="en" data-theme="dark">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-        <link rel="shortcut icon" type="image/png" href="/static/ico.png">
         {#bundle /}
         {#let title="mvnpm - Use NPM packages as Maven/Gradle dependencies"}
         {#let description="Seamlessly integrate NPM packages into Java through Maven and Gradle dependencies. The bridge between NPM and Maven Central."}
@@ -40,13 +39,60 @@
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
-                "@type": "SoftwareApplication",
-                "name": "mvnpm",
-                "description": "{description}",
-                "url": "https://mvnpm.org/",
-                "image": "https://mvnpm.org/static/logo.svg",
-                "applicationCategory": "DeveloperTool",
-                "operatingSystem": "Cross-platform"
+                "@graph": [
+                    {
+                        "@type": "Organization",
+                        "@id": "https://mvnpm.org/#organization",
+                        "name": "mvnpm",
+                        "url": "https://mvnpm.org/",
+                        "logo": "https://mvnpm.org/static/logo.svg",
+                        "sameAs": [
+                            "https://github.com/mvnpm/mvnpm"
+                        ],
+                        "parentOrganization": {
+                            "@type": "Organization",
+                            "name": "Commonhaus Foundation",
+                            "url": "https://www.commonhaus.org"
+                        }
+                    },
+                    {
+                        "@type": "WebSite",
+                        "@id": "https://mvnpm.org/#website",
+                        "name": "mvnpm",
+                        "url": "https://mvnpm.org/",
+                        "description": "{description}",
+                        "publisher": {
+                            "@id": "https://mvnpm.org/#organization"
+                        },
+                        "potentialAction": {
+                            "@type": "SearchAction",
+                            "target": {
+                                "@type": "EntryPoint",
+                                "urlTemplate": "https://mvnpm.org/search/\{search_term_string}"
+                            },
+                            "query-input": "required name=search_term_string"
+                        }
+                    },
+                    {
+                        "@type": "SoftwareApplication",
+                        "@id": "https://mvnpm.org/#software",
+                        "name": "mvnpm",
+                        "description": "{description}",
+                        "url": "https://mvnpm.org/",
+                        "image": "https://mvnpm.org/static/logo.svg",
+                        "applicationCategory": "DeveloperApplication",
+                        "operatingSystem": "Cross-platform",
+                        "offers": {
+                            "@type": "Offer",
+                            "price": "0",
+                            "priceCurrency": "USD"
+                        },
+                        "codeRepository": "https://github.com/mvnpm/mvnpm",
+                        "author": {
+                            "@id": "https://mvnpm.org/#organization"
+                        }
+                    }
+                ]
             }
         </script>
 
@@ -84,7 +130,7 @@
 
         <footer>
             <div class="copyright">
-                <div>Copyright &copy; {config:['copyright.year']} <a href="https://www.commonhaus.org">mvnpm.io</a> | v{config:['quarkus.application.version']}</div>
+                <div>Copyright &copy; {config:['copyright.year']} <a href="https://www.commonhaus.org">mvnpm</a> | v{config:['quarkus.application.version']}</div>
                 <div class="smalltext">For details on our trademarks, please visit our <a href="https://www.commonhaus.org/policies/trademark-policy/">Trademark Policy</a> and <a href="https://www.commonhaus.org/trademarks/">Trademark List</a>.</div>
             </div>
             <a href="https://www.commonhaus.org" target="_blank">

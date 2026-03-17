@@ -1,0 +1,45 @@
+# mvnpm
+
+> mvnpm is the bridge between NPM and Maven Central. It lets Java developers use NPM packages as standard Maven or Gradle dependencies directly from Maven Central.
+
+## How it works
+
+Most popular NPM packages are already synced to Maven Central and can be used directly like any other Maven dependency. When a new version is published on NPM, mvnpm automatically detects it and syncs it to Maven Central.
+
+If a package is not yet on Maven Central, you can trigger a sync from the mvnpm website. For new projects with many unsynced dependencies, the mvnpm repository can be configured as a fallback to fetch and sync packages on the fly.
+
+## Usage
+
+### Maven
+```xml
+<dependency>
+    <groupId>org.mvnpm</groupId>
+    <artifactId>{package-name}</artifactId>
+    <version>{package-version}</version>
+</dependency>
+```
+
+### Gradle
+```groovy
+implementation 'org.mvnpm:{package-name}:{package-version}'
+```
+
+### Scoped packages
+Scoped NPM packages use `org.mvnpm.at.{namespace}` as the groupId.
+For example, `@hotwired/stimulus` becomes `org.mvnpm.at.hotwired:stimulus`.
+
+## Key features
+- Use any NPM package as a Maven or Gradle dependency from Maven Central
+- Automatic sync of new NPM versions to Maven Central
+- On-demand sync for unsynced packages via the mvnpm website
+- Fallback repository for new projects with many unsynced dependencies
+- NPM semver ranges converted to Maven version range syntax
+- Dependency locking via mvnpm locker plugin (Maven) or native Gradle locking
+
+## Links
+- Website: https://mvnpm.org
+- Documentation: https://mvnpm.org/doc
+- Source Code: https://github.com/mvnpm/mvnpm
+- mvnpm Locker Plugin: https://github.com/mvnpm/locker
+- Import Map Support: https://github.com/mvnpm/importmap
+- esbuild-java: https://github.com/mvnpm/esbuild-java

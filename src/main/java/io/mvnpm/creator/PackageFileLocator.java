@@ -75,21 +75,29 @@ public class PackageFileLocator {
         return Paths.get(localUserDirectory.orElse(Constants.CACHE_DIR)).resolve(localM2Directory);
     }
 
+    public Path getMetadataDir() {
+        return Paths.get(localUserDirectory.orElse(Constants.CACHE_DIR)).resolve("metadata");
+    }
+
     public Path getArtifactRoot(Name name) {
         return getGroupRoot(name.mvnPath).resolve(
                 Paths.get(name.mvnArtifactId));
     }
 
+    private Path getMetadataArtifactRoot(Name name) {
+        return getMetadataDir().resolve(name.mvnPath).resolve(name.mvnArtifactId);
+    }
+
     public Path getLocalMetadataXmlFullPath(Name name) {
-        return getArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML);
+        return getMetadataArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML);
     }
 
     public Path getLocalMetadataXmlSha1FullPath(Name name) {
-        return getArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML + Constants.DOT_SHA1);
+        return getMetadataArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML + Constants.DOT_SHA1);
     }
 
     public Path getLocalMetadataXmlMd5FullPath(Name name) {
-        return getArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML + Constants.DOT_MD5);
+        return getMetadataArtifactRoot(name).resolve(Constants.MAVEN_METADATA_XML + Constants.DOT_MD5);
     }
 
     public Path getLocalDirectory(Name name, String version) {
