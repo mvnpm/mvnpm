@@ -40,7 +40,7 @@ public class UITest {
 
         String title = page.title();
         Assertions.assertEquals(
-                "mvnpm - The best and easiest way to use NPM packages in the Java ecosystem as Maven/Gradle dependencies",
+                "mvnpm - Use NPM packages as Maven/Gradle dependencies",
                 title);
 
         final ElementHandle coordinatesInputEl = page.waitForSelector("#coordinates-field input");
@@ -63,9 +63,9 @@ public class UITest {
 
         String title = page.title();
         Assertions.assertEquals(
-                "mvnpm - The best and easiest way to use NPM packages in the Java ecosystem as Maven/Gradle dependencies",
+                "mvnpm - Use NPM packages as Maven/Gradle dependencies",
                 title);
-        page.getByText("Use NPM package like any other Maven/Gradle dependency...", new Page.GetByTextOptions().setExact(true))
+        page.getByText("Add an NPM dependency", new Page.GetByTextOptions().setExact(true))
                 .elementHandle();
     }
 

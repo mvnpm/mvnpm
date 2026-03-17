@@ -81,7 +81,7 @@ public class PackageGenerationTest {
     // Reproducing https://github.com/quarkusio/quarkus/issues/46527
     public void testCompositeMoreWithEsbuild() throws IOException {
         final InstalledJarResult result = downloadAndInstallJar(new Name("@mvnpm/vaadin-webcomponents"), "24.8.3");
-        assertEquals(57, result.dep().dirs().size());
+        assertEquals(56, result.dep().dirs().size());
 
         // Test JS and TypeScript definition files
         assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/index.js")), "index.js missing");

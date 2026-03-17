@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#0F1117"/>
+  <!-- { -->
+  <path d="M16 18 Q10 18 10 24 L10 28 Q10 32 6 32 Q10 32 10 36 L10 40 Q10 46 16 46" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- } -->
+  <path d="M28 18 Q34 18 34 24 L34 28 Q34 32 38 32 Q34 32 34 36 L34 40 Q34 46 28 46" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- < > -->
+  <polyline points="50,22 42,32 50,42" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="54,22 62,32 54,42" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Arrow -->
+  <line x1="36" y1="32" x2="44" y2="32" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/>
+  <polyline points="41,29 44,32 41,35" stroke="url(#g)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

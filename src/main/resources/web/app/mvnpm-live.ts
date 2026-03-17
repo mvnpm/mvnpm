@@ -14,14 +14,15 @@ export class MvnpmLive extends LitElement {
         :host {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 16px;
             width: 100%;
-            padding: 20px;
+            padding: 24px;
         }
 
         .live-sync {
             display: flex;
             justify-content: center;
+            padding: 8px;
         }
     `;
 

@@ -1,14 +1,26 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 500 500" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linejoin:round;stroke-miterlimit:2;">
-    <rect x="0" y="0" width="500" height="500" style="fill:white;fill-rule:nonzero;"/>
-    <g id="mvnpm">
-        <g>
-            <path d="M284.291,251.16L284.291,350.313L307.537,350.313L307.537,251.16L354.028,251.16L354.028,350.313L377.273,350.313L377.273,251.16L423.764,251.16L423.764,350.313L447.009,350.313L447.009,251.16L423.764,226.327L307.537,226.327L284.291,251.16Z" style="fill-rule:nonzero;"/>
-            <path d="M171.075,226.327L147.829,251.16L147.829,399.801L171.075,399.801L171.075,251.16L240.811,251.16L240.811,325.48L182.781,325.48L182.781,350.313L240.811,350.313L264.056,325.48L264.056,251.16L240.811,226.327L171.075,226.327Z" style="fill-rule:nonzero;"/>
-            <path d="M34.613,226.327L11.367,251.16L11.367,350.313L34.613,350.313L34.613,251.16L104.349,251.16L104.349,350.313L127.594,350.313L127.594,251.16L104.349,226.327L34.613,226.327Z" style="fill-rule:nonzero;"/>
-            <path d="M306.547,100.199L332.446,224.417L352.113,250.381L423.337,250.25L446.91,222.583L488.633,145.69L449.03,145.945L406.267,214.331L374.459,226.115L374.004,225.937L349.787,126.977L306.547,100.199Z" style="fill-rule:nonzero;"/>
-            <path d="M53.956,126.854L53.956,233.243L96.375,233.243L96.375,126.854L181.213,126.854L181.213,233.243L223.632,233.243L223.632,126.854L308.47,126.854L330.853,232.566L375.892,232.703L350.889,126.854L308.47,100.209L96.375,100.209L53.956,126.854Z" style="fill-rule:nonzero;"/>
-        </g>
-    </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 120" fill="none">
+  <defs>
+    <linearGradient id="bridge" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+  </defs>
+  <!-- Bridge icon: { } connected to < > -->
+  <g transform="translate(0, 18)">
+    <!-- Left bracket { -->
+    <path d="M12 20 Q4 20 4 28 L4 38 Q4 44 0 44 Q4 44 4 50 L4 60 Q4 68 12 68" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <!-- Right bracket } -->
+    <path d="M30 20 Q38 20 38 28 L38 38 Q38 44 42 44 Q38 44 38 50 L38 60 Q38 68 30 68" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <!-- Arrow bridge -->
+    <line x1="46" y1="44" x2="68" y2="44" stroke="url(#bridge)" stroke-width="3" stroke-linecap="round"/>
+    <polyline points="62,38 68,44 62,50" stroke="url(#bridge)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Left angle < -->
+    <polyline points="88,28 76,44 88,60" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Right angle > -->
+    <polyline points="92,28 104,44 92,60" stroke="url(#bridge)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <!-- Wordmark -->
+  <text x="120" y="80" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Consolas, monospace" font-size="64" font-weight="700" letter-spacing="-1">
+    <tspan fill="currentColor">mvn</tspan><tspan fill="#F59E0B">pm</tspan>
+  </text>
 </svg>

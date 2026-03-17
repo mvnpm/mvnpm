@@ -20,36 +20,54 @@ export class MvnpmReleases extends LitElement {
     :host {
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 16px;
         width: 100%;
-        padding: 20px;
-        padding-top: 60px;
+        padding: 24px;
+        padding-top: 24px;
     }
-    
+
+    vaadin-radio-group {
+        padding: 8px 12px;
+        background: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
+        border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+        border-radius: var(--mvnpm-radius-md, 10px);
+    }
+
+    vaadin-grid {
+        border-radius: var(--mvnpm-radius-md, 10px);
+        border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+        --lumo-base-color: var(--mvnpm-bg-secondary, var(--lumo-base-color));
+    }
+
+    span[style] {
+        transition: opacity 0.15s ease;
+    }
+
+    .empty-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px;
+        color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+        font-size: 0.95rem;
+    }
+
     .rotate {
         animation: rotation 1s infinite linear;
     }
 
     @keyframes rotation {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
-    
+
     .flicker {
         animation: flickerAnimation 0.15s infinite;
     }
-    
+
     @keyframes flickerAnimation {
-        0%, 100% {
-            opacity: 1;
-        }
-        50% {
-            opacity: 0;
-        }
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
     }
     `;
 
@@ -103,7 +121,7 @@ export class MvnpmReleases extends LitElement {
         } else if(!this._itemList){
             return html`<vaadin-progress-bar class="progressBar" indeterminate></vaadin-progress-bar>`;
         } else {
-            return html`<span>Nothing to display</span>`;
+            return html`<div class="empty-state">No items in this stage</div>`;
         }
     }
 

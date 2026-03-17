@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="dark">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="shortcut icon" type="image/png" href="https://mvnpm.org/static/ico.png">
+        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+        <link rel="shortcut icon" type="image/png" href="/static/ico.png">
         {#bundle /}
-        {#let title="mvnpm - The best and easiest way to use NPM packages in the Java ecosystem as Maven/Gradle dependencies"}
-        {#let description="Seamlessly integrate NPM packages into Java through Maven, and Gradle dependencies. The best solution for Java developers using frontend libraries."}
+        {#let title="mvnpm - Use NPM packages as Maven/Gradle dependencies"}
+        {#let description="Seamlessly integrate NPM packages into Java through Maven and Gradle dependencies. The bridge between NPM and Maven Central."}
 
         <title>{title}</title>
 
@@ -30,6 +31,10 @@
         <!-- Canonical URL -->
         <link rel="canonical" href="https://mvnpm.org/">
 
+        <!-- Preload Inter font -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
         <!-- Schema Markup -->
         <script type="application/ld+json">
@@ -44,26 +49,77 @@
                 "operatingSystem": "Cross-platform"
             }
         </script>
+
+        <script>
+            // Apply saved theme before first paint to avoid flash
+            (function() {
+                var saved = localStorage.getItem('mvnpm-theme');
+                if (saved) {
+                    document.documentElement.setAttribute('data-theme', saved);
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                }
+            })();
+        </script>
     </head>
 
     <body>
         <header>
             <div class="banner" onclick="location.href='/';">
-                <img src="/static/logo-reversed.svg" alt="mvnpm"/>
+                <img class="logo-dark" src="/static/logo.svg" alt="mvnpm"/>
+                <img class="logo-light" src="/static/logo-reversed.svg" alt="mvnpm"/>
             </div>
-            <mvnpm-nav></mvnpm-nav>
+            <div class="header-right">
+                <mvnpm-nav></mvnpm-nav>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
+                    <span class="theme-icon-dark">&#9790;</span>
+                    <span class="theme-icon-light">&#9728;</span>
+                </button>
+            </div>
         </header>
 
         <main id="outlet">
-          <img class="js-loading-indicator" src="/static/loader.svg" width="50" style="margin: 0 auto;"/>
+          <img class="js-loading-indicator" src="/static/loader.svg" width="40" style="margin: 0 auto;"/>
         </main>
 
         <footer>
             <div class="copyright">
-                <div>Copyright &copy; {config:['copyright.year']} <a href="https://www.commonhaus.org">mvnpm.io | v{config:['quarkus.application.version']}<a/> . All rights reserved </div>
-                <div class="smalltext">For details on our trademarks, please visit our <a href="https://www.commonhaus.org/policies/trademark-policy/">Trademark Policy</a> and <a href="https://www.commonhaus.org/trademarks/">Trademark List</a>. Trademarks of third parties are owned by their respective holders and their mention here does not suggest any endorsement or association.</div>
+                <div>Copyright &copy; {config:['copyright.year']} <a href="https://www.commonhaus.org">mvnpm.io</a> | v{config:['quarkus.application.version']}</div>
+                <div class="smalltext">For details on our trademarks, please visit our <a href="https://www.commonhaus.org/policies/trademark-policy/">Trademark Policy</a> and <a href="https://www.commonhaus.org/trademarks/">Trademark List</a>.</div>
             </div>
-            <img src="https://raw.githubusercontent.com/commonhaus/artwork/main/foundation/brand/png/CF_logo_horizontal_reverse_200px.png"/>
+            <a href="https://www.commonhaus.org" target="_blank">
+                <img src="https://raw.githubusercontent.com/commonhaus/artwork/main/foundation/brand/png/CF_logo_horizontal_reverse_200px.png" height="30" alt="Commonhaus Foundation"/>
+            </a>
         </footer>
+
+        <script>
+            function toggleTheme() {
+                var current = document.documentElement.getAttribute('data-theme') || 'dark';
+                var next = current === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('mvnpm-theme', next);
+            }
+        </script>
+
+        <style>
+            /* Logo visibility per theme */
+            html[data-theme="dark"] .logo-dark,
+            html:not([data-theme]) .logo-dark { display: none; }
+            html[data-theme="dark"] .logo-light,
+            html:not([data-theme]) .logo-light { display: block; }
+            html[data-theme="light"] .logo-dark { display: block; }
+            html[data-theme="light"] .logo-light { display: none; }
+
+            /* Theme toggle icon visibility */
+            html[data-theme="dark"] .theme-icon-dark,
+            html:not([data-theme]) .theme-icon-dark { display: none; }
+            html[data-theme="dark"] .theme-icon-light,
+            html:not([data-theme]) .theme-icon-light { display: inline; }
+            html[data-theme="light"] .theme-icon-dark { display: inline; }
+            html[data-theme="light"] .theme-icon-light { display: none; }
+
+            /* Commonhaus logo: invert for light mode */
+            html[data-theme="light"] footer img { filter: invert(1); }
+        </style>
     </body>
 </html>
