@@ -2,6 +2,7 @@ import {LitElement, html, css} from 'lit';
 import {customElement, state} from 'lit/decorators.js';
 import {unsafeHTML} from 'lit/directives/unsafe-html.js';
 import {compareVersions} from 'compare-versions';
+import {ThemeMixin} from './theme-mixin.js';
 import '@vaadin/form-layout';
 import '@vaadin/text-field';
 import '@vaadin/combo-box';
@@ -13,8 +14,6 @@ import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset';
 import '@vaadin/icons';
 import '@vaadin/progress-bar';
-import '@vaadin/tabs';
-import '@vaadin/tabsheet';
 import '@qomponent/qui-code-block';
 import '@qomponent/qui-card';
 import '@qomponent/qui-badge';
@@ -32,7 +31,7 @@ interface Coordinates {
  *
  */
 @customElement('mvnpm-home')
-export class MvnpmHome extends LitElement {
+export class MvnpmHome extends ThemeMixin(LitElement) {
 
   static styles = css`
       :host {
@@ -55,6 +54,14 @@ export class MvnpmHome extends LitElement {
           align-items: center;
           flex-direction: column;
           column-gap: 15px;
+      }
+
+      .coordinates-name {
+          width: 500px;
+      }
+
+      .coordinates-version {
+          width: 100px;
       }
 
       .coordinates {
@@ -527,9 +534,32 @@ export class MvnpmHome extends LitElement {
           align-items: center;
       }
 
-      @media (max-width: 600px) {
+      @media (max-width: 768px) {
+          .hero {
+              padding: 32px 16px 16px;
+          }
           .hero-title {
-              font-size: 1.6rem;
+              font-size: 1.8rem;
+          }
+          .hero-subtitle {
+              font-size: 0.95rem;
+          }
+          .coordinates-pane {
+              padding: 0 12px;
+              box-sizing: border-box;
+          }
+          .coordinates {
+              flex-wrap: wrap;
+              column-gap: 8px;
+              row-gap: 0;
+          }
+          .coordinates-name {
+              width: 100%;
+          }
+          .coordinates-version {
+              width: auto;
+              flex: 1;
+              min-width: 0;
           }
           .how-it-works {
               padding: 24px 16px 8px;
@@ -537,15 +567,79 @@ export class MvnpmHome extends LitElement {
           .how-step-desc {
               display: none;
           }
+          .how-arrow {
+              font-size: 22px;
+              padding: 0 6px;
+          }
+          .recent-section {
+              padding: 12px 16px 24px;
+          }
           .recent-grid {
               grid-template-columns: 1fr 1fr;
+          }
+          .info-line {
+              flex-direction: column;
+              gap: 8px;
           }
           .info-buttons {
               gap: 6px;
           }
+          .fileBrowser {
+              flex-direction: column;
+          }
           .fileList {
-              width: 160px;
-              min-width: 160px;
+              width: 100%;
+              min-width: unset;
+              border-right: none;
+              border-bottom: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+              padding-right: 0;
+              padding-bottom: 12px;
+              margin-right: 0;
+              margin-bottom: 12px;
+          }
+          .searchResults {
+              width: 95%;
+          }
+          .dependencies {
+              flex-direction: column;
+          }
+      }
+
+      @media (max-width: 480px) {
+          .hero {
+              padding: 20px 12px 12px;
+          }
+          .hero-title {
+              font-size: 1.4rem;
+          }
+          .hero-subtitle {
+              font-size: 0.85rem;
+          }
+          .how-step-icon {
+              width: 44px;
+              height: 44px;
+              font-size: 18px;
+          }
+          .how-step-label {
+              font-size: 0.75rem;
+          }
+          .how-arrow {
+              font-size: 18px;
+              padding: 0 4px;
+              height: 44px;
+          }
+          .recent-grid {
+              grid-template-columns: 1fr;
+          }
+          .info h1 {
+              font-size: 1.2rem;
+          }
+          .tabpane {
+              padding: 0 8px;
+          }
+          .gaveventlogline {
+              flex-wrap: wrap;
+              gap: 4px;
           }
       }
   `;
@@ -586,9 +680,6 @@ export class MvnpmHome extends LitElement {
   private _scope = "provided";
 
   @state()
-  private _theme?: string;
-
-  @state()
   private _recentReleases?: any[];
 
   constructor() {
@@ -598,7 +689,6 @@ export class MvnpmHome extends LitElement {
     this._codeViewSelection = ".pom";
     this._centralSyncItem = null;
     this._gavEventLog = null;
-    this._theme = "dark";
 
     var currentPath = window.location.pathname;
     if (currentPath.startsWith("/package/")) {
@@ -640,7 +730,7 @@ export class MvnpmHome extends LitElement {
   _renderCoordinates() {
     return html`
       <div class="coordinates">
-        <vaadin-text-field id="coordinates-field" label="Name (Package or Coordinates)" style="width: 500px"
+        <vaadin-text-field id="coordinates-field" label="Name (Package or Coordinates)" class="coordinates-name"
                            @focusout="${this._findVersionsAndShowLatest}"
                            @keypress="${this._findVersionsAndShowLatest}"
                            @input="${this._coordinatesNameChanged}"
@@ -662,7 +752,7 @@ export class MvnpmHome extends LitElement {
                         .items="${this._versions}"
                         value="${this._latestVersion}"
                         @change="${this._versionChanged}"
-                        style="width: 100px"
+                        class="coordinates-version"
       ></vaadin-combo-box>`
 
   }
@@ -907,7 +997,7 @@ export class MvnpmHome extends LitElement {
                 </div>
               </div>
               <div slot="content">
-                <qui-code-block id="pom-dependency-code" mode="xml" content="${this._usePom}"></qui-code-block>
+                <qui-code-block id="pom-dependency-code" mode="xml" theme="${this._theme}" content="${this._usePom}"></qui-code-block>
               </div>
               <div slot="footer">
                 <vaadin-radio-group @change="${this._scopeChanged}">
@@ -918,7 +1008,7 @@ export class MvnpmHome extends LitElement {
             </qui-card>
             <qui-card class="infoCard" header="Import map (Runtime)">
               <div slot="content">
-                <qui-code-block id="import-map-code" mode="json" content="${this._useJson}"></qui-code-block>
+                <qui-code-block id="import-map-code" mode="json" theme="${this._theme}" content="${this._useJson}"></qui-code-block>
               </div>
             </qui-card>
             <qui-card class="infoCard" header="Dependencies">
@@ -1036,7 +1126,7 @@ export class MvnpmHome extends LitElement {
   _renderCodeView() {
     if (this._codeViewMode) {
       return html`
-        <qui-code-block mode="${this._codeViewMode}" src='${this._codeViewSrc}?proxy=true'></qui-code-block>`;
+        <qui-code-block mode="${this._codeViewMode}" theme="${this._theme}" src='${this._codeViewSrc}?proxy=true'></qui-code-block>`;
     } else {
       return html`
         <mvnpm-jar-view jarName="${this._codeViewSrc}?proxy=true"></mvnpm-jar-view>`;
@@ -1045,7 +1135,6 @@ export class MvnpmHome extends LitElement {
 
   _showFile(e) {
     this._changeCodeView(e.target.dataset.file);
-    this._theme = "dark";
   }
 
   _changeCodeView(src) {

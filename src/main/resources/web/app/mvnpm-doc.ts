@@ -1,5 +1,6 @@
 import { LitElement, html, css} from 'lit';
-import { customElement, state } from 'lit/decorators.js';
+import { customElement } from 'lit/decorators.js';
+import { ThemeMixin } from './theme-mixin.js';
 import '@qomponent/qui-code-block';
 
 /**
@@ -7,91 +8,173 @@ import '@qomponent/qui-code-block';
  */
 
 @customElement('mvnpm-doc')
-export class MvnpmDoc extends LitElement {
+export class MvnpmDoc extends ThemeMixin(LitElement) {
 
     static styles = css`
         :host {
             width: 100%;
             display: flex;
             flex-direction: column;
-            padding: 30px;
-            gap: 30px;
+            padding: 40px 30px;
+            gap: 24px;
+            line-height: 1.7;
         }
 
         @media (min-width: 1100px) {
             :host {
-                width: 960px;
+                width: 720px;
                 margin: 0 auto;
             }
         }
 
         section {
-            background-color: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
-            border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
-            border-radius: var(--mvnpm-radius-md, 10px);
-            padding: 24px;
-            position: relative;
-            z-index: 1;
+            border-bottom: 1px solid var(--mvnpm-border-subtle, var(--lumo-contrast-5pct));
+            padding-bottom: 32px;
+        }
+
+        section:last-of-type {
+            border-bottom: none;
+            padding-bottom: 0;
         }
 
         qui-code-block {
             width: 100%;
+            height: auto;
+            border-radius: var(--mvnpm-radius-sm, 6px);
+            overflow: hidden;
+            margin: 8px 0 16px;
         }
 
         h1 {
-            margin-top: 0;
+            margin: 0 0 8px;
             font-weight: 700;
-            font-size: 1.6em;
+            font-size: 1.8em;
+            letter-spacing: -0.02em;
+            color: var(--mvnpm-text-primary, var(--lumo-body-text-color));
+        }
+
+        .subtitle {
+            color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
+            font-size: 1.05em;
+            margin: 0 0 16px;
         }
 
         h2 {
-            margin-top: 0;
+            margin: 0 0 12px;
             font-weight: 600;
+            font-size: 1.25em;
+            letter-spacing: -0.01em;
+            color: var(--mvnpm-text-primary, var(--lumo-body-text-color));
         }
 
-        .use {
-            width: 100%;
-            border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
-            border-radius: var(--mvnpm-radius-md, 10px);
-            padding: 20px;
+        p {
+            margin: 0 0 12px;
+            color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
         }
-        .url {
+
+        .label {
+            display: inline-block;
+            font-weight: 600;
+            font-size: 0.8em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+            margin: 12px 0 4px;
+        }
+
+        .hint {
+            font-size: 0.9em;
+            color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+            margin: 4px 0 0;
+        }
+
+        code, .url {
             font-family: var(--mvnpm-font-mono, monospace);
             background-color: var(--mvnpm-code-bg, var(--lumo-contrast-5pct));
             padding: 2px 6px;
             border-radius: 4px;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
-        code {
-            font-family: var(--mvnpm-font-mono, monospace);
-            background-color: var(--mvnpm-code-bg, var(--lumo-contrast-5pct));
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
+
         a {
-            color: var(--mvnpm-text-link, var(--lumo-contrast-60pct));
+            color: var(--mvnpm-indigo-light, var(--lumo-primary-text-color));
             text-decoration: none;
             transition: color 0.15s ease;
         }
+
         a:hover {
             color: var(--mvnpm-text-link-hover, var(--lumo-body-text-color));
+            text-decoration: underline;
         }
+
+        ul, ol {
+            margin: 8px 0 12px;
+            padding-left: 20px;
+            color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        li::marker {
+            color: var(--mvnpm-text-tertiary, var(--lumo-tertiary-text-color));
+        }
+
         .how {
             width: 100%;
             border-radius: var(--mvnpm-radius-md, 10px);
+            margin-bottom: 16px;
+        }
+
+        .callout {
+            background-color: var(--mvnpm-code-bg, var(--lumo-contrast-5pct));
+            border-left: 3px solid var(--mvnpm-indigo-light, var(--lumo-primary-color));
+            padding: 12px 16px;
+            border-radius: 0 var(--mvnpm-radius-sm, 6px) var(--mvnpm-radius-sm, 6px) 0;
+            margin: 12px 0;
+            font-size: 0.95em;
+        }
+
+        .callout p {
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            :host {
+                padding: 20px 16px;
+                gap: 20px;
+            }
+            h1 {
+                font-size: 1.4em;
+            }
+            h2 {
+                font-size: 1.1em;
+            }
+            section {
+                padding-bottom: 24px;
+            }
+            qui-code-block {
+                font-size: 0.8rem;
+            }
+            code, .url {
+                font-size: 0.8em;
+                word-break: break-all;
+            }
         }
     `;
-    @state() _dep: string = `<dependency>
+
+    private _dep = `<dependency>
     <groupId>org.mvnpm</groupId>
     <artifactId>{package-name}</artifactId>
     <version>{package-version}</version>
     <scope>{runtime/provided}</scope>
 </dependency>`;
 
-    @state() _gradleDep: string = `implementation 'org.mvnpm:{package-name}:{package-version}'`;
-    @state() _settings: string = `
-<settings>
+    private _gradleDep = `implementation 'org.mvnpm:{package-name}:{package-version}'
+// or compileOnly for bundled usage`;
+
+    private _settings = `<settings>
     <profiles>
         <profile>
             <id>mvnpm-repo</id>
@@ -105,7 +188,7 @@ export class MvnpmDoc extends LitElement {
                     <snapshots>
                         <enabled>false</enabled>
                     </snapshots>
-                    <id>mvnpm.org</id> 
+                    <id>mvnpm.org</id>
                     <name>mvnpm</name>
                     <url>https://repo.mvnpm.org/maven2</url>
                 </repository>
@@ -116,82 +199,92 @@ export class MvnpmDoc extends LitElement {
     <activeProfiles>
         <activeProfile>mvnpm-repo</activeProfile>
     </activeProfiles>
-
 </settings>`;
 
-    @state() _gradleLocking: string = `
-     dependencyLocking {
-        lockAllConfigurations()
-     }   
-    `;
+    private _gradleRepo = `repositories {
+    mavenCentral()
+    maven { url "https://repo.mvnpm.org/maven2" }
+}`;
+
+    private _gradleLocking = `dependencyLocking {
+    lockAllConfigurations()
+}`;
 
     render() {
         return html`
-            <h1>Getting Started with mvnpm</h1>
+            <header>
+                <h1>Getting Started with mvnpm</h1>
+                <p class="subtitle">Use NPM packages as standard Maven or Gradle dependencies.</p>
+            </header>
+
             <section>
                 <h2>Add an NPM dependency</h2>
-                <p><b>mvnpm</b> lets you consume <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a> packages as dependencies directly from a Maven or Gradle project.</p>
-                <p><strong>Maven</strong></p>
-                <qui-code-block mode="xml" content="${this._dep}"></qui-code-block>
-                <p><strong>Gradle</strong></p>
-                <qui-code-block mode="groovy" content="${this._gradleDep}"></qui-code-block>
-                <p>
-                    <i>For scoped packages, use <code>org.mvnpm.at.{namespace}</code> as groupId
-                    (e.g. <code>@hotwired/stimulus</code> becomes <code>org.mvnpm.at.hotwired:stimulus</code>).</i>
+                <p><b>mvnpm</b> lets you consume <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a> packages directly from your Java build tool.</p>
+                <span class="label">Maven</span>
+                <qui-code-block mode="xml" theme="${this._theme}" content="${this._dep}"></qui-code-block>
+                <span class="label">Gradle</span>
+                <qui-code-block mode="groovy" theme="${this._theme}" content="${this._gradleDep}"></qui-code-block>
+                <p class="hint">
+                    For scoped packages, use <code>org.mvnpm.at.{namespace}</code> as groupId
+                    (e.g. <code>@hotwired/stimulus</code> becomes <code>org.mvnpm.at.hotwired:stimulus</code>).
                 </p>
             </section>
+
             <section>
                 <h2>Ways to consume</h2>
                 <ul>
-                    <li>Packaged and served with the <a href="https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html" target="_blank">Quarkus Web Bundler extension</a> using scope "provided"</li>
-                    <li>Directly served by Quarkus with scope "runtime"</li>
-                    <li>In any Java application with <a href="https://github.com/mvnpm/importmap" target="_blank">importmaps</a> or <a href="https://github.com/mvnpm/esbuild-java" target="_blank">esbuild-java</a></li>
-                    <li>In any Java application as you would with <a href="https://www.webjars.org/" target="_blank">webjars</a></li>
+                    <li>Bundled and served with the <a href="https://docs.quarkiverse.io/quarkus-web-bundler/dev/index.html" target="_blank">Quarkus Web Bundler</a> (scope <code>provided</code>)</li>
+                    <li>Served directly using <a href="https://github.com/mvnpm/importmap" target="_blank">importmaps</a> (scope <code>runtime</code>)</li>
+                    <li>Bundled with <a href="https://github.com/mvnpm/esbuild-java" target="_blank">esbuild-java</a></li>
+                    <li>As a drop-in <a href="https://www.webjars.org/" target="_blank">WebJars</a> replacement</li>
                 </ul>
             </section>
-            <section>
-                <h2>How it works</h2>
-                <img class="how" src="/static/how-does-mvnpm-work.png" alt="Diagram showing how mvnpm converts NPM packages to Maven artifacts and syncs them to Maven Central"/>
-                <ol>
-                    <li>Your Maven/Gradle build requests an NPM package from Maven Central.</li>
-                    <li>If the package doesn't exist on Central yet, the build falls through to the mvnpm repository (if configured as a fallback).</li>
-                    <li>mvnpm fetches the package from the NPM Registry, converts the tgz into a JAR, and generates a POM and import map.</li>
-                    <li>The JAR is returned to your build immediately so you can continue working.</li>
-                    <li>In the background, mvnpm creates all the files needed for Maven Central (source, javadoc, SHA1/MD5/ASC signatures) and uploads a release bundle.</li>
-                    <li>By the time your CI/CD pipeline runs, the package is available on Maven Central.</li>
-                </ol>
-            </section>
+
             <section>
                 <h2>Syncing a missing package</h2>
-                <p>Most popular packages are already synced to Maven Central and can be used directly. Check the "Maven Central" badge on the <a href="/">Browse page</a> to see if a package version is available.</p>
-                <p>If it's not synced yet:</p>
+                <p>Most popular packages are already on Maven Central. Check the "Maven Central" badge on the <a href="/">Browse page</a> to verify.</p>
                 <ul>
-                    <li>Click the "Maven Central" badge on the Browse page to trigger a sync.</li>
-                    <li>Or configure your Maven settings to use the <a href="#configure-fallback-repo">mvnpm repository as a fallback</a>. Missing packages will be fetched automatically and synced to Central.</li>
+                    <li>Click the "Maven Central" badge to trigger a sync.</li>
+                    <li>Or configure the <a href="#configure-fallback-repo">fallback repository</a> to fetch missing packages automatically.</li>
                 </ul>
-                <p><strong>Use Maven Central for production builds.</strong> The fallback repository is for development and initial sync only.</p>
+                <p>Once a package is synced, mvnpm automatically syncs new versions as they're published on NPM. Tools like Dependabot and Renovate can then propose updates in your pull requests.</p>
+                <div class="callout">
+                    <p><strong>Use Maven Central for production builds.</strong> The fallback repository is for development and initial sync only.</p>
+                </div>
             </section>
+
+            <section>
+                <h2>Fallback repository mode</h2>
+                <img class="how" src="/static/how-does-mvnpm-work.svg" alt="Diagram showing how mvnpm converts NPM packages to Maven artifacts and syncs them to Maven Central"/>
+                <ol>
+                    <li>Your build requests a package from Maven Central.</li>
+                    <li>If it's not there yet, the request falls through to the mvnpm repository.</li>
+                    <li>mvnpm fetches the package from NPM and converts it into a Maven artifact (JAR + POM).</li>
+                    <li>The artifact is returned to your build immediately and synced to Maven Central in the background.</li>
+                </ol>
+            </section>
+
             <section>
                 <h2 id="configure-fallback-repo">Configuring the fallback repository</h2>
-                <p>The mvnpm Maven repository is a facade on top of the <a href="https://www.npmjs.com/" target="_blank">NPM Registry</a>. It's useful when starting a project or updating versions with many unsynced packages.</p>
-                <p>Add the following to your <span class="url">~/.m2/settings.xml</span>:</p>
-                <qui-code-block mode="xml" content="${this._settings}"></qui-code-block>
+                <p>Add mvnpm as a fallback repository so missing packages are fetched automatically.</p>
+                <span class="label">Maven</span>
+                <p>Add to your <span class="url">~/.m2/settings.xml</span>:</p>
+                <qui-code-block mode="xml" theme="${this._theme}" content="${this._settings}"></qui-code-block>
+                <span class="label">Gradle</span>
+                <p>Add to your <span class="url">build.gradle</span>:</p>
+                <qui-code-block mode="groovy" theme="${this._theme}" content="${this._gradleRepo}"></qui-code-block>
             </section>
-            <section>
-                <h2>Version updates</h2>
-                <p>mvnpm continuously monitors the NPM Registry for previously synchronized packages. When a new version is detected, it's automatically synced to Maven Central. Tools like Dependabot and Renovate will be able to propose version updates in your pull requests.</p>
-            </section>
+
             <section>
                 <h2 id="how-to-lock-dependencies-">Locking dependencies</h2>
-                <p><strong>Maven</strong></p>
-                <p>The <a href="https://github.com/mvnpm/locker" target="_blank">mvnpm locker Maven Plugin</a> creates a version locker profile for your <code>org.mvnpm</code> and <code>org.webjars</code> dependencies, similar to <code>package-lock.json</code> or <code>yarn.lock</code>.</p>
-                <p>This is essential because NPM dependencies use version ranges. Without locking, your builds may pull different versions between runs. The locker also reduces the number of files Maven needs to download (better for reproducibility and CI).</p>
-                <p><strong>Gradle</strong></p>
-                <p>Gradle has native dependency locking. Enable it in your <code>build.gradle</code>:</p>
-                <qui-code-block mode="groovy" content="${this._gradleLocking}"></qui-code-block>
+                <span class="label">Maven</span>
+                <p>The <a href="https://github.com/mvnpm/locker" target="_blank">mvnpm locker Maven Plugin</a> locks your <code>org.mvnpm</code> and <code>org.webjars</code> dependency versions, similar to <code>package-lock.json</code> or <code>yarn.lock</code>.</p>
+                <span class="label">Gradle</span>
+                <p>Enable native dependency locking in your <code>build.gradle</code>:</p>
+                <qui-code-block mode="groovy" theme="${this._theme}" content="${this._gradleLocking}"></qui-code-block>
                 <p>Then run <code>gradle dependencies --write-locks</code> to generate the lockfile.</p>
             </section>
         `;
     }
 
- }
+}

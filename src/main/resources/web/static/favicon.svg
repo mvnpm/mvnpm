@@ -5,5 +5,6 @@
       <stop offset="100%" stop-color="#6366F1"/>
     </linearGradient>
   </defs>
-  <text x="32" y="54" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace" font-size="56" font-weight="700" fill="url(#g)" text-anchor="middle">{/&gt;</text>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <text x="31.4" y="30.6" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace" font-size="30" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="central">{/&gt;</text>
 </svg>

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
+import { ThemeMixin } from './theme-mixin.js';
 import type { TabsSelectedChangedEvent } from '@vaadin/tabs';
 import '@vaadin/combo-box';
 import '@vaadin/progress-bar';
@@ -19,7 +20,7 @@ const isAdmin = params.get('admin') === 'true';
  * This component shows the composites
  */
 @customElement('mvnpm-composites')
-export class MvnpmComposites extends LitElement {
+export class MvnpmComposites extends ThemeMixin(LitElement) {
     static styles = css`
     :host {
         display: flex;
@@ -72,7 +73,7 @@ export class MvnpmComposites extends LitElement {
 
     @state({ type: Boolean})
     private _isPublishing: boolean = false;
-    
+
     connectedCallback() {
         super.connectedCallback();
         this._fetchCompositesList();
@@ -111,7 +112,7 @@ export class MvnpmComposites extends LitElement {
                                 <vaadin-icon icon="vaadin:external-link" style="color: lightgrey;height:15px; width: 15px;" @click="${this._browse}"></vaadin-icon></h3>
                                 ${this._renderVersions()}
                             </div>
-                            <qui-code-block mode="xml" src="${this._selectedComposite.download_url}"></qui-code-block>
+                            <qui-code-block mode="xml" theme="${this._theme}" src="${this._selectedComposite.download_url}"></qui-code-block>
                         </div>`;
     }
 
