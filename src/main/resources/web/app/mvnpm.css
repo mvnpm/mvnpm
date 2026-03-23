@@ -203,7 +203,7 @@ header .banner {
 }
 
 header .banner img {
-    height: 36px;
+    height: 56px;
 }
 
 header .header-right {
@@ -313,4 +313,59 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
 ::selection {
     background-color: rgba(99, 102, 241, 0.3);
     color: inherit;
+}
+
+/* --- Responsive: Tablet --- */
+@media (max-width: 768px) {
+    header {
+        height: auto;
+        padding: 8px 12px;
+        flex-direction: column;
+        align-items: center;
+        gap: 0;
+    }
+
+    header .banner {
+        justify-content: center;
+        width: 100%;
+    }
+
+    header .banner img {
+        height: 56px;
+    }
+
+    header .header-right {
+        width: 100%;
+        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .theme-toggle {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+    }
+
+    footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 8px 12px;
+    }
+
+    footer .smalltext {
+        display: none;
+    }
+}
+
+/* --- Responsive: Mobile --- */
+@media (max-width: 480px) {
+    main {
+        padding-top: 8px;
+    }
+
+    footer img {
+        height: 24px !important;
+    }
 }

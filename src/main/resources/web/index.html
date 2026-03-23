@@ -3,7 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+        <link rel="icon" type="image/svg+xml" href="/static/favicon.svg?v={config:['quarkus.application.version']}">
+        <link rel="icon" type="image/x-icon" sizes="64x64 32x32 16x16" href="/static/favicon.ico?v={config:['quarkus.application.version']}">
         {#bundle /}
         {#let title="mvnpm - Use NPM packages as Maven/Gradle dependencies"}
         {#let description="Seamlessly integrate NPM packages into Java through Maven and Gradle dependencies. The bridge between NPM and Maven Central."}
@@ -14,18 +15,23 @@
         <meta name="keywords" content="mvnpm, npm in Java, Maven NPM, Gradle NPM, Java frontend integration, use npm with Java, JavaScript in Maven, best npm tool for Java">
         <meta name="author" content="mvnpm Team">
 
-        <!-- Open Graph / Facebook -->
+        <!-- Open Graph / Facebook / LinkedIn / Slack / Discord -->
         <meta property="og:title" content="{title}">
         <meta property="og:description" content="{description}">
-        <meta property="og:image" content="https://mvnpm.org/static/logo.svg">
+        <meta property="og:image" content="https://mvnpm.org/static/og-image.png">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
+        <meta property="og:image:type" content="image/png">
         <meta property="og:url" content="https://mvnpm.org/">
         <meta property="og:type" content="website">
+        <meta property="og:site_name" content="mvnpm">
 
         <!-- Twitter Cards -->
         <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{title}">
         <meta name="twitter:description" content="{description}">
-        <meta name="twitter:image" content="https://mvnpm.org/static/logo.svg">
+        <meta name="twitter:image" content="https://mvnpm.org/static/og-image.png">
+        <meta name="twitter:image:alt" content="mvnpm - Use NPM packages as Maven/Gradle dependencies">
 
         <!-- Canonical URL -->
         <link rel="canonical" href="https://mvnpm.org/">
@@ -45,7 +51,7 @@
                         "@id": "https://mvnpm.org/#organization",
                         "name": "mvnpm",
                         "url": "https://mvnpm.org/",
-                        "logo": "https://mvnpm.org/static/logo.svg",
+                        "logo": "https://mvnpm.org/static/og-image.png",
                         "sameAs": [
                             "https://github.com/mvnpm/mvnpm"
                         ],
@@ -79,7 +85,7 @@
                         "name": "mvnpm",
                         "description": "{description}",
                         "url": "https://mvnpm.org/",
-                        "image": "https://mvnpm.org/static/logo.svg",
+                        "image": "https://mvnpm.org/static/og-image.png",
                         "applicationCategory": "DeveloperApplication",
                         "operatingSystem": "Cross-platform",
                         "offers": {
@@ -112,20 +118,20 @@
     <body>
         <header>
             <div class="banner" onclick="location.href='/';">
-                <img class="logo-dark" src="/static/logo.svg" alt="mvnpm"/>
-                <img class="logo-light" src="/static/logo-reversed.svg" alt="mvnpm"/>
+                <img class="logo-dark" src="/static/logo.svg?v={config:['quarkus.application.version']}" alt="mvnpm"/>
+                <img class="logo-light" src="/static/logo-reversed.svg?v={config:['quarkus.application.version']}" alt="mvnpm"/>
             </div>
             <div class="header-right">
                 <mvnpm-nav></mvnpm-nav>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme">
-                    <span class="theme-icon-dark">&#9790;</span>
-                    <span class="theme-icon-light">&#9728;</span>
+                    <svg class="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    <svg class="theme-icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
                 </button>
             </div>
         </header>
 
         <main id="outlet">
-          <img class="js-loading-indicator" src="/static/loader.svg" width="40" style="margin: 0 auto;"/>
+          <img class="js-loading-indicator" src="/static/loader.svg?v={config:['quarkus.application.version']}" width="40" style="margin: 0 auto;"/>
         </main>
 
         <footer>
@@ -160,8 +166,8 @@
             html[data-theme="dark"] .theme-icon-dark,
             html:not([data-theme]) .theme-icon-dark { display: none; }
             html[data-theme="dark"] .theme-icon-light,
-            html:not([data-theme]) .theme-icon-light { display: inline; }
-            html[data-theme="light"] .theme-icon-dark { display: inline; }
+            html:not([data-theme]) .theme-icon-light { display: block; }
+            html[data-theme="light"] .theme-icon-dark { display: block; }
             html[data-theme="light"] .theme-icon-light { display: none; }
 
             /* Commonhaus logo: invert for light mode */

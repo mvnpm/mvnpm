@@ -46,5 +46,6 @@ nbactions.xml
 # Quarkus
 .quarkus
 
-# CacheBro
-.cachebro/
+# Claude Code
+.claude/
+.playwright-mcp/

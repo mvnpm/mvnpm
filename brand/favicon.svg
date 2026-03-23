@@ -5,15 +5,6 @@
       <stop offset="100%" stop-color="#6366F1"/>
     </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="14" fill="#0F1117"/>
-  <!-- { -->
-  <path d="M16 18 Q10 18 10 24 L10 28 Q10 32 6 32 Q10 32 10 36 L10 40 Q10 46 16 46" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-  <!-- } -->
-  <path d="M28 18 Q34 18 34 24 L34 28 Q34 32 38 32 Q34 32 34 36 L34 40 Q34 46 28 46" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-  <!-- < > -->
-  <polyline points="50,22 42,32 50,42" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <polyline points="54,22 62,32 54,42" stroke="url(#g)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Arrow -->
-  <line x1="36" y1="32" x2="44" y2="32" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round"/>
-  <polyline points="41,29 44,32 41,35" stroke="url(#g)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="64" height="64" rx="14" fill="url(#g)"/>
+  <text x="31.4" y="30.6" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', Consolas, monospace" font-size="30" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="central">{/&gt;</text>
 </svg>
