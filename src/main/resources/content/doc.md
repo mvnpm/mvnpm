@@ -2,7 +2,7 @@
 layout: main
 title: "Getting Started with mvnpm"
 description: "Use NPM packages as standard Maven or Gradle dependencies. Learn how to add NPM dependencies, configure the fallback repository, and lock versions."
-image: static/og-image.png
+image: og-image.png
 ---
 
 # Getting Started with mvnpm
@@ -18,20 +18,20 @@ Use NPM packages as standard Maven or Gradle dependencies.
 ```xml
 <dependency>
     <groupId>org.mvnpm</groupId>
-    <artifactId>{package-name}</artifactId>
-    <version>{package-version}</version>
-    <scope>{runtime/provided}</scope>
+    <artifactId>\{package-name}</artifactId>
+    <version>\{package-version}</version>
+    <scope>\{runtime/provided}</scope>
 </dependency>
 ```
 
 **Gradle**
 
 ```groovy
-implementation 'org.mvnpm:{package-name}:{package-version}'
+implementation 'org.mvnpm:\{package-name}:\{package-version}'
 // or compileOnly for bundled usage
 ```
 
-For scoped packages, use `org.mvnpm.at.{namespace}` as groupId
+For scoped packages, use `org.mvnpm.at.\{namespace}` as groupId
 (e.g. `@hotwired/stimulus` becomes `org.mvnpm.at.hotwired:stimulus`).
 
 ## Ways to consume
