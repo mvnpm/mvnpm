@@ -137,26 +137,5 @@
             localStorage.setItem('mvnpm-theme', next);
         }
     </script>
-
-    <style>
-        /* Logo visibility per theme */
-        html[data-theme="dark"] .logo-dark,
-        html:not([data-theme]) .logo-dark { display: none; }
-        html[data-theme="dark"] .logo-light,
-        html:not([data-theme]) .logo-light { display: block; }
-        html[data-theme="light"] .logo-dark { display: block; }
-        html[data-theme="light"] .logo-light { display: none; }
-
-        /* Theme toggle icon visibility */
-        html[data-theme="dark"] .theme-icon-dark,
-        html:not([data-theme]) .theme-icon-dark { display: none; }
-        html[data-theme="dark"] .theme-icon-light,
-        html:not([data-theme]) .theme-icon-light { display: block; }
-        html[data-theme="light"] .theme-icon-dark { display: block; }
-        html[data-theme="light"] .theme-icon-light { display: none; }
-
-        /* Commonhaus logo: invert for light mode */
-        html[data-theme="light"] footer img { filter: invert(1); }
-    </style>
 </body>
 </html>

@@ -445,25 +445,21 @@ footer .copyright {
 }
 
 /* --- Scrollbar (dark theme) --- */
-html[data-theme="dark"] ::-webkit-scrollbar,
-html:not([data-theme]) ::-webkit-scrollbar {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-html[data-theme="dark"] ::-webkit-scrollbar-track,
-html:not([data-theme]) ::-webkit-scrollbar-track {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar-track {
     background: transparent;
 }
 
-html[data-theme="dark"] ::-webkit-scrollbar-thumb,
-html:not([data-theme]) ::-webkit-scrollbar-thumb {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar-thumb {
     background: var(--mvnpm-border);
     border-radius: 4px;
 }
 
-html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
-html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar-thumb:hover {
     background: var(--mvnpm-text-tertiary);
 }
 
@@ -593,6 +589,27 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
         padding: 12px;
     }
 }
+
+/* --- Theme-dependent visibility --- */
+
+/* Logo: show reversed (light text) on dark, normal on light */
+html[data-theme="dark"] .logo-dark,
+html:not([data-theme]) .logo-dark { display: none; }
+html[data-theme="dark"] .logo-light,
+html:not([data-theme]) .logo-light { display: block; }
+html[data-theme="light"] .logo-dark { display: block; }
+html[data-theme="light"] .logo-light { display: none; }
+
+/* Theme toggle icon: show sun on dark, moon on light */
+html[data-theme="dark"] .theme-icon-dark,
+html:not([data-theme]) .theme-icon-dark { display: none; }
+html[data-theme="dark"] .theme-icon-light,
+html:not([data-theme]) .theme-icon-light { display: block; }
+html[data-theme="light"] .theme-icon-dark { display: block; }
+html[data-theme="light"] .theme-icon-light { display: none; }
+
+/* Commonhaus logo: invert for light mode */
+html[data-theme="light"] footer img { filter: invert(1); }
 
 /* --- Responsive: Mobile --- */
 @media (max-width: 480px) {
