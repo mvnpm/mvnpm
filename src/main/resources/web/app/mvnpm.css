@@ -289,6 +289,70 @@ main {
     padding-top: 16px;
 }
 
+/* --- Markdown Content (Roq pages) --- */
+main > .roq-content {
+    width: 100%;
+    max-width: 820px;
+    padding: 0 24px 48px;
+    text-align: left;
+}
+
+main > .roq-content h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+main > .roq-content h2 {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--mvnpm-border);
+}
+
+main > .roq-content pre {
+    background: var(--mvnpm-code-bg);
+    border: 1px solid var(--mvnpm-border);
+    border-radius: var(--mvnpm-radius-sm);
+    padding: 16px;
+    overflow-x: auto;
+    font-family: var(--mvnpm-font-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+main > .roq-content code {
+    font-family: var(--mvnpm-font-mono);
+    font-size: 0.85em;
+}
+
+main > .roq-content :not(pre) > code {
+    background: var(--mvnpm-code-bg);
+    border: 1px solid var(--mvnpm-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+main > .roq-content blockquote {
+    border-left: 3px solid var(--mvnpm-amber);
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    background: var(--mvnpm-bg-surface);
+    border-radius: 0 var(--mvnpm-radius-sm) var(--mvnpm-radius-sm) 0;
+}
+
+main > .roq-content a {
+    color: var(--mvnpm-text-link);
+    text-decoration: none;
+}
+
+main > .roq-content a:hover {
+    color: var(--mvnpm-text-link-hover);
+}
+
+main > .roq-content img {
+    max-width: 100%;
+    height: auto;
+}
+
 /* --- Footer --- */
 footer {
     display: flex;

@@ -249,6 +249,13 @@
 	<version>${codeblock.version}</version>
 	<scope>provided</scope>
     </dependency>
+    <!-- Syntax highlighting for doc pages -->
+    <dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>highlight.js</artifactId>
+	<version>11.11.1</version>
+	<scope>provided</scope>
+    </dependency>
     <!-- To compare versions -->
     <dependency>
       <groupId>org.mvnpm</groupId>

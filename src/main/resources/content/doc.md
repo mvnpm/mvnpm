@@ -1,5 +1,5 @@
 ---
-layout: main
+layout: doc
 title: "Getting Started with mvnpm"
 description: "Use NPM packages as standard Maven or Gradle dependencies. Learn how to add NPM dependencies, configure the fallback repository, and lock versions."
 image: og-image.png
