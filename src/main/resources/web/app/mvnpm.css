@@ -314,6 +314,7 @@ main > .roq-content {
     width: 100%;
     max-width: 820px;
     padding: 0 24px 48px;
+    box-sizing: border-box;
     text-align: left;
 }
 
@@ -474,12 +475,39 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
 
 /* --- Responsive: Tablet --- */
 @media (max-width: 768px) {
+    html, body {
+        height: auto;
+        min-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: visible;
+        justify-content: flex-start;
+    }
+
+    main {
+        overflow: visible;
+        height: auto;
+        flex: 1;
+    }
+
+    @keyframes hide-nav {
+        to { max-height: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+    }
+
     header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
         height: auto;
         padding: 8px 12px;
         flex-direction: column;
         align-items: center;
         gap: 0;
+    }
+
+    header .header-right {
+        animation: hide-nav linear both;
+        animation-timeline: scroll();
+        animation-range: 0px 150px;
     }
 
     header .banner {
@@ -505,15 +533,21 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
     }
 
     nav {
-        flex-direction: column;
-        gap: 2px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px 4px;
         width: 100%;
     }
 
     nav a {
-        padding: 0.5rem 1rem;
+        padding: 0.4rem 0.6rem;
         border-radius: var(--mvnpm-radius-sm, 6px);
-        justify-content: center;
+        font-size: 0.85rem;
+    }
+
+    nav a[href*="/live"], nav a[href*="/composites"] {
+        display: none;
     }
 
     nav a[data-selected] {
@@ -526,13 +560,37 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
 
     footer {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        align-items: center;
+        text-align: center;
+        gap: 6px;
+        margin-top: 24px;
         padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    footer .copyright {
+        align-items: center;
     }
 
     footer .smalltext {
         display: none;
+    }
+
+    footer img {
+        height: 24px !important;
+    }
+
+    main > .roq-content {
+        padding: 24px 16px 32px;
+    }
+
+    main > .roq-content h1 {
+        font-size: 1.5rem;
+    }
+
+    main > .roq-content pre {
+        font-size: 0.78rem;
+        padding: 12px;
     }
 }
 
@@ -540,9 +598,5 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
 @media (max-width: 480px) {
     main {
         padding-top: 8px;
-    }
-
-    footer img {
-        height: 24px !important;
     }
 }
