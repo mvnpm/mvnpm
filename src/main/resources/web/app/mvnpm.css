@@ -44,6 +44,16 @@ html[data-theme="dark"], html:not([data-theme]) {
 
     --mvnpm-code-bg: #151722;
 
+    /* Syntax highlighting (github-dark inspired) */
+    --hljs-color: #e6edf3;
+    --hljs-keyword: #ff7b72;
+    --hljs-string: #a5d6ff;
+    --hljs-title: #d2a8ff;
+    --hljs-name: #7ee787;
+    --hljs-attr: #79c0ff;
+    --hljs-comment: #8b949e;
+    --hljs-literal: #79c0ff;
+
     /* Log entry colors */
     --mvnpm-log-time: grey;
     --mvnpm-log-group: lightblue;
@@ -109,7 +119,17 @@ html[data-theme="light"] {
     --mvnpm-text-link: #4F46E5;
     --mvnpm-text-link-hover: #6366F1;
 
-    --mvnpm-code-bg: #F4F4F5;
+    --mvnpm-code-bg: #f6f8fa;
+
+    /* Syntax highlighting (github-light inspired) */
+    --hljs-color: #1f2328;
+    --hljs-keyword: #cf222e;
+    --hljs-string: #0a3069;
+    --hljs-title: #8250df;
+    --hljs-name: #116329;
+    --hljs-attr: #0550ae;
+    --hljs-comment: #6e7781;
+    --hljs-literal: #0550ae;
 
     /* Log entry colors */
     --mvnpm-log-time: #71717A;
@@ -352,6 +372,36 @@ main > .roq-content img {
     max-width: 100%;
     height: auto;
 }
+
+/* --- Syntax Highlighting (highlight.js) --- */
+.hljs {
+    background: var(--mvnpm-code-bg) !important;
+    color: var(--hljs-color);
+}
+
+.hljs-keyword,
+.hljs-selector-tag { color: var(--hljs-keyword); }
+
+.hljs-string,
+.hljs-doctag { color: var(--hljs-string); }
+
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.function_ { color: var(--hljs-title); }
+
+.hljs-tag,
+.hljs-name { color: var(--hljs-name); }
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable { color: var(--hljs-attr); }
+
+.hljs-comment { color: var(--hljs-comment); }
+
+.hljs-built_in { color: var(--hljs-literal); }
 
 /* --- Footer --- */
 footer {
