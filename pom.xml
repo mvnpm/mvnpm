@@ -209,6 +209,11 @@
       <artifactId>quarkus-roq-frontmatter</artifactId>
       <version>${quarkus-roq-frontmatter.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.roq</groupId>
+      <artifactId>quarkus-roq-plugin-markdown</artifactId>
+      <version>${quarkus-roq-frontmatter.version}</version>
+    </dependency>
     <!-- UI (from mvnpm) -->
     <dependency>
         <groupId>org.mvnpm</groupId>
