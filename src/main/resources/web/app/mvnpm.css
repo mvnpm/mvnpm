@@ -1,5 +1,8 @@
 /* ===== MVNPM Design System ===== */
 
+/* --- Vaadin Lumo Theme (auto-injected into component shadow DOMs) --- */
+@import '@vaadin/vaadin-lumo-styles/lumo.css';
+
 /* --- Theme Variables --- */
 :root {
     /* Brand colors */
@@ -74,9 +77,19 @@ html[data-theme="dark"], html:not([data-theme]) {
     --lumo-contrast: var(--mvnpm-text-primary);
     --lumo-contrast-90pct: rgba(240, 240, 244, 0.9);
     --lumo-contrast-80pct: rgba(240, 240, 244, 0.8);
+    --lumo-contrast-70pct: rgba(240, 240, 244, 0.7);
+    --lumo-contrast-60pct: rgba(240, 240, 244, 0.6);
     --lumo-contrast-50pct: rgba(240, 240, 244, 0.5);
+    --lumo-contrast-40pct: rgba(240, 240, 244, 0.4);
+    --lumo-contrast-30pct: rgba(240, 240, 244, 0.3);
+    --lumo-contrast-20pct: rgba(240, 240, 244, 0.2);
     --lumo-contrast-10pct: rgba(240, 240, 244, 0.1);
     --lumo-contrast-5pct: rgba(240, 240, 244, 0.05);
+    --lumo-header-text-color: var(--mvnpm-text-primary);
+    --lumo-body-text-color: var(--mvnpm-text-primary);
+    --lumo-secondary-text-color: var(--mvnpm-text-secondary);
+    --lumo-tertiary-text-color: var(--mvnpm-text-tertiary);
+    --lumo-disabled-text-color: var(--mvnpm-text-tertiary);
     --lumo-primary-color: var(--mvnpm-indigo-light);
     --lumo-primary-text-color: var(--mvnpm-indigo-light);
     --lumo-primary-color-10pct: rgba(99, 102, 241, 0.1);
@@ -100,6 +113,7 @@ html[data-theme="dark"], html:not([data-theme]) {
     --lumo-border-radius-s: var(--mvnpm-radius-sm);
 
     /* Vaadin component overrides */
+    --lumo-clickable-cursor: pointer;
     --vaadin-clickable-cursor: pointer;
     --vaadin-text-color: var(--mvnpm-text-primary);
     --vaadin-text-color-secondary: var(--mvnpm-text-secondary);
@@ -112,10 +126,6 @@ html[data-theme="dark"], html:not([data-theme]) {
     --vaadin-focus-ring-color: var(--mvnpm-indigo-light);
     --vaadin-radius-m: var(--mvnpm-radius-sm);
     --vaadin-selection-color: var(--mvnpm-indigo-light);
-    --vaadin-selection-color-text: #ffffff;
-    /* Radio & checkbox sizing (1lh is too large with our line-height) */
-    --vaadin-radio-button-size: 1em;
-    --vaadin-checkbox-size: 1em;
     /* Input fields */
     --vaadin-input-field-background: var(--mvnpm-bg-surface);
     --vaadin-input-field-border-color: var(--mvnpm-border);
@@ -135,8 +145,6 @@ html[data-theme="dark"], html:not([data-theme]) {
     /* Progress bar */
     --vaadin-progress-bar-background: var(--mvnpm-bg-surface);
     --vaadin-progress-bar-value-background: var(--mvnpm-indigo-light);
-    /* Tabs */
-    /* Tabs: no global selected-text-color; override via vaadin-tab[selected] in components */
     /* Grid */
     --vaadin-grid-header-background: var(--mvnpm-bg-surface);
     --vaadin-grid-row-stripe-background: var(--mvnpm-bg-surface);
@@ -188,9 +196,19 @@ html[data-theme="light"] {
     --lumo-contrast: var(--mvnpm-text-primary);
     --lumo-contrast-90pct: rgba(24, 24, 27, 0.9);
     --lumo-contrast-80pct: rgba(24, 24, 27, 0.8);
+    --lumo-contrast-70pct: rgba(24, 24, 27, 0.7);
+    --lumo-contrast-60pct: rgba(24, 24, 27, 0.6);
     --lumo-contrast-50pct: rgba(24, 24, 27, 0.5);
+    --lumo-contrast-40pct: rgba(24, 24, 27, 0.4);
+    --lumo-contrast-30pct: rgba(24, 24, 27, 0.3);
+    --lumo-contrast-20pct: rgba(24, 24, 27, 0.2);
     --lumo-contrast-10pct: rgba(24, 24, 27, 0.1);
     --lumo-contrast-5pct: rgba(24, 24, 27, 0.05);
+    --lumo-header-text-color: var(--mvnpm-text-primary);
+    --lumo-body-text-color: var(--mvnpm-text-primary);
+    --lumo-secondary-text-color: var(--mvnpm-text-secondary);
+    --lumo-tertiary-text-color: var(--mvnpm-text-tertiary);
+    --lumo-disabled-text-color: var(--mvnpm-text-tertiary);
     --lumo-primary-color: var(--mvnpm-indigo);
     --lumo-primary-text-color: var(--mvnpm-indigo);
     --lumo-primary-color-10pct: rgba(99, 102, 241, 0.1);
@@ -214,6 +232,7 @@ html[data-theme="light"] {
     --lumo-border-radius-s: var(--mvnpm-radius-sm);
 
     /* Vaadin component overrides */
+    --lumo-clickable-cursor: pointer;
     --vaadin-clickable-cursor: pointer;
     --vaadin-text-color: var(--mvnpm-text-primary);
     --vaadin-text-color-secondary: var(--mvnpm-text-secondary);
@@ -226,10 +245,6 @@ html[data-theme="light"] {
     --vaadin-focus-ring-color: var(--mvnpm-indigo);
     --vaadin-radius-m: var(--mvnpm-radius-sm);
     --vaadin-selection-color: var(--mvnpm-indigo);
-    --vaadin-selection-color-text: #ffffff;
-    /* Radio & checkbox sizing (1lh is too large with our line-height) */
-    --vaadin-radio-button-size: 1em;
-    --vaadin-checkbox-size: 1em;
     /* Input fields */
     --vaadin-input-field-background: var(--mvnpm-bg-surface);
     --vaadin-input-field-border-color: var(--mvnpm-border);
@@ -249,8 +264,6 @@ html[data-theme="light"] {
     /* Progress bar */
     --vaadin-progress-bar-background: var(--mvnpm-bg-surface);
     --vaadin-progress-bar-value-background: var(--mvnpm-indigo);
-    /* Tabs */
-    /* Tabs: no global selected-text-color; override via vaadin-tab[selected] in components */
     /* Grid */
     --vaadin-grid-header-background: var(--mvnpm-bg-surface);
     --vaadin-grid-row-stripe-background: var(--mvnpm-bg-surface);

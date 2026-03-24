@@ -63,14 +63,6 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           height: 4px;
       }
 
-      vaadin-tab[selected] {
-          --vaadin-tab-text-color: var(--vaadin-selection-color, var(--lumo-primary-color));
-      }
-
-      vaadin-radio-button[checked] {
-          --vaadin-radio-button-background: var(--vaadin-selection-color, var(--lumo-primary-color));
-      }
-
       .coordinates-name {
           width: 500px;
       }
@@ -808,6 +800,7 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
     return html`
       <div class="coordinates">
         <vaadin-text-field id="coordinates-field" label="Name (Package or Coordinates)" class="coordinates-name"
+                           autocomplete="off"
                            @keypress="${this._findVersionsAndShowLatest}"
                            @input="${this._coordinatesNameChanged}"
                            value="${this._coordinates.name}" clear-button-visible></vaadin-text-field>
@@ -1075,7 +1068,7 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
               <div slot="content">
                 <qui-code-block id="pom-dependency-code" mode="xml" theme="${this._theme}" content="${this._usePom}"></qui-code-block>
               </div>
-              <div slot="footer" style="display:flex; justify-content:center; padding:4px 8px;">
+              <div slot="footer">
                 <vaadin-radio-group theme="horizontal" @change="${this._scopeChanged}">
                   <vaadin-radio-button value="runtime" label="runtime"></vaadin-radio-button>
                   <vaadin-radio-button value="provided" label="provided" checked></vaadin-radio-button>
