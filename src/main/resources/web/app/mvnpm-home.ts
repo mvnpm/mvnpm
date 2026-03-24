@@ -430,7 +430,6 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
       .gaveventlogconsole {
           display: flex;
           flex-direction: column;
-          height: 100%;
           padding: 16px 20px;
           background: var(--mvnpm-code-bg, #151722);
           border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
@@ -532,6 +531,38 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           width: 100%;
           justify-content: space-between;
           align-items: center;
+      }
+
+      /* --- Desktop SPA layout --- */
+      @media (min-width: 769px) {
+          :host {
+              overflow: hidden;
+          }
+          .searchResults {
+              flex: 1;
+              min-height: 0;
+              overflow-y: auto;
+          }
+          .fileBrowser {
+              height: calc(100vh - var(--mvnpm-header-height) - var(--mvnpm-footer-height) - 180px);
+          }
+          .fileList {
+              height: 100%;
+              box-sizing: border-box;
+              overflow-y: auto;
+          }
+          .fileBrowser > qui-code-block,
+          .fileBrowser > mvnpm-jar-view {
+              flex: 1;
+              min-width: 0;
+              height: 100%;
+              overflow: auto;
+          }
+          .gaveventlogconsole {
+              height: calc(100vh - var(--mvnpm-header-height) - var(--mvnpm-footer-height) - 180px);
+              overflow-y: auto;
+              box-sizing: border-box;
+          }
       }
 
       @media (max-width: 768px) {

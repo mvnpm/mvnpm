@@ -17,6 +17,13 @@ export class MvnpmLive extends LitElement {
             gap: 16px;
             width: 100%;
             padding: 24px;
+            box-sizing: border-box;
+        }
+
+        @media (min-width: 769px) {
+            :host {
+                overflow: hidden;
+            }
         }
 
         .live-sync {

@@ -23,7 +23,13 @@ export class MvnpmReleases extends LitElement {
         gap: 16px;
         width: 100%;
         padding: 24px;
-        padding-top: 24px;
+        box-sizing: border-box;
+    }
+
+    @media (min-width: 769px) {
+        :host {
+            overflow: hidden;
+        }
     }
 
     vaadin-radio-group {

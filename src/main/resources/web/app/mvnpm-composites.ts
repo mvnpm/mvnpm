@@ -27,7 +27,22 @@ export class MvnpmComposites extends ThemeMixin(LitElement) {
         gap: 16px;
         width: 100%;
         padding: 24px;
+        box-sizing: border-box;
     }
+
+    @media (min-width: 769px) {
+        :host {
+            overflow: hidden;
+        }
+        .selected {
+            min-height: 0;
+            overflow: auto;
+        }
+        .left {
+            overflow: auto;
+        }
+    }
+
     .selected {
         display: flex;
         flex-direction: column;
