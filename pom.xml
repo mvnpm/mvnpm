@@ -64,6 +64,7 @@
     <pgpainless.version>1.5.5</pgpainless.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>2.1.0</quarkus-web-bundler.version>
+    <quarkus-roq-frontmatter.version>2.0.5</quarkus-roq-frontmatter.version>
     <lit.version>3.3.1</lit.version>
     <vaadin.version>24.8.3</vaadin.version>
     <ldrs.version>1.1.7</ldrs.version>
@@ -203,6 +204,16 @@
       <artifactId>quarkus-web-bundler</artifactId>
       <version>${quarkus-web-bundler.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.roq</groupId>
+      <artifactId>quarkus-roq-frontmatter</artifactId>
+      <version>${quarkus-roq-frontmatter.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.roq</groupId>
+      <artifactId>quarkus-roq-plugin-markdown</artifactId>
+      <version>${quarkus-roq-frontmatter.version}</version>
+    </dependency>
     <!-- UI (from mvnpm) -->
     <dependency>
         <groupId>org.mvnpm</groupId>
@@ -238,6 +249,13 @@
 	<version>${codeblock.version}</version>
 	<scope>provided</scope>
     </dependency>
+    <!-- Syntax highlighting for doc pages -->
+    <dependency>
+	<groupId>org.mvnpm</groupId>
+	<artifactId>highlight.js</artifactId>
+	<version>11.11.1</version>
+	<scope>provided</scope>
+    </dependency>
     <!-- To compare versions -->
     <dependency>
       <groupId>org.mvnpm</groupId>
@@ -267,6 +285,11 @@
 	<scope>provided</scope>
     </dependency>
     <!-- Testing -->
+    <dependency>
+      <groupId>io.quarkiverse.roq</groupId>
+      <artifactId>quarkus-roq-plugin-sitemap</artifactId>
+      <version>1.10.3</version>
+    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-junit5</artifactId>

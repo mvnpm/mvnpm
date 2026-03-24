@@ -44,6 +44,16 @@ html[data-theme="dark"], html:not([data-theme]) {
 
     --mvnpm-code-bg: #151722;
 
+    /* Syntax highlighting (github-dark inspired) */
+    --hljs-color: #e6edf3;
+    --hljs-keyword: #ff7b72;
+    --hljs-string: #a5d6ff;
+    --hljs-title: #d2a8ff;
+    --hljs-name: #7ee787;
+    --hljs-attr: #79c0ff;
+    --hljs-comment: #8b949e;
+    --hljs-literal: #79c0ff;
+
     /* Log entry colors */
     --mvnpm-log-time: grey;
     --mvnpm-log-group: lightblue;
@@ -109,7 +119,17 @@ html[data-theme="light"] {
     --mvnpm-text-link: #4F46E5;
     --mvnpm-text-link-hover: #6366F1;
 
-    --mvnpm-code-bg: #F4F4F5;
+    --mvnpm-code-bg: #f6f8fa;
+
+    /* Syntax highlighting (github-light inspired) */
+    --hljs-color: #1f2328;
+    --hljs-keyword: #cf222e;
+    --hljs-string: #0a3069;
+    --hljs-title: #8250df;
+    --hljs-name: #116329;
+    --hljs-attr: #0550ae;
+    --hljs-comment: #6e7781;
+    --hljs-literal: #0550ae;
 
     /* Log entry colors */
     --mvnpm-log-time: #71717A;
@@ -234,17 +254,155 @@ header .header-right {
     background-color: var(--mvnpm-bg-surface);
 }
 
+/* --- Nav --- */
+nav {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+nav a {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    font-family: var(--mvnpm-font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--mvnpm-text-secondary);
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s ease;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+}
+
+nav a:hover {
+    color: var(--mvnpm-text-primary);
+}
+
+nav a[data-selected] {
+    color: var(--mvnpm-indigo-light);
+}
+
+nav a[data-selected]::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 1.5rem;
+    height: 2px;
+    background-color: var(--mvnpm-indigo-light);
+    border-radius: 2px 2px 0 0;
+    transform: translateX(-50%);
+}
+
 /* --- Main --- */
 main {
     width: 100%;
     height: 100%;
     display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
+    flex-direction: column;
+    align-items: center;
     overflow-x: hidden;
     overflow-y: auto;
     padding-top: 16px;
 }
+
+/* --- Markdown Content (Roq pages) --- */
+main > .roq-content {
+    width: 100%;
+    max-width: 820px;
+    padding: 0 24px 48px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+main > .roq-content h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+main > .roq-content h2 {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--mvnpm-border);
+}
+
+main > .roq-content pre {
+    background: var(--mvnpm-code-bg);
+    border: 1px solid var(--mvnpm-border);
+    border-radius: var(--mvnpm-radius-sm);
+    padding: 16px;
+    overflow-x: auto;
+    font-family: var(--mvnpm-font-mono);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+main > .roq-content code {
+    font-family: var(--mvnpm-font-mono);
+    font-size: 0.85em;
+}
+
+main > .roq-content :not(pre) > code {
+    background: var(--mvnpm-code-bg);
+    border: 1px solid var(--mvnpm-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+}
+
+main > .roq-content blockquote {
+    border-left: 3px solid var(--mvnpm-amber);
+    margin: 1rem 0;
+    padding: 0.5rem 1rem;
+    background: var(--mvnpm-bg-surface);
+    border-radius: 0 var(--mvnpm-radius-sm) var(--mvnpm-radius-sm) 0;
+}
+
+main > .roq-content a {
+    color: var(--mvnpm-text-link);
+    text-decoration: none;
+}
+
+main > .roq-content a:hover {
+    color: var(--mvnpm-text-link-hover);
+}
+
+main > .roq-content img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* --- Syntax Highlighting (highlight.js) --- */
+.hljs {
+    background: var(--mvnpm-code-bg) !important;
+    color: var(--hljs-color);
+}
+
+.hljs-keyword,
+.hljs-selector-tag { color: var(--hljs-keyword); }
+
+.hljs-string,
+.hljs-doctag { color: var(--hljs-string); }
+
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.function_ { color: var(--hljs-title); }
+
+.hljs-tag,
+.hljs-name { color: var(--hljs-name); }
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable { color: var(--hljs-attr); }
+
+.hljs-comment { color: var(--hljs-comment); }
+
+.hljs-built_in { color: var(--hljs-literal); }
 
 /* --- Footer --- */
 footer {
@@ -287,25 +445,21 @@ footer .copyright {
 }
 
 /* --- Scrollbar (dark theme) --- */
-html[data-theme="dark"] ::-webkit-scrollbar,
-html:not([data-theme]) ::-webkit-scrollbar {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-html[data-theme="dark"] ::-webkit-scrollbar-track,
-html:not([data-theme]) ::-webkit-scrollbar-track {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar-track {
     background: transparent;
 }
 
-html[data-theme="dark"] ::-webkit-scrollbar-thumb,
-html:not([data-theme]) ::-webkit-scrollbar-thumb {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar-thumb {
     background: var(--mvnpm-border);
     border-radius: 4px;
 }
 
-html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
-html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
+:is(html[data-theme="dark"], html:not([data-theme])) ::-webkit-scrollbar-thumb:hover {
     background: var(--mvnpm-text-tertiary);
 }
 
@@ -317,12 +471,39 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
 
 /* --- Responsive: Tablet --- */
 @media (max-width: 768px) {
+    html, body {
+        height: auto;
+        min-height: 100vh;
+        overflow-x: hidden;
+        overflow-y: visible;
+        justify-content: flex-start;
+    }
+
+    main {
+        overflow: visible;
+        height: auto;
+        flex: 1;
+    }
+
+    @keyframes hide-nav {
+        to { max-height: 0; opacity: 0; overflow: hidden; margin: 0; padding: 0; }
+    }
+
     header {
+        position: sticky;
+        top: 0;
+        z-index: 100;
         height: auto;
         padding: 8px 12px;
         flex-direction: column;
         align-items: center;
         gap: 0;
+    }
+
+    header .header-right {
+        animation: hide-nav linear both;
+        animation-timeline: scroll();
+        animation-range: 0px 150px;
     }
 
     header .banner {
@@ -347,25 +528,92 @@ html:not([data-theme]) ::-webkit-scrollbar-thumb:hover {
         right: 12px;
     }
 
+    nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2px 4px;
+        width: 100%;
+    }
+
+    nav a {
+        padding: 0.4rem 0.6rem;
+        border-radius: var(--mvnpm-radius-sm, 6px);
+        font-size: 0.85rem;
+    }
+
+    nav a[href*="/live"], nav a[href*="/composites"] {
+        display: none;
+    }
+
+    nav a[data-selected] {
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    nav a[data-selected]::after {
+        display: none;
+    }
+
     footer {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        align-items: center;
+        text-align: center;
+        gap: 6px;
+        margin-top: 24px;
         padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    footer .copyright {
+        align-items: center;
     }
 
     footer .smalltext {
         display: none;
     }
+
+    footer img {
+        height: 24px !important;
+    }
+
+    main > .roq-content {
+        padding: 24px 16px 32px;
+    }
+
+    main > .roq-content h1 {
+        font-size: 1.5rem;
+    }
+
+    main > .roq-content pre {
+        font-size: 0.78rem;
+        padding: 12px;
+    }
 }
+
+/* --- Theme-dependent visibility --- */
+
+/* Logo: show reversed (light text) on dark, normal on light */
+html[data-theme="dark"] .logo-dark,
+html:not([data-theme]) .logo-dark { display: none; }
+html[data-theme="dark"] .logo-light,
+html:not([data-theme]) .logo-light { display: block; }
+html[data-theme="light"] .logo-dark { display: block; }
+html[data-theme="light"] .logo-light { display: none; }
+
+/* Theme toggle icon: show sun on dark, moon on light */
+html[data-theme="dark"] .theme-icon-dark,
+html:not([data-theme]) .theme-icon-dark { display: none; }
+html[data-theme="dark"] .theme-icon-light,
+html:not([data-theme]) .theme-icon-light { display: block; }
+html[data-theme="light"] .theme-icon-dark { display: block; }
+html[data-theme="light"] .theme-icon-light { display: none; }
+
+/* Commonhaus logo: invert for light mode */
+html[data-theme="light"] footer img { filter: invert(1); }
 
 /* --- Responsive: Mobile --- */
 @media (max-width: 480px) {
     main {
         padding-top: 8px;
-    }
-
-    footer img {
-        height: 24px !important;
     }
 }

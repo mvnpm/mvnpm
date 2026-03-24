@@ -62,9 +62,8 @@ public class UITest {
         page.waitForLoadState();
 
         String title = page.title();
-        Assertions.assertEquals(
-                "mvnpm - Use NPM packages as Maven/Gradle dependencies",
-                title);
+        Assertions.assertTrue(title.contains("Getting Started with mvnpm"),
+                "Doc page title should contain 'Getting Started with mvnpm'");
         page.getByText("Add an NPM dependency", new Page.GetByTextOptions().setExact(true))
                 .elementHandle();
     }

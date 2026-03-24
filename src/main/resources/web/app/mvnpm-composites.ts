@@ -9,7 +9,7 @@ import '@qomponent/qui-code-block';
 import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
-import { Router } from '@vaadin/router';
+
 
 const params = new URLSearchParams(window.location.search);
 const isAdmin = params.get('admin') === 'true';
@@ -118,7 +118,7 @@ export class MvnpmComposites extends ThemeMixin(LitElement) {
 
     _browse(){
         let artifactId = this._selectedComposite.name.replaceAll(".xml", "");
-        Router.go("/package/org.mvnpm.at.mvnpm:" + artifactId);
+        window.location.href = "/package/org.mvnpm.at.mvnpm:" + artifactId;
     }
 
     _renderVersions(){
