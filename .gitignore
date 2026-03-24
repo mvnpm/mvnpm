@@ -49,3 +49,5 @@ nbactions.xml
 # Claude Code
 .claude/
 .playwright-mcp/
+screenshot*.png
+*-screenshot*.png

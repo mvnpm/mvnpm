@@ -63,10 +63,6 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           height: 4px;
       }
 
-      vaadin-tab[selected] {
-          --vaadin-tab-text-color: var(--lumo-primary-color);
-      }
-
       .coordinates-name {
           width: 500px;
       }
@@ -804,6 +800,7 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
     return html`
       <div class="coordinates">
         <vaadin-text-field id="coordinates-field" label="Name (Package or Coordinates)" class="coordinates-name"
+                           autocomplete="off"
                            @keypress="${this._findVersionsAndShowLatest}"
                            @input="${this._coordinatesNameChanged}"
                            value="${this._coordinates.name}" clear-button-visible></vaadin-text-field>
@@ -1072,7 +1069,7 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
                 <qui-code-block id="pom-dependency-code" mode="xml" theme="${this._theme}" content="${this._usePom}"></qui-code-block>
               </div>
               <div slot="footer">
-                <vaadin-radio-group @change="${this._scopeChanged}">
+                <vaadin-radio-group theme="horizontal" @change="${this._scopeChanged}">
                   <vaadin-radio-button value="runtime" label="runtime"></vaadin-radio-button>
                   <vaadin-radio-button value="provided" label="provided" checked></vaadin-radio-button>
                 </vaadin-radio-group>
@@ -1103,6 +1100,11 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
 
   _pomToClipboard() {
     navigator.clipboard.writeText(this._usePom);
+    Notification.show('Copied to clipboard!', {
+      position: 'top-center',
+      duration: 2000,
+      theme: 'success',
+    });
   }
 
   _viewDependency(dependency) {
