@@ -54,6 +54,17 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           align-items: center;
           flex-direction: column;
           column-gap: 15px;
+          padding-top: 32px;
+          padding-bottom: 8px;
+      }
+
+      vaadin-progress-bar {
+          margin: 8px;
+          height: 4px;
+      }
+
+      vaadin-tab[selected] {
+          --vaadin-tab-text-color: var(--lumo-primary-color);
       }
 
       .coordinates-name {
@@ -470,9 +481,11 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          width: 90%;
+          width: 100%;
           max-width: 900px;
-          padding: 16px 0;
+          padding: 16px 24px;
+          box-sizing: border-box;
+          align-self: center;
       }
 
       .searchResultName {
@@ -542,6 +555,9 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
               flex: 1;
               min-height: 0;
               overflow-y: auto;
+              max-width: none;
+              padding-left: max(24px, calc((100% - 852px) / 2));
+              padding-right: max(24px, calc((100% - 852px) / 2));
           }
           .fileBrowser {
               height: calc(100vh - var(--mvnpm-header-height) - var(--mvnpm-footer-height) - 180px);
@@ -576,7 +592,7 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
               font-size: 0.95rem;
           }
           .coordinates-pane {
-              padding: 0 12px;
+              padding: 16px 12px 0;
               box-sizing: border-box;
           }
           .coordinates {
@@ -629,7 +645,7 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
               margin-bottom: 12px;
           }
           .searchResults {
-              width: 95%;
+              padding: 16px 12px;
           }
           .dependencies {
               flex-direction: column;
@@ -713,6 +729,8 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
   @state()
   private _recentReleases?: any[];
 
+  private _onPopState: () => void;
+
   constructor() {
     super();
     this._clearCoordinates();
@@ -733,6 +751,30 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
   connectedCallback() {
     super.connectedCallback();
     this._fetchRecentReleases();
+    this._onPopState = this._handlePopState.bind(this);
+    window.addEventListener('popstate', this._onPopState);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('popstate', this._onPopState);
+  }
+
+  private _handlePopState() {
+    var currentPath = window.location.pathname;
+    if (currentPath.startsWith("/package/")) {
+      this._searchResults = null;
+      this._info = null;
+      this._coordinates = {};
+      this._coordinates.name = currentPath.substring(9);
+      this._showGA(this._coordinates.name);
+    } else if (currentPath.startsWith("/search/")) {
+      this._coordinates.version = null;
+      this._info = null;
+      this._search(currentPath.substring(8), false);
+    } else {
+      this._clearCoordinates();
+    }
   }
 
   private _fetchRecentReleases() {
@@ -762,7 +804,6 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
     return html`
       <div class="coordinates">
         <vaadin-text-field id="coordinates-field" label="Name (Package or Coordinates)" class="coordinates-name"
-                           @focusout="${this._findVersionsAndShowLatest}"
                            @keypress="${this._findVersionsAndShowLatest}"
                            @input="${this._coordinatesNameChanged}"
                            value="${this._coordinates.name}" clear-button-visible></vaadin-text-field>
@@ -935,8 +976,8 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
 
   _selectSearchResult(e) {
     this._coordinates.version = null;
-    this._coordinates.name = e.target.dataset.package;
-    this._showGA(this._coordinates.name);
+    this._coordinates.name = e.currentTarget.dataset.package;
+    this._showGA(this._coordinates.name, false);
   }
 
   _renderSearchKeywords(keywords) {
@@ -1192,7 +1233,7 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
     }
   }
 
-  _showGA(name) {
+  _showGA(name, fallbackToSearch = true) {
     if (name && name.length > 0) {
       let groupPath: string;
       let artifactPath: string;
@@ -1226,13 +1267,21 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
         .then(xmlDoc => new window.DOMParser().parseFromString(xmlDoc, "text/xml"))
         .then(metadata => this._inspectMetadata(metadata))
         .catch(error => {
-          this._search(name);
+          if (fallbackToSearch) {
+            this._search(name);
+          } else {
+            this._stopLoading();
+            Notification.show(name + ' is being synced, please try again shortly', {
+              position: 'top-center',
+              duration: 3000,
+            });
+          }
         });
 
     }
   }
 
-  _search(name) {
+  _search(name, updateHistory = true) {
     var searchUrl = "/api/info/search/" + name;
     fetch(searchUrl)
       .then((response) => {
@@ -1252,7 +1301,9 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
         }
       })
       .then(jsonResult => {
-        window.history.pushState({/* State */}, "", "/search/" + name);
+        if (updateHistory) {
+          window.history.pushState({/* State */}, "", "/search/" + name);
+        }
         this._coordinates.version = null;
         this._searchResults = jsonResult;
       });
