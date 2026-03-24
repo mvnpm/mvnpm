@@ -27,6 +27,8 @@
     /* Font */
     --mvnpm-font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Cascadia Code', 'Consolas', monospace;
     --mvnpm-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --mvnpm-font-size-m: 1rem;
+    --mvnpm-line-height-m: 1.6;
 
     color-scheme: dark light;
 }
@@ -67,45 +69,62 @@ html[data-theme="dark"], html:not([data-theme]) {
     --mvnpm-log-lightgreen: lightgreen;
     --mvnpm-log-red: red;
 
-    /* Lumo overrides */
-    --lumo-clickable-cursor: pointer;
+    /* Lumo overrides (used by qui-card, qui-badge) */
     --lumo-base-color: var(--mvnpm-bg-primary);
-    --lumo-body-text-color: var(--mvnpm-text-primary);
-    --lumo-header-text-color: var(--mvnpm-text-primary);
-    --lumo-secondary-text-color: var(--mvnpm-text-secondary);
-    --lumo-tertiary-text-color: var(--mvnpm-text-tertiary);
-    --lumo-disabled-text-color: var(--mvnpm-text-tertiary);
+    --lumo-contrast: var(--mvnpm-text-primary);
+    --lumo-contrast-90pct: rgba(240, 240, 244, 0.9);
+    --lumo-contrast-80pct: rgba(240, 240, 244, 0.8);
+    --lumo-contrast-50pct: rgba(240, 240, 244, 0.5);
+    --lumo-contrast-10pct: rgba(240, 240, 244, 0.1);
+    --lumo-contrast-5pct: rgba(240, 240, 244, 0.05);
     --lumo-primary-color: var(--mvnpm-indigo-light);
     --lumo-primary-text-color: var(--mvnpm-indigo-light);
-    --lumo-primary-color-50pct: rgba(99, 102, 241, 0.5);
     --lumo-primary-color-10pct: rgba(99, 102, 241, 0.1);
     --lumo-primary-contrast-color: #ffffff;
     --lumo-error-color: var(--mvnpm-error);
     --lumo-error-text-color: #F87171;
-    --lumo-error-color-50pct: rgba(239, 68, 68, 0.5);
     --lumo-error-color-10pct: rgba(239, 68, 68, 0.1);
     --lumo-error-contrast-color: #ffffff;
     --lumo-success-color: var(--mvnpm-success);
     --lumo-success-text-color: #4ADE80;
-    --lumo-success-color-50pct: rgba(34, 197, 94, 0.5);
     --lumo-success-color-10pct: rgba(34, 197, 94, 0.1);
     --lumo-success-contrast-color: #ffffff;
     --lumo-warning-color: var(--mvnpm-warning);
     --lumo-warning-text-color: #FBBF24;
-    --lumo-warning-color-50pct: rgba(245, 158, 11, 0.5);
     --lumo-warning-color-10pct: rgba(245, 158, 11, 0.1);
     --lumo-warning-contrast-color: #ffffff;
-    --lumo-contrast: var(--mvnpm-text-primary);
-    --lumo-contrast-90pct: rgba(240, 240, 244, 0.9);
-    --lumo-contrast-80pct: rgba(240, 240, 244, 0.8);
-    --lumo-contrast-70pct: rgba(240, 240, 244, 0.7);
-    --lumo-contrast-60pct: rgba(240, 240, 244, 0.6);
-    --lumo-contrast-50pct: rgba(240, 240, 244, 0.5);
-    --lumo-contrast-40pct: rgba(240, 240, 244, 0.4);
-    --lumo-contrast-30pct: rgba(240, 240, 244, 0.3);
-    --lumo-contrast-20pct: rgba(240, 240, 244, 0.2);
-    --lumo-contrast-10pct: rgba(240, 240, 244, 0.1);
-    --lumo-contrast-5pct: rgba(240, 240, 244, 0.05);
+    --lumo-font-size-l: 1.125rem;
+    --lumo-font-size-s: 0.8125rem;
+    --lumo-font-size-xxs: 0.625rem;
+    --lumo-font-family: var(--mvnpm-font-sans);
+    --lumo-border-radius-s: var(--mvnpm-radius-sm);
+
+    /* Vaadin component overrides */
+    --vaadin-clickable-cursor: pointer;
+    --vaadin-text-color: var(--mvnpm-text-primary);
+    --vaadin-text-color-secondary: var(--mvnpm-text-secondary);
+    --vaadin-text-color-disabled: var(--mvnpm-text-tertiary);
+    --vaadin-background-color: var(--mvnpm-bg-primary);
+    --vaadin-background-container: var(--mvnpm-bg-elevated);
+    --vaadin-background-container-strong: var(--mvnpm-bg-surface);
+    --vaadin-border-color: var(--mvnpm-border);
+    --vaadin-border-color-secondary: var(--mvnpm-border-subtle);
+    --vaadin-focus-ring-color: var(--mvnpm-indigo-light);
+    --vaadin-radius-m: var(--mvnpm-radius-sm);
+    --vaadin-input-field-background: var(--mvnpm-bg-surface);
+    --vaadin-input-field-border-color: var(--mvnpm-border);
+    --vaadin-input-field-value-color: var(--mvnpm-text-primary);
+    --vaadin-input-field-label-color: var(--mvnpm-text-secondary);
+    --vaadin-input-field-placeholder-color: var(--mvnpm-text-tertiary);
+    --vaadin-input-field-helper-color: var(--mvnpm-text-tertiary);
+    --vaadin-input-field-error-color: var(--mvnpm-error);
+    --vaadin-input-field-button-text-color: var(--mvnpm-text-secondary);
+    --vaadin-input-field-required-indicator: none;
+    --vaadin-input-field-required-indicator-color: var(--mvnpm-text-tertiary);
+    --vaadin-button-text-color: var(--mvnpm-text-secondary);
+    --vaadin-button-border-color: var(--mvnpm-border);
+    --vaadin-progress-bar-background: var(--mvnpm-bg-surface);
+    --vaadin-progress-bar-value-background: var(--mvnpm-indigo-light);
 }
 
 /* --- Light Theme --- */
@@ -144,45 +163,62 @@ html[data-theme="light"] {
     --mvnpm-log-lightgreen: #16A34A;
     --mvnpm-log-red: #DC2626;
 
-    /* Lumo overrides */
-    --lumo-clickable-cursor: pointer;
+    /* Lumo overrides (used by qui-card, qui-badge) */
     --lumo-base-color: var(--mvnpm-bg-primary);
-    --lumo-body-text-color: var(--mvnpm-text-primary);
-    --lumo-header-text-color: var(--mvnpm-text-primary);
-    --lumo-secondary-text-color: var(--mvnpm-text-secondary);
-    --lumo-tertiary-text-color: var(--mvnpm-text-tertiary);
-    --lumo-disabled-text-color: var(--mvnpm-text-tertiary);
+    --lumo-contrast: var(--mvnpm-text-primary);
+    --lumo-contrast-90pct: rgba(24, 24, 27, 0.9);
+    --lumo-contrast-80pct: rgba(24, 24, 27, 0.8);
+    --lumo-contrast-50pct: rgba(24, 24, 27, 0.5);
+    --lumo-contrast-10pct: rgba(24, 24, 27, 0.1);
+    --lumo-contrast-5pct: rgba(24, 24, 27, 0.05);
     --lumo-primary-color: var(--mvnpm-indigo);
     --lumo-primary-text-color: var(--mvnpm-indigo);
-    --lumo-primary-color-50pct: rgba(99, 102, 241, 0.5);
     --lumo-primary-color-10pct: rgba(99, 102, 241, 0.1);
     --lumo-primary-contrast-color: #ffffff;
     --lumo-error-color: var(--mvnpm-error);
     --lumo-error-text-color: #DC2626;
-    --lumo-error-color-50pct: rgba(239, 68, 68, 0.5);
     --lumo-error-color-10pct: rgba(239, 68, 68, 0.1);
     --lumo-error-contrast-color: #ffffff;
     --lumo-success-color: var(--mvnpm-success);
     --lumo-success-text-color: #16A34A;
-    --lumo-success-color-50pct: rgba(34, 197, 94, 0.5);
     --lumo-success-color-10pct: rgba(34, 197, 94, 0.1);
     --lumo-success-contrast-color: #ffffff;
     --lumo-warning-color: var(--mvnpm-warning);
     --lumo-warning-text-color: #D97706;
-    --lumo-warning-color-50pct: rgba(245, 158, 11, 0.5);
     --lumo-warning-color-10pct: rgba(245, 158, 11, 0.1);
     --lumo-warning-contrast-color: #ffffff;
-    --lumo-contrast: var(--mvnpm-text-primary);
-    --lumo-contrast-90pct: rgba(24, 24, 27, 0.9);
-    --lumo-contrast-80pct: rgba(24, 24, 27, 0.8);
-    --lumo-contrast-70pct: rgba(24, 24, 27, 0.7);
-    --lumo-contrast-60pct: rgba(24, 24, 27, 0.6);
-    --lumo-contrast-50pct: rgba(24, 24, 27, 0.5);
-    --lumo-contrast-40pct: rgba(24, 24, 27, 0.4);
-    --lumo-contrast-30pct: rgba(24, 24, 27, 0.3);
-    --lumo-contrast-20pct: rgba(24, 24, 27, 0.2);
-    --lumo-contrast-10pct: rgba(24, 24, 27, 0.1);
-    --lumo-contrast-5pct: rgba(24, 24, 27, 0.05);
+    --lumo-font-size-l: 1.125rem;
+    --lumo-font-size-s: 0.8125rem;
+    --lumo-font-size-xxs: 0.625rem;
+    --lumo-font-family: var(--mvnpm-font-sans);
+    --lumo-border-radius-s: var(--mvnpm-radius-sm);
+
+    /* Vaadin component overrides */
+    --vaadin-clickable-cursor: pointer;
+    --vaadin-text-color: var(--mvnpm-text-primary);
+    --vaadin-text-color-secondary: var(--mvnpm-text-secondary);
+    --vaadin-text-color-disabled: var(--mvnpm-text-tertiary);
+    --vaadin-background-color: var(--mvnpm-bg-primary);
+    --vaadin-background-container: var(--mvnpm-bg-elevated);
+    --vaadin-background-container-strong: var(--mvnpm-bg-surface);
+    --vaadin-border-color: var(--mvnpm-border);
+    --vaadin-border-color-secondary: var(--mvnpm-border-subtle);
+    --vaadin-focus-ring-color: var(--mvnpm-indigo);
+    --vaadin-radius-m: var(--mvnpm-radius-sm);
+    --vaadin-input-field-background: var(--mvnpm-bg-surface);
+    --vaadin-input-field-border-color: var(--mvnpm-border);
+    --vaadin-input-field-value-color: var(--mvnpm-text-primary);
+    --vaadin-input-field-label-color: var(--mvnpm-text-secondary);
+    --vaadin-input-field-placeholder-color: var(--mvnpm-text-tertiary);
+    --vaadin-input-field-helper-color: var(--mvnpm-text-tertiary);
+    --vaadin-input-field-error-color: var(--mvnpm-error);
+    --vaadin-input-field-button-text-color: var(--mvnpm-text-secondary);
+    --vaadin-input-field-required-indicator: none;
+    --vaadin-input-field-required-indicator-color: var(--mvnpm-text-tertiary);
+    --vaadin-button-text-color: var(--mvnpm-text-secondary);
+    --vaadin-button-border-color: var(--mvnpm-border);
+    --vaadin-progress-bar-background: var(--mvnpm-bg-surface);
+    --vaadin-progress-bar-value-background: var(--mvnpm-indigo);
 }
 
 /* --- Base Styles --- */
@@ -194,12 +230,11 @@ html, body {
     flex-direction: column;
     justify-content: space-between;
     overflow: hidden;
-    line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-family: var(--mvnpm-font-sans);
-    font-size: var(--lumo-font-size-m);
-    line-height: var(--lumo-line-height-m);
+    font-size: var(--mvnpm-font-size-m);
+    line-height: var(--mvnpm-line-height-m);
     color: var(--mvnpm-text-primary);
     background-color: var(--mvnpm-bg-primary);
     transition: background-color 0.2s ease, color 0.2s ease;

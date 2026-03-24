@@ -30,6 +30,10 @@ export class MvnpmComposites extends ThemeMixin(LitElement) {
         box-sizing: border-box;
     }
 
+    vaadin-tab[selected] {
+        --vaadin-tab-text-color: var(--lumo-primary-color);
+    }
+
     @media (min-width: 769px) {
         :host {
             overflow: hidden;
