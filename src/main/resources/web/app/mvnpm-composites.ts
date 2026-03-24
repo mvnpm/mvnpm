@@ -31,7 +31,7 @@ export class MvnpmComposites extends ThemeMixin(LitElement) {
     }
 
     vaadin-tab[selected] {
-        --vaadin-tab-text-color: var(--lumo-primary-color);
+        --vaadin-tab-text-color: var(--vaadin-selection-color, var(--lumo-primary-color));
     }
 
     @media (min-width: 769px) {

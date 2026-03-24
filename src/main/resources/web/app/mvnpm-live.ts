@@ -31,6 +31,10 @@ export class MvnpmLive extends LitElement {
             justify-content: center;
             padding: 8px;
         }
+
+        vaadin-checkbox[checked] {
+            --vaadin-checkbox-background: var(--vaadin-selection-color, var(--lumo-primary-color));
+        }
     `;
 
     @state({type: Boolean})

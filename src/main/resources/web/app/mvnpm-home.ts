@@ -64,7 +64,11 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
       }
 
       vaadin-tab[selected] {
-          --vaadin-tab-text-color: var(--lumo-primary-color);
+          --vaadin-tab-text-color: var(--vaadin-selection-color, var(--lumo-primary-color));
+      }
+
+      vaadin-radio-button[checked] {
+          --vaadin-radio-button-background: var(--vaadin-selection-color, var(--lumo-primary-color));
       }
 
       .coordinates-name {
@@ -1071,8 +1075,8 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
               <div slot="content">
                 <qui-code-block id="pom-dependency-code" mode="xml" theme="${this._theme}" content="${this._usePom}"></qui-code-block>
               </div>
-              <div slot="footer">
-                <vaadin-radio-group @change="${this._scopeChanged}">
+              <div slot="footer" style="display:flex; justify-content:center; padding:4px 8px;">
+                <vaadin-radio-group theme="horizontal" @change="${this._scopeChanged}">
                   <vaadin-radio-button value="runtime" label="runtime"></vaadin-radio-button>
                   <vaadin-radio-button value="provided" label="provided" checked></vaadin-radio-button>
                 </vaadin-radio-group>
@@ -1103,6 +1107,11 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
 
   _pomToClipboard() {
     navigator.clipboard.writeText(this._usePom);
+    Notification.show('Copied to clipboard!', {
+      position: 'top-center',
+      duration: 2000,
+      theme: 'success',
+    });
   }
 
   _viewDependency(dependency) {

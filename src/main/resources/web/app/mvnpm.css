@@ -111,6 +111,12 @@ html[data-theme="dark"], html:not([data-theme]) {
     --vaadin-border-color-secondary: var(--mvnpm-border-subtle);
     --vaadin-focus-ring-color: var(--mvnpm-indigo-light);
     --vaadin-radius-m: var(--mvnpm-radius-sm);
+    --vaadin-selection-color: var(--mvnpm-indigo-light);
+    --vaadin-selection-color-text: #ffffff;
+    /* Radio & checkbox sizing (1lh is too large with our line-height) */
+    --vaadin-radio-button-size: 1em;
+    --vaadin-checkbox-size: 1em;
+    /* Input fields */
     --vaadin-input-field-background: var(--mvnpm-bg-surface);
     --vaadin-input-field-border-color: var(--mvnpm-border);
     --vaadin-input-field-value-color: var(--mvnpm-text-primary);
@@ -121,10 +127,24 @@ html[data-theme="dark"], html:not([data-theme]) {
     --vaadin-input-field-button-text-color: var(--mvnpm-text-secondary);
     --vaadin-input-field-required-indicator: none;
     --vaadin-input-field-required-indicator-color: var(--mvnpm-text-tertiary);
+    /* Buttons */
     --vaadin-button-text-color: var(--mvnpm-text-secondary);
     --vaadin-button-border-color: var(--mvnpm-border);
+    --vaadin-button-primary-background: var(--mvnpm-indigo-light);
+    --vaadin-button-primary-text-color: #ffffff;
+    /* Progress bar */
     --vaadin-progress-bar-background: var(--mvnpm-bg-surface);
     --vaadin-progress-bar-value-background: var(--mvnpm-indigo-light);
+    /* Tabs */
+    /* Tabs: no global selected-text-color; override via vaadin-tab[selected] in components */
+    /* Grid */
+    --vaadin-grid-header-background: var(--mvnpm-bg-surface);
+    --vaadin-grid-row-stripe-background: var(--mvnpm-bg-surface);
+    --vaadin-grid-border-color: var(--mvnpm-border);
+    /* Overlay (combo-box dropdowns, etc.) */
+    --vaadin-overlay-background: var(--mvnpm-bg-elevated);
+    --vaadin-overlay-border-color: var(--mvnpm-border);
+    --vaadin-item-checkmark-color: var(--mvnpm-indigo-light);
 }
 
 /* --- Light Theme --- */
@@ -205,6 +225,12 @@ html[data-theme="light"] {
     --vaadin-border-color-secondary: var(--mvnpm-border-subtle);
     --vaadin-focus-ring-color: var(--mvnpm-indigo);
     --vaadin-radius-m: var(--mvnpm-radius-sm);
+    --vaadin-selection-color: var(--mvnpm-indigo);
+    --vaadin-selection-color-text: #ffffff;
+    /* Radio & checkbox sizing (1lh is too large with our line-height) */
+    --vaadin-radio-button-size: 1em;
+    --vaadin-checkbox-size: 1em;
+    /* Input fields */
     --vaadin-input-field-background: var(--mvnpm-bg-surface);
     --vaadin-input-field-border-color: var(--mvnpm-border);
     --vaadin-input-field-value-color: var(--mvnpm-text-primary);
@@ -215,10 +241,24 @@ html[data-theme="light"] {
     --vaadin-input-field-button-text-color: var(--mvnpm-text-secondary);
     --vaadin-input-field-required-indicator: none;
     --vaadin-input-field-required-indicator-color: var(--mvnpm-text-tertiary);
+    /* Buttons */
     --vaadin-button-text-color: var(--mvnpm-text-secondary);
     --vaadin-button-border-color: var(--mvnpm-border);
+    --vaadin-button-primary-background: var(--mvnpm-indigo);
+    --vaadin-button-primary-text-color: #ffffff;
+    /* Progress bar */
     --vaadin-progress-bar-background: var(--mvnpm-bg-surface);
     --vaadin-progress-bar-value-background: var(--mvnpm-indigo);
+    /* Tabs */
+    /* Tabs: no global selected-text-color; override via vaadin-tab[selected] in components */
+    /* Grid */
+    --vaadin-grid-header-background: var(--mvnpm-bg-surface);
+    --vaadin-grid-row-stripe-background: var(--mvnpm-bg-surface);
+    --vaadin-grid-border-color: var(--mvnpm-border);
+    /* Overlay (combo-box dropdowns, etc.) */
+    --vaadin-overlay-background: var(--mvnpm-bg-elevated);
+    --vaadin-overlay-border-color: var(--mvnpm-border);
+    --vaadin-item-checkmark-color: var(--mvnpm-indigo);
 }
 
 /* --- Base Styles --- */

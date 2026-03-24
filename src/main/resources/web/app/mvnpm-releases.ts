@@ -39,6 +39,10 @@ export class MvnpmReleases extends LitElement {
         border-radius: var(--mvnpm-radius-md, 10px);
     }
 
+    vaadin-radio-button[checked] {
+        --vaadin-radio-button-background: var(--vaadin-selection-color, var(--lumo-primary-color));
+    }
+
     vaadin-grid {
         border-radius: var(--mvnpm-radius-md, 10px);
         border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
