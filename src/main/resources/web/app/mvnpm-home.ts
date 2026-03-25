@@ -192,6 +192,60 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           align-items: center;
       }
 
+      /* --- MCP Card --- */
+      .mcp-card {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 20px 24px;
+          border-radius: var(--mvnpm-radius-md, 10px);
+          border: 1px solid var(--mvnpm-border, var(--lumo-contrast-10pct));
+          background: var(--mvnpm-bg-surface, var(--lumo-contrast-5pct));
+          cursor: pointer;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          max-width: 652px;
+          width: 100%;
+          box-sizing: border-box;
+          text-decoration: none;
+          color: inherit;
+          margin-top: 16px;
+      }
+
+      .mcp-card:hover {
+          border-color: var(--mvnpm-indigo, var(--lumo-primary-color));
+          box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+      }
+
+      .mcp-card-icon {
+          font-size: 28px;
+          flex-shrink: 0;
+      }
+
+      .mcp-card-body {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          flex: 1;
+          min-width: 0;
+      }
+
+      .mcp-card-title {
+          font-size: 0.95rem;
+          font-weight: 600;
+      }
+
+      .mcp-card-desc {
+          font-size: 0.8rem;
+          color: var(--mvnpm-text-secondary, var(--lumo-secondary-text-color));
+      }
+
+      .mcp-card-link {
+          font-size: 0.8rem;
+          font-weight: 600;
+          color: var(--mvnpm-indigo, #6366F1);
+          flex-shrink: 0;
+      }
+
       /* --- Recently Synced --- */
       .recent-section {
           width: 100%;
@@ -862,6 +916,15 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           <div class="how-step-desc">Use like any Maven dependency</div>
         </div>
       </div>
+
+      <a class="mcp-card" href="/ai-agent">
+        <span class="mcp-card-icon">&#129302;</span>
+        <div class="mcp-card-body">
+          <div class="mcp-card-title">AI Agent Integration</div>
+          <div class="mcp-card-desc">Connect your AI coding assistant to mvnpm via MCP (Model Context Protocol)</div>
+        </div>
+        <span class="mcp-card-link">Learn more &#8594;</span>
+      </a>
 
       ${this._renderRecentReleases()}
     `;
