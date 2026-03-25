@@ -1,8 +1,9 @@
 ---
 layout: doc
 nav:
-  order: 6
+  order: 7
   title: About
+  mobile: true
 title: "About mvnpm"
 description: "The story behind mvnpm, why it exists, and the ecosystem of tools that make frontend development in Java seamless."
 image: og-image.png

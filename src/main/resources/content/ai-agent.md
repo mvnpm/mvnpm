@@ -1,8 +1,9 @@
 ---
 layout: doc
 nav:
-  order: 7
+  order: 3
   title: MCP
+  mobile: false
 title: "AI Agent Integration"
 description: "Connect your AI coding assistant to mvnpm via MCP (Model Context Protocol). Setup guides for Claude Code, Cursor, VS Code, Windsurf, and more."
 image: og-image.png

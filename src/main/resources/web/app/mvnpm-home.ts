@@ -670,6 +670,11 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
           }
           .recent-section {
               padding: 12px 16px 24px;
+              box-sizing: border-box;
+          }
+          .mcp-card {
+              margin: 16px 16px 0;
+              width: auto;
           }
           .recent-grid {
               grid-template-columns: 1fr 1fr;

@@ -100,7 +100,7 @@
         <div class="header-right">
             <nav>
                 {#for p in site.pages.sortedByNav}
-                <a href="{p.url}" {#if p.id == page.id}data-selected{/if}>{p.data.nav.title}</a>
+                <a href="{p.url}" {#if p.id == page.id}data-selected{/if} {#if !p.data.nav.mobile??}class="nav-desktop-only"{/if}>{p.data.nav.title}</a>
                 {/for}
                 <a href="https://github.com/mvnpm/mvnpm" target="_blank" title="Source on GitHub">
                     <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
