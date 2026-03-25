@@ -1,15 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://mvnpm.org/</loc>
-  </url>
-  <url>
-    <loc>https://mvnpm.org/doc</loc>
-  </url>
-  <url>
-    <loc>https://mvnpm.org/releases</loc>
-  </url>
-  <url>
-    <loc>https://mvnpm.org/composites</loc>
-  </url>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url>
+        <loc>/doc/</loc>
+        <lastmod>2026-03-25T12:10:39.490274+01:00</lastmod>
+    </url>
+    <url>
+        <loc>/</loc>
+        <lastmod>2026-03-25T12:10:39.491603+01:00</lastmod>
+    </url>
+    <url>
+        <loc>/releases/</loc>
+        <lastmod>2026-03-25T12:10:39.491866+01:00</lastmod>
+    </url>
+    <url>
+        <loc>/live/</loc>
+        <lastmod>2026-03-25T12:10:39.491946+01:00</lastmod>
+    </url>
+    <url>
+        <loc>/composites/</loc>
+        <lastmod>2026-03-25T12:10:39.492077+01:00</lastmod>
+    </url>
+    <url>
+        <loc>/about/</loc>
+        <lastmod>2026-03-25T12:10:39.492124+01:00</lastmod>
+    </url>
+    <url>
+        <loc>/ai/</loc>
+        <lastmod>2026-03-25T12:10:39.492124+01:00</lastmod>
+    </url>
 </urlset>
