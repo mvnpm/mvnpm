@@ -5,8 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/svg+xml" href="{site.file('static/favicon.svg')}">
-    <link rel="icon" type="image/x-icon" sizes="64x64 32x32 16x16" href="{site.file('static/favicon.ico')}">
+    <link rel="icon" type="image/svg+xml" href="{site.file('static/favicon.svg')}?v={config:['build.id']}">
+    <link rel="icon" type="image/x-icon" sizes="64x64 32x32 16x16" href="{site.file('static/favicon.ico')}?v={config:['build.id']}">
     {#bundle /}
 
     <!-- Roq handles: title, description, og:title, og:description, og:image, og:url, twitter:title, twitter:description, twitter:image -->
@@ -94,8 +94,8 @@
 <body>
     <header>
         <div class="banner" onclick="location.href='/';">
-            <img class="logo-dark" src="{site.file('static/logo.svg')}" alt="mvnpm"/>
-            <img class="logo-light" src="{site.file('static/logo-reversed.svg')}" alt="mvnpm"/>
+            <img class="logo-dark" src="{site.file('static/logo.svg')}?v={config:['build.id']}" alt="mvnpm"/>
+            <img class="logo-light" src="{site.file('static/logo-reversed.svg')}?v={config:['build.id']}" alt="mvnpm"/>
         </div>
         <div class="header-right">
             <nav>
