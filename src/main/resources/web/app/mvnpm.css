@@ -634,7 +634,7 @@ footer .copyright {
         font-size: 0.85rem;
     }
 
-    nav a[href*="/live"], nav a[href*="/composites"], nav a[href*="/releases"] {
+    nav a.nav-desktop-only {
         display: none;
     }
 
