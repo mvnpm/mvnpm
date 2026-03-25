@@ -42,6 +42,8 @@ public class NpmRegistryFacade {
     }
 
     @CacheResult(cacheName = "npm-package-cache")
+    @Timeout(unit = ChronoUnit.MINUTES, value = 2)
+    @Retry(maxRetries = 2)
     @Blocking
     public io.mvnpm.npm.model.Package getPackage(String project, String version) {
         if (null == version || version.startsWith("git:/") || version.startsWith("git+http")) {
@@ -56,6 +58,7 @@ public class NpmRegistryFacade {
         }
     }
 
+    @Timeout(unit = ChronoUnit.MINUTES, value = 2)
     @Blocking
     public SearchResults search(String term, int page) {
         if (page < 0)

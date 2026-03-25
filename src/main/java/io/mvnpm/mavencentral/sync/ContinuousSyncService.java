@@ -148,7 +148,6 @@ public class ContinuousSyncService {
      */
     @Scheduled(every = "${mvnpm.check-packaging.every:60s}", concurrentExecution = SKIP)
     @Blocking
-    @Transactional
     void checkPackaging() {
         List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING, 1);
         if (!initQueue.isEmpty()) {
