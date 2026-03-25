@@ -13,7 +13,6 @@ import java.util.Map;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.FileUtils;
