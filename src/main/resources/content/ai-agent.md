@@ -13,14 +13,11 @@ image: og-image.png
 
 Connect your AI coding assistant to mvnpm using the **Model Context Protocol (MCP)**. Your agent can search NPM packages, get Maven coordinates, browse artifacts, and monitor sync status — all without leaving your editor.
 
-## Endpoints
+## Endpoint
 
-mvnpm exposes two MCP transport options:
-
-| Transport | URL | Notes |
-|-----------|-----|-------|
-| **SSE** (Server-Sent Events) | `https://mvnpm.org/mcp/sse` | Widest client support |
-| **Streamable HTTP** | `https://mvnpm.org/mcp` | Newer, simpler protocol |
+| Transport | URL |
+|-----------|-----|
+| **Streamable HTTP** | `https://mvnpm.org/mcp` |
 
 ## Available Tools
 
@@ -45,7 +42,7 @@ All tools accept both **NPM names** (`lit`, `@hotwired/stimulus`) and **Maven co
 ### Claude Code
 
 ```bash
-claude mcp add mvnpm --transport sse https://mvnpm.org/mcp/sse
+claude mcp add --transport http mvnpm https://mvnpm.org/mcp
 ```
 
 That's it. The mvnpm tools are now available in your Claude Code sessions.
@@ -58,7 +55,7 @@ Add to `.cursor/mcp.json` in your project root (or `~/.cursor/mcp.json` globally
 {
   "mcpServers": {
     "mvnpm": {
-      "url": "https://mvnpm.org/mcp/sse"
+      "url": "https://mvnpm.org/mcp"
     }
   }
 }
@@ -72,8 +69,8 @@ Add to `.vscode/mcp.json` in your project root:
 {
   "servers": {
     "mvnpm": {
-      "type": "sse",
-      "url": "https://mvnpm.org/mcp/sse"
+      "type": "http",
+      "url": "https://mvnpm.org/mcp"
     }
   }
 }
@@ -87,7 +84,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 {
   "mcpServers": {
     "mvnpm": {
-      "serverUrl": "https://mvnpm.org/mcp/sse"
+      "serverUrl": "https://mvnpm.org/mcp"
     }
   }
 }
@@ -95,10 +92,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
 
 ### Generic / Other Clients
 
-Any MCP-compatible client can connect using:
-
-- **SSE**: `https://mvnpm.org/mcp/sse`
-- **Streamable HTTP**: `https://mvnpm.org/mcp`
+Any MCP-compatible client can connect to `https://mvnpm.org/mcp` using the [Streamable HTTP transport](https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http).
 
 Refer to your client's documentation for how to add a remote MCP server.
 
