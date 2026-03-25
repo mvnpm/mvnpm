@@ -126,6 +126,7 @@ public class MavenRepositoryService {
                     return version != null ? new NameVersion(name, version.toString()) : null;
                 }).onItem().delayIt().by(Duration.ofSeconds(3)))
                 .filter(Objects::nonNull)
+                .emitOn(Infrastructure.getDefaultWorkerPool())
                 .invoke(n -> {
                     final String depGavString = n.name().toGavString(n.version());
                     Log.infof("Matching dependency version found for package %s -> %s", reqGavString, depGavString);
