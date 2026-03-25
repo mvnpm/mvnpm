@@ -13,7 +13,6 @@ import java.util.Map;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.FileUtils;
@@ -148,7 +147,6 @@ public class ContinuousSyncService {
      */
     @Scheduled(every = "${mvnpm.check-packaging.every:60s}", concurrentExecution = SKIP)
     @Blocking
-    @Transactional
     void checkPackaging() {
         List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING, 1);
         if (!initQueue.isEmpty()) {
