@@ -1,6 +1,8 @@
 package io.mvnpm.mavencentral.sync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
@@ -90,6 +92,31 @@ class SyncedPackageClaimTest {
         LocalDateTime claim2 = LocalDateTime.now().plusHours(2);
         int secondClaim = SyncedPackage.claimBatch(10, claim2);
         assertEquals(0, secondClaim);
+    }
+
+    @Test
+    @Transactional
+    void createIfAbsentCreatesNewEntry() {
+        SyncedPackage.createIfAbsent("org.mvnpm", "new-pkg");
+
+        SyncedPackage found = SyncedPackage.findById(new SyncedPackageId("org.mvnpm", "new-pkg"));
+        assertNotNull(found);
+        assertNull(found.nextCheck, "Newly created SyncedPackage should have null nextCheck");
+    }
+
+    @Test
+    @Transactional
+    void createIfAbsentDoesNotOverwriteExisting() {
+        // Create with a nextCheck value
+        SyncedPackage pkg = new SyncedPackage("org.mvnpm", "existing");
+        pkg.nextCheck = LocalDateTime.now().plusDays(5);
+        pkg.persist();
+
+        // createIfAbsent should NOT overwrite
+        SyncedPackage.createIfAbsent("org.mvnpm", "existing");
+
+        SyncedPackage found = SyncedPackage.findById(new SyncedPackageId("org.mvnpm", "existing"));
+        assertNotNull(found.nextCheck, "createIfAbsent should not overwrite existing nextCheck");
     }
 
     private void insertPackage(String groupId, String artifactId, LocalDateTime nextCheck) {

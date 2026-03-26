@@ -30,6 +30,9 @@ class ContinuousSyncServiceTest {
     @Inject
     ContinuousSyncService continuousSyncService;
 
+    @Inject
+    CentralSyncItemService centralSyncItemService;
+
     @InjectMock
     NpmRegistryFacade npmRegistryFacade;
 
@@ -40,6 +43,7 @@ class ContinuousSyncServiceTest {
     @Transactional
     void cleanup() {
         SyncedPackage.deleteAll();
+        CentralSyncItem.deleteAll();
     }
 
     @Test
@@ -116,6 +120,22 @@ class ContinuousSyncServiceTest {
         assertNotNull(pkg);
         Duration untilNextCheck = Duration.between(LocalDateTime.now(), pkg.nextCheck);
         assertTrue(untilNextCheck.toHours() >= 22, "Future package nextCheck should not change");
+    }
+
+    @Test
+    void changeStageToReleasedCreatesSyncedPackage() {
+        // Create a CentralSyncItem and move it to RELEASED
+        CentralSyncItem item = createItem("org.mvnpm", "released-pkg", "2.0.0");
+        centralSyncItemService.changeStage(item, Stage.RELEASED);
+
+        // SyncedPackage should be auto-created
+        SyncedPackage pkg = findPackage("org.mvnpm", "released-pkg");
+        assertNotNull(pkg, "SyncedPackage should be created when item reaches RELEASED");
+    }
+
+    @Transactional
+    CentralSyncItem createItem(String groupId, String artifactId, String version) {
+        return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.UPLOADED);
     }
 
     @Transactional
