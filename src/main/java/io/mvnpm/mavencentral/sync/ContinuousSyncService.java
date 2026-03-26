@@ -23,6 +23,7 @@ import org.apache.commons.io.FileUtils;
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageCreator;
 import io.mvnpm.creator.PackageFileLocator;
+import io.mvnpm.creator.PackageListener;
 import io.mvnpm.creator.composite.CompositeCreator;
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.utils.FileUtil;
@@ -84,6 +85,9 @@ public class ContinuousSyncService {
 
     @Inject
     MavenRepositoryService mavenRepositoryService;
+
+    @Inject
+    PackageListener packageListener;
 
     @Inject
     MavenCentralService mavenCentralService;
@@ -404,6 +408,14 @@ public class ContinuousSyncService {
 
     private void processNextUpload(CentralSyncItem centralSyncItem) {
         if (!centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
+            // Ensure package files exist locally (may have been created on another pod)
+            try {
+                ensureFilesExist(centralSyncItem);
+            } catch (PackageAlreadySyncedException e) {
+                Log.infof("Package already synced, marking as released: %s", centralSyncItem.toGavString());
+                centralSyncItemService.changeStage(centralSyncItem, Stage.RELEASED);
+                return;
+            }
             try {
                 String releaseId = centralSyncService.sync(centralSyncItem);
                 centralSyncItem.stagingRepoId = releaseId;
@@ -422,6 +434,22 @@ public class ContinuousSyncService {
                 retryUpload(centralSyncItem, throwable);
             }
         }
+    }
+
+    /**
+     * Ensure all bundle files exist locally before upload.
+     * Files may have been created on another pod — this recreates them if missing.
+     * All creation services are idempotent (skip if file already exists).
+     */
+    private void ensureFilesExist(CentralSyncItem centralSyncItem) {
+        Name name = NameParser.fromMavenGA(centralSyncItem.groupId, centralSyncItem.artifactId);
+        String version = centralSyncItem.version;
+        // getPath creates jar + pom + tgz if not cached (jar creation triggers pom/tgz internally)
+        Path jarPath = mavenRepositoryService.getPath(name, version, FileType.jar);
+        Path pomPath = packageFileLocator.getLocalFullPath(FileType.pom, name, version);
+        Path tgzPath = packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
+        // Synchronously create remaining bundle files (source, javadoc, asc, hashes)
+        packageListener.createBundleFiles(pomPath, jarPath, tgzPath, List.of());
     }
 
     private void retryUpload(CentralSyncItem centralSyncItem, Throwable t) {

@@ -19,9 +19,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import io.mvnpm.creator.PackageListener;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
+import io.mvnpm.mavencentral.MavenCentralFacade;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.DistTags;
+import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.Project;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -40,6 +44,12 @@ class ContinuousSyncServiceTest {
 
     @InjectMock
     MavenRepositoryService mavenRepositoryService;
+
+    @InjectMock
+    PackageListener packageListener;
+
+    @InjectMock
+    MavenCentralFacade mavenCentralFacade;
 
     @BeforeEach
     @Transactional
@@ -301,6 +311,42 @@ class ContinuousSyncServiceTest {
                 new Gav("org.mvnpm", "ghost", "1.0.0"));
 
         assertNull(claimed);
+    }
+
+    @Test
+    void processUpload_ensuresFilesExistBeforeSync() {
+        // Create an UPLOADING item (as if just claimed)
+        CentralSyncItem item = createInitItem("org.mvnpm", "ensure-files-pkg", "1.0.0");
+        changeStage("org.mvnpm", "ensure-files-pkg", "1.0.0", Stage.UPLOADING);
+        item = reloadItem("org.mvnpm", "ensure-files-pkg", "1.0.0");
+
+        // Call processNextAction directly (normally triggered by stage-change event)
+        continuousSyncService.processNextAction(item);
+
+        // Verify that getPath was called to ensure files exist
+        Mockito.verify(mavenRepositoryService).getPath(Mockito.any(Name.class), Mockito.eq("1.0.0"),
+                Mockito.any());
+        // Verify that createBundleFiles was called for remaining bundle files
+        Mockito.verify(packageListener).createBundleFiles(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
+    }
+
+    @Test
+    void processUpload_alreadySynced_marksReleased() {
+        // Create an UPLOADING item
+        createInitItem("org.mvnpm", "synced-pkg", "2.0.0");
+        changeStage("org.mvnpm", "synced-pkg", "2.0.0", Stage.UPLOADING);
+        CentralSyncItem item = reloadItem("org.mvnpm", "synced-pkg", "2.0.0");
+
+        // Make getPath throw PackageAlreadySyncedException (package already on Central)
+        Mockito.when(mavenRepositoryService.getPath(Mockito.any(Name.class), Mockito.eq("2.0.0"), Mockito.any()))
+                .thenThrow(new PackageAlreadySyncedException("test", new Name("synced-pkg"), "2.0.0", null));
+
+        // Process the upload
+        continuousSyncService.processNextAction(item);
+
+        // Item should be marked as RELEASED
+        CentralSyncItem updated = reloadItem("org.mvnpm", "synced-pkg", "2.0.0");
+        assertEquals(Stage.RELEASED, updated.stage);
     }
 
     @Transactional
