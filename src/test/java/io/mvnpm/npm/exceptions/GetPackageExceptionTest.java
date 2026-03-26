@@ -8,25 +8,25 @@ import jakarta.ws.rs.core.Response;
 
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class GetPackageExceptionTest {
 
-    @Test
-    void isNotFoundReturnsTrueFor404() {
-        GetPackageException ex = createWithStatus(404);
-        assertTrue(ex.isNotFound());
+    @ParameterizedTest
+    @ValueSource(ints = { 400, 404, 405, 410 })
+    void isPermanentlyUnavailable_permanentErrors(int status) {
+        GetPackageException ex = createWithStatus(status);
+        assertTrue(ex.isPermanentlyUnavailable(),
+                "Status " + status + " should be permanently unavailable");
     }
 
-    @Test
-    void isNotFoundReturnsFalseFor429() {
-        GetPackageException ex = createWithStatus(429);
-        assertFalse(ex.isNotFound());
-    }
-
-    @Test
-    void isNotFoundReturnsFalseFor500() {
-        GetPackageException ex = createWithStatus(500);
-        assertFalse(ex.isNotFound());
+    @ParameterizedTest
+    @ValueSource(ints = { 401, 403, 429, 500, 502, 503 })
+    void isPermanentlyUnavailable_retriableErrors(int status) {
+        GetPackageException ex = createWithStatus(status);
+        assertFalse(ex.isPermanentlyUnavailable(),
+                "Status " + status + " should NOT be permanently unavailable");
     }
 
     @Test

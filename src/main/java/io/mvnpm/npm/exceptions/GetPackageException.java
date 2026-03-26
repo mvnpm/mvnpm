@@ -15,8 +15,14 @@ public class GetPackageException extends WebApplicationException {
         this.npmStatusCode = cause.getResponse().getStatus();
     }
 
-    public boolean isNotFound() {
-        return npmStatusCode == 404;
+    /**
+     * Returns true if the NPM error is permanent and the package will never be fetchable.
+     */
+    public boolean isPermanentlyUnavailable() {
+        return npmStatusCode == 400 // bad request (invalid package name)
+                || npmStatusCode == 404 // not found
+                || npmStatusCode == 405 // method not allowed (e.g. platform-specific @esbuild packages)
+                || npmStatusCode == 410; // gone (unpublished)
     }
 
     private static String getMessage(String project, String version, ClientWebApplicationException cause) {

@@ -544,6 +544,9 @@ public class VersionConverterTest {
     public void testInvalidVersions() {
         Assertions.assertEquals("", VersionConverter.convert("${org.mvnpm-d3-time.version}"));
         Assertions.assertEquals("", VersionConverter.convert("${redoc.version}.0"));
+        Assertions.assertEquals("", VersionConverter.convert("${fontsource.version}.0"));
+        Assertions.assertEquals("", VersionConverter.convert("@shoelace-style.0.0"));
+        Assertions.assertEquals("", VersionConverter.convert("@esbuild.0.0"));
     }
 
     // Partial version in range

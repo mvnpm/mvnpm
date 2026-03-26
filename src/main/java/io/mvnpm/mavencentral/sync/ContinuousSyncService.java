@@ -40,6 +40,7 @@ import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
+import io.mvnpm.version.InvalidVersionException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
@@ -247,12 +248,16 @@ public class ContinuousSyncService {
                 } catch (PackageAlreadySyncedException e) {
                     // Already synced, nothing to do
                 } catch (GetPackageException e) {
-                    if (e.isNotFound()) {
-                        Log.warnf("Package not found on NPM, removing: %s — %s", itemToBeCreated, e.getMessage());
+                    if (e.isPermanentlyUnavailable()) {
+                        Log.warnf("Package permanently unavailable on NPM, removing: %s — %s", itemToBeCreated,
+                                e.getMessage());
                         deletePackagingItem(itemToBeCreated);
                     } else {
                         Log.warnf("NPM error for %s: %s", itemToBeCreated, e.getMessage());
                     }
+                } catch (InvalidVersionException e) {
+                    Log.warnf("Invalid version, removing: %s — %s", itemToBeCreated, e.getVersion());
+                    deletePackagingItem(itemToBeCreated);
                 } catch (Exception e) {
                     Log.warnf("Error checking packaging for %s: %s", itemToBeCreated, e.getMessage());
                 }

@@ -30,6 +30,7 @@ import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Package;
 import io.mvnpm.npm.model.Project;
+import io.mvnpm.version.InvalidVersionException;
 import io.mvnpm.version.Version;
 import io.mvnpm.version.VersionMatcher;
 import io.quarkus.logging.Log;
@@ -137,7 +138,7 @@ public class MavenRepositoryService {
                     } catch (PackageAlreadySyncedException e) {
                         // Already synced, nothing to do
                     } catch (GetPackageException e) {
-                        if (e.isNotFound()) {
+                        if (e.isPermanentlyUnavailable()) {
                             // Package doesn't exist on NPM (e.g. private/scoped) — not a real error
                             Log.infof("Dependency '%s' not available on NPM, skipping: %s",
                                     depGavString, e.getMessage());
@@ -146,6 +147,9 @@ public class MavenRepositoryService {
                                     depGavString, e.getMessage());
                             error.set(true);
                         }
+                    } catch (InvalidVersionException e) {
+                        Log.infof("Dependency '%s' has invalid version '%s', skipping",
+                                depGavString, e.getVersion());
                     } catch (Exception e) {
                         Log.warnf("Error while syncing matching dependency '%s' because: %s",
                                 depGavString, e.getMessage());
