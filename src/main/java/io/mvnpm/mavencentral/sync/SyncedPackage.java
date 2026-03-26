@@ -27,12 +27,29 @@ public class SyncedPackage extends PanacheEntityBase {
         this.artifactId = artifactId;
     }
 
-    public static List<SyncedPackage> findBatchToCheck(int batchSize) {
-        return find(
-                "from SyncedPackage where nextCheck IS NULL or nextCheck < ?1 order by nextCheck ASC NULLS FIRST",
-                LocalDateTime.now())
-                .page(0, batchSize)
-                .list();
+    /**
+     * Atomically claim a batch of packages due for checking by setting their nextCheck
+     * to a temporary future value. Must be called within a transaction.
+     * Returns the number of claimed items.
+     */
+    public static int claimBatch(int batchSize, LocalDateTime claimUntil) {
+        LocalDateTime now = LocalDateTime.now();
+        return getEntityManager().createNativeQuery(
+                "UPDATE syncedpackage SET nextcheck = :claimUntil "
+                        + "WHERE (groupid, artifactid) IN ("
+                        + "  SELECT groupid, artifactid FROM syncedpackage "
+                        + "  WHERE nextcheck IS NULL OR nextcheck < :now "
+                        + "  ORDER BY nextcheck ASC NULLS FIRST "
+                        + "  LIMIT :limit"
+                        + ") AND (nextcheck IS NULL OR nextcheck < :now)")
+                .setParameter("claimUntil", claimUntil)
+                .setParameter("now", now)
+                .setParameter("limit", batchSize)
+                .executeUpdate();
+    }
+
+    public static List<SyncedPackage> findClaimed(LocalDateTime claimUntil) {
+        return find("from SyncedPackage where nextCheck = ?1", claimUntil).list();
     }
 
     public static void createIfAbsent(String groupId, String artifactId) {

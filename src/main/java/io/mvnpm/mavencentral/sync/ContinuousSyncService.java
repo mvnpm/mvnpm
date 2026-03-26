@@ -112,7 +112,7 @@ public class ContinuousSyncService {
     @RunOnVirtualThread
     public void checkAll() {
         try {
-            List<SyncedPackage> batch = SyncedPackage.findBatchToCheck(50);
+            List<SyncedPackage> batch = claimBatchToCheck(50);
             if (batch.isEmpty()) {
                 Log.debug("No packages due for update check");
                 return;
@@ -125,6 +125,16 @@ public class ContinuousSyncService {
         } catch (Throwable t) {
             Log.error("Error during batch update check: " + t.getMessage());
         }
+    }
+
+    @Transactional
+    List<SyncedPackage> claimBatchToCheck(int batchSize) {
+        LocalDateTime claimUntil = LocalDateTime.now().plusHours(1);
+        int claimed = SyncedPackage.claimBatch(batchSize, claimUntil);
+        if (claimed == 0) {
+            return List.of();
+        }
+        return SyncedPackage.findClaimed(claimUntil);
     }
 
     private LocalDateTime checkAndComputeNextCheck(SyncedPackage pkg) {
@@ -149,25 +159,28 @@ public class ContinuousSyncService {
                 String modified = project.time().get("modified");
                 if (modified != null) {
                     Instant lastModified = Instant.parse(modified);
-                    Duration age = Duration.between(lastModified, Instant.now());
-                    long days = age.toDays();
-                    if (days < 7) {
-                        return LocalDateTime.now().plusHours(4);
-                    } else if (days < 30) {
-                        return LocalDateTime.now().plusHours(12);
-                    } else if (days < 180) {
-                        return LocalDateTime.now().plusDays(1);
-                    } else if (days < 1825) {
-                        return LocalDateTime.now().plusDays(3);
-                    } else {
-                        return LocalDateTime.now().plusDays(30);
-                    }
+                    long ageDays = Duration.between(lastModified, Instant.now()).toDays();
+                    return LocalDateTime.now().plus(nextCheckInterval(ageDays));
                 }
             }
         } catch (Exception e) {
             Log.debugf("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
         }
         return LocalDateTime.now().plusDays(1);
+    }
+
+    static Duration nextCheckInterval(long ageDays) {
+        if (ageDays < 7) {
+            return Duration.ofHours(4);
+        } else if (ageDays < 30) {
+            return Duration.ofHours(12);
+        } else if (ageDays < 180) {
+            return Duration.ofDays(1);
+        } else if (ageDays < 1825) {
+            return Duration.ofDays(3);
+        } else {
+            return Duration.ofDays(30);
+        }
     }
 
     @Transactional
@@ -250,9 +263,9 @@ public class ContinuousSyncService {
     }
 
     private void deletePackagingItem(CentralSyncItem item) {
+        centralSyncItemService.delete(item);
         Path dir = packageFileLocator.getLocalDirectory(item.groupId, item.artifactId, item.version);
         FileUtils.deleteQuietly(dir.toFile());
-        centralSyncItemService.delete(item);
     }
 
     /**
