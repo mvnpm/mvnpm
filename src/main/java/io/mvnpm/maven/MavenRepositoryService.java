@@ -22,6 +22,7 @@ import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.utils.ImportMapUtil;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
+import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.mavencentral.sync.CentralSyncItem;
 import io.mvnpm.mavencentral.sync.CentralSyncItemService;
 import io.mvnpm.npm.NpmRegistryFacade;
@@ -133,10 +134,14 @@ public class MavenRepositoryService {
                     try {
                         getPath(n.name(), n.version(), FileType.jar);
                     } catch (PackageAlreadySyncedException e) {
-                        // Do nothing
+                        // Already synced, nothing to do
+                    } catch (GetPackageException e) {
+                        // Package doesn't exist on NPM (e.g. private/scoped) — not a real error
+                        Log.infof("Dependency '%s' not available on NPM, skipping: %s",
+                                depGavString, e.getMessage());
                     } catch (Exception e) {
                         Log.warnf("Error while syncing matching dependency '%s' because: %s",
-                                n.name().toGavString(n.version()), e.getMessage());
+                                depGavString, e.getMessage());
                         error.set(true);
                     }
                 })
