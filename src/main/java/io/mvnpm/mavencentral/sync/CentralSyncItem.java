@@ -64,14 +64,15 @@ public class CentralSyncItem extends PanacheEntityBase {
     }
 
     private static int insertIfNotPresent(Gav gav, Stage stage) {
-        return getEntityManager().createQuery(
-                "insert into CentralSyncItem (groupId, artifactId, version, startTime, stage, stageChangeTime, dependenciesChecked, creationAttempts, uploadAttempts, promotionAttempts) values (:groupId, :artifactId, :version, :now, :stage, :now, false, 0, 0, 0)\n"
-                        + "  on conflict(groupId, artifactId, version) do nothing")
+        return getEntityManager().createNativeQuery(
+                "INSERT INTO centralsyncitem (groupid, artifactid, version, starttime, stage, stagechangetime, dependencieschecked, creationattempts, uploadattempts, promotionattempts)"
+                        + " VALUES (:groupId, :artifactId, :version, :now, :stage, :now, false, 0, 0, 0)"
+                        + " ON CONFLICT (groupid, artifactid, version) DO NOTHING")
                 .setParameter("groupId", gav.getGroupId())
                 .setParameter("artifactId", gav.getArtifactId())
                 .setParameter("version", gav.getVersion())
                 .setParameter("now", LocalDateTime.now())
-                .setParameter("stage", stage)
+                .setParameter("stage", stage.ordinal())
                 .executeUpdate();
     }
 

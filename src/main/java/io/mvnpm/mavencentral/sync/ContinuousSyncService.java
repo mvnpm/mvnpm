@@ -6,6 +6,8 @@ import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import java.util.Map;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.FileUtils;
@@ -33,6 +36,7 @@ import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
 import io.mvnpm.mavencentral.exceptions.StatusCheckException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
@@ -42,6 +46,7 @@ import io.quarkus.scheduler.Scheduled;
 import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -82,17 +87,19 @@ public class ContinuousSyncService {
     @Inject
     MavenCentralService mavenCentralService;
 
+    @Inject
+    io.vertx.mutiny.core.eventbus.EventBus bus;
+
     @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     public void checkError() {
         try {
             Log.debug("Starting error retry...");
-            List<CentralSyncItem> error = CentralSyncItem.findByStage(Stage.ERROR, 50);
-
-            if (error != null && !error.isEmpty()) {
-                for (CentralSyncItem centralSyncItem : error) {
-                    centralSyncItemService.tryErroredItemAgain(centralSyncItem);
-                }
+            CentralSyncItem item;
+            int count = 0;
+            while ((item = centralSyncItemService.claimNextForErrorRetry()) != null && count < 50) {
+                bus.publish("central-sync-item-stage-change", item);
+                count++;
             }
         } catch (Throwable t) {
             Log.error(t.getMessage());
@@ -100,22 +107,90 @@ public class ContinuousSyncService {
     }
 
     /**
-     * Check all known artifacts for updates
+     * Check a batch of synced packages for updates using adaptive scheduling.
+     * Replaces the old checkAll which loaded all rows into memory.
      */
-    @Scheduled(cron = "{mvnpm.checkall.cron.expr}", concurrentExecution = SKIP)
-    @Blocking
+    @Scheduled(every = "${mvnpm.check-all.every:5m}", concurrentExecution = SKIP)
+    @RunOnVirtualThread
     public void checkAll() {
         try {
-            Log.debug("Starting full update check...");
-            List<CentralSyncItem> distinct = CentralSyncItem.findDistinctGA();
-
-            if (distinct != null && !distinct.isEmpty()) {
-                for (CentralSyncItem centralSyncItem : distinct) {
-                    update(centralSyncItem.groupId, centralSyncItem.artifactId);
-                }
+            List<SyncedPackage> batch = claimBatchToCheck(50);
+            if (batch.isEmpty()) {
+                Log.debug("No packages due for update check");
+                return;
+            }
+            Log.infof("Checking %d packages for updates", batch.size());
+            for (SyncedPackage pkg : batch) {
+                LocalDateTime nextCheck = checkAndComputeNextCheck(pkg);
+                updateNextCheck(pkg, nextCheck);
             }
         } catch (Throwable t) {
-            Log.error(t.getMessage());
+            Log.error("Error during batch update check: " + t.getMessage());
+        }
+    }
+
+    @Transactional
+    List<SyncedPackage> claimBatchToCheck(int batchSize) {
+        LocalDateTime claimUntil = LocalDateTime.now().plusHours(1);
+        int claimed = SyncedPackage.claimBatch(batchSize, claimUntil);
+        if (claimed == 0) {
+            return List.of();
+        }
+        return SyncedPackage.findClaimed(claimUntil);
+    }
+
+    private LocalDateTime checkAndComputeNextCheck(SyncedPackage pkg) {
+        try {
+            update(pkg.groupId, pkg.artifactId);
+            return computeNextCheck(pkg.groupId, pkg.artifactId);
+        } catch (Throwable t) {
+            Log.warnf("Error checking %s: %s", pkg.toGaString(), t.getMessage());
+            // On error, retry in 1 hour
+            return LocalDateTime.now().plusHours(1);
+        }
+    }
+
+    private LocalDateTime computeNextCheck(String groupId, String artifactId) {
+        try {
+            if (isInternal(groupId, artifactId)) {
+                return LocalDateTime.now().plusDays(1);
+            }
+            Name name = NameParser.fromMavenGA(groupId, artifactId);
+            Project project = npmRegistryFacade.getProject(name.npmFullName);
+            if (project != null && project.time() != null) {
+                String modified = project.time().get("modified");
+                if (modified != null) {
+                    Instant lastModified = Instant.parse(modified);
+                    long ageDays = Duration.between(lastModified, Instant.now()).toDays();
+                    return LocalDateTime.now().plus(nextCheckInterval(ageDays));
+                }
+            }
+        } catch (Exception e) {
+            Log.debugf("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
+        }
+        return LocalDateTime.now().plusDays(1);
+    }
+
+    static Duration nextCheckInterval(long ageDays) {
+        if (ageDays < 7) {
+            return Duration.ofHours(4);
+        } else if (ageDays < 30) {
+            return Duration.ofHours(12);
+        } else if (ageDays < 180) {
+            return Duration.ofDays(1);
+        } else if (ageDays < 1825) {
+            return Duration.ofDays(3);
+        } else {
+            return Duration.ofDays(30);
+        }
+    }
+
+    @Transactional
+    void updateNextCheck(SyncedPackage pkg, LocalDateTime nextCheck) {
+        SyncedPackage managed = SyncedPackage.findById(new SyncedPackageId(pkg.groupId, pkg.artifactId));
+        if (managed != null) {
+            managed.nextCheck = nextCheck;
+            managed.persist();
         }
     }
 
@@ -123,7 +198,7 @@ public class ContinuousSyncService {
      * This check is to auto-sync matching dependencies on existing packages
      */
     @Scheduled(every = "${mvnpm.check-versions.every:5m}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void checkVersions() {
         final List<CentralSyncItem> byStage = CentralSyncItem.findPackageWithUncheckedDependencies(1);
         if (!byStage.isEmpty()) {
@@ -146,11 +221,10 @@ public class ContinuousSyncService {
      * This just check if there is an artifact is stuck at packaging
      */
     @Scheduled(every = "${mvnpm.check-packaging.every:60s}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void checkPackaging() {
-        List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING, 1);
-        if (!initQueue.isEmpty()) {
-            CentralSyncItem itemToBeCreated = initQueue.get(0);
+        CentralSyncItem itemToBeCreated = centralSyncItemService.claimNextForPackagingCheck();
+        if (itemToBeCreated != null) {
             if (centralSyncService.canProcessSync(itemToBeCreated)) {
                 final Name name = NameParser.fromMavenGA(itemToBeCreated.groupId, itemToBeCreated.artifactId);
                 try {
@@ -158,7 +232,8 @@ public class ContinuousSyncService {
                     if (FileUtil.isOlderThanTimeout(jar, 60)) {
                         centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
                         if (itemToBeCreated.creationAttempts > 10) {
-                            Log.errorf("Package creation attempts exceeded maximum 10 attempts for:" + itemToBeCreated);
+                            Log.errorf("Package creation failed after 10 attempts, removing: %s", itemToBeCreated);
+                            deletePackagingItem(itemToBeCreated);
                             return;
                         }
                         // A jar which stays more than 60 minutes in NONE stage needs to be recreated
@@ -170,9 +245,16 @@ public class ContinuousSyncService {
                         packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
                     }
                 } catch (PackageAlreadySyncedException e) {
-                    // Do nothing
-                } catch (WebApplicationException e) {
-                    Log.error(e);
+                    // Already synced, nothing to do
+                } catch (GetPackageException e) {
+                    if (e.isNotFound()) {
+                        Log.warnf("Package not found on NPM, removing: %s — %s", itemToBeCreated, e.getMessage());
+                        deletePackagingItem(itemToBeCreated);
+                    } else {
+                        Log.warnf("NPM error for %s: %s", itemToBeCreated, e.getMessage());
+                    }
+                } catch (Exception e) {
+                    Log.warnf("Error checking packaging for %s: %s", itemToBeCreated, e.getMessage());
                 }
 
             }
@@ -181,34 +263,38 @@ public class ContinuousSyncService {
         }
     }
 
+    private void deletePackagingItem(CentralSyncItem item) {
+        centralSyncItemService.delete(item);
+        Path dir = packageFileLocator.getLocalDirectory(item.groupId, item.artifactId, item.version);
+        FileUtils.deleteQuietly(dir.toFile());
+    }
+
     /**
      * This just check if there is an artifact being uploaded, and if not change the status and fire an event
      */
     @Scheduled(every = "${mvnpm.next-upload.every:3m}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void nextToUploadStatusChange() {
-        // We only process one at a time, so first check that there is not another process in progress
-        if (!isCurrentlyUploading()) {
-            List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.INIT, 1);
-            if (!initQueue.isEmpty()) {
-                CentralSyncItem itemToBeUploaded = initQueue.get(0);
-                if (centralSyncService.canProcessSync(itemToBeUploaded)) {
-                    // Kick off an update
-                    Log.debug("Version [" + itemToBeUploaded.version + "] of "
-                            + itemToBeUploaded.toGavString() + " is NOT in central. Kicking off sync...");
-                    itemToBeUploaded.increaseUploadAttempt();
-                    itemToBeUploaded = centralSyncItemService.changeStage(itemToBeUploaded, Stage.UPLOADING);
-                }
-            } else {
-                Log.debug("Nothing in the queue to sync");
-            }
-        } else {
-            Log.debug("Sync upload in progress ");
+        if (isCurrentlyUploading()) {
+            Log.debug("Sync upload in progress");
+            return;
         }
+        CentralSyncItem item = centralSyncItemService.claimNextForUpload();
+        if (item == null) {
+            Log.debug("Nothing in the queue to sync");
+            return;
+        }
+        // Check if already in Central (avoid duplicate upload)
+        if (centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(item)) {
+            return; // Item moved to RELEASED inside the check
+        }
+        Log.debugf("Version [%s] of %s is NOT in central. Kicking off sync...",
+                item.version, item.toGavString());
+        bus.publish("central-sync-item-stage-change", item);
     }
 
     @Scheduled(every = "${mvnpm.clean-release.every:3m}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void cleanCentralStatuses() {
         // Check if this is in central, and update the status
         List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
@@ -218,7 +304,7 @@ public class ContinuousSyncService {
     }
 
     @Scheduled(every = "${mvnpm.release.every:60s}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void processCentralStatuses() {
         List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
         if (!uploadedToCentral.isEmpty()) {
@@ -350,11 +436,23 @@ public class ContinuousSyncService {
         resetPromotion();
     }
 
+    @Scheduled(every = "${mvnpm.reset-upload.every:30m}", concurrentExecution = SKIP)
+    @RunOnVirtualThread
+    void periodicResetUpload() {
+        resetUpload();
+    }
+
     private void resetUpload() {
         List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADING, 50);
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
         for (CentralSyncItem centralSyncItem : uploading) {
+            if (centralSyncItem.stageChangeTime != null && centralSyncItem.stageChangeTime.isAfter(cutoff)) {
+                Log.debugf("[MULTI-POD] Skipping recent UPLOADING item %s (may be in progress on another pod)",
+                        centralSyncItem);
+                continue;
+            }
             centralSyncItem.increaseUploadAttempt();
-            Log.info("Resetting upload for " + centralSyncItem + " after restart");
+            Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
             centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
         }
     }

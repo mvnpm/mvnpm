@@ -43,10 +43,13 @@ public class CentralSyncService {
                 startSync ? Stage.PACKAGING : Stage.NONE);
 
         // Check the status
-        if (!centralSyncItem.alreadyReleased() && checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
-            centralSyncItem.stage = Stage.RELEASED;
-            centralSyncItemService.merge(centralSyncItem);
-        } else if (startSync && centralSyncItem.stage == Stage.NONE) {
+        if (!centralSyncItem.alreadyReleased()) {
+            checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem);
+            // Reload to get the updated state (changeStage may have set RELEASED)
+            centralSyncItem = CentralSyncItem.findById(
+                    new Gav(centralSyncItem.groupId, centralSyncItem.artifactId, centralSyncItem.version));
+        }
+        if (startSync && centralSyncItem.stage == Stage.NONE) {
             centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.PACKAGING);
         }
         return centralSyncItem;

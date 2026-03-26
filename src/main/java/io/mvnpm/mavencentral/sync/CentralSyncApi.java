@@ -111,7 +111,11 @@ public class CentralSyncApi {
         final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version,
                 true);
         if (centralSyncItem.isInError()) {
-            return centralSyncItemService.tryErroredItemAgain(centralSyncItem);
+            CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
+                    new Gav(centralSyncItem.groupId, centralSyncItem.artifactId, centralSyncItem.version));
+            if (claimed != null) {
+                return claimed;
+            }
         }
         return centralSyncItem;
 

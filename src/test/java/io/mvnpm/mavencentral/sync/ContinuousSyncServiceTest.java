@@ -1,0 +1,338 @@
+package io.mvnpm.mavencentral.sync;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Set;
+
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
+import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.model.DistTags;
+import io.mvnpm.npm.model.Project;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.QuarkusTest;
+
+@QuarkusTest
+class ContinuousSyncServiceTest {
+
+    @Inject
+    ContinuousSyncService continuousSyncService;
+
+    @Inject
+    CentralSyncItemService centralSyncItemService;
+
+    @InjectMock
+    NpmRegistryFacade npmRegistryFacade;
+
+    @InjectMock
+    MavenRepositoryService mavenRepositoryService;
+
+    @BeforeEach
+    @Transactional
+    void cleanup() {
+        SyncedPackage.deleteAll();
+        CentralSyncItem.deleteAll();
+    }
+
+    @Test
+    void nextCheckInterval_activePackage() {
+        assertEquals(Duration.ofHours(4), ContinuousSyncService.nextCheckInterval(2));
+    }
+
+    @Test
+    void nextCheckInterval_recentPackage() {
+        assertEquals(Duration.ofHours(12), ContinuousSyncService.nextCheckInterval(15));
+    }
+
+    @Test
+    void nextCheckInterval_moderatePackage() {
+        assertEquals(Duration.ofDays(1), ContinuousSyncService.nextCheckInterval(90));
+    }
+
+    @Test
+    void nextCheckInterval_olderPackage() {
+        assertEquals(Duration.ofDays(3), ContinuousSyncService.nextCheckInterval(365));
+    }
+
+    @Test
+    void nextCheckInterval_abandonedPackage() {
+        assertEquals(Duration.ofDays(30), ContinuousSyncService.nextCheckInterval(2000));
+    }
+
+    @Test
+    void nextCheckInterval_boundaries() {
+        assertEquals(Duration.ofHours(4), ContinuousSyncService.nextCheckInterval(0));
+        assertEquals(Duration.ofHours(4), ContinuousSyncService.nextCheckInterval(6));
+        assertEquals(Duration.ofHours(12), ContinuousSyncService.nextCheckInterval(7));
+        assertEquals(Duration.ofHours(12), ContinuousSyncService.nextCheckInterval(29));
+        assertEquals(Duration.ofDays(1), ContinuousSyncService.nextCheckInterval(30));
+        assertEquals(Duration.ofDays(1), ContinuousSyncService.nextCheckInterval(179));
+        assertEquals(Duration.ofDays(3), ContinuousSyncService.nextCheckInterval(180));
+        assertEquals(Duration.ofDays(3), ContinuousSyncService.nextCheckInterval(1824));
+        assertEquals(Duration.ofDays(30), ContinuousSyncService.nextCheckInterval(1825));
+    }
+
+    @Test
+    void checkAllUpdatesNextCheck() {
+        // Insert a due package
+        insertPackage("org.mvnpm", "lit", null);
+
+        // Mock NPM to return a project modified 10 days ago (→ 12h interval)
+        Instant tenDaysAgo = Instant.now().minus(Duration.ofDays(10));
+        Project project = new Project(null, "lit", new DistTags("1.0.0", null),
+                null, null, Set.of("1.0.0"), Map.of("modified", tenDaysAgo.toString()));
+        Mockito.when(npmRegistryFacade.getProject("lit")).thenReturn(project);
+
+        // MavenRepositoryService is mocked — getPath returns null by default (no-op)
+
+        continuousSyncService.checkAll();
+
+        // Verify nextCheck was set (should be ~12h from now)
+        SyncedPackage updated = findPackage("org.mvnpm", "lit");
+        assertNotNull(updated, "SyncedPackage should still exist");
+        assertNotNull(updated.nextCheck, "nextCheck should be set after checkAll");
+        Duration untilNextCheck = Duration.between(LocalDateTime.now(), updated.nextCheck);
+        assertTrue(untilNextCheck.toHours() >= 11, "nextCheck should be at least 11h from now, was: " + untilNextCheck);
+        assertTrue(untilNextCheck.toHours() <= 13, "nextCheck should be at most 13h from now, was: " + untilNextCheck);
+    }
+
+    @Test
+    void checkAllSkipsFutureItems() {
+        // Insert a package not yet due
+        insertPackage("org.mvnpm", "vue", LocalDateTime.now().plusDays(1));
+
+        continuousSyncService.checkAll();
+
+        // nextCheck should remain unchanged (still ~1 day in future)
+        SyncedPackage pkg = findPackage("org.mvnpm", "vue");
+        assertNotNull(pkg);
+        Duration untilNextCheck = Duration.between(LocalDateTime.now(), pkg.nextCheck);
+        assertTrue(untilNextCheck.toHours() >= 22, "Future package nextCheck should not change");
+    }
+
+    @Test
+    void changeStageToReleasedCreatesSyncedPackage() {
+        // Create a CentralSyncItem and move it to RELEASED
+        CentralSyncItem item = createItem("org.mvnpm", "released-pkg", "2.0.0");
+        centralSyncItemService.changeStage(item, Stage.RELEASED);
+
+        // SyncedPackage should be auto-created
+        SyncedPackage pkg = findPackage("org.mvnpm", "released-pkg");
+        assertNotNull(pkg, "SyncedPackage should be created when item reaches RELEASED");
+    }
+
+    @Test
+    void claimNextForUpload_claimsOldestInitItem() {
+        createInitItem("org.mvnpm", "first", "1.0.0");
+        createInitItem("org.mvnpm", "second", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+
+        assertNotNull(claimed);
+        assertEquals("first", claimed.artifactId);
+        assertEquals(Stage.UPLOADING, claimed.stage);
+        assertEquals(1, claimed.uploadAttempts);
+    }
+
+    @Test
+    void claimNextForUpload_returnsNullWhenEmpty() {
+        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForUpload_skipsNonInitItems() {
+        createItem("org.mvnpm", "uploading-pkg", "1.0.0");
+        changeStage("org.mvnpm", "uploading-pkg", "1.0.0", Stage.UPLOADING);
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForUpload_sequentialClaimsGetDifferentItems() {
+        createInitItem("org.mvnpm", "a", "1.0.0");
+        createInitItem("org.mvnpm", "b", "1.0.0");
+
+        CentralSyncItem first = centralSyncItemService.claimNextForUpload();
+        CentralSyncItem second = centralSyncItemService.claimNextForUpload();
+
+        assertNotNull(first);
+        assertNotNull(second);
+        assertNotEquals(first.artifactId, second.artifactId);
+    }
+
+    @Transactional
+    CentralSyncItem createInitItem(String groupId, String artifactId, String version) {
+        return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
+    }
+
+    @Transactional
+    void changeStage(String groupId, String artifactId, String version, Stage stage) {
+        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+        if (item != null) {
+            item.stage = stage;
+            item.persist();
+        }
+    }
+
+    @Test
+    void changeStage_sameStageIsNoOp() {
+        CentralSyncItem item = createItem("org.mvnpm", "noop-pkg", "1.0.0");
+        changeStage("org.mvnpm", "noop-pkg", "1.0.0", Stage.CLOSED);
+
+        // First change to RELEASED should succeed
+        item = reloadItem("org.mvnpm", "noop-pkg", "1.0.0");
+        CentralSyncItem result1 = centralSyncItemService.changeStage(item, Stage.RELEASED);
+        assertNotNull(result1);
+        assertEquals(Stage.RELEASED, result1.stage);
+
+        // Second change to RELEASED should be a no-op (same stage)
+        item = reloadItem("org.mvnpm", "noop-pkg", "1.0.0");
+        CentralSyncItem result2 = centralSyncItemService.changeStage(item, Stage.RELEASED);
+        assertNotNull(result2);
+        assertEquals(Stage.RELEASED, result2.stage);
+    }
+
+    @Test
+    void claimNextForErrorRetry_claimsErrorItem() {
+        createInitItem("org.mvnpm", "err-pkg", "1.0.0");
+        changeStage("org.mvnpm", "err-pkg", "1.0.0", Stage.ERROR);
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForErrorRetry();
+
+        assertNotNull(claimed);
+        assertEquals("err-pkg", claimed.artifactId);
+        assertEquals(Stage.PACKAGING, claimed.stage);
+    }
+
+    @Test
+    void claimNextForErrorRetry_returnsNullWhenNoErrors() {
+        createInitItem("org.mvnpm", "ok-pkg", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForErrorRetry();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForErrorRetry_sequentialClaimsGetDifferentItems() {
+        createInitItem("org.mvnpm", "err-a", "1.0.0");
+        changeStage("org.mvnpm", "err-a", "1.0.0", Stage.ERROR);
+        createInitItem("org.mvnpm", "err-b", "1.0.0");
+        changeStage("org.mvnpm", "err-b", "1.0.0", Stage.ERROR);
+
+        CentralSyncItem first = centralSyncItemService.claimNextForErrorRetry();
+        CentralSyncItem second = centralSyncItemService.claimNextForErrorRetry();
+
+        assertNotNull(first);
+        assertNotNull(second);
+        assertNotEquals(first.artifactId, second.artifactId);
+    }
+
+    @Test
+    void claimNextForPackagingCheck_claimsPackagingItem() {
+        createInitItem("org.mvnpm", "pack-pkg", "1.0.0");
+        changeStage("org.mvnpm", "pack-pkg", "1.0.0", Stage.PACKAGING);
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+
+        assertNotNull(claimed);
+        assertEquals("pack-pkg", claimed.artifactId);
+        assertEquals(Stage.PACKAGING, claimed.stage);
+    }
+
+    @Test
+    void claimNextForPackagingCheck_returnsNullWhenEmpty() {
+        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForPackagingCheck_skipsNonPackagingItems() {
+        createInitItem("org.mvnpm", "init-only", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimForErrorRetry_claimsSpecificErrorItem() {
+        createInitItem("org.mvnpm", "err-specific", "1.0.0");
+        changeStage("org.mvnpm", "err-specific", "1.0.0", Stage.ERROR);
+        setAttemptCounters("org.mvnpm", "err-specific", "1.0.0", 3, 2);
+
+        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
+                new Gav("org.mvnpm", "err-specific", "1.0.0"));
+
+        assertNotNull(claimed);
+        assertEquals("err-specific", claimed.artifactId);
+        assertEquals(Stage.PACKAGING, claimed.stage);
+        assertEquals(2, claimed.uploadAttempts);
+        assertEquals(1, claimed.promotionAttempts);
+    }
+
+    @Test
+    void claimForErrorRetry_returnsNullForNonErrorItem() {
+        createInitItem("org.mvnpm", "not-error", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
+                new Gav("org.mvnpm", "not-error", "1.0.0"));
+
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimForErrorRetry_returnsNullForNonExistentItem() {
+        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
+                new Gav("org.mvnpm", "ghost", "1.0.0"));
+
+        assertNull(claimed);
+    }
+
+    @Transactional
+    void setAttemptCounters(String groupId, String artifactId, String version,
+            int uploadAttempts, int promotionAttempts) {
+        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+        if (item != null) {
+            item.uploadAttempts = uploadAttempts;
+            item.promotionAttempts = promotionAttempts;
+            item.persist();
+        }
+    }
+
+    @Transactional
+    CentralSyncItem reloadItem(String groupId, String artifactId, String version) {
+        return CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+    }
+
+    @Transactional
+    CentralSyncItem createItem(String groupId, String artifactId, String version) {
+        return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.UPLOADED);
+    }
+
+    @Transactional
+    void insertPackage(String groupId, String artifactId, LocalDateTime nextCheck) {
+        SyncedPackage pkg = new SyncedPackage(groupId, artifactId);
+        pkg.nextCheck = nextCheck;
+        pkg.persist();
+    }
+
+    @Transactional
+    SyncedPackage findPackage(String groupId, String artifactId) {
+        return SyncedPackage.findById(new SyncedPackageId(groupId, artifactId));
+    }
+}

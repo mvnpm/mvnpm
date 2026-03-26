@@ -1,12 +1,15 @@
 package io.mvnpm.mavencentral.sync;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 
 import io.quarkus.hibernate.orm.panache.Panache;
+import io.quarkus.logging.Log;
 import io.vertx.mutiny.core.eventbus.EventBus;
 
 /**
@@ -22,13 +25,27 @@ public class CentralSyncItemService {
 
     @Transactional
     public CentralSyncItem changeStage(CentralSyncItem centralSyncItem, Stage stage) {
-        if (!centralSyncItem.stage.equals(stage)) {
-            centralSyncItem = merge(centralSyncItem);
-            centralSyncItem.stage = stage;
-            centralSyncItem.stageChangeTime = LocalDateTime.now();
-            centralSyncItem.persist();
-            bus.publish("central-sync-item-stage-change", centralSyncItem);
+        Gav gav = new Gav(centralSyncItem.groupId, centralSyncItem.artifactId, centralSyncItem.version);
+        // Lock the row to prevent two pods from changing the same item simultaneously
+        CentralSyncItem locked = CentralSyncItem.findById(gav, LockModeType.PESSIMISTIC_WRITE);
+        if (locked == null) {
+            Log.warnf("[MULTI-POD] changeStage: item not found for %s, skipping", gav);
+            return null;
         }
+        if (locked.stage.equals(stage)) {
+            Log.debugf("[MULTI-POD] changeStage: %s already at stage %s, skipping (likely handled by another pod)", gav, stage);
+            return locked;
+        }
+        Log.infof("[MULTI-POD] changeStage: %s %s -> %s", gav, locked.stage, stage);
+        // Merge caller's pending field changes (e.g. stagingRepoId, attempt counters)
+        centralSyncItem.stage = stage;
+        centralSyncItem.stageChangeTime = LocalDateTime.now();
+        centralSyncItem = merge(centralSyncItem);
+        centralSyncItem.persist();
+        if (stage == Stage.RELEASED) {
+            SyncedPackage.createIfAbsent(centralSyncItem.groupId, centralSyncItem.artifactId);
+        }
+        bus.publish("central-sync-item-stage-change", centralSyncItem);
         return centralSyncItem;
     }
 
@@ -41,14 +58,12 @@ public class CentralSyncItemService {
     }
 
     @Transactional
-    public CentralSyncItem tryErroredItemAgain(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.uploadAttempts > 0) {
-            centralSyncItem.uploadAttempts = centralSyncItem.uploadAttempts - 1;
+    public CentralSyncItem claimForErrorRetry(Gav gav) {
+        CentralSyncItem item = CentralSyncItem.findById(gav, LockModeType.PESSIMISTIC_WRITE);
+        if (item == null || item.stage != Stage.ERROR) {
+            return null;
         }
-        if (centralSyncItem.promotionAttempts > 0) {
-            centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
-        }
-        return changeStage(centralSyncItem, Stage.PACKAGING);
+        return applyErrorRetry(item);
     }
 
     @Transactional
@@ -65,6 +80,80 @@ public class CentralSyncItemService {
             return centralSyncItem;
         }
         return Panache.getEntityManager().merge(centralSyncItem);
+    }
+
+    @Transactional
+    public CentralSyncItem claimNextForUpload() {
+        @SuppressWarnings("unchecked")
+        List<CentralSyncItem> candidates = Panache.getEntityManager()
+                .createNativeQuery(
+                        "SELECT * FROM centralsyncitem WHERE stage = :init "
+                                + "ORDER BY stagechangetime ASC LIMIT 1 FOR UPDATE SKIP LOCKED",
+                        CentralSyncItem.class)
+                .setParameter("init", Stage.INIT.ordinal())
+                .getResultList();
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        CentralSyncItem item = candidates.get(0);
+        item.stage = Stage.UPLOADING;
+        item.stageChangeTime = LocalDateTime.now();
+        item.uploadAttempts++;
+        item.persist();
+        Log.infof("[MULTI-POD] Claimed for upload: %s (attempt %d)", item.toGavString(), item.uploadAttempts);
+        return item;
+    }
+
+    @Transactional
+    public CentralSyncItem claimNextForErrorRetry() {
+        @SuppressWarnings("unchecked")
+        List<CentralSyncItem> candidates = Panache.getEntityManager()
+                .createNativeQuery(
+                        "SELECT * FROM centralsyncitem WHERE stage = :error "
+                                + "ORDER BY stagechangetime ASC LIMIT 1 FOR UPDATE SKIP LOCKED",
+                        CentralSyncItem.class)
+                .setParameter("error", Stage.ERROR.ordinal())
+                .getResultList();
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        return applyErrorRetry(candidates.get(0));
+    }
+
+    private CentralSyncItem applyErrorRetry(CentralSyncItem item) {
+        if (item.uploadAttempts > 0) {
+            item.uploadAttempts--;
+        }
+        if (item.promotionAttempts > 0) {
+            item.promotionAttempts--;
+        }
+        item.stage = Stage.PACKAGING;
+        item.stageChangeTime = LocalDateTime.now();
+        item.persist();
+        Log.infof("[MULTI-POD] Claimed for error retry: %s", item.toGavString());
+        return item;
+    }
+
+    @Transactional
+    public CentralSyncItem claimNextForPackagingCheck() {
+        @SuppressWarnings("unchecked")
+        List<CentralSyncItem> candidates = Panache.getEntityManager()
+                .createNativeQuery(
+                        "SELECT * FROM centralsyncitem WHERE stage = :packaging "
+                                + "ORDER BY stagechangetime ASC LIMIT 1 FOR UPDATE SKIP LOCKED",
+                        CentralSyncItem.class)
+                .setParameter("packaging", Stage.PACKAGING.ordinal())
+                .getResultList();
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        return candidates.get(0);
+    }
+
+    @Transactional
+    public void delete(CentralSyncItem centralSyncItem) {
+        centralSyncItem = merge(centralSyncItem);
+        centralSyncItem.delete();
     }
 
     @Transactional

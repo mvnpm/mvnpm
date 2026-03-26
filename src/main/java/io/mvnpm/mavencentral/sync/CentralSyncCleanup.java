@@ -23,6 +23,7 @@ import io.quarkus.logging.Log;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 import io.smallrye.mutiny.Uni;
 import io.smallrye.mutiny.infrastructure.Infrastructure;
 
@@ -64,7 +65,7 @@ public class CentralSyncCleanup {
      * and deletes version directories that are not actively being synced.
      */
     @Scheduled(cron = "0 0 4 ? * SUN", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     public void weeklyCleanup() {
         Log.info("Starting weekly artifact cache cleanup...");
         Path mvnpmRoot = packageFileLocator.getMvnpmRoot();
