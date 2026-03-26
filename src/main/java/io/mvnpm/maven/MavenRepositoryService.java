@@ -125,7 +125,8 @@ public class MavenRepositoryService {
                             .collect(Collectors.toSet());
                     final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
                     return version != null ? new NameVersion(name, version.toString()) : null;
-                }).onItem().delayIt().by(Duration.ofSeconds(3)))
+                }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
+                        .onItem().delayIt().by(Duration.ofSeconds(3)))
                 .filter(Objects::nonNull)
                 .emitOn(Infrastructure.getDefaultWorkerPool())
                 .invoke(n -> {

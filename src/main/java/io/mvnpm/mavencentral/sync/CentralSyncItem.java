@@ -2,11 +2,8 @@ package io.mvnpm.mavencentral.sync;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -90,15 +87,6 @@ public class CentralSyncItem extends PanacheEntityBase {
     public static List<CentralSyncItem> findUpdloadedButNotReleased() {
         List<Stage> uploadedButNotReleased = Arrays.asList(Stage.UPLOADED, Stage.CLOSED, Stage.RELEASING);
         return find("#CentralSyncItem.findUploadedButNotReleased", uploadedButNotReleased).list();
-    }
-
-    // TODO: Do this in SQL ?
-    public static List<CentralSyncItem> findDistinctGA() {
-        Set<String> gaSet = new HashSet<>();
-        List<CentralSyncItem> all = CentralSyncItem.findAll().list();
-        return all.stream()
-                .filter(e -> gaSet.add(e.toGaString()))
-                .collect(Collectors.toList());
     }
 
     public boolean isInProgress() {
