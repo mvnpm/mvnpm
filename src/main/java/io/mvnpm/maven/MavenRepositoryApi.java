@@ -22,9 +22,14 @@ import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageCreator;
 import io.mvnpm.creator.type.MetadataService;
 import io.mvnpm.creator.utils.FileUtil;
+import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.mavencentral.sync.CentralSyncItemService;
 import io.mvnpm.mavencentral.sync.CentralSyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
+import io.mvnpm.version.InvalidVersionException;
+import io.quarkus.logging.Log;
 
 /**
  * The maven repository endpoint
@@ -45,6 +50,9 @@ public class MavenRepositoryApi {
 
     @Inject
     CentralSyncService centralSyncService;
+
+    @Inject
+    CentralSyncItemService centralSyncItemService;
 
     @Inject
     PackageCreator packageCreator;
@@ -115,197 +123,190 @@ public class MavenRepositoryApi {
     @Path("/org/mvnpm/{gavt : (.+)?}.pom")
     @Produces(MediaType.APPLICATION_XML)
     public Response getPom(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt + ".pom");
-        return toResponse(nameVersion.name(), nameVersion.version(), FileType.pom);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt + ".pom");
+        return resolveAndStream(nv, FileType.pom, Optional.empty(), mavenRepositoryService::getPath);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.pom.sha1")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getPomSha1(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt + ".pom.sha1");
-        return toSha1Response(nameVersion.name(), nameVersion.version(), FileType.pom);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt + ".pom.sha1");
+        return resolveAndStream(nv, FileType.pom, Optional.of(Constants.DOT_SHA1), mavenRepositoryService::getSha1);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.pom.md5")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getPomMd5(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt + ".pom.mp5");
-        return toMd5Response(nameVersion.name(), nameVersion.version(), FileType.pom);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt + ".pom.mp5");
+        return resolveAndStream(nv, FileType.pom, Optional.of(Constants.DOT_MD5), mavenRepositoryService::getMd5);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.pom.asc")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getPomAsc(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt + ".pom.asc");
-        return toAscResponse(nameVersion.name(), nameVersion.version(), FileType.pom);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt + ".pom.asc");
+        return resolveAndStream(nv, FileType.pom, Optional.of(Constants.DOT_ASC), mavenRepositoryService::getAsc);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.jar")
     @Produces("application/java-archive")
     public Response getJar(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toResponse(nameVersion.name(), nameVersion.version(), FileType.jar);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.jar, Optional.empty(), mavenRepositoryService::getPath);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.jar.sha1")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getJarSha1(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toSha1Response(nameVersion.name(), nameVersion.version(), FileType.jar);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.jar, Optional.of(Constants.DOT_SHA1), mavenRepositoryService::getSha1);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.jar.md5")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getJarMd5(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toMd5Response(nameVersion.name(), nameVersion.version(), FileType.jar);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.jar, Optional.of(Constants.DOT_MD5), mavenRepositoryService::getMd5);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.jar.asc")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getJarAsc(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toAscResponse(nameVersion.name(), nameVersion.version(), FileType.jar);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.jar, Optional.of(Constants.DOT_ASC), mavenRepositoryService::getAsc);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-sources.jar")
     @Produces("application/java-archive")
     public Response getSourcesJar(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toResponse(nameVersion.name(), nameVersion.version(), FileType.source);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.source, Optional.empty(), mavenRepositoryService::getPath);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-sources.jar.sha1")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getSourcesJarSha1(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toSha1Response(nameVersion.name(), nameVersion.version(), FileType.source);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.source, Optional.of(Constants.DOT_SHA1), mavenRepositoryService::getSha1);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-sources.jar.md5")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getSourcesJarMd5(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toMd5Response(nameVersion.name(), nameVersion.version(), FileType.source);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.source, Optional.of(Constants.DOT_MD5), mavenRepositoryService::getMd5);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-sources.jar.asc")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getSourcesJarAsc(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toAscResponse(nameVersion.name(), nameVersion.version(), FileType.source);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.source, Optional.of(Constants.DOT_ASC), mavenRepositoryService::getAsc);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-javadoc.jar")
     @Produces("application/java-archive")
     public Response getJavadocJar(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toResponse(nameVersion.name(), nameVersion.version(), FileType.javadoc);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.javadoc, Optional.empty(), mavenRepositoryService::getPath);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-javadoc.jar.sha1")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getJavadocJarSha1(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toSha1Response(nameVersion.name(), nameVersion.version(), FileType.javadoc);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.javadoc, Optional.of(Constants.DOT_SHA1), mavenRepositoryService::getSha1);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-javadoc.jar.md5")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getJavadocJarMd5(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toMd5Response(nameVersion.name(), nameVersion.version(), FileType.javadoc);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.javadoc, Optional.of(Constants.DOT_MD5), mavenRepositoryService::getMd5);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}-javadoc.jar.asc")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getJavadocJarAsc(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toAscResponse(nameVersion.name(), nameVersion.version(), FileType.javadoc);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.javadoc, Optional.of(Constants.DOT_ASC), mavenRepositoryService::getAsc);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.tgz")
     @Produces("application/gzip")
     public Response getTgz(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toResponse(nameVersion.name(), nameVersion.version(), FileType.tgz);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.tgz, Optional.empty(), mavenRepositoryService::getPath);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.tgz.sha1")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTgzSha1(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toSha1Response(nameVersion.name(), nameVersion.version(), FileType.tgz);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.tgz, Optional.of(Constants.DOT_SHA1), mavenRepositoryService::getSha1);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.tgz.md5")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTgzMd5(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toMd5Response(nameVersion.name(), nameVersion.version(), FileType.tgz);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.tgz, Optional.of(Constants.DOT_MD5), mavenRepositoryService::getMd5);
     }
 
     @GET
     @Path("/org/mvnpm/{gavt : (.+)?}.tgz.asc")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getTgzAsc(@PathParam("gavt") String gavt) {
-        NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
-        return toAscResponse(nameVersion.name(), nameVersion.version(), FileType.tgz);
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt);
+        return resolveAndStream(nv, FileType.tgz, Optional.of(Constants.DOT_ASC), mavenRepositoryService::getAsc);
     }
 
-    private Response toResponse(Name fullName, String version, FileType type) {
-        if (centralSyncService
-                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
-                .alreadyReleased()) {
-            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.empty());
-        }
-
-        return streamPath(mavenRepositoryService.getPath(fullName, version, type));
+    @FunctionalInterface
+    interface PathResolver {
+        java.nio.file.Path resolve(Name name, String version, FileType type);
     }
 
-    private Response toSha1Response(Name fullName, String version, FileType type) {
-        if (centralSyncService
-                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
-                .alreadyReleased()) {
-            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.of(Constants.DOT_SHA1));
+    Response resolveAndStream(NameVersion nv, FileType type, Optional<String> dotSigned, PathResolver resolver) {
+        Name fullName = nv.name();
+        String version = nv.version();
+        CentralSyncItem item = centralSyncService
+                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync());
+        if (item.alreadyReleased()) {
+            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, dotSigned);
         }
-        return streamPath(mavenRepositoryService.getSha1(fullName, version, type));
-    }
-
-    private Response toMd5Response(Name fullName, String version, FileType type) {
-        if (centralSyncService
-                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
-                .alreadyReleased()) {
-            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.of(Constants.DOT_MD5));
+        try {
+            return streamPath(resolver.resolve(fullName, version, type));
+        } catch (GetPackageException e) {
+            if (e.isPermanentlyUnavailable()) {
+                Log.warnf("Package permanently unavailable on NPM, cleaning up sync item: %s:%s:%s — %s",
+                        fullName.mvnGroupId, fullName.mvnArtifactId, version, e.getMessage());
+                centralSyncItemService.delete(item);
+            }
+            throw e;
+        } catch (InvalidVersionException e) {
+            Log.warnf("Invalid version, cleaning up sync item: %s:%s:%s — %s",
+                    fullName.mvnGroupId, fullName.mvnArtifactId, version, e.getVersion());
+            centralSyncItemService.delete(item);
+            throw e;
         }
-        return streamPath(mavenRepositoryService.getMd5(fullName, version, type));
-    }
-
-    private Response toAscResponse(Name fullName, String version, FileType type) {
-        if (centralSyncService
-                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync())
-                .alreadyReleased()) {
-            throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, Optional.of(Constants.DOT_ASC));
-        }
-        return streamPath(mavenRepositoryService.getAsc(fullName, version, type));
     }
 
     private Response streamPath(java.nio.file.Path path) {
