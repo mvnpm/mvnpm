@@ -269,6 +269,51 @@ class ContinuousSyncServiceTest {
         assertNull(claimed);
     }
 
+    @Test
+    void claimForErrorRetry_claimsSpecificErrorItem() {
+        createInitItem("org.mvnpm", "err-specific", "1.0.0");
+        changeStage("org.mvnpm", "err-specific", "1.0.0", Stage.ERROR);
+        setAttemptCounters("org.mvnpm", "err-specific", "1.0.0", 3, 2);
+
+        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
+                new Gav("org.mvnpm", "err-specific", "1.0.0"));
+
+        assertNotNull(claimed);
+        assertEquals("err-specific", claimed.artifactId);
+        assertEquals(Stage.PACKAGING, claimed.stage);
+        assertEquals(2, claimed.uploadAttempts);
+        assertEquals(1, claimed.promotionAttempts);
+    }
+
+    @Test
+    void claimForErrorRetry_returnsNullForNonErrorItem() {
+        createInitItem("org.mvnpm", "not-error", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
+                new Gav("org.mvnpm", "not-error", "1.0.0"));
+
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimForErrorRetry_returnsNullForNonExistentItem() {
+        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
+                new Gav("org.mvnpm", "ghost", "1.0.0"));
+
+        assertNull(claimed);
+    }
+
+    @Transactional
+    void setAttemptCounters(String groupId, String artifactId, String version,
+            int uploadAttempts, int promotionAttempts) {
+        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+        if (item != null) {
+            item.uploadAttempts = uploadAttempts;
+            item.promotionAttempts = promotionAttempts;
+            item.persist();
+        }
+    }
+
     @Transactional
     CentralSyncItem reloadItem(String groupId, String artifactId, String version) {
         return CentralSyncItem.findById(new Gav(groupId, artifactId, version));

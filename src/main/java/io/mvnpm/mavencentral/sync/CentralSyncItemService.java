@@ -58,14 +58,12 @@ public class CentralSyncItemService {
     }
 
     @Transactional
-    public CentralSyncItem tryErroredItemAgain(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.uploadAttempts > 0) {
-            centralSyncItem.uploadAttempts = centralSyncItem.uploadAttempts - 1;
+    public CentralSyncItem claimForErrorRetry(Gav gav) {
+        CentralSyncItem item = CentralSyncItem.findById(gav, LockModeType.PESSIMISTIC_WRITE);
+        if (item == null || item.stage != Stage.ERROR) {
+            return null;
         }
-        if (centralSyncItem.promotionAttempts > 0) {
-            centralSyncItem.promotionAttempts = centralSyncItem.promotionAttempts - 1;
-        }
-        return changeStage(centralSyncItem, Stage.PACKAGING);
+        return applyErrorRetry(item);
     }
 
     @Transactional
@@ -119,7 +117,10 @@ public class CentralSyncItemService {
         if (candidates.isEmpty()) {
             return null;
         }
-        CentralSyncItem item = candidates.get(0);
+        return applyErrorRetry(candidates.get(0));
+    }
+
+    private CentralSyncItem applyErrorRetry(CentralSyncItem item) {
         if (item.uploadAttempts > 0) {
             item.uploadAttempts--;
         }
