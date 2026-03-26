@@ -1,6 +1,7 @@
 package io.mvnpm.mavencentral.sync;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -68,6 +69,27 @@ public class CentralSyncItemService {
             return centralSyncItem;
         }
         return Panache.getEntityManager().merge(centralSyncItem);
+    }
+
+    @Transactional
+    public CentralSyncItem claimNextForUpload() {
+        @SuppressWarnings("unchecked")
+        List<CentralSyncItem> candidates = Panache.getEntityManager()
+                .createNativeQuery(
+                        "SELECT * FROM centralsyncitem WHERE stage = :init "
+                                + "ORDER BY stagechangetime ASC LIMIT 1 FOR UPDATE SKIP LOCKED",
+                        CentralSyncItem.class)
+                .setParameter("init", Stage.INIT.ordinal())
+                .getResultList();
+        if (candidates.isEmpty()) {
+            return null;
+        }
+        CentralSyncItem item = candidates.get(0);
+        item.stage = Stage.UPLOADING;
+        item.stageChangeTime = LocalDateTime.now();
+        item.uploadAttempts++;
+        item.persist();
+        return item;
     }
 
     @Transactional

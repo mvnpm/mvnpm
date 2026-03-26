@@ -1,7 +1,9 @@
 package io.mvnpm.mavencentral.sync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Duration;
@@ -131,6 +133,61 @@ class ContinuousSyncServiceTest {
         // SyncedPackage should be auto-created
         SyncedPackage pkg = findPackage("org.mvnpm", "released-pkg");
         assertNotNull(pkg, "SyncedPackage should be created when item reaches RELEASED");
+    }
+
+    @Test
+    void claimNextForUpload_claimsOldestInitItem() {
+        createInitItem("org.mvnpm", "first", "1.0.0");
+        createInitItem("org.mvnpm", "second", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+
+        assertNotNull(claimed);
+        assertEquals("first", claimed.artifactId);
+        assertEquals(Stage.UPLOADING, claimed.stage);
+        assertEquals(1, claimed.uploadAttempts);
+    }
+
+    @Test
+    void claimNextForUpload_returnsNullWhenEmpty() {
+        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForUpload_skipsNonInitItems() {
+        createItem("org.mvnpm", "uploading-pkg", "1.0.0");
+        changeStage("org.mvnpm", "uploading-pkg", "1.0.0", Stage.UPLOADING);
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForUpload_sequentialClaimsGetDifferentItems() {
+        createInitItem("org.mvnpm", "a", "1.0.0");
+        createInitItem("org.mvnpm", "b", "1.0.0");
+
+        CentralSyncItem first = centralSyncItemService.claimNextForUpload();
+        CentralSyncItem second = centralSyncItemService.claimNextForUpload();
+
+        assertNotNull(first);
+        assertNotNull(second);
+        assertNotEquals(first.artifactId, second.artifactId);
+    }
+
+    @Transactional
+    CentralSyncItem createInitItem(String groupId, String artifactId, String version) {
+        return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
+    }
+
+    @Transactional
+    void changeStage(String groupId, String artifactId, String version, Stage stage) {
+        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+        if (item != null) {
+            item.stage = stage;
+            item.persist();
+        }
     }
 
     @Transactional

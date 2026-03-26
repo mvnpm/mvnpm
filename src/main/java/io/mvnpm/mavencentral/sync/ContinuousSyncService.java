@@ -87,6 +87,9 @@ public class ContinuousSyncService {
     @Inject
     MavenCentralService mavenCentralService;
 
+    @Inject
+    io.vertx.mutiny.core.eventbus.EventBus bus;
+
     @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     public void checkError() {
@@ -274,24 +277,22 @@ public class ContinuousSyncService {
     @Scheduled(every = "${mvnpm.next-upload.every:3m}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     void nextToUploadStatusChange() {
-        // We only process one at a time, so first check that there is not another process in progress
-        if (!isCurrentlyUploading()) {
-            List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.INIT, 1);
-            if (!initQueue.isEmpty()) {
-                CentralSyncItem itemToBeUploaded = initQueue.get(0);
-                if (centralSyncService.canProcessSync(itemToBeUploaded)) {
-                    // Kick off an update
-                    Log.debug("Version [" + itemToBeUploaded.version + "] of "
-                            + itemToBeUploaded.toGavString() + " is NOT in central. Kicking off sync...");
-                    itemToBeUploaded.increaseUploadAttempt();
-                    itemToBeUploaded = centralSyncItemService.changeStage(itemToBeUploaded, Stage.UPLOADING);
-                }
-            } else {
-                Log.debug("Nothing in the queue to sync");
-            }
-        } else {
-            Log.debug("Sync upload in progress ");
+        if (isCurrentlyUploading()) {
+            Log.debug("Sync upload in progress");
+            return;
         }
+        CentralSyncItem item = centralSyncItemService.claimNextForUpload();
+        if (item == null) {
+            Log.debug("Nothing in the queue to sync");
+            return;
+        }
+        // Check if already in Central (avoid duplicate upload)
+        if (centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(item)) {
+            return; // Item moved to RELEASED inside the check
+        }
+        Log.debugf("Version [%s] of %s is NOT in central. Kicking off sync...",
+                item.version, item.toGavString());
+        bus.publish("central-sync-item-stage-change", item);
     }
 
     @Scheduled(every = "${mvnpm.clean-release.every:3m}", concurrentExecution = SKIP)
@@ -439,9 +440,14 @@ public class ContinuousSyncService {
 
     private void resetUpload() {
         List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADING, 50);
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
         for (CentralSyncItem centralSyncItem : uploading) {
+            if (centralSyncItem.stageChangeTime != null && centralSyncItem.stageChangeTime.isAfter(cutoff)) {
+                Log.infof("Skipping recent UPLOADING item %s (may be in progress on another pod)", centralSyncItem);
+                continue;
+            }
             centralSyncItem.increaseUploadAttempt();
-            Log.info("Resetting upload for " + centralSyncItem + " after restart");
+            Log.info("Resetting stale upload for " + centralSyncItem + " after restart");
             centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
         }
     }
