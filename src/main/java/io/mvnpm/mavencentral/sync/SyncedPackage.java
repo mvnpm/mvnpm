@@ -53,9 +53,9 @@ public class SyncedPackage extends PanacheEntityBase {
     }
 
     public static void createIfAbsent(String groupId, String artifactId) {
-        getEntityManager().createQuery(
-                "insert into SyncedPackage (groupId, artifactId) values (:groupId, :artifactId)"
-                        + " on conflict(groupId, artifactId) do nothing")
+        getEntityManager().createNativeQuery(
+                "INSERT INTO syncedpackage (groupid, artifactid) VALUES (:groupId, :artifactId)"
+                        + " ON CONFLICT (groupid, artifactid) DO NOTHING")
                 .setParameter("groupId", groupId)
                 .setParameter("artifactId", artifactId)
                 .executeUpdate();
