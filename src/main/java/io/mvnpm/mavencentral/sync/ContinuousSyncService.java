@@ -27,6 +27,7 @@ import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
+import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.mavencentral.MavenCentralFacade;
 import io.mvnpm.mavencentral.ReleaseStatus;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
@@ -158,7 +159,8 @@ public class ContinuousSyncService {
                     if (FileUtil.isOlderThanTimeout(jar, 60)) {
                         centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
                         if (itemToBeCreated.creationAttempts > 10) {
-                            Log.errorf("Package creation attempts exceeded maximum 10 attempts for:" + itemToBeCreated);
+                            Log.errorf("Package creation failed after 10 attempts, removing: %s", itemToBeCreated);
+                            deletePackagingItem(itemToBeCreated);
                             return;
                         }
                         // A jar which stays more than 60 minutes in NONE stage needs to be recreated
@@ -170,15 +172,28 @@ public class ContinuousSyncService {
                         packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
                     }
                 } catch (PackageAlreadySyncedException e) {
-                    // Do nothing
-                } catch (WebApplicationException e) {
-                    Log.error(e);
+                    // Already synced, nothing to do
+                } catch (GetPackageException e) {
+                    if (e.isNotFound()) {
+                        Log.warnf("Package not found on NPM, removing: %s — %s", itemToBeCreated, e.getMessage());
+                        deletePackagingItem(itemToBeCreated);
+                    } else {
+                        Log.warnf("NPM error for %s: %s", itemToBeCreated, e.getMessage());
+                    }
+                } catch (Exception e) {
+                    Log.warnf("Error checking packaging for %s: %s", itemToBeCreated, e.getMessage());
                 }
 
             }
         } else {
             Log.debug("Nothing in the queue to sync");
         }
+    }
+
+    private void deletePackagingItem(CentralSyncItem item) {
+        Path dir = packageFileLocator.getLocalDirectory(item.groupId, item.artifactId, item.version);
+        FileUtils.deleteQuietly(dir.toFile());
+        centralSyncItemService.delete(item);
     }
 
     /**

@@ -68,6 +68,12 @@ public class CentralSyncItemService {
     }
 
     @Transactional
+    public void delete(CentralSyncItem centralSyncItem) {
+        centralSyncItem = merge(centralSyncItem);
+        centralSyncItem.delete();
+    }
+
+    @Transactional
     public CentralSyncItem find(String groupId, String artifactId, String version) {
         return CentralSyncItem.findById(new Gav(groupId, artifactId, version));
     }

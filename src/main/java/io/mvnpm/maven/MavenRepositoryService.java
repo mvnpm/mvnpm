@@ -136,9 +136,15 @@ public class MavenRepositoryService {
                     } catch (PackageAlreadySyncedException e) {
                         // Already synced, nothing to do
                     } catch (GetPackageException e) {
-                        // Package doesn't exist on NPM (e.g. private/scoped) — not a real error
-                        Log.infof("Dependency '%s' not available on NPM, skipping: %s",
-                                depGavString, e.getMessage());
+                        if (e.isNotFound()) {
+                            // Package doesn't exist on NPM (e.g. private/scoped) — not a real error
+                            Log.infof("Dependency '%s' not available on NPM, skipping: %s",
+                                    depGavString, e.getMessage());
+                        } else {
+                            Log.warnf("Error while syncing matching dependency '%s' because: %s",
+                                    depGavString, e.getMessage());
+                            error.set(true);
+                        }
                     } catch (Exception e) {
                         Log.warnf("Error while syncing matching dependency '%s' because: %s",
                                 depGavString, e.getMessage());
