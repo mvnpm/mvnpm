@@ -46,6 +46,7 @@ import io.quarkus.scheduler.Scheduled;
 import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
+import io.smallrye.common.annotation.RunOnVirtualThread;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -87,7 +88,7 @@ public class ContinuousSyncService {
     MavenCentralService mavenCentralService;
 
     @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     public void checkError() {
         try {
             Log.debug("Starting error retry...");
@@ -108,7 +109,7 @@ public class ContinuousSyncService {
      * Replaces the old checkAll which loaded all rows into memory.
      */
     @Scheduled(every = "${mvnpm.check-all.every:5m}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     public void checkAll() {
         try {
             List<SyncedPackage> batch = SyncedPackage.findBatchToCheck(100);
@@ -180,7 +181,7 @@ public class ContinuousSyncService {
      * This check is to auto-sync matching dependencies on existing packages
      */
     @Scheduled(every = "${mvnpm.check-versions.every:5m}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void checkVersions() {
         final List<CentralSyncItem> byStage = CentralSyncItem.findPackageWithUncheckedDependencies(1);
         if (!byStage.isEmpty()) {
@@ -203,7 +204,7 @@ public class ContinuousSyncService {
      * This just check if there is an artifact is stuck at packaging
      */
     @Scheduled(every = "${mvnpm.check-packaging.every:60s}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void checkPackaging() {
         List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING, 1);
         if (!initQueue.isEmpty()) {
@@ -256,7 +257,7 @@ public class ContinuousSyncService {
      * This just check if there is an artifact being uploaded, and if not change the status and fire an event
      */
     @Scheduled(every = "${mvnpm.next-upload.every:3m}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void nextToUploadStatusChange() {
         // We only process one at a time, so first check that there is not another process in progress
         if (!isCurrentlyUploading()) {
@@ -279,7 +280,7 @@ public class ContinuousSyncService {
     }
 
     @Scheduled(every = "${mvnpm.clean-release.every:3m}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void cleanCentralStatuses() {
         // Check if this is in central, and update the status
         List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
@@ -289,7 +290,7 @@ public class ContinuousSyncService {
     }
 
     @Scheduled(every = "${mvnpm.release.every:60s}", concurrentExecution = SKIP)
-    @Blocking
+    @RunOnVirtualThread
     void processCentralStatuses() {
         List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
         if (!uploadedToCentral.isEmpty()) {
