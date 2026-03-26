@@ -112,7 +112,7 @@ public class ContinuousSyncService {
     @RunOnVirtualThread
     public void checkAll() {
         try {
-            List<SyncedPackage> batch = SyncedPackage.findBatchToCheck(100);
+            List<SyncedPackage> batch = SyncedPackage.findBatchToCheck(50);
             if (batch.isEmpty()) {
                 Log.debug("No packages due for update check");
                 return;
@@ -156,6 +156,8 @@ public class ContinuousSyncService {
                     } else if (days < 30) {
                         return LocalDateTime.now().plusHours(12);
                     } else if (days < 180) {
+                        return LocalDateTime.now().plusDays(1);
+                    } else if (days < 1825) {
                         return LocalDateTime.now().plusDays(3);
                     } else {
                         return LocalDateTime.now().plusDays(30);
