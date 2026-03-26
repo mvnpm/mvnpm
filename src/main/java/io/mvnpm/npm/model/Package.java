@@ -1,6 +1,5 @@
 package io.mvnpm.npm.model;
 
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
@@ -14,7 +13,7 @@ public record Package(
         @JsonDeserialize(using = DescriptionDeserializer.class) String description,
         @JsonDeserialize(using = LicenseDeserializer.class) License license,
         @JsonDeserialize(using = AuthorDeserializer.class) Author author,
-        @JsonDeserialize(using = URLDeserializer.class) URL homepage,
+        String homepage,
         @JsonDeserialize(using = RepositoryDeserializer.class) Repository repository,
         @JsonDeserialize(using = BugsDeserializer.class) Bugs bugs,
         String main,
