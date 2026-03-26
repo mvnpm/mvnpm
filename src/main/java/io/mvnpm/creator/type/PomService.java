@@ -9,7 +9,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -166,9 +165,9 @@ public class PomService {
         }
     }
 
-    private String toUrl(Model model, URL homepage) {
-        if (homepage != null) {
-            return homepage.toString();
+    private String toUrl(Model model, String homepage) {
+        if (homepage != null && !homepage.isEmpty()) {
+            return homepage;
         } else if (model.getScm() != null && model.getScm().getUrl() != null) {
             return model.getScm().getUrl();
         } else if (model.getScm() != null && model.getScm().getConnection() != null) {
@@ -188,7 +187,7 @@ public class PomService {
                 l.setName(license.type());
             }
             if (license.url() != null) {
-                l.setUrl(license.url().toString());
+                l.setUrl(license.url());
             }
         }
 
@@ -206,7 +205,7 @@ public class PomService {
             o.setName(p.name().displayName);
         }
         if (p.homepage() != null) {
-            o.setUrl(p.homepage().toString());
+            o.setUrl(p.homepage());
         }
         return o;
     }
@@ -214,7 +213,7 @@ public class PomService {
     private IssueManagement toIssueManagement(Bugs bugs) {
         if (bugs != null && bugs.url() != null) {
             IssueManagement i = new IssueManagement();
-            i.setUrl(bugs.url().toString());
+            i.setUrl(bugs.url());
             return i;
         }
         return null;

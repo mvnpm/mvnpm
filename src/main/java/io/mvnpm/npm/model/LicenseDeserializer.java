@@ -1,7 +1,6 @@
 package io.mvnpm.npm.model;
 
 import java.io.IOException;
-import java.net.URL;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -28,23 +27,15 @@ public class LicenseDeserializer extends StdDeserializer<License> {
         try {
             return jp.readValueAs(License.class);
         } catch (Throwable t) {
-            // Let try with String
             try {
-                URL url = jp.readValueAs(URL.class);
-                return new License(null, url);
+                String type = jp.readValueAs(String.class);
+                return new License(type, null);
             } catch (Throwable tt) {
                 try {
-                    String type = jp.readValueAs(String.class);
+                    String type = jp.getText();
                     return new License(type, null);
                 } catch (Throwable ttt) {
-                    try {
-                        String type = jp.getText();
-                        return new License(type, null);
-                    } catch (Throwable tttt) {
-                        ttt.printStackTrace();
-                        return null;
-                    }
-
+                    return null;
                 }
             }
         }

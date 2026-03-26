@@ -1,7 +1,6 @@
 package io.mvnpm.npm.model;
 
 import java.io.IOException;
-import java.net.URL;
 
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
@@ -28,13 +27,10 @@ public class BugsDeserializer extends StdDeserializer<Bugs> {
         try {
             return jp.readValueAs(Bugs.class);
         } catch (Throwable t) {
-            // Let try with String
             try {
                 String url = jp.readValueAs(String.class);
-                URL u = new URL(url);
-                return new Bugs(u);
+                return new Bugs(url);
             } catch (Throwable tt) {
-                tt.printStackTrace();
                 return null;
             }
         }

@@ -1,7 +1,5 @@
 package io.mvnpm.npm.model;
 
-import java.net.URL;
-
-public record License(String type, URL url) {
+public record License(String type, String url) {
 
 }
