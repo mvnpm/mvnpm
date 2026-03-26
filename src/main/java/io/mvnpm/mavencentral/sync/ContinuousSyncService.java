@@ -95,12 +95,11 @@ public class ContinuousSyncService {
     public void checkError() {
         try {
             Log.debug("Starting error retry...");
-            List<CentralSyncItem> error = CentralSyncItem.findByStage(Stage.ERROR, 50);
-
-            if (error != null && !error.isEmpty()) {
-                for (CentralSyncItem centralSyncItem : error) {
-                    centralSyncItemService.tryErroredItemAgain(centralSyncItem);
-                }
+            CentralSyncItem item;
+            int count = 0;
+            while ((item = centralSyncItemService.claimNextForErrorRetry()) != null && count < 50) {
+                bus.publish("central-sync-item-stage-change", item);
+                count++;
             }
         } catch (Throwable t) {
             Log.error(t.getMessage());
@@ -224,9 +223,8 @@ public class ContinuousSyncService {
     @Scheduled(every = "${mvnpm.check-packaging.every:60s}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     void checkPackaging() {
-        List<CentralSyncItem> initQueue = CentralSyncItem.findByStage(Stage.PACKAGING, 1);
-        if (!initQueue.isEmpty()) {
-            CentralSyncItem itemToBeCreated = initQueue.get(0);
+        CentralSyncItem itemToBeCreated = centralSyncItemService.claimNextForPackagingCheck();
+        if (itemToBeCreated != null) {
             if (centralSyncService.canProcessSync(itemToBeCreated)) {
                 final Name name = NameParser.fromMavenGA(itemToBeCreated.groupId, itemToBeCreated.artifactId);
                 try {
@@ -438,16 +436,23 @@ public class ContinuousSyncService {
         resetPromotion();
     }
 
+    @Scheduled(every = "${mvnpm.reset-upload.every:30m}", concurrentExecution = SKIP)
+    @RunOnVirtualThread
+    void periodicResetUpload() {
+        resetUpload();
+    }
+
     private void resetUpload() {
         List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADING, 50);
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
         for (CentralSyncItem centralSyncItem : uploading) {
             if (centralSyncItem.stageChangeTime != null && centralSyncItem.stageChangeTime.isAfter(cutoff)) {
-                Log.infof("Skipping recent UPLOADING item %s (may be in progress on another pod)", centralSyncItem);
+                Log.debugf("[MULTI-POD] Skipping recent UPLOADING item %s (may be in progress on another pod)",
+                        centralSyncItem);
                 continue;
             }
             centralSyncItem.increaseUploadAttempt();
-            Log.info("Resetting stale upload for " + centralSyncItem + " after restart");
+            Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
             centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
         }
     }

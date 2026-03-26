@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -33,6 +34,7 @@ class CheckPackagingTest {
     @InjectMock
     CentralSyncService centralSyncService;
 
+    @BeforeEach
     @AfterEach
     @Transactional
     void cleanup() {

@@ -190,6 +190,90 @@ class ContinuousSyncServiceTest {
         }
     }
 
+    @Test
+    void changeStage_sameStageIsNoOp() {
+        CentralSyncItem item = createItem("org.mvnpm", "noop-pkg", "1.0.0");
+        changeStage("org.mvnpm", "noop-pkg", "1.0.0", Stage.CLOSED);
+
+        // First change to RELEASED should succeed
+        item = reloadItem("org.mvnpm", "noop-pkg", "1.0.0");
+        CentralSyncItem result1 = centralSyncItemService.changeStage(item, Stage.RELEASED);
+        assertNotNull(result1);
+        assertEquals(Stage.RELEASED, result1.stage);
+
+        // Second change to RELEASED should be a no-op (same stage)
+        item = reloadItem("org.mvnpm", "noop-pkg", "1.0.0");
+        CentralSyncItem result2 = centralSyncItemService.changeStage(item, Stage.RELEASED);
+        assertNotNull(result2);
+        assertEquals(Stage.RELEASED, result2.stage);
+    }
+
+    @Test
+    void claimNextForErrorRetry_claimsErrorItem() {
+        createInitItem("org.mvnpm", "err-pkg", "1.0.0");
+        changeStage("org.mvnpm", "err-pkg", "1.0.0", Stage.ERROR);
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForErrorRetry();
+
+        assertNotNull(claimed);
+        assertEquals("err-pkg", claimed.artifactId);
+        assertEquals(Stage.PACKAGING, claimed.stage);
+    }
+
+    @Test
+    void claimNextForErrorRetry_returnsNullWhenNoErrors() {
+        createInitItem("org.mvnpm", "ok-pkg", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForErrorRetry();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForErrorRetry_sequentialClaimsGetDifferentItems() {
+        createInitItem("org.mvnpm", "err-a", "1.0.0");
+        changeStage("org.mvnpm", "err-a", "1.0.0", Stage.ERROR);
+        createInitItem("org.mvnpm", "err-b", "1.0.0");
+        changeStage("org.mvnpm", "err-b", "1.0.0", Stage.ERROR);
+
+        CentralSyncItem first = centralSyncItemService.claimNextForErrorRetry();
+        CentralSyncItem second = centralSyncItemService.claimNextForErrorRetry();
+
+        assertNotNull(first);
+        assertNotNull(second);
+        assertNotEquals(first.artifactId, second.artifactId);
+    }
+
+    @Test
+    void claimNextForPackagingCheck_claimsPackagingItem() {
+        createInitItem("org.mvnpm", "pack-pkg", "1.0.0");
+        changeStage("org.mvnpm", "pack-pkg", "1.0.0", Stage.PACKAGING);
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+
+        assertNotNull(claimed);
+        assertEquals("pack-pkg", claimed.artifactId);
+        assertEquals(Stage.PACKAGING, claimed.stage);
+    }
+
+    @Test
+    void claimNextForPackagingCheck_returnsNullWhenEmpty() {
+        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+        assertNull(claimed);
+    }
+
+    @Test
+    void claimNextForPackagingCheck_skipsNonPackagingItems() {
+        createInitItem("org.mvnpm", "init-only", "1.0.0");
+
+        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+        assertNull(claimed);
+    }
+
+    @Transactional
+    CentralSyncItem reloadItem(String groupId, String artifactId, String version) {
+        return CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+    }
+
     @Transactional
     CentralSyncItem createItem(String groupId, String artifactId, String version) {
         return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.UPLOADED);
