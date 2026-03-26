@@ -27,6 +27,9 @@ public class CentralSyncItemService {
             centralSyncItem.stage = stage;
             centralSyncItem.stageChangeTime = LocalDateTime.now();
             centralSyncItem.persist();
+            if (stage == Stage.RELEASED) {
+                SyncedPackage.createIfAbsent(centralSyncItem.groupId, centralSyncItem.artifactId);
+            }
             bus.publish("central-sync-item-stage-change", centralSyncItem);
         }
         return centralSyncItem;

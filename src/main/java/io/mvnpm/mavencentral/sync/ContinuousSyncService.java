@@ -6,6 +6,8 @@ import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import java.util.Map;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.FileUtils;
@@ -27,13 +30,13 @@ import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.mavencentral.MavenCentralFacade;
 import io.mvnpm.mavencentral.ReleaseStatus;
 import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
 import io.mvnpm.mavencentral.exceptions.StatusCheckException;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
@@ -101,22 +104,75 @@ public class ContinuousSyncService {
     }
 
     /**
-     * Check all known artifacts for updates
+     * Check a batch of synced packages for updates using adaptive scheduling.
+     * Replaces the old checkAll which loaded all rows into memory.
      */
-    @Scheduled(cron = "{mvnpm.checkall.cron.expr}", concurrentExecution = SKIP)
+    @Scheduled(every = "${mvnpm.check-all.every:5m}", concurrentExecution = SKIP)
     @Blocking
     public void checkAll() {
         try {
-            Log.debug("Starting full update check...");
-            List<CentralSyncItem> distinct = CentralSyncItem.findDistinctGA();
-
-            if (distinct != null && !distinct.isEmpty()) {
-                for (CentralSyncItem centralSyncItem : distinct) {
-                    update(centralSyncItem.groupId, centralSyncItem.artifactId);
-                }
+            List<SyncedPackage> batch = SyncedPackage.findBatchToCheck(100);
+            if (batch.isEmpty()) {
+                Log.debug("No packages due for update check");
+                return;
+            }
+            Log.infof("Checking %d packages for updates", batch.size());
+            for (SyncedPackage pkg : batch) {
+                LocalDateTime nextCheck = checkAndComputeNextCheck(pkg);
+                updateNextCheck(pkg, nextCheck);
             }
         } catch (Throwable t) {
-            Log.error(t.getMessage());
+            Log.error("Error during batch update check: " + t.getMessage());
+        }
+    }
+
+    private LocalDateTime checkAndComputeNextCheck(SyncedPackage pkg) {
+        try {
+            update(pkg.groupId, pkg.artifactId);
+            return computeNextCheck(pkg.groupId, pkg.artifactId);
+        } catch (Throwable t) {
+            Log.warnf("Error checking %s: %s", pkg.toGaString(), t.getMessage());
+            // On error, retry in 1 hour
+            return LocalDateTime.now().plusHours(1);
+        }
+    }
+
+    private LocalDateTime computeNextCheck(String groupId, String artifactId) {
+        try {
+            if (isInternal(groupId, artifactId)) {
+                return LocalDateTime.now().plusDays(1);
+            }
+            Name name = NameParser.fromMavenGA(groupId, artifactId);
+            Project project = npmRegistryFacade.getProject(name.npmFullName);
+            if (project != null && project.time() != null) {
+                String modified = project.time().get("modified");
+                if (modified != null) {
+                    Instant lastModified = Instant.parse(modified);
+                    Duration age = Duration.between(lastModified, Instant.now());
+                    long days = age.toDays();
+                    if (days < 7) {
+                        return LocalDateTime.now().plusHours(4);
+                    } else if (days < 30) {
+                        return LocalDateTime.now().plusHours(12);
+                    } else if (days < 180) {
+                        return LocalDateTime.now().plusDays(3);
+                    } else {
+                        return LocalDateTime.now().plusDays(30);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.debugf("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
+        }
+        return LocalDateTime.now().plusDays(1);
+    }
+
+    @Transactional
+    void updateNextCheck(SyncedPackage pkg, LocalDateTime nextCheck) {
+        SyncedPackage managed = SyncedPackage.findById(new SyncedPackageId(pkg.groupId, pkg.artifactId));
+        if (managed != null) {
+            managed.nextCheck = nextCheck;
+            managed.persist();
         }
     }
 
