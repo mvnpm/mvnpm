@@ -6,11 +6,16 @@ import java.util.List;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
 @IdClass(SyncedPackageId.class)
+@Table(indexes = {
+        @Index(columnList = "nextCheck")
+})
 public class SyncedPackage extends PanacheEntityBase {
     @Id
     public String groupId;
