@@ -2,12 +2,15 @@ package io.mvnpm;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.inject.Inject;
 
@@ -15,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageFileLocator;
+import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.model.Name;
 import io.quarkus.test.junit.QuarkusTest;
@@ -62,6 +66,39 @@ class MavenRepositoryServiceTest {
                 final Path path = packageFileLocator.getLocalFullPath(file, name, version, e);
                 waitFor(path);
             }
+        }
+    }
+
+    @Test
+    void checkDependenciesDoesNotBlockEventLoop() throws Exception {
+        // First create the package so we have a POM to check
+        Name name = new Name("lit");
+        String version = "3.3.1";
+        mavenRepositoryService.getPath(name, version, FileType.jar);
+        Path pom = packageFileLocator.getLocalFullPath(FileType.pom, name.mvnGroupId, name.mvnArtifactId, version);
+        waitFor(pom);
+
+        // Run checkDependencies from a virtual thread (simulates @RunOnVirtualThread scheduler)
+        // This previously failed with "The current thread cannot be blocked: vert.x-eventloop-thread-0"
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        Thread.startVirtualThread(() -> {
+            try {
+                mavenRepositoryService.checkDependencies(new DependencyVersionCheckRequest(pom, name, version))
+                        .await().atMost(Duration.ofMinutes(2));
+                future.complete(null);
+            } catch (Exception e) {
+                future.completeExceptionally(e);
+            }
+        });
+
+        try {
+            future.get(3, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            if (e.getCause() != null && e.getCause().getMessage() != null
+                    && e.getCause().getMessage().contains("cannot be blocked")) {
+                fail("checkDependencies blocked the event loop: " + e.getCause().getMessage());
+            }
+            // Other exceptions (e.g. item not in DB) are OK — we're testing thread safety, not business logic
         }
     }
 

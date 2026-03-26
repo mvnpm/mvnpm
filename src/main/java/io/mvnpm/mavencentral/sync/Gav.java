@@ -42,6 +42,11 @@ public class Gav implements Serializable {
     }
 
     @Override
+    public String toString() {
+        return groupId + ":" + artifactId + ":" + version;
+    }
+
+    @Override
     public int hashCode() {
         int hash = 7;
         hash = 29 * hash + Objects.hashCode(this.groupId);
