@@ -128,12 +128,7 @@ public class ContinuousSyncService {
             for (SyncedPackage pkg : batch) {
                 LocalDateTime nextCheck = checkAndComputeNextCheck(pkg);
                 updateNextCheck(pkg, nextCheck);
-                // Throttle to let each package finish bundle creation and release memory
-                Thread.sleep(Duration.ofSeconds(10));
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            Log.warn("Update check interrupted");
         } catch (Throwable t) {
             Log.error("Error during batch update check: " + t.getMessage());
         }
@@ -395,11 +390,13 @@ public class ContinuousSyncService {
                 Project project = npmRegistryFacade.getProject(name.npmFullName);
                 if (project != null) {
                     String latest = project.distTags().latest();
-                    try {
-                        mavenRepositoryService.getPath(name, latest, FileType.jar);
-                        Log.infof("Continuous Updater: New package %s found", name.npmFullName);
-                    } catch (PackageAlreadySyncedException e) {
-                        Log.debugf("Continuous Updater: Package %s already synced", name.npmFullName);
+                    // Queue for sync without creating files — files are created at upload time
+                    // by ensureFilesExist() on the pod that will upload
+                    boolean queued = centralSyncService.initializeSync(name, latest);
+                    if (queued) {
+                        Log.infof("Continuous Updater: New package %s %s queued for sync", name.npmFullName, latest);
+                    } else {
+                        Log.debugf("Continuous Updater: Package %s already synced or in progress", name.npmFullName);
                     }
                 }
             } catch (WebApplicationException wae) {
