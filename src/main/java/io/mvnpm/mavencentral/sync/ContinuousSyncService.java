@@ -102,7 +102,7 @@ public class ContinuousSyncService {
             Log.debug("Starting error retry...");
             CentralSyncItem item;
             int count = 0;
-            while ((item = centralSyncItemService.claimNextForErrorRetry()) != null && count < 50) {
+            while ((item = centralSyncItemService.claimNextForErrorRetry()) != null && count < 10) {
                 bus.publish("central-sync-item-stage-change", item);
                 count++;
             }
@@ -115,11 +115,11 @@ public class ContinuousSyncService {
      * Check a batch of synced packages for updates using adaptive scheduling.
      * Replaces the old checkAll which loaded all rows into memory.
      */
-    @Scheduled(every = "${mvnpm.check-all.every:5m}", concurrentExecution = SKIP)
+    @Scheduled(every = "${mvnpm.check-all.every:10m}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     public void checkAll() {
         try {
-            List<SyncedPackage> batch = claimBatchToCheck(50);
+            List<SyncedPackage> batch = claimBatchToCheck(10);
             if (batch.isEmpty()) {
                 Log.debug("No packages due for update check");
                 return;
@@ -128,7 +128,12 @@ public class ContinuousSyncService {
             for (SyncedPackage pkg : batch) {
                 LocalDateTime nextCheck = checkAndComputeNextCheck(pkg);
                 updateNextCheck(pkg, nextCheck);
+                // Throttle to let each package finish bundle creation and release memory
+                Thread.sleep(Duration.ofSeconds(10));
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.warn("Update check interrupted");
         } catch (Throwable t) {
             Log.error("Error during batch update check: " + t.getMessage());
         }
