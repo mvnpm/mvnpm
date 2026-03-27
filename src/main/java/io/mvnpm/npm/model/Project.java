@@ -13,5 +13,5 @@ public record Project(
         String homepage,
         @JsonDeserialize(using = LicenseDeserializer.class) License license,
         @JsonDeserialize(using = VersionDeserializer.class) Set<String> versions,
-        Map<String, String> time) {
+        @JsonDeserialize(using = TimeMapDeserializer.class) Map<String, String> time) {
 }
