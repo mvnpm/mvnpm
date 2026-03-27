@@ -30,7 +30,7 @@ public class NpmRegistryFacade {
     NpmRegistryClient npmRegistryClient;
 
     // NOTE: Project metadata can be large (a few KB per entry after deserialization).
-    // Cache is bounded by npm-project-cache config (100k max, 1h TTL).
+    // Cache is bounded by npm-project-cache config (1k max, 1h TTL).
     @CacheResult(cacheName = "npm-project-cache")
     @Timeout(unit = ChronoUnit.SECONDS, value = 10)
     @Retry(maxRetries = 1)
