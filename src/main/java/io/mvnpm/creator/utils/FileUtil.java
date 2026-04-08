@@ -25,7 +25,6 @@ import org.pgpainless.sop.SOPImpl;
 
 import io.mvnpm.Constants;
 import io.mvnpm.creator.exceptions.NoSecretRingAscException;
-import sop.ByteArrayAndResult;
 import sop.ReadyWithResult;
 import sop.SOP;
 import sop.SigningResult;
@@ -157,21 +156,24 @@ public final class FileUtil {
             String outputFile = fileToSign.toString() + Constants.DOT_ASC;
             Path ascFileOutput = Paths.get(outputFile);
             if (!Files.exists(ascFileOutput)) {
-                try {
-                    byte[] jarFileBytes = Files.readAllBytes(fileToSign);
+                Path tempFile = getTempFilePathFor(ascFileOutput);
+                try (InputStream fileStream = Files.newInputStream(fileToSign);
+                        java.io.OutputStream ascOut = Files.newOutputStream(tempFile)) {
 
                     SOP sop = new SOPImpl();
                     ReadyWithResult<SigningResult> readyWithResult = sop.detachedSign()
                             .key(secretKeyRing.getSecretKey().getEncoded())
-                            .data(jarFileBytes);
+                            .data(fileStream);
 
-                    ByteArrayAndResult<SigningResult> bytesAndResult = readyWithResult.toByteArrayAndResult();
-
-                    byte[] detachedSignature = bytesAndResult.getBytes();
-
-                    Files.write(ascFileOutput, detachedSignature);
+                    readyWithResult.writeTo(ascOut);
                 } catch (IOException e) {
+                    tempFile.toFile().delete();
                     throw new UncheckedIOException("Error while signing: '%s'".formatted(fileToSign), e);
+                }
+                try {
+                    forceMoveAtomic(tempFile, ascFileOutput);
+                } catch (IOException e) {
+                    throw new UncheckedIOException("Error moving signed file: '%s'".formatted(fileToSign), e);
                 }
             }
             return ascFileOutput;
