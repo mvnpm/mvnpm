@@ -28,7 +28,7 @@ import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Package;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.version.Version;
 import io.mvnpm.version.VersionMatcher;
 import io.quarkus.logging.Log;
@@ -117,11 +117,11 @@ public class MavenRepositoryService {
                 .onItem().transformToUniAndConcatenate(d -> Uni.createFrom().item(() -> {
                     final String range = d.getVersion();
                     final Name name = NameParser.fromMavenGA(d.getGroupId(), d.getArtifactId());
-                    Project project = npmRegistryFacade.getProject(name.npmFullName);
-                    if (project == null) {
+                    ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+                    if (info == null) {
                         return null;
                     }
-                    final Set<Version> versions = project.versions().stream()
+                    final Set<Version> versions = info.versions().stream()
                             .map(Version::fromString)
                             .collect(Collectors.toSet());
                     final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
@@ -204,7 +204,7 @@ public class MavenRepositoryService {
     }
 
     private String getLatestVersion(Name fullName) {
-        Project project = npmRegistryFacade.getProject(fullName.npmFullName);
-        return project.distTags().latest();
+        ProjectInfo info = npmRegistryFacade.getProjectInfo(fullName.npmFullName);
+        return info.distTags().latest();
     }
 }

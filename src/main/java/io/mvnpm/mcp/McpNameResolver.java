@@ -30,7 +30,7 @@ public class McpNameResolver {
      */
     public String resolveVersion(Name name, String version) {
         if (version == null || version.isBlank() || "latest".equalsIgnoreCase(version)) {
-            return npmRegistryFacade.getProject(name.npmFullName).distTags().latest();
+            return npmRegistryFacade.getProjectInfo(name.npmFullName).distTags().latest();
         }
         return version;
     }

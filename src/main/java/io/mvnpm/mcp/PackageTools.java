@@ -4,7 +4,7 @@ import jakarta.inject.Inject;
 
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.npm.model.SearchResult;
 import io.mvnpm.npm.model.SearchResults;
 import io.quarkiverse.mcp.server.TextContent;
@@ -95,19 +95,19 @@ public class PackageTools {
     ToolResponse list_versions(
             @ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
         Name resolved = nameResolver.resolve(name);
-        Project project = npmRegistryFacade.getProject(resolved.npmFullName);
+        ProjectInfo info = npmRegistryFacade.getProjectInfo(resolved.npmFullName);
         StringBuilder sb = new StringBuilder();
         sb.append("Package: ").append(resolved.npmFullName).append("\n");
         sb.append("Maven: ").append(resolved.mvnGroupId).append(":").append(resolved.mvnArtifactId).append("\n\n");
         sb.append("Dist Tags:\n");
-        if (project.distTags() != null) {
-            if (project.distTags().latest() != null)
-                sb.append("  latest: ").append(project.distTags().latest()).append("\n");
-            if (project.distTags().next() != null)
-                sb.append("  next: ").append(project.distTags().next()).append("\n");
+        if (info.distTags() != null) {
+            if (info.distTags().latest() != null)
+                sb.append("  latest: ").append(info.distTags().latest()).append("\n");
+            if (info.distTags().next() != null)
+                sb.append("  next: ").append(info.distTags().next()).append("\n");
         }
-        sb.append("\nAll Versions (").append(project.versions().size()).append("):\n");
-        project.versions().forEach(v -> sb.append("  ").append(v).append("\n"));
+        sb.append("\nAll Versions (").append(info.versions().size()).append("):\n");
+        info.versions().forEach(v -> sb.append("  ").append(v).append("\n"));
         return ToolResponse.success(new TextContent(sb.toString()));
     }
 
@@ -115,8 +115,8 @@ public class PackageTools {
     ToolResponse get_maven_coordinates(
             @ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
         Name resolved = nameResolver.resolve(name);
-        Project project = npmRegistryFacade.getProject(resolved.npmFullName);
-        String latest = project.distTags() != null ? project.distTags().latest() : "LATEST";
+        ProjectInfo info = npmRegistryFacade.getProjectInfo(resolved.npmFullName);
+        String latest = info.distTags() != null ? info.distTags().latest() : "LATEST";
         StringBuilder sb = new StringBuilder();
         sb.append("NPM: ").append(resolved.npmFullName).append("\n");
         sb.append("Maven GroupId: ").append(resolved.mvnGroupId).append("\n");

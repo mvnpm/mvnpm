@@ -54,7 +54,7 @@ import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.quarkus.logging.Log;
 import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
@@ -155,8 +155,8 @@ public class CompositeCreator {
         if (dependencies != null && !dependencies.isEmpty()) {
             Dependency first = dependencies.get(0);
             Name name = NameParser.fromMavenGA(first.getGroupId(), first.getArtifactId());
-            Project p = npmRegistryFacade.getProject(name.npmFullName);
-            return p.distTags().latest();
+            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            return info.distTags().latest();
         }
         return null;
     }

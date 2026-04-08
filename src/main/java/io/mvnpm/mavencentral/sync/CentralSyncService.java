@@ -12,7 +12,7 @@ import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 
 /**
  * This sync a package with maven central
@@ -119,7 +119,7 @@ public class CentralSyncService {
     }
 
     public String getLatestVersion(Name fullName) {
-        Project project = npmRegistryFacade.getProject(fullName.npmFullName);
-        return project.distTags().latest();
+        ProjectInfo info = npmRegistryFacade.getProjectInfo(fullName.npmFullName);
+        return info.distTags().latest();
     }
 }

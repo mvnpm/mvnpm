@@ -40,7 +40,7 @@ import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.version.InvalidVersionException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
@@ -161,14 +161,11 @@ public class ContinuousSyncService {
                 return LocalDateTime.now().plusDays(1);
             }
             Name name = NameParser.fromMavenGA(groupId, artifactId);
-            Project project = npmRegistryFacade.getProject(name.npmFullName);
-            if (project != null && project.time() != null) {
-                String modified = project.time().get("modified");
-                if (modified != null) {
-                    Instant lastModified = Instant.parse(modified);
-                    long ageDays = Duration.between(lastModified, Instant.now()).toDays();
-                    return LocalDateTime.now().plus(nextCheckInterval(ageDays));
-                }
+            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            if (info != null && info.lastModified() != null) {
+                Instant lastModified = Instant.parse(info.lastModified());
+                long ageDays = Duration.between(lastModified, Instant.now()).toDays();
+                return LocalDateTime.now().plus(nextCheckInterval(ageDays));
             }
         } catch (Exception e) {
             Log.debugf("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
@@ -387,9 +384,9 @@ public class ContinuousSyncService {
             // Get latest in NPM TODO: Later make this per patch release...
             try {
                 Name name = NameParser.fromMavenGA(groupId, artifactId);
-                Project project = npmRegistryFacade.getProject(name.npmFullName);
-                if (project != null) {
-                    String latest = project.distTags().latest();
+                ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+                if (info != null) {
+                    String latest = info.distTags().latest();
                     // Queue for sync without creating files — files are created at upload time
                     // by ensureFilesExist() on the pod that will upload
                     boolean queued = centralSyncService.initializeSync(name, latest);

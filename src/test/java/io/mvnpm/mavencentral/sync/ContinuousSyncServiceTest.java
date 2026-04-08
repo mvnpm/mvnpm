@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.Set;
 
 import jakarta.inject.Inject;
@@ -27,7 +26,7 @@ import io.mvnpm.mavencentral.MavenCentralFacade;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.DistTags;
 import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 
@@ -104,9 +103,9 @@ class ContinuousSyncServiceTest {
 
         // Mock NPM to return a project modified 10 days ago (→ 12h interval)
         Instant tenDaysAgo = Instant.now().minus(Duration.ofDays(10));
-        Project project = new Project(null, "lit", new DistTags("1.0.0", null),
-                null, null, Set.of("1.0.0"), Map.of("modified", tenDaysAgo.toString()));
-        Mockito.when(npmRegistryFacade.getProject("lit")).thenReturn(project);
+        ProjectInfo info = new ProjectInfo(new DistTags("1.0.0", null),
+                Set.of("1.0.0"), tenDaysAgo.toString());
+        Mockito.when(npmRegistryFacade.getProjectInfo("lit")).thenReturn(info);
 
         // MavenRepositoryService is mocked — getPath returns null by default (no-op)
 

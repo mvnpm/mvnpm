@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
-import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -31,7 +30,7 @@ import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.version.InvalidVersionException;
 import io.mvnpm.version.Version;
 import io.quarkus.logging.Log;
@@ -138,13 +137,13 @@ public class MetadataService {
     }
 
     private Versioning getNpmVersioning(Name name) {
-        Project project = npmRegistryFacade.getProject(name.npmFullName);
+        ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
         Versioning versioning = new Versioning();
-        String latest = getLatest(project);
+        String latest = info.distTags().latest();
         versioning.setLatest(latest);
         versioning.setRelease(latest);
 
-        for (String version : project.versions()) {
+        for (String version : info.versions()) {
             try {
                 Version v = Version.fromString(version);
                 if (!versioning.getVersions().contains(v.toString())) {
@@ -158,9 +157,9 @@ public class MetadataService {
             }
         }
 
-        Map<String, String> time = project.time();
-        if (time != null && time.containsKey(MODIFIED)) {
-            String dateTime = time.get(MODIFIED);
+        String lastModified = info.lastModified();
+        if (lastModified != null) {
+            String dateTime = lastModified;
             // 2022-07-20T09:14:55.450Z
             dateTime = dateTime.replaceAll(Constants.HYPHEN, Constants.EMPTY);
             // 20220720T09:14:55.450Z
@@ -180,10 +179,6 @@ public class MetadataService {
         return versioning;
     }
 
-    private String getLatest(Project p) {
-        return p.distTags().latest();
-    }
-
     private void createDir(Path localFilePath) {
         Path parentDir = localFilePath.getParent();
         if (!Files.exists(parentDir)) {
@@ -196,5 +191,4 @@ public class MetadataService {
     }
 
     private static final String TIME_STAMP_FORMAT = "yyyyMMddHHmmss";
-    private static final String MODIFIED = "modified";
 }
