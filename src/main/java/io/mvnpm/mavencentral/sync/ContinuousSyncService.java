@@ -40,7 +40,7 @@ import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.version.InvalidVersionException;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
@@ -161,14 +161,11 @@ public class ContinuousSyncService {
                 return LocalDateTime.now().plusDays(1);
             }
             Name name = NameParser.fromMavenGA(groupId, artifactId);
-            Project project = npmRegistryFacade.getProject(name.npmFullName);
-            if (project != null && project.time() != null) {
-                String modified = project.time().get("modified");
-                if (modified != null) {
-                    Instant lastModified = Instant.parse(modified);
-                    long ageDays = Duration.between(lastModified, Instant.now()).toDays();
-                    return LocalDateTime.now().plus(nextCheckInterval(ageDays));
-                }
+            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            if (info != null && info.lastModified() != null) {
+                Instant lastModified = Instant.parse(info.lastModified());
+                long ageDays = Duration.between(lastModified, Instant.now()).toDays();
+                return LocalDateTime.now().plus(nextCheckInterval(ageDays));
             }
         } catch (Exception e) {
             Log.debugf("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
@@ -387,9 +384,9 @@ public class ContinuousSyncService {
             // Get latest in NPM TODO: Later make this per patch release...
             try {
                 Name name = NameParser.fromMavenGA(groupId, artifactId);
-                Project project = npmRegistryFacade.getProject(name.npmFullName);
-                if (project != null) {
-                    String latest = project.distTags().latest();
+                ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+                if (info != null) {
+                    String latest = info.distTags().latest();
                     // Queue for sync without creating files — files are created at upload time
                     // by ensureFilesExist() on the pod that will upload
                     boolean queued = centralSyncService.initializeSync(name, latest);
@@ -449,7 +446,8 @@ public class ContinuousSyncService {
         // getPath creates jar + pom + tgz if not cached (jar creation triggers pom/tgz internally)
         Path jarPath = mavenRepositoryService.getPath(name, version, FileType.jar);
         Path pomPath = packageFileLocator.getLocalFullPath(FileType.pom, name, version);
-        Path tgzPath = packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
+        // Composites (internal packages) don't have a tgz file
+        Path tgzPath = name.isInternal() ? null : packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
         // Synchronously create remaining bundle files (source, javadoc, asc, hashes)
         packageListener.createBundleFiles(pomPath, jarPath, tgzPath, List.of());
     }
@@ -487,8 +485,14 @@ public class ContinuousSyncService {
                 continue;
             }
             centralSyncItem.increaseUploadAttempt();
-            Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+            if (centralSyncItem.uploadAttempts >= 10) {
+                Log.errorf("Upload stuck after %d attempts, moving to ERROR: %s",
+                        centralSyncItem.uploadAttempts, centralSyncItem);
+                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
+            } else {
+                Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
+                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+            }
         }
     }
 

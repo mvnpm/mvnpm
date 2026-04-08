@@ -18,7 +18,7 @@ spec:
           image: registry.redhat.io/rhel9/postgresql-16:latest
           resources:
             limits:
-              memory: 150Mi
+              memory: 512Mi
           volumeMounts:
             - mountPath: /var/lib/pgsql/data
               name: mvnpm-postgres-data

@@ -13,6 +13,7 @@ import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.npm.model.SearchResults;
 import io.quarkus.cache.CacheResult;
 import io.smallrye.common.annotation.Blocking;
@@ -29,9 +30,10 @@ public class NpmRegistryFacade {
     @RestClient
     NpmRegistryClient npmRegistryClient;
 
-    // NOTE: Project metadata can be large (a few KB per entry after deserialization).
-    // Cache is bounded by npm-project-cache config (1k max, 1h TTL).
-    @CacheResult(cacheName = "npm-project-cache")
+    /**
+     * Fetch full Project from NPM (uncached).
+     * Only use when all fields are needed (e.g. REST API serialization).
+     */
     @Timeout(unit = ChronoUnit.SECONDS, value = 10)
     @Retry(maxRetries = 1)
     @Blocking
@@ -42,6 +44,18 @@ public class NpmRegistryFacade {
         } else {
             throw new WebApplicationException("Error while getting Project for [" + project + "]", response);
         }
+    }
+
+    /**
+     * Lightweight cached projection: distTags + version strings + lastModified.
+     * Drops the large per-version time map, description, homepage, license, name.
+     */
+    @CacheResult(cacheName = "npm-project-cache")
+    @Timeout(unit = ChronoUnit.SECONDS, value = 10)
+    @Retry(maxRetries = 1)
+    @Blocking
+    public ProjectInfo getProjectInfo(String project) {
+        return ProjectInfo.from(getProject(project));
     }
 
     @CacheResult(cacheName = "npm-package-cache")

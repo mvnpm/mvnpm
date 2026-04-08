@@ -36,7 +36,7 @@ import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Bugs;
 import io.mvnpm.npm.model.Maintainer;
 import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.Project;
+import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.npm.model.Repository;
 import io.mvnpm.version.VersionConverter;
 import io.quarkus.logging.Log;
@@ -301,8 +301,8 @@ public class PomService {
 
         // This is an open ended range. Let's get the latest for a bottom boundary
         if (trimVersion.equals(OPEN_BLOCK + COMMA + CLOSE_ROUND)) {
-            Project project = npmRegistryFacade.getProject(name.npmFullName);
-            return OPEN_BLOCK + project.distTags().latest() + COMMA + CLOSE_ROUND;
+            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            return OPEN_BLOCK + info.distTags().latest() + COMMA + CLOSE_ROUND;
         }
         // TODO: Make other ranges more effient too ?
         return trimVersion;
