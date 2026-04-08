@@ -449,7 +449,8 @@ public class ContinuousSyncService {
         // getPath creates jar + pom + tgz if not cached (jar creation triggers pom/tgz internally)
         Path jarPath = mavenRepositoryService.getPath(name, version, FileType.jar);
         Path pomPath = packageFileLocator.getLocalFullPath(FileType.pom, name, version);
-        Path tgzPath = packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
+        // Composites (internal packages) don't have a tgz file
+        Path tgzPath = name.isInternal() ? null : packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
         // Synchronously create remaining bundle files (source, javadoc, asc, hashes)
         packageListener.createBundleFiles(pomPath, jarPath, tgzPath, List.of());
     }
@@ -487,8 +488,14 @@ public class ContinuousSyncService {
                 continue;
             }
             centralSyncItem.increaseUploadAttempt();
-            Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+            if (centralSyncItem.uploadAttempts >= 10) {
+                Log.errorf("Upload stuck after %d attempts, moving to ERROR: %s",
+                        centralSyncItem.uploadAttempts, centralSyncItem);
+                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
+            } else {
+                Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
+                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+            }
         }
     }
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -347,6 +348,59 @@ class ContinuousSyncServiceTest {
         // Item should be marked as RELEASED
         CentralSyncItem updated = reloadItem("org.mvnpm", "synced-pkg", "2.0.0");
         assertEquals(Stage.RELEASED, updated.stage);
+    }
+
+    @Test
+    void resetUpload_movesToErrorAfterTooManyAttempts() {
+        createInitItem("org.mvnpm", "stuck-pkg", "1.0.0");
+        changeStage("org.mvnpm", "stuck-pkg", "1.0.0", Stage.UPLOADING);
+        setAttemptCounters("org.mvnpm", "stuck-pkg", "1.0.0", 9, 0);
+        // Make stageChangeTime old enough to be considered stale (>30 min)
+        setStageChangeTime("org.mvnpm", "stuck-pkg", "1.0.0", LocalDateTime.now().minusHours(1));
+
+        continuousSyncService.periodicResetUpload();
+
+        CentralSyncItem updated = reloadItem("org.mvnpm", "stuck-pkg", "1.0.0");
+        assertEquals(Stage.ERROR, updated.stage, "Item with 10+ attempts should move to ERROR");
+    }
+
+    @Test
+    void resetUpload_resetsToInitWhenUnderAttemptLimit() {
+        createInitItem("org.mvnpm", "retry-pkg", "1.0.0");
+        changeStage("org.mvnpm", "retry-pkg", "1.0.0", Stage.UPLOADING);
+        setAttemptCounters("org.mvnpm", "retry-pkg", "1.0.0", 2, 0);
+        setStageChangeTime("org.mvnpm", "retry-pkg", "1.0.0", LocalDateTime.now().minusHours(1));
+
+        continuousSyncService.periodicResetUpload();
+
+        CentralSyncItem updated = reloadItem("org.mvnpm", "retry-pkg", "1.0.0");
+        assertEquals(Stage.INIT, updated.stage, "Item under attempt limit should reset to INIT");
+    }
+
+    @Test
+    void processUpload_compositeWithoutTgz_passesNullTgz() {
+        // Create an UPLOADING item
+        createInitItem("org.mvnpm.at.mvnpm", "composite-pkg", "1.0.0");
+        changeStage("org.mvnpm.at.mvnpm", "composite-pkg", "1.0.0", Stage.UPLOADING);
+        CentralSyncItem item = reloadItem("org.mvnpm.at.mvnpm", "composite-pkg", "1.0.0");
+
+        // getPath returns a non-existent path (simulating composite with no tgz)
+        Mockito.when(mavenRepositoryService.getPath(Mockito.any(Name.class), Mockito.eq("1.0.0"), Mockito.any()))
+                .thenReturn(Path.of("/tmp/nonexistent-jar.jar"));
+
+        continuousSyncService.processNextAction(item);
+
+        // Verify createBundleFiles was called with null tgz (third argument)
+        Mockito.verify(packageListener).createBundleFiles(Mockito.any(), Mockito.any(), Mockito.isNull(), Mockito.any());
+    }
+
+    @Transactional
+    void setStageChangeTime(String groupId, String artifactId, String version, LocalDateTime time) {
+        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+        if (item != null) {
+            item.stageChangeTime = time;
+            item.persist();
+        }
     }
 
     @Transactional
