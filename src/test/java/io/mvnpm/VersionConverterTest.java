@@ -540,6 +540,13 @@ public class VersionConverterTest {
     }
 
     @Test
+    public void testWorkspaceVersion() {
+        Assertions.assertEquals("", VersionConverter.convert("workspace:*"));
+        Assertions.assertEquals("", VersionConverter.convert("workspace:^1.0.0"));
+        Assertions.assertEquals("", VersionConverter.convert("workspace:~1.2.3"));
+    }
+
+    @Test
     // Issue https://github.com/mvnpm/mvnpm/issues/36027
     public void testInvalidVersions() {
         Assertions.assertEquals("", VersionConverter.convert("${org.mvnpm-d3-time.version}"));
