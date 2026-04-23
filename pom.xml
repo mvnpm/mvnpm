@@ -240,18 +240,21 @@
     <dependency>
 	<groupId>org.mvnpm.at.qomponent</groupId>
 	<artifactId>qui-code-block</artifactId>
+	<version>1.1.1</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Syntax highlighting for doc pages -->
     <dependency>
 	<groupId>org.mvnpm</groupId>
 	<artifactId>highlight.js</artifactId>
+	<version>11.11.1</version>
 	<scope>provided</scope>
     </dependency>
     <!-- To compare versions -->
     <dependency>
       <groupId>org.mvnpm</groupId>
       <artifactId>compare-versions</artifactId>
+      <version>6.1.1</version>
       <scope>provided</scope>
     </dependency>
     <!-- To render Markdown -->
@@ -264,12 +267,14 @@
     <dependency>
 	<groupId>org.mvnpm.at.qomponent</groupId>
 	<artifactId>qui-card</artifactId>
+	<version>1.0.2</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Badges for display -->
     <dependency>
 	<groupId>org.mvnpm.at.qomponent</groupId>
 	<artifactId>qui-badge</artifactId>
+	<version>1.0.4</version>
 	<scope>provided</scope>
     </dependency>
     <!-- Testing -->
