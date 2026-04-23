@@ -599,7 +599,8 @@ export class MvnpmHome extends ThemeMixin(LitElement) {
       /* --- Desktop SPA layout --- */
       @media (min-width: 769px) {
           :host {
-              overflow: hidden;
+              overflow-x: hidden;
+              overflow-y: auto;
           }
           .searchResults {
               flex: 1;
