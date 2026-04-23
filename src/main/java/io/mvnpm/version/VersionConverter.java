@@ -101,7 +101,8 @@ public class VersionConverter {
                 versionString.startsWith("git:/") ||
                 versionString.startsWith("git+http") ||
                 versionString.startsWith("http://") ||
-                versionString.startsWith("https://")) { // We do not support git repos as version. Maybe something we can add later
+                versionString.startsWith("https://") ||
+                versionString.startsWith("workspace:")) { // We do not support git repos as version. Maybe something we can add later
             versionString = EMPTY;
         }
         return versionString;
