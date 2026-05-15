@@ -79,11 +79,16 @@
         <type>pom</type>
         <scope>import</scope>
       </dependency>
-<!--      <dependency>
+      <dependency>
         <groupId>org.mvnpm.at.codemirror</groupId>
         <artifactId>view</artifactId>
-        <version>6.38.0</version>
-      </dependency>-->
+        <version>6.43.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mvnpm.at.codemirror</groupId>
+        <artifactId>state</artifactId>
+        <version>6.6.0</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
   <dependencies>
