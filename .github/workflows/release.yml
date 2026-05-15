@@ -22,6 +22,7 @@ jobs:
       run: |
         RELEASE_VERSION=$(echo ${{ github.event.release.tag_name }} | sed 's/^v//')
         mvn versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false
+        mvn versions:set -DnewVersion=${RELEASE_VERSION} -DgenerateBackupPoms=false -f locker/pom.xml
 
     - name: Build with Maven
       run: mvn clean install -Dnative -DskipTests
