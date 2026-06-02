@@ -270,12 +270,27 @@ public class PomService {
 
     private List<Dependency> toDependencies(io.mvnpm.npm.model.Package p) {
         List<Dependency> deps = new ArrayList<>();
-        populateFromMap(deps, p.dependencies());
-        populateFromMap(deps, p.peerDependencies());
+        populateFromMap(deps, p.dependencies(), null, null);
+        if (p.peerDependencies() != null && !p.peerDependencies().isEmpty()) {
+            for (Map.Entry<Name, String> e : p.peerDependencies().entrySet()) {
+                if (e.getValue().startsWith("file:")) {
+                    continue;
+                }
+                Name name = e.getKey();
+                String version = e.getValue();
+                Dependency d = toDependency(name, version);
+                d.setScope("provided");
+                if (p.isOptionalPeerDependency(name)) {
+                    d.setOptional(true);
+                }
+                deps.add(d);
+            }
+        }
         return deps;
     }
 
-    private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies) {
+    private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies, String scope,
+            Boolean optional) {
         if (dependencies != null && !dependencies.isEmpty()) {
             for (Map.Entry<Name, String> e : dependencies.entrySet()) {
                 if (e.getValue().startsWith("file:")) {
@@ -283,7 +298,14 @@ public class PomService {
                 }
                 Name name = e.getKey();
                 String version = e.getValue();
-                listToPopulate.add(toDependency(name, version));
+                Dependency d = toDependency(name, version);
+                if (scope != null) {
+                    d.setScope(scope);
+                }
+                if (optional != null) {
+                    d.setOptional(optional);
+                }
+                listToPopulate.add(d);
             }
         }
     }

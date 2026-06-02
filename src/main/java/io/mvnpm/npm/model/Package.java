@@ -22,5 +22,14 @@ public record Package(
         @JsonDeserialize(using = MaintainersDeserializer.class) List<Maintainer> maintainers,
         Map<Name, String> dependencies,
         Map<Name, String> peerDependencies,
+        Map<String, Map<String, Boolean>> peerDependenciesMeta,
         Dist dist) {
+
+    public boolean isOptionalPeerDependency(Name name) {
+        if (peerDependenciesMeta == null) {
+            return false;
+        }
+        Map<String, Boolean> meta = peerDependenciesMeta.get(name.npmFullName);
+        return meta != null && Boolean.TRUE.equals(meta.get("optional"));
+    }
 }
