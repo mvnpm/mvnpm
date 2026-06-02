@@ -271,7 +271,21 @@ public class PomService {
     private List<Dependency> toDependencies(io.mvnpm.npm.model.Package p) {
         List<Dependency> deps = new ArrayList<>();
         populateFromMap(deps, p.dependencies());
-        populateFromMap(deps, p.peerDependencies());
+        if (p.peerDependencies() != null && !p.peerDependencies().isEmpty()) {
+            for (Map.Entry<Name, String> e : p.peerDependencies().entrySet()) {
+                if (e.getValue().startsWith("file:")) {
+                    continue;
+                }
+                Name name = e.getKey();
+                String version = e.getValue();
+                Dependency d = toDependency(name, version);
+                d.setScope("provided");
+                if (p.isOptionalPeerDependency(name)) {
+                    d.setOptional(true);
+                }
+                deps.add(d);
+            }
+        }
         return deps;
     }
 

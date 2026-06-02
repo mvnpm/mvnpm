@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Map;
 
@@ -128,5 +129,75 @@ class PackageDeserializationTest {
         assertEquals(2, project.time().size());
         assertEquals("2025-01-01T00:00:00.000Z", project.time().get("created"));
         assertEquals("2025-01-02T00:00:00.000Z", project.time().get("1.0.0"));
+    }
+
+    @Test
+    void peerDependenciesMetaDeserialization() throws Exception {
+        String json = """
+                {
+                    "name": "some-package",
+                    "version": "1.0.0",
+                    "peerDependencies": {
+                        "react": "^17 || ^18",
+                        "react-dom": "^17 || ^18"
+                    },
+                    "peerDependenciesMeta": {
+                        "react-dom": {
+                            "optional": true
+                        }
+                    }
+                }
+                """;
+        Package pkg = mapper.readValue(json, Package.class);
+        assertNotNull(pkg);
+        assertNotNull(pkg.peerDependencies());
+        assertEquals(2, pkg.peerDependencies().size());
+        assertNotNull(pkg.peerDependenciesMeta());
+        assertEquals(1, pkg.peerDependenciesMeta().size());
+        assertTrue(pkg.peerDependenciesMeta().get("react-dom").get("optional"));
+    }
+
+    @Test
+    void isOptionalPeerDependency() throws Exception {
+        String json = """
+                {
+                    "name": "some-package",
+                    "version": "1.0.0",
+                    "peerDependencies": {
+                        "react": "^18",
+                        "react-dom": "^18"
+                    },
+                    "peerDependenciesMeta": {
+                        "react-dom": {
+                            "optional": true
+                        }
+                    }
+                }
+                """;
+        Package pkg = mapper.readValue(json, Package.class);
+
+        Name reactDom = NameParser.fromNpmProject("react-dom");
+        Name react = NameParser.fromNpmProject("react");
+
+        assertTrue(pkg.isOptionalPeerDependency(reactDom));
+        assertFalse(pkg.isOptionalPeerDependency(react));
+    }
+
+    @Test
+    void isOptionalPeerDependencyWithNoMeta() throws Exception {
+        String json = """
+                {
+                    "name": "some-package",
+                    "version": "1.0.0",
+                    "peerDependencies": {
+                        "react": "^18"
+                    }
+                }
+                """;
+        Package pkg = mapper.readValue(json, Package.class);
+        assertNull(pkg.peerDependenciesMeta());
+
+        Name react = NameParser.fromNpmProject("react");
+        assertFalse(pkg.isOptionalPeerDependency(react));
     }
 }
