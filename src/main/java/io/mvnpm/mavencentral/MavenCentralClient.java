@@ -18,13 +18,15 @@ import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.jboss.resteasy.reactive.PartType;
 
+import io.mvnpm.maven.api.MavenClient;
+
 /**
  * The main client on https://central.sonatype.com
  *
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @RegisterRestClient(configKey = "mavencentral")
-public interface MavenCentralClient {
+public interface MavenCentralClient extends MavenClient {
 
     @POST
     @Path("/api/v1/publisher/upload")

@@ -19,7 +19,7 @@ import jakarta.ws.rs.core.Response;
 import org.jboss.resteasy.reactive.ResponseHeader;
 import org.jboss.resteasy.reactive.RestResponse;
 
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Project;
@@ -35,16 +35,17 @@ import io.mvnpm.npm.model.SearchResults;
 public class ProjectInfoApi {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @GET
     @Path("/project/{project : (.+)?}")
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     public RestResponse<Project> projectInfo(@PathParam("project") String project) {
         try {
-            return RestResponse.ok(npmRegistryFacade.getProject(project));
+            return RestResponse.ok(npmFacade.getProject(project));
         } catch (WebApplicationException wae) {
-            return RestResponse.status(wae.getResponse().getStatus(), wae.getResponse().getStatusInfo().getReasonPhrase());
+            return RestResponse.status(wae.getResponse().getStatus(),
+                    wae.getResponse().getStatusInfo().getReasonPhrase());
         } catch (Throwable t) {
             return RestResponse.status(500, t.getMessage());
         }
@@ -55,14 +56,14 @@ public class ProjectInfoApi {
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
     public io.mvnpm.npm.model.Package packageInfo(@PathParam("project") String project,
             @DefaultValue("latest") @QueryParam("version") String version) {
-        return npmRegistryFacade.getPackage(project, version);
+        return npmFacade.getPackage(project, version);
     }
 
     @GET
     @Path("/search/{term : (.+)?}")
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_1DAY)
     public SearchResults search(@PathParam("term") String term, @QueryParam("page") @DefaultValue("1") int page) {
-        return npmRegistryFacade.search(term, page);
+        return npmFacade.search(term, page);
     }
 
     @GET

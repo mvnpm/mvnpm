@@ -2,6 +2,7 @@ package io.mvnpm.mavencentral;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -16,17 +17,21 @@ import io.mvnpm.maven.api.ReleaseStatus;
 import io.mvnpm.maven.exceptions.StatusCheckException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
 import io.mvnpm.maven.sync.SyncItem;
+import io.mvnpm.maven.api.BundleCreator.BundleRecord;
+import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.MavenFacade;
+import io.mvnpm.maven.sync.SyncItem;
+import io.mvnpm.maven.sync.SyncItemService;
+import io.mvnpm.mavencentral.exceptions.StatusCheckException;
+import io.mvnpm.mavencentral.exceptions.UploadFailedException;
+import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
 import io.quarkus.security.UnauthorizedException;
 import io.vertx.core.json.JsonObject;
 
-/**
- * Facade on the Central server
- *
- * @author Phillip Kruger (phillip.kruger@gmail.com)
- */
 @ApplicationScoped
-public class MavenCentralFacade {
+@DefaultBean
+public class MavenCentralFacade implements MavenFacade {
 
     @Inject
     ErrorHandlingService errorHandlingService;
@@ -34,13 +39,16 @@ public class MavenCentralFacade {
     @RestClient
     MavenCentralClient mavenCentralClient;
 
+    @Inject
+    SyncItemService syncItemService;
+
     @ConfigProperty(name = "mvnpm.mavencentral.authorization")
     Optional<String> authorization;
 
     @ConfigProperty(name = "mvnpm.mavencentral.autorelease")
     boolean autorelease;
 
-    public boolean isInCentral(String groupId, String artifactId, String version) {
+    public boolean isContained(String groupId, String artifactId, String version) {
         try {
             if (authorization.isPresent()) {
                 String a = "Bearer " + authorization.get();
@@ -63,9 +71,15 @@ public class MavenCentralFacade {
         return false;
     }
 
-    public String upload(Path path) throws UploadFailedException {
+    public String upload(Gav gav, List<BundleRecord> records) throws UploadFailedException {
+        // should only have one entry, namely: ("", <BundleRecord>)
+        if (records.size() > 1) {
+            throw new RuntimeException(
+                    "Maven-Central uploads only require exactly one map-entry, namely: [key = \"bundle\"] and [value = <Bundle-Path>]");
+        }
+        final Path path = records.get(0).path();
         try {
-            Log.debug("\tUploading " + path + "...");
+            Log.info("\tUploading " + path + "...");
 
             if (authorization.isPresent()) {
                 String a = "Bearer " + authorization.get();
@@ -117,11 +131,12 @@ public class MavenCentralFacade {
             }
         } catch (Throwable ex) {
             // Since we moved over to the new api, the old repoId in the DB does not work, so here we can try another way
-            if (isInCentral(csi.groupId, csi.artifactId, csi.version)) {
+            if (isContained(csi.groupId, csi.artifactId, csi.version)) {
                 return ReleaseStatus.PUBLISHED;
             }
             throw new StatusCheckException(
                     "Status check for " + csi.toGavString() + " failed (releaseId " + releaseId + ")", ex);
         }
     }
+
 }

@@ -24,8 +24,7 @@ import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.api.Gav;
 import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.mvnpm.mavencentral.MavenCentralFacade;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.DistTags;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.ProjectInfo;
@@ -42,7 +41,7 @@ class ContinuousSyncServiceTest {
     SyncItemService syncItemService;
 
     @InjectMock
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @InjectMock
     MavenRepositoryService mavenRepositoryService;
@@ -51,7 +50,7 @@ class ContinuousSyncServiceTest {
     PackageListener packageListener;
 
     @InjectMock
-    MavenCentralFacade mavenCentralFacade;
+    MavenFacade mavenFacade;
 
     @BeforeEach
     @Transactional
@@ -106,7 +105,7 @@ class ContinuousSyncServiceTest {
         // Mock NPM to return a project modified 10 days ago (→ 12h interval)
         Instant tenDaysAgo = Instant.now().minus(Duration.ofDays(10));
         ProjectInfo info = new ProjectInfo(new DistTags("1.0.0", null), Set.of("1.0.0"), tenDaysAgo.toString());
-        Mockito.when(npmRegistryFacade.getProjectInfo("lit")).thenReturn(info);
+        Mockito.when(npmFacade.getProjectInfo("lit")).thenReturn(info);
 
         // MavenRepositoryService is mocked — getPath returns null by default (no-op)
 

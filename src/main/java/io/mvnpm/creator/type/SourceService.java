@@ -35,7 +35,7 @@ public class SourceService {
     public Path createSource(Path tgzFile) {
         Path sourceFile = Path.of(tgzFile.toString().replace(Constants.DOT_TGZ, Constants.DASH_SOURCES_DOT_JAR));
         createJar(tgzFile, sourceFile);
-        Log.debug("source created for " + tgzFile + "[ok]");
+        Log.info("source created for " + tgzFile + "[ok]");
         return sourceFile;
     }
 

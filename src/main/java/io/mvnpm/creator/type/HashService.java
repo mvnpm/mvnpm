@@ -21,7 +21,7 @@ public class HashService {
         List<Path> hashes = new ArrayList<>();
         hashes.add(FileUtil.createSha1(filePath));
         hashes.add(FileUtil.createMd5(filePath));
-        Log.debug("file hashes created (sha1 and md5) " + filePath + " [ok]");
+        Log.info("file hashes created (sha1 and md5) " + filePath + " [ok]");
         return hashes;
     }
 }

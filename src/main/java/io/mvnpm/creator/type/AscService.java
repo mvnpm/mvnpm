@@ -36,7 +36,7 @@ public class AscService {
         if (!hasSecretKeyRing()) {
             return null;
         }
-        Log.debug("file signed " + filePath + " [ok]");
+        Log.info("file signed " + filePath + " [ok]");
         return FileUtil.createAsc(getSecretKeyRing(), filePath);
     }
 

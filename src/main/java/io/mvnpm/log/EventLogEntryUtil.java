@@ -1,5 +1,13 @@
 package io.mvnpm.log;
 
+import static io.mvnpm.maven.api.Stage.CLOSED;
+import static io.mvnpm.maven.api.Stage.INIT;
+import static io.mvnpm.maven.api.Stage.RELEASED;
+import static io.mvnpm.maven.api.Stage.RELEASING;
+import static io.mvnpm.maven.api.Stage.UPLOADED;
+import static io.mvnpm.maven.api.Stage.UPLOADING;
+import static io.mvnpm.maven.api.Stage.ERROR;
+
 import io.mvnpm.maven.sync.SyncItem;
 
 public class EventLogEntryUtil {

@@ -11,10 +11,12 @@ import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.npm.model.SearchResults;
+import io.quarkus.arc.DefaultBean;
 import io.quarkus.cache.CacheResult;
 import io.smallrye.common.annotation.Blocking;
 
@@ -25,7 +27,8 @@ import io.smallrye.common.annotation.Blocking;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class NpmRegistryFacade {
+@DefaultBean
+public class NpmRegistryFacade implements NpmFacade {
 
     @RestClient
     NpmRegistryClient npmRegistryClient;

@@ -16,6 +16,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Response;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.maven.exceptions.MavenRequestError;
@@ -29,18 +31,20 @@ import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 
 @Singleton
-public class MavenCentralService {
+public final class MavenService {
 
-    public static final String MAVEN_CENTRAL_REPO_URL = "https://repo1.maven.org/maven2";
+    @ConfigProperty(name = "quarkus.maven-repository.url")
+    public static String MAVEN_REPO_URL;
 
     @Inject
     private Vertx vertx;
 
-    private final AtomicReference<WebClient> webClient = new AtomicReference<>();
     @Inject
     private PackageFileLocator packageFileLocator;
 
-    private WebClient webClient() {
+    private final AtomicReference<WebClient> webClient = new AtomicReference<>();
+
+    private final WebClient webClient() {
         return webClient.updateAndGet(wc -> wc == null ? WebClient.create(vertx) : wc);
     }
 
@@ -50,13 +54,14 @@ public class MavenCentralService {
             file = "%s/%s".formatted(version, file);
         }
         return URI.create(
-                (MAVEN_CENTRAL_REPO_URL + "/%s/%s/%s").formatted(name.mvnGroupIdPath(), name.mvnArtifactId, file));
+                (MAVEN_REPO_URL + "/%s/%s/%s").formatted(name.mvnGroupIdPath(),
+                        name.mvnArtifactId, file));
     }
 
-    public Path downloadFromMavenCentral(Name name, String version, FileType type) {
-        final HttpResponse<Buffer> response = getFromMavenCentral(name, version,
-                packageFileLocator.getLocalFileName(type, name, version, Optional.empty())).await()
-                .atMost(Duration.ofSeconds(15));
+    public Path download(Name name, String version, FileType type) {
+        final HttpResponse<Buffer> response = get(name, version,
+                packageFileLocator.getLocalFileName(type, name, version, Optional.empty())).await().atMost(
+                        Duration.ofSeconds(15));
         try {
             Path downloaded = Files.createTempFile(CENTRAL_TMP_PREFIX + name.toGavString(version),
                     type.toString().toLowerCase());
@@ -65,15 +70,13 @@ public class MavenCentralService {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-
     }
 
-    public Uni<HttpResponse<Buffer>> getFromMavenCentral(Name name, String version, FileType type) {
-        return getFromMavenCentral(name, version,
-                packageFileLocator.getLocalFileName(type, name, version, Optional.empty()));
+    public Uni<HttpResponse<Buffer>> get(Name name, String version, FileType type) {
+        return get(name, version, packageFileLocator.getLocalFileName(type, name, version, Optional.empty()));
     }
 
-    public Uni<HttpResponse<Buffer>> getFromMavenCentral(Name name, String version, String fileName) {
+    public Uni<HttpResponse<Buffer>> get(Name name, String version, String fileName) {
         final URI uri = getUri(name, version, fileName);
         return webClient().getAbs(uri.toString()).send().map(Unchecked.function(r -> {
             if (r.statusCode() == 404) {

@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncItem.java
 package io.mvnpm.maven.sync;
+========
+package io.mvnpm.maven.api;
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncItem.java
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -22,12 +26,21 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 @Table(indexes = { @Index(columnList = "stage, stageChangeTime DESC") })
 @NamedQueries({
         @NamedQuery(name = "SyncItem.findByStage", query = "from SyncItem where stage = ?1 order by stageChangeTime DESC LIMIT ?2"),
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncItem.java
         @NamedQuery(name = "SyncItem.findUploadedButNotReleased", query = "from SyncItem where stage IN ?1 order by stageChangeTime DESC") })
 public class SyncItem extends PanacheEntityBase {
+========
+        @NamedQuery(name = "SyncItem.findUploadedButNotReleased", query = "from SyncItem where stage IN ?1 order by stageChangeTime DESC")
+})
+public final class SyncItem extends PanacheEntityBase {
+
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncItem.java
     @Id
     public String groupId;
+
     @Id
     public String artifactId;
+
     @Id
     public String version;
 

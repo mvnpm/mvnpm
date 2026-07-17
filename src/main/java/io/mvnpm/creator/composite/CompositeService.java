@@ -22,7 +22,7 @@ import io.mvnpm.Constants;
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
-import io.mvnpm.maven.MavenCentralService;
+import io.mvnpm.maven.MavenService;
 import io.mvnpm.npm.model.Name;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
@@ -37,7 +37,7 @@ public class CompositeService {
     PackageFileLocator packageFileLocator;
 
     @Inject
-    MavenCentralService mavenCentralService;
+    MavenService mavenService;
 
     public Path getPath(Name fullName, String version, FileType type) {
         return compositeCreator.getOrBuildComposite(fullName.mvnArtifactId, version);
@@ -68,7 +68,7 @@ public class CompositeService {
     public Path getImportMap(Name name, String version) {
         final Path importMapPath = compositeCreator.getImportMapPath(name, version);
         if (!Files.exists(importMapPath)) {
-            final HttpResponse<Buffer> response = mavenCentralService.getFromMavenCentral(name, version, FileType.jar)
+            final HttpResponse<Buffer> response = mavenService.get(name, version, FileType.jar)
                     .await().atMost(Duration.ofSeconds(10));
             createImportMapFromJar(response.bodyAsBuffer().getBytes(), importMapPath);
         }

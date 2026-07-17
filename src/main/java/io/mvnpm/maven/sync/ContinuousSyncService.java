@@ -26,7 +26,6 @@ import io.mvnpm.creator.composite.CompositeCreator;
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
-import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.api.ReleaseStatus;
 import io.mvnpm.maven.api.Stage;
@@ -34,8 +33,8 @@ import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.maven.exceptions.StatusCheckException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
-import io.mvnpm.mavencentral.MavenCentralFacade;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.maven.MavenService;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -59,13 +58,13 @@ import io.smallrye.common.annotation.RunOnVirtualThread;
 public class ContinuousSyncService {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     SyncService syncService;
 
     @Inject
-    MavenCentralFacade mavenCentralFacade;
+    MavenFacade mavenFacade;
 
     @Inject
     ErrorHandlingService errorHandlingService;
@@ -89,7 +88,7 @@ public class ContinuousSyncService {
     PackageListener packageListener;
 
     @Inject
-    MavenCentralService mavenCentralService;
+    MavenService mavenService;
 
     @Inject
     io.vertx.mutiny.core.eventbus.EventBus bus;
@@ -120,7 +119,7 @@ public class ContinuousSyncService {
         try {
             List<SyncedPackage> batch = claimBatchToCheck(10);
             if (batch.isEmpty()) {
-                Log.debug("No packages due for update check");
+                Log.info("No packages due for update check");
                 return;
             }
             Log.infof("Checking %d packages for updates", batch.size());
@@ -160,14 +159,14 @@ public class ContinuousSyncService {
                 return LocalDateTime.now().plusDays(1);
             }
             Name name = NameParser.fromMavenGA(groupId, artifactId);
-            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
             if (info != null && info.lastModified() != null) {
                 Instant lastModified = Instant.parse(info.lastModified());
                 long ageDays = Duration.between(lastModified, Instant.now()).toDays();
                 return LocalDateTime.now().plus(nextCheckInterval(ageDays));
             }
         } catch (Exception e) {
-            Log.debugf("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
+            Log.infof("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
         }
         return LocalDateTime.now().plusDays(1);
     }
@@ -208,7 +207,7 @@ public class ContinuousSyncService {
                 final String gavString = name.toGavString(item.version);
                 try {
                     Log.infof("Checking versions for %s", gavString);
-                    final Path pom = mavenCentralService.downloadFromMavenCentral(name, item.version, FileType.pom);
+                    final Path pom = mavenService.download(name, item.version, FileType.pom);
                     mavenRepositoryService.checkDependencies(new DependencyVersionCheckRequest(pom, name, item.version))
                             .await().atMost(Duration.ofHours(1));
                 } catch (Exception e) {
@@ -264,7 +263,7 @@ public class ContinuousSyncService {
 
             }
         } else {
-            Log.debug("Nothing in the queue to sync");
+            Log.info("Nothing in the queue to sync");
         }
     }
 
@@ -281,12 +280,12 @@ public class ContinuousSyncService {
     @RunOnVirtualThread
     void nextToUploadStatusChange() {
         if (isCurrentlyUploading()) {
-            Log.debug("Sync upload in progress");
+            Log.info("Sync upload in progress");
             return;
         }
         SyncItem item = syncItemService.claimNextForUpload();
         if (item == null) {
-            Log.debug("Nothing in the queue to sync");
+            Log.info("Nothing in the queue to sync");
             return;
         }
         // Check if already in repository (avoid duplicate upload)
@@ -319,7 +318,7 @@ public class ContinuousSyncService {
                     SyncItem uploadedItem = itemToCheck.getValue();
                     String releaseId = itemToCheck.getKey();
                     try {
-                        ReleaseStatus releaseStatus = mavenCentralFacade.status(uploadedItem, releaseId);
+                        ReleaseStatus releaseStatus = mavenFacade.status(uploadedItem, releaseId);
                         switch (releaseStatus) {
                             case PENDING:
                             case VALIDATING:
@@ -377,13 +376,13 @@ public class ContinuousSyncService {
      * Check for version updates, and if a new version is out, do a sync
      */
     private void update(String groupId, String artifactId) {
-        Log.debug("====== mvnpm: Continuous Updater ======");
-        Log.debug("\tChecking " + groupId + ":" + artifactId);
+        Log.info("====== mvnpm: Continuous Updater ======");
+        Log.info("\tChecking " + groupId + ":" + artifactId);
         if (!isInternal(groupId, artifactId)) {
             // Get latest in NPM TODO: Later make this per patch release...
             try {
                 Name name = NameParser.fromMavenGA(groupId, artifactId);
-                ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+                ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
                 if (info != null) {
                     String latest = info.distTags().latest();
                     // Queue for sync without creating files — files are created at upload time
@@ -392,7 +391,7 @@ public class ContinuousSyncService {
                     if (queued) {
                         Log.infof("Continuous Updater: New package %s %s queued for sync", name.npmFullName, latest);
                     } else {
-                        Log.debugf("Continuous Updater: Package %s already synced or in progress", name.npmFullName);
+                        Log.infof("Continuous Updater: Package %s already synced or in progress", name.npmFullName);
                     }
                 }
             } catch (WebApplicationException wae) {

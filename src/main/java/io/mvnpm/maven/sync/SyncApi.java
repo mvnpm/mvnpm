@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncApi.java
 package io.mvnpm.maven.sync;
+========
+package io.mvnpm.maven.api;
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncApi.java
 
 import java.util.List;
 import java.util.Set;
@@ -40,14 +44,23 @@ public class SyncApi {
 
     @Inject
     SyncService syncService;
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncApi.java
 
     @Inject
     private SyncItemService syncItemService;
+========
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncApi.java
 
     @Inject
     private MavenRepositoryService mavenRepositoryService;
 
     private final Set<Session> sessions = new ConcurrentHashSet<>();
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncApi.java
+========
+
+    @Inject
+    private SyncItemService syncItemService;
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncApi.java
 
     @OnOpen
     public void onOpen(Session session) {
@@ -86,7 +99,11 @@ public class SyncApi {
     @GET
     @NoCache
     @Path("/info/{groupId}/{artifactId}")
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncApi.java
     public SyncItem getSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+========
+    public SyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncApi.java
             @DefaultValue("latest") @QueryParam("version") String version) {
         return syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, false);
     }
@@ -111,10 +128,18 @@ public class SyncApi {
         }
 
         mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncApi.java
         final SyncItem syncItem = syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, true);
         if (syncItem.isInError()) {
             SyncItem claimed = syncItemService
                     .claimForErrorRetry(new Gav(syncItem.groupId, syncItem.artifactId, syncItem.version));
+========
+        final SyncItem centralSyncItem = syncService.checkReleaseInDbAndRepo(groupId, artifactId, version,
+                true);
+        if (centralSyncItem.isInError()) {
+            SyncItem claimed = syncItemService.claimForErrorRetry(
+                    new Gav(centralSyncItem.groupId, centralSyncItem.artifactId, centralSyncItem.version));
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncApi.java
             if (claimed != null) {
                 return claimed;
             }
@@ -132,9 +157,16 @@ public class SyncApi {
         if (version.equalsIgnoreCase("latest")) {
             version = syncService.getLatestVersion(groupId, artifactId);
         }
+<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncApi.java
         final SyncItem syncItem = syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, false);
         syncItem.delete();
         return syncItem;
+========
+        final SyncItem centralSyncItem = syncService.checkReleaseInDbAndRepo(groupId, artifactId, version,
+                false);
+        centralSyncItem.delete();
+        return centralSyncItem;
+>>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncApi.java
     }
 
     @GET
