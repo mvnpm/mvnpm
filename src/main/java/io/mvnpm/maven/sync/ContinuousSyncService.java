@@ -10,12 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.WebApplicationException;
-
 import org.apache.commons.io.FileUtils;
 
 import io.mvnpm.creator.FileType;
@@ -47,6 +41,11 @@ import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.common.annotation.RunOnVirtualThread;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -92,6 +91,9 @@ public class ContinuousSyncService {
 
     @Inject
     io.vertx.mutiny.core.eventbus.EventBus bus;
+
+    @Inject
+    private Namespace namespace;
 
     @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
     @RunOnVirtualThread
@@ -155,7 +157,7 @@ public class ContinuousSyncService {
 
     private LocalDateTime computeNextCheck(String groupId, String artifactId) {
         try {
-            if (isInternal(groupId, artifactId)) {
+            if (namespace.isInternal(groupId, artifactId)) {
                 return LocalDateTime.now().plusDays(1);
             }
             Name name = NameParser.fromMavenGA(groupId, artifactId);
@@ -320,23 +322,23 @@ public class ContinuousSyncService {
                     try {
                         ReleaseStatus releaseStatus = mavenFacade.status(uploadedItem, releaseId);
                         switch (releaseStatus) {
-                            case PENDING:
-                            case VALIDATING:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.UPLOADED);
-                                break;
-                            case VALIDATED:
-                            case PUBLISHING:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.CLOSED);
-                                break;
-                            case PUBLISHED:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.RELEASED);
-                                break;
-                            case FAILED:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.ERROR);
-                                // TODO: Here we should get more details, and do a drop maybe ?
-                                break;
-                            default:
-                                throw new AssertionError();
+                        case PENDING:
+                        case VALIDATING:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.UPLOADED);
+                            break;
+                        case VALIDATED:
+                        case PUBLISHING:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.CLOSED);
+                            break;
+                        case PUBLISHED:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.RELEASED);
+                            break;
+                        case FAILED:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.ERROR);
+                            // TODO: Here we should get more details, and do a drop maybe ?
+                            break;
+                        default:
+                            throw new AssertionError();
                         }
                     } catch (StatusCheckException ex) {
                         // Nothing really. We will catch this with the next one
@@ -378,7 +380,7 @@ public class ContinuousSyncService {
     private void update(String groupId, String artifactId) {
         Log.debug("====== mvnpm: Continuous Updater ======");
         Log.debug("\tChecking " + groupId + ":" + artifactId);
-        if (!isInternal(groupId, artifactId)) {
+        if (!namespace.isInternal(groupId, artifactId)) {
             // Get latest in NPM TODO: Later make this per patch release...
             try {
                 Name name = NameParser.fromMavenGA(groupId, artifactId);
@@ -501,13 +503,4 @@ public class ContinuousSyncService {
             syncItem = syncItemService.changeStage(syncItem, Stage.UPLOADED);
         }
     }
-
-    private boolean isInternal(String groupId, String artifactId) {
-        return groupId.equals("org.mvnpm.at.mvnpm") || (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit"))
-                || // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm.locked.at.vaadin") && artifactId.equals("router")) ||
-                // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm") && artifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
-    }
-
 }
