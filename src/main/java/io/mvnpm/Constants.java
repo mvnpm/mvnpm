@@ -54,6 +54,8 @@ public interface Constants {
     String JAR = "jar";
     String DOT_JAR = DOT + JAR;
 
+    String SOURCES = "sources";
+    String JAVADOC = "javadoc";
     String DASH_SOURCES_DOT_JAR = "-sources.jar";
     String DASH_JAVADOC_DOT_JAR = "-javadoc.jar";
     String DASH_IMPORTMAP_DOT_JSON = "-importmap.json";
