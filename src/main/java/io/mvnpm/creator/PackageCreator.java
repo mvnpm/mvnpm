@@ -90,10 +90,10 @@ public class PackageCreator {
         boolean cache = Files.exists(cacheFilePath);
 
         if (cache) {
-            Log.info("Serving from cache [" + cacheFilePath + "]");
+            Log.debug("Serving from cache [" + cacheFilePath + "]");
             return cacheFilePath;
         } else {
-            Log.info("Creating [" + cacheFilePath + "]");
+            Log.debug("Creating [" + cacheFilePath + "]");
             return create(type, name, version, cacheFilePath);
         }
     }

@@ -12,7 +12,6 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import io.mvnpm.Constants;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
+import io.mvnpm.mavencentral.CentralBundleCreator;
 import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -33,7 +33,7 @@ import io.quarkus.test.junit.TestProfile;
 public class CentralBundleCreatorTest {
 
     @Inject
-    BundleCreator bundleCreator;
+    CentralBundleCreator bundleCreator;
 
     @Inject
     MavenFacade mavenFacade;
@@ -45,167 +45,81 @@ public class CentralBundleCreatorTest {
         String version = "3.2.1";
 
         List<BundleRecord> bundleRecords = bundleCreator.bundle(groupId, artifactId, version);
-        if (bundleRecords.size() == 1) {
-            final Path bundlePath = bundleRecords.get(0).path();
-            assertNotNull(bundlePath, "Bundle path should not be null");
-            assertTrue(Files.exists(bundlePath), "Bundle file should exist");
-            assertTrue(Files.isRegularFile(bundlePath), "Bundle should be a regular file");
+        assertTrue(bundleRecords.size() == 1, "Bundle records should be of size 1 for maven-central uploads");
+        final Path bundlePath = bundleRecords.get(0).path();
+        assertNotNull(bundlePath, "Bundle path should not be null");
+        assertTrue(Files.exists(bundlePath), "Bundle file should exist");
+        assertTrue(Files.isRegularFile(bundlePath), "Bundle should be a regular file");
 
-            Path tempDir = Path.of(System.getProperty("java.io.tmpdir"));
-            Path target = tempDir.resolve(bundlePath.getFileName());
+        Path tempDir = Path.of(System.getProperty("java.io.tmpdir"));
+        Path target = tempDir.resolve(bundlePath.getFileName());
 
-            Files.move(bundlePath, target, StandardCopyOption.REPLACE_EXISTING);
+        Files.move(bundlePath, target, StandardCopyOption.REPLACE_EXISTING);
 
-            // Verify bundle contents
-            Set<String> entries = new HashSet<>();
-            try (InputStream is = Files.newInputStream(target);
-                    ZipInputStream zis = new ZipInputStream(is)) {
+        // Verify bundle contents
+        Set<String> entries = new HashSet<>();
+        try (InputStream is = Files.newInputStream(target); ZipInputStream zis = new ZipInputStream(is)) {
 
-                ZipEntry entry;
-                while ((entry = zis.getNextEntry()) != null) {
-                    entries.add(entry.getName());
-                    assertNotNull(entry.getName(), "Zip entry name should not be null");
-                }
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                entries.add(entry.getName());
+                assertNotNull(entry.getName(), "Zip entry name should not be null");
             }
-
-            assertFalse(entries.isEmpty(), "Bundle should contain entries");
-
-            String basePath = groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-            String baseFile = artifactId + Constants.HYPHEN + version;
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM), "Missing pom.xml");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_ASC),
-                    "Missing pom.asc");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_SHA1),
-                    "Missing pom.sha1");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_MD5),
-                    "Missing pom.md5");
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR), "Missing jar");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_ASC),
-                    "Missing jar.asc");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_SHA1),
-                    "Missing jar.sha1");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_MD5),
-                    "Missing jar.md5");
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR),
-                    "Missing sources jar");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_ASC),
-                    "Missing sources jar.asc");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_SHA1),
-                    "Missing sources jar.sha1");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_MD5),
-                    "Missing sources jar.md5");
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR),
-                    "Missing javadoc jar");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_ASC),
-                    "Missing javadoc jar.asc");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_SHA1),
-                    "Missing javadoc jar.sha1");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_MD5),
-                    "Missing javadoc jar.md5");
-
-            // Now upload
-
-            String uploadId = null;
-            try {
-                uploadId = mavenFacade.upload(new Gav(groupId, artifactId, version), bundleRecords);
-            } catch (UploadFailedException e) {
-                e.printStackTrace();
-                fail("Upload failed: " + e.getMessage());
-            }
-
-            // Then
-            assertNotNull(uploadId, "UploadId should not be null");
-            assertFalse(uploadId.isEmpty(), "UploadId should not be empty");
-
-            System.out.println("Upload successful! Upload ID: " + uploadId);
-
-        } else if (bundleRecords.size() > 1) {
-            for (final BundleRecord record : bundleRecords) {
-                final Path bundlePath = record.path();
-                assertNotNull(bundlePath, "Bundle path should not be null");
-                assertTrue(Files.exists(bundlePath), "Bundle file should exist");
-                assertTrue(Files.isRegularFile(bundlePath), "Bundle should be a regular file");
-
-                Path tempDir = Path.of(System.getProperty("java.io.tmpdir"));
-                Path target = tempDir.resolve(bundlePath.getFileName());
-
-                Files.move(bundlePath, target, StandardCopyOption.REPLACE_EXISTING);
-            }
-
-            // Verify bundle contents
-            Set<String> entries = bundleRecords.stream().map(record -> record.path().toString())
-                    .collect(Collectors.toSet());
-            assertFalse(entries.isEmpty(), "Bundle should contain entries");
-
-            String basePath = groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-            String baseFile = artifactId + Constants.HYPHEN + version;
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM), "Missing pom.xml");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_ASC),
-                    "Missing pom.asc");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_SHA1),
-                    "Missing pom.sha1");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_MD5),
-                    "Missing pom.md5");
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR), "Missing jar");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_ASC),
-                    "Missing jar.asc");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_SHA1),
-                    "Missing jar.sha1");
-            assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_MD5),
-                    "Missing jar.md5");
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR),
-                    "Missing sources jar");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_ASC),
-                    "Missing sources jar.asc");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_SHA1),
-                    "Missing sources jar.sha1");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_MD5),
-                    "Missing sources jar.md5");
-
-            assertTrue(entries.contains(basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR),
-                    "Missing javadoc jar");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_ASC),
-                    "Missing javadoc jar.asc");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_SHA1),
-                    "Missing javadoc jar.sha1");
-            assertTrue(entries.contains(
-                    basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_MD5),
-                    "Missing javadoc jar.md5");
-
-            // Now upload
-
-            String uploadId = null;
-            try {
-                uploadId = mavenFacade.upload(new Gav(groupId, artifactId, version), bundleRecords);
-            } catch (UploadFailedException e) {
-                e.printStackTrace();
-                fail("Upload failed: " + e.getMessage());
-            }
-
-            // Then
-            assertNotNull(uploadId, "UploadId should not be null");
-            assertFalse(uploadId.isEmpty(), "UploadId should not be empty");
-
-            System.out.println("Upload successful! Upload ID: " + uploadId);
         }
 
+        assertFalse(entries.isEmpty(), "Bundle should contain entries");
+
+        String basePath = groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+        String baseFile = artifactId + Constants.HYPHEN + version;
+
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM), "Missing pom.xml");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_ASC),
+                "Missing pom.asc");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_SHA1),
+                "Missing pom.sha1");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_POM + Constants.DOT_MD5),
+                "Missing pom.md5");
+
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR), "Missing jar");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_ASC),
+                "Missing jar.asc");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_SHA1),
+                "Missing jar.sha1");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DOT_JAR + Constants.DOT_MD5),
+                "Missing jar.md5");
+
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR),
+                "Missing sources jar");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_ASC),
+                "Missing sources jar.asc");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_SHA1),
+                "Missing sources jar.sha1");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_MD5),
+                "Missing sources jar.md5");
+
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR),
+                "Missing javadoc jar");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_ASC),
+                "Missing javadoc jar.asc");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_SHA1),
+                "Missing javadoc jar.sha1");
+        assertTrue(entries.contains(basePath + baseFile + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_MD5),
+                "Missing javadoc jar.md5");
+
+        // Now upload
+
+        String uploadId = null;
+        try {
+            uploadId = mavenFacade.upload(new Gav(groupId, artifactId, version), bundleRecords);
+        } catch (UploadFailedException e) {
+            e.printStackTrace();
+            fail("Upload failed: " + e.getMessage());
+        }
+
+        // Then
+        assertNotNull(uploadId, "UploadId should not be null");
+        assertFalse(uploadId.isEmpty(), "UploadId should not be empty");
+
+        System.out.println("Upload successful! Upload ID: " + uploadId);
     }
 }

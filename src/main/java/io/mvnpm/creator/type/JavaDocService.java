@@ -21,7 +21,7 @@ public class JavaDocService {
 
     public Path createJavadoc(Path jarFile) {
         Path javadocFile = jarService.createEmptyJar(jarFile, Constants.DASH_JAVADOC_DOT_JAR);
-        Log.info("javadoc created " + jarFile + "[ok]");
+        Log.debug("javadoc created " + jarFile + "[ok]");
         return javadocFile;
     }
 }

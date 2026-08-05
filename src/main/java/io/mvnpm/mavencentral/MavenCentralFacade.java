@@ -74,12 +74,12 @@ public class MavenCentralFacade implements MavenFacade {
     public String upload(Gav gav, List<BundleRecord> records) throws UploadFailedException {
         // should only have one entry, namely: ("", <BundleRecord>)
         if (records.size() > 1) {
-            throw new RuntimeException(
+            throw new UploadFailedException(
                     "Maven-Central uploads only require exactly one map-entry, namely: [key = \"bundle\"] and [value = <Bundle-Path>]");
         }
         final Path path = records.get(0).path();
         try {
-            Log.info("\tUploading " + path + "...");
+            Log.debug("\tUploading " + path + "...");
 
             if (authorization.isPresent()) {
                 String a = "Bearer " + authorization.get();

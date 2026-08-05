@@ -119,7 +119,7 @@ public class ContinuousSyncService {
         try {
             List<SyncedPackage> batch = claimBatchToCheck(10);
             if (batch.isEmpty()) {
-                Log.info("No packages due for update check");
+                Log.debug("No packages due for update check");
                 return;
             }
             Log.infof("Checking %d packages for updates", batch.size());
@@ -166,7 +166,7 @@ public class ContinuousSyncService {
                 return LocalDateTime.now().plus(nextCheckInterval(ageDays));
             }
         } catch (Exception e) {
-            Log.infof("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
+            Log.debugf("Could not determine publish date for %s:%s, using default interval", groupId, artifactId);
         }
         return LocalDateTime.now().plusDays(1);
     }
@@ -263,7 +263,7 @@ public class ContinuousSyncService {
 
             }
         } else {
-            Log.info("Nothing in the queue to sync");
+            Log.debug("Nothing in the queue to sync");
         }
     }
 
@@ -280,12 +280,12 @@ public class ContinuousSyncService {
     @RunOnVirtualThread
     void nextToUploadStatusChange() {
         if (isCurrentlyUploading()) {
-            Log.info("Sync upload in progress");
+            Log.debug("Sync upload in progress");
             return;
         }
         SyncItem item = syncItemService.claimNextForUpload();
         if (item == null) {
-            Log.info("Nothing in the queue to sync");
+            Log.debug("Nothing in the queue to sync");
             return;
         }
         // Check if already in repository (avoid duplicate upload)
@@ -376,8 +376,8 @@ public class ContinuousSyncService {
      * Check for version updates, and if a new version is out, do a sync
      */
     private void update(String groupId, String artifactId) {
-        Log.info("====== mvnpm: Continuous Updater ======");
-        Log.info("\tChecking " + groupId + ":" + artifactId);
+        Log.debug("====== mvnpm: Continuous Updater ======");
+        Log.debug("\tChecking " + groupId + ":" + artifactId);
         if (!isInternal(groupId, artifactId)) {
             // Get latest in NPM TODO: Later make this per patch release...
             try {

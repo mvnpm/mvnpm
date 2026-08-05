@@ -137,7 +137,7 @@ public class MavenRepositoryService {
                     if (queued) {
                         Log.infof("Dependency '%s' queued for sync", depGavString);
                     } else {
-                        Log.infof("Dependency '%s' already synced or in progress", depGavString);
+                        Log.warnf("Dependency '%s' already synced or in progress", depGavString);
                     }
                 }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool()).collect().asList().invoke(() -> {
                     Log.infof("Package %s dependencies have been checked.", req.name().toGavString(req.version()));
