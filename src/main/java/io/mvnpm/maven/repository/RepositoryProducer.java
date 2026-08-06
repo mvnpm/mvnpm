@@ -1,5 +1,9 @@
 package io.mvnpm.maven.repository;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.Dependent;
+import jakarta.enterprise.inject.Produces;
+
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
@@ -7,17 +11,14 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.mvnpm.Constants;
 import io.quarkus.arc.properties.IfBuildProperty;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.Dependent;
-import jakarta.enterprise.inject.Produces;
 
 /**
  * The producer bean for creating both the release- and snapshot-{@link RemoteRepository}.
- * 
+ *
  * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
 @ApplicationScoped
-@IfBuildProperty(name = "mvnpm.custom-repository.enabled", stringValue = "true")
+@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
 public final class RepositoryProducer implements Constants {
 
     private static final String REPOSITORY = "repository";
@@ -40,6 +41,7 @@ public final class RepositoryProducer implements Constants {
     @Produces
     @Dependent
     @Snapshots
+    @IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
     public final RemoteRepository snapshotsRepository() {
         return createRepository("snapshots", repositoryPath(snapshotsRepository));
     }
@@ -47,6 +49,7 @@ public final class RepositoryProducer implements Constants {
     @Produces
     @Dependent
     @Releases
+    @IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
     public final RemoteRepository releasesRepository() {
         return createRepository("releases", repositoryPath(releaseRepository));
     }

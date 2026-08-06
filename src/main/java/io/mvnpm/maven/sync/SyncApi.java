@@ -3,14 +3,6 @@ package io.mvnpm.maven.sync;
 import java.util.List;
 import java.util.Set;
 
-import org.jboss.resteasy.reactive.NoCache;
-
-import io.mvnpm.creator.FileType;
-import io.mvnpm.maven.MavenRepositoryService;
-import io.quarkus.logging.Log;
-import io.quarkus.vertx.ConsumeEvent;
-import io.smallrye.common.annotation.Blocking;
-import io.vertx.core.impl.ConcurrentHashSet;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;

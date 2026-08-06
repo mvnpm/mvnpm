@@ -29,6 +29,7 @@ import org.apache.maven.model.Scm;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.mvnpm.Constants;
 import io.mvnpm.creator.utils.FileUtil;
@@ -54,6 +55,12 @@ public class PomService {
 
     @Inject
     HashService hashService;
+
+    @ConfigProperty(name = "mvnpm.git-link")
+    String gitLink;
+
+    @ConfigProperty(name = "mvnpm.website")
+    String website;
 
     private final MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
@@ -175,7 +182,7 @@ public class PomService {
         } else if (model.getScm() != null && model.getScm().getDeveloperConnection() != null) {
             return model.getScm().getDeveloperConnection();
         } else {
-            return "http://mvnpm.org"; // If all else fail, set our URL, as an empty one fails the oss sonatype validation
+            return website; // If all else fail, set URL
         }
     }
 
@@ -240,9 +247,9 @@ public class PomService {
             return s;
         } else {
             Scm s = new Scm();
-            s.setUrl("https://github.com/mvnpm/mvnpm.git");
-            s.setConnection("https://github.com/mvnpm/mvnpm.git");
-            s.setDeveloperConnection("https://github.com/mvnpm/mvnpm.git");
+            s.setUrl(gitLink);
+            s.setConnection(gitLink);
+            s.setDeveloperConnection(gitLink);
             return s;
         }
 

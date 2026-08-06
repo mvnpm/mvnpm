@@ -2,7 +2,7 @@ package io.mvnpm.mcp;
 
 import jakarta.inject.Inject;
 
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.npm.model.SearchResult;
@@ -15,16 +15,16 @@ import io.quarkiverse.mcp.server.ToolResponse;
 public class PackageTools {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     McpNameResolver nameResolver;
 
-    @Tool(description = "Search for NPM packages available as Maven dependencies via mvnpm. Returns package names, descriptions, versions, and Maven coordinates.")
+    @Tool(description = "Search for NPM packages available as Maven dependencies. Returns package names, descriptions, versions, and Maven coordinates.")
     ToolResponse search_packages(
             @ToolArg(description = "Search query (e.g. 'lit', 'web components', 'react')") String query,
             @ToolArg(description = "Page number (1-based, 50 results per page)", defaultValue = "1") int page) {
-        SearchResults results = npmRegistryFacade.search(query, page);
+        SearchResults results = npmFacade.search(query, page);
         StringBuilder sb = new StringBuilder();
         sb.append("Found ").append(results.total()).append(" results (page ").append(page).append("):\n\n");
         int i = (page - 1) * 50 + 1;
@@ -49,7 +49,7 @@ public class PackageTools {
             @ToolArg(description = "Version (defaults to 'latest')", defaultValue = "latest") String version) {
         Name resolved = nameResolver.resolve(name);
         String ver = nameResolver.resolveVersion(resolved, version);
-        io.mvnpm.npm.model.Package pkg = npmRegistryFacade.getPackage(resolved.npmFullName, ver);
+        io.mvnpm.npm.model.Package pkg = npmFacade.getPackage(resolved.npmFullName, ver);
         StringBuilder sb = new StringBuilder();
         sb.append("Package: ").append(pkg.name().npmFullName).append("\n");
         sb.append("Version: ").append(pkg.version()).append("\n");
@@ -93,7 +93,7 @@ public class PackageTools {
     @Tool(description = "List all available versions for an NPM package, including dist-tags (latest, next). Accepts NPM name or Maven coordinates.")
     ToolResponse list_versions(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
         Name resolved = nameResolver.resolve(name);
-        ProjectInfo info = npmRegistryFacade.getProjectInfo(resolved.npmFullName);
+        ProjectInfo info = npmFacade.getProjectInfo(resolved.npmFullName);
         StringBuilder sb = new StringBuilder();
         sb.append("Package: ").append(resolved.npmFullName).append("\n");
         sb.append("Maven: ").append(resolved.mvnGroupId).append(":").append(resolved.mvnArtifactId).append("\n\n");
@@ -112,7 +112,7 @@ public class PackageTools {
     @Tool(description = "Get Maven coordinates and dependency snippet for an NPM package. Accepts NPM name (e.g. '@hotwired/stimulus') or Maven coordinates.")
     ToolResponse get_maven_coordinates(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
         Name resolved = nameResolver.resolve(name);
-        ProjectInfo info = npmRegistryFacade.getProjectInfo(resolved.npmFullName);
+        ProjectInfo info = npmFacade.getProjectInfo(resolved.npmFullName);
         String latest = info.distTags() != null ? info.distTags().latest() : "LATEST";
         StringBuilder sb = new StringBuilder();
         sb.append("NPM: ").append(resolved.npmFullName).append("\n");

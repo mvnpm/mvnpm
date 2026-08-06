@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncCleanup.java
 package io.mvnpm.maven.sync;
-========
-package io.mvnpm.maven.api;
->>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncCleanup.java
 
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
@@ -44,11 +40,10 @@ public class SyncCleanup {
     PackageFileLocator packageFileLocator;
 
     @Inject
-<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncCleanup.java
     SyncItemService syncItemService;
-========
-    SyncItemService centralSyncItemService;
->>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncCleanup.java
+
+    @Inject
+    Namespace namespace;
 
     void onStart(@Observes io.quarkus.runtime.StartupEvent ev) {
         Uni.createFrom().voidItem().onItem().delayIt().by(Duration.ofMinutes(5))
@@ -60,12 +55,7 @@ public class SyncCleanup {
     public void artifactReleased(SyncItem syncItem) {
         if (syncItem.stage.equals(Stage.RELEASED)) {
             Log.infof("Deleting cache directory for: %s", syncItem);
-<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncCleanup.java
             Path dir = packageFileLocator.getLocalDirectory(syncItem.groupId, syncItem.artifactId, syncItem.version);
-========
-            Path dir = packageFileLocator.getLocalDirectory(syncItem.groupId, syncItem.artifactId,
-                    syncItem.version);
->>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncCleanup.java
             FileUtils.deleteQuietly(dir.toFile());
         }
     }
@@ -128,17 +118,13 @@ public class SyncCleanup {
 
         String version = relativePath.getFileName().toString();
         String artifactId = relativePath.getParent().getFileName().toString();
-        StringBuilder groupId = new StringBuilder("org.mvnpm");
+        StringBuilder groupId = new StringBuilder(namespace.toGroupId());
         for (int i = 0; i < nameCount - 2; i++) {
             groupId.append('.').append(relativePath.getName(i));
         }
 
         String gav = groupId + ":" + artifactId + ":" + version;
-<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncCleanup.java
         SyncItem item = syncItemService.find(groupId.toString(), artifactId, version);
-========
-        SyncItem item = centralSyncItemService.find(groupId.toString(), artifactId, version);
->>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncCleanup.java
         if (item == null) {
             Log.warnf("No sync item found for %s, skipping", gav);
             return false;

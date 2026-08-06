@@ -2,10 +2,6 @@ package io.mvnpm.mavencentral;
 
 import java.time.temporal.ChronoUnit;
 
-import org.eclipse.microprofile.faulttolerance.Timeout;
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-import io.mvnpm.maven.api.MavenClient;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -16,6 +12,11 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import org.eclipse.microprofile.faulttolerance.Timeout;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+
+import io.mvnpm.maven.api.MavenClient;
 
 /**
  * The main client on https://central.sonatype.com

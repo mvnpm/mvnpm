@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import jakarta.ws.rs.container.ContainerRequestContext;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.resteasy.reactive.RestResponse;
 import org.jboss.resteasy.reactive.server.ServerRequestFilter;
 
@@ -16,6 +17,9 @@ import io.vertx.core.http.HttpMethod;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 public class KnownNotFoundFilter {
+
+    @ConfigProperty(name = "mvnpm.namespace")
+    static String namespace;
 
     @ServerRequestFilter
     public Optional<RestResponse<Void>> getFilter(ContainerRequestContext ctx) {
@@ -43,6 +47,6 @@ public class KnownNotFoundFilter {
         return false;
     }
 
-    private static final List<String> KNOWN_PATHS = List.of("/maven2/org/mvnpm/importmap/");
+    private static final List<String> KNOWN_PATHS = List.of("/maven2/" + namespace + "/importmap/");
     private static final String MAVEN_2 = "/maven2";
 }

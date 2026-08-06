@@ -9,13 +9,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import org.eclipse.aether.repository.RemoteRepository;
-
 import jakarta.inject.Qualifier;
+
+import org.eclipse.aether.repository.RemoteRepository;
 
 /**
  * The annotation for the {@link RemoteRepository} containing snapshot-artifacts.
- * 
+ *
  * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
 @Qualifier

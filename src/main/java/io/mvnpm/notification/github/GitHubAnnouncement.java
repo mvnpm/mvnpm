@@ -11,6 +11,7 @@ import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.notification.Notification;
 import io.mvnpm.notification.NotificationFormatter;
+import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 import io.vertx.core.json.JsonObject;
@@ -21,6 +22,7 @@ import io.vertx.core.json.JsonObject;
  * @author Phillip Kruger (phillip.kruger@gmail.com
  */
 @ApplicationScoped
+@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "false")
 public class GitHubAnnouncement {
 
     @RestClient
@@ -40,7 +42,7 @@ public class GitHubAnnouncement {
     public void artifactReleased(SyncItem syncItem) {
         if (syncItem.stage.equals(Stage.RELEASED) && token.isPresent()) {
 
-            Notification notification = NotificationFormatter.getNotificationAsMarkDown(syncItem);
+            Notification notification = new NotificationFormatter(syncItem).getNotificationAsMarkDown();
 
             String a = "Bearer " + token.get();
             String query = ANNOUNCE_MUTATION.formatted(repositoryId, categoryId, notification.body(),
