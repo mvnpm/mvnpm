@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.exceptions;
+package io.mvnpm.maven.exceptions;
 
 public class UploadFailedException extends Exception {
 
@@ -17,7 +17,8 @@ public class UploadFailedException extends Exception {
         super(cause);
     }
 
-    public UploadFailedException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public UploadFailedException(String message, Throwable cause, boolean enableSuppression,
+            boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 

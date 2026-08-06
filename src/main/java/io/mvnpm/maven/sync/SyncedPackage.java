@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,9 +13,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
 @IdClass(SyncedPackageId.class)
-@Table(indexes = {
-        @Index(columnList = "nextCheck")
-})
+@Table(indexes = { @Index(columnList = "nextCheck") })
 public class SyncedPackage extends PanacheEntityBase {
     @Id
     public String groupId;
@@ -39,17 +37,12 @@ public class SyncedPackage extends PanacheEntityBase {
      */
     public static int claimBatch(int batchSize, LocalDateTime claimUntil) {
         LocalDateTime now = LocalDateTime.now();
-        return getEntityManager().createNativeQuery(
-                "UPDATE syncedpackage SET nextcheck = :claimUntil "
-                        + "WHERE (groupid, artifactid) IN ("
-                        + "  SELECT groupid, artifactid FROM syncedpackage "
-                        + "  WHERE nextcheck IS NULL OR nextcheck < :now "
-                        + "  ORDER BY nextcheck ASC NULLS FIRST "
-                        + "  LIMIT :limit"
-                        + ") AND (nextcheck IS NULL OR nextcheck < :now)")
-                .setParameter("claimUntil", claimUntil)
-                .setParameter("now", now)
-                .setParameter("limit", batchSize)
+        return getEntityManager()
+                .createNativeQuery("UPDATE syncedpackage SET nextcheck = :claimUntil "
+                        + "WHERE (groupid, artifactid) IN (" + "  SELECT groupid, artifactid FROM syncedpackage "
+                        + "  WHERE nextcheck IS NULL OR nextcheck < :now " + "  ORDER BY nextcheck ASC NULLS FIRST "
+                        + "  LIMIT :limit" + ") AND (nextcheck IS NULL OR nextcheck < :now)")
+                .setParameter("claimUntil", claimUntil).setParameter("now", now).setParameter("limit", batchSize)
                 .executeUpdate();
     }
 
@@ -58,12 +51,10 @@ public class SyncedPackage extends PanacheEntityBase {
     }
 
     public static void createIfAbsent(String groupId, String artifactId) {
-        getEntityManager().createNativeQuery(
-                "INSERT INTO syncedpackage (groupid, artifactid) VALUES (:groupId, :artifactId)"
+        getEntityManager()
+                .createNativeQuery("INSERT INTO syncedpackage (groupid, artifactid) VALUES (:groupId, :artifactId)"
                         + " ON CONFLICT (groupid, artifactid) DO NOTHING")
-                .setParameter("groupId", groupId)
-                .setParameter("artifactId", artifactId)
-                .executeUpdate();
+                .setParameter("groupId", groupId).setParameter("artifactId", artifactId).executeUpdate();
     }
 
     public String toGaString() {

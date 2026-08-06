@@ -5,6 +5,23 @@ import static io.mvnpm.Constants.HEADER_CACHE_CONTROL_IMMUTABLE;
 
 import java.util.Optional;
 
+import org.jboss.resteasy.reactive.NoCache;
+
+import io.mvnpm.Constants;
+import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.PackageCreator;
+import io.mvnpm.creator.type.MetadataService;
+import io.mvnpm.creator.utils.FileUtil;
+import io.mvnpm.creator.utils.UrlPathParser;
+import io.mvnpm.maven.api.NameVersion;
+import io.mvnpm.maven.sync.SyncItem;
+import io.mvnpm.maven.sync.SyncItemService;
+import io.mvnpm.maven.sync.SyncService;
+import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.exceptions.GetPackageException;
+import io.mvnpm.npm.model.Name;
+import io.mvnpm.version.InvalidVersionException;
+import io.quarkus.logging.Log;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
@@ -14,22 +31,6 @@ import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.StreamingOutput;
-
-import org.jboss.resteasy.reactive.NoCache;
-
-import io.mvnpm.Constants;
-import io.mvnpm.creator.FileType;
-import io.mvnpm.creator.PackageCreator;
-import io.mvnpm.creator.type.MetadataService;
-import io.mvnpm.creator.utils.FileUtil;
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.CentralSyncItemService;
-import io.mvnpm.mavencentral.sync.CentralSyncService;
-import io.mvnpm.npm.NpmRegistryFacade;
-import io.mvnpm.npm.exceptions.GetPackageException;
-import io.mvnpm.npm.model.Name;
-import io.mvnpm.version.InvalidVersionException;
-import io.quarkus.logging.Log;
 
 /**
  * The maven repository endpoint
@@ -49,10 +50,10 @@ public class MavenRepositoryApi {
     MetadataService metadataService;
 
     @Inject
-    CentralSyncService centralSyncService;
+    SyncService syncService;
 
     @Inject
-    CentralSyncItemService centralSyncItemService;
+    SyncItemService syncItemService;
 
     @Inject
     PackageCreator packageCreator;
@@ -99,13 +100,10 @@ public class MavenRepositoryApi {
     public Response getPackageJson(@PathParam("gavt") String gavt) {
         NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt + "/package.json");
         if (nameVersion.name().isInternal()) {
-            return Response.ok()
-                    .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
-                    .build(); // TODO: Can we return this in some format ?
+            return Response.ok().header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE).build(); // TODO: Can we return this in some format ?
         } else {
             return Response.ok(npmRegistryFacade.getPackage(nameVersion.name().npmFullName, nameVersion.version()))
-                    .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
-                    .build();
+                    .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE).build();
         }
     }
 
@@ -115,8 +113,7 @@ public class MavenRepositoryApi {
     public Response getImportMap(@PathParam("gavt") String gavt) {
         NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt + "/importmap.json");
         return Response.ok(mavenRepositoryService.getImportMap(nameVersion))
-                .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
-                .build();
+                .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE).build();
     }
 
     @GET
@@ -287,8 +284,8 @@ public class MavenRepositoryApi {
     Response resolveAndStream(NameVersion nv, FileType type, Optional<String> dotSigned, PathResolver resolver) {
         Name fullName = nv.name();
         String version = nv.version();
-        CentralSyncItem item = centralSyncService
-                .checkReleaseInDbAndCentral(fullName.mvnGroupId, fullName.mvnArtifactId, version, type.triggerSync());
+        SyncItem item = syncService.checkReleaseInDbAndRepo(fullName.mvnGroupId, fullName.mvnArtifactId, version,
+                type.triggerSync());
         if (item.alreadyReleased()) {
             throw packageCreator.newPackageAlreadySyncedException(fullName, version, type, dotSigned);
         }
@@ -298,21 +295,19 @@ public class MavenRepositoryApi {
             if (e.isPermanentlyUnavailable()) {
                 Log.warnf("Package permanently unavailable on NPM, cleaning up sync item: %s:%s:%s — %s",
                         fullName.mvnGroupId, fullName.mvnArtifactId, version, e.getMessage());
-                centralSyncItemService.delete(item);
+                syncItemService.delete(item);
             }
             throw e;
         } catch (InvalidVersionException e) {
-            Log.warnf("Invalid version, cleaning up sync item: %s:%s:%s — %s",
-                    fullName.mvnGroupId, fullName.mvnArtifactId, version, e.getVersion());
-            centralSyncItemService.delete(item);
+            Log.warnf("Invalid version, cleaning up sync item: %s:%s:%s — %s", fullName.mvnGroupId,
+                    fullName.mvnArtifactId, version, e.getVersion());
+            syncItemService.delete(item);
             throw e;
         }
     }
 
     private Response streamPath(java.nio.file.Path path) {
         StreamingOutput streamingOutput = FileUtil.toStreamingOutput(path);
-        return Response.ok(streamingOutput)
-                .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE)
-                .build();
+        return Response.ok(streamingOutput).header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE).build();
     }
 }

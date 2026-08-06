@@ -1,18 +1,20 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import java.nio.file.Path;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-
+import io.mvnpm.maven.api.BundleCreator;
+import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.Stage;
+import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
+import io.mvnpm.maven.exceptions.UploadFailedException;
 import io.mvnpm.mavencentral.MavenCentralFacade;
-import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
-import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.ProjectInfo;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 /**
  * This sync a package with maven central
@@ -20,7 +22,8 @@ import io.mvnpm.npm.model.ProjectInfo;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class CentralSyncService {
+public class SyncService {
+
     @Inject
     BundleCreator bundleCreator;
 
@@ -31,28 +34,27 @@ public class CentralSyncService {
     NpmRegistryFacade npmRegistryFacade;
 
     @Inject
-    CentralSyncItemService centralSyncItemService;
+    SyncItemService syncItemService;
 
     @Transactional
-    public CentralSyncItem checkReleaseInDbAndCentral(String groupId, String artifactId, String version, boolean startSync) {
+    public SyncItem checkReleaseInDbAndRepo(String groupId, String artifactId, String version, boolean startSync) {
         if ("latest".equalsIgnoreCase(version)) {
             version = getLatestVersion(groupId, artifactId);
         }
 
-        CentralSyncItem centralSyncItem = centralSyncItemService.findOrCreate(groupId, artifactId, version,
+        SyncItem syncItem = syncItemService.findOrCreate(groupId, artifactId, version,
                 startSync ? Stage.PACKAGING : Stage.NONE);
 
         // Check the status
-        if (!centralSyncItem.alreadyReleased()) {
-            checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem);
+        if (!syncItem.alreadyReleased()) {
+            checkStatusAndUpdateStageIfNeeded(syncItem);
             // Reload to get the updated state (changeStage may have set RELEASED)
-            centralSyncItem = CentralSyncItem.findById(
-                    new Gav(centralSyncItem.groupId, centralSyncItem.artifactId, centralSyncItem.version));
+            syncItem = SyncItem.findById(new Gav(syncItem.groupId, syncItem.artifactId, syncItem.version));
         }
-        if (startSync && centralSyncItem.stage == Stage.NONE) {
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.PACKAGING);
+        if (startSync && syncItem.stage == Stage.NONE) {
+            syncItem = syncItemService.changeStage(syncItem, Stage.PACKAGING);
         }
-        return centralSyncItem;
+        return syncItem;
     }
 
     @Transactional
@@ -64,13 +66,13 @@ public class CentralSyncService {
      * Sync a certain version of a artifact with central
      */
     private boolean initializeSync(String groupId, String artifactId, String version) {
-        CentralSyncItem itemToSync = centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
+        SyncItem itemToSync = syncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
         if (itemToSync.stage == Stage.INIT) {
             // Already started
             return false;
         }
         if (canProcessSync(itemToSync)) { // Check if this is already synced or in progress
-            itemToSync = centralSyncItemService.changeStage(itemToSync, Stage.INIT);
+            itemToSync = syncItemService.changeStage(itemToSync, Stage.INIT);
             return true;
         }
         return false;
@@ -79,32 +81,29 @@ public class CentralSyncService {
     /**
      * Check if this is not already in Central, or in the process of being synced
      */
-    public boolean canProcessSync(CentralSyncItem csi) {
-        if (csi.alreadyReleased()) {
-            csi = centralSyncItemService.changeStage(csi, Stage.RELEASED);
+    public boolean canProcessSync(SyncItem syncItem) {
+        if (syncItem.alreadyReleased()) {
+            syncItem = syncItemService.changeStage(syncItem, Stage.RELEASED);
             return false;
         }
-        if (csi.isInProgress() || csi.isInError()) {
-            checkCentralStatusAndUpdateStageIfNeeded(csi); // Clear the queue
+        if (syncItem.isInProgress() || syncItem.isInError()) {
+            checkStatusAndUpdateStageIfNeeded(syncItem); // Clear the queue
             return false;
         }
         // Next try remote (might have been synced before we stored)
-        return !checkCentralStatusAndUpdateStageIfNeeded(csi);
+        return !checkStatusAndUpdateStageIfNeeded(syncItem);
     }
 
-    public boolean checkCentralStatusAndUpdateStageIfNeeded(CentralSyncItem csi) {
-        boolean isPublishedInCentral = mavenCentralFacade.isInCentral(csi.groupId,
-                csi.artifactId, csi.version);
-        if (isPublishedInCentral) {
-            csi = centralSyncItemService.changeStage(csi, Stage.RELEASED);
+    public boolean checkStatusAndUpdateStageIfNeeded(SyncItem syncItem) {
+        boolean isPublished = mavenCentralFacade.isInCentral(syncItem.groupId, syncItem.artifactId, syncItem.version);
+        if (isPublished) {
+            syncItem = syncItemService.changeStage(syncItem, Stage.RELEASED);
         }
-        return isPublishedInCentral;
+        return isPublished;
     }
 
-    public String sync(CentralSyncItem centralSyncItem) throws UploadFailedException, MissingFilesForBundleException {
-        return sync(centralSyncItem.groupId,
-                centralSyncItem.artifactId,
-                centralSyncItem.version);
+    public String sync(SyncItem syncItem) throws UploadFailedException, MissingFilesForBundleException {
+        return sync(syncItem.groupId, syncItem.artifactId, syncItem.version);
     }
 
     public String sync(String groupId, String artifactId, String version)

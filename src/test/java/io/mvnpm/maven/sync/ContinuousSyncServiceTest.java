@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -21,6 +21,8 @@ import org.mockito.Mockito;
 
 import io.mvnpm.creator.PackageListener;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.mavencentral.MavenCentralFacade;
 import io.mvnpm.npm.NpmRegistryFacade;
@@ -37,7 +39,7 @@ class ContinuousSyncServiceTest {
     ContinuousSyncService continuousSyncService;
 
     @Inject
-    CentralSyncItemService centralSyncItemService;
+    SyncItemService syncItemService;
 
     @InjectMock
     NpmRegistryFacade npmRegistryFacade;
@@ -55,7 +57,7 @@ class ContinuousSyncServiceTest {
     @Transactional
     void cleanup() {
         SyncedPackage.deleteAll();
-        CentralSyncItem.deleteAll();
+        SyncItem.deleteAll();
     }
 
     @Test
@@ -103,8 +105,7 @@ class ContinuousSyncServiceTest {
 
         // Mock NPM to return a project modified 10 days ago (→ 12h interval)
         Instant tenDaysAgo = Instant.now().minus(Duration.ofDays(10));
-        ProjectInfo info = new ProjectInfo(new DistTags("1.0.0", null),
-                Set.of("1.0.0"), tenDaysAgo.toString());
+        ProjectInfo info = new ProjectInfo(new DistTags("1.0.0", null), Set.of("1.0.0"), tenDaysAgo.toString());
         Mockito.when(npmRegistryFacade.getProjectInfo("lit")).thenReturn(info);
 
         // MavenRepositoryService is mocked — getPath returns null by default (no-op)
@@ -137,8 +138,8 @@ class ContinuousSyncServiceTest {
     @Test
     void changeStageToReleasedCreatesSyncedPackage() {
         // Create a CentralSyncItem and move it to RELEASED
-        CentralSyncItem item = createItem("org.mvnpm", "released-pkg", "2.0.0");
-        centralSyncItemService.changeStage(item, Stage.RELEASED);
+        SyncItem item = createItem("org.mvnpm", "released-pkg", "2.0.0");
+        syncItemService.changeStage(item, Stage.RELEASED);
 
         // SyncedPackage should be auto-created
         SyncedPackage pkg = findPackage("org.mvnpm", "released-pkg");
@@ -150,7 +151,7 @@ class ContinuousSyncServiceTest {
         createInitItem("org.mvnpm", "first", "1.0.0");
         createInitItem("org.mvnpm", "second", "1.0.0");
 
-        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+        SyncItem claimed = syncItemService.claimNextForUpload();
 
         assertNotNull(claimed);
         assertEquals("first", claimed.artifactId);
@@ -160,7 +161,7 @@ class ContinuousSyncServiceTest {
 
     @Test
     void claimNextForUpload_returnsNullWhenEmpty() {
-        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+        SyncItem claimed = syncItemService.claimNextForUpload();
         assertNull(claimed);
     }
 
@@ -169,7 +170,7 @@ class ContinuousSyncServiceTest {
         createItem("org.mvnpm", "uploading-pkg", "1.0.0");
         changeStage("org.mvnpm", "uploading-pkg", "1.0.0", Stage.UPLOADING);
 
-        CentralSyncItem claimed = centralSyncItemService.claimNextForUpload();
+        SyncItem claimed = syncItemService.claimNextForUpload();
         assertNull(claimed);
     }
 
@@ -178,8 +179,8 @@ class ContinuousSyncServiceTest {
         createInitItem("org.mvnpm", "a", "1.0.0");
         createInitItem("org.mvnpm", "b", "1.0.0");
 
-        CentralSyncItem first = centralSyncItemService.claimNextForUpload();
-        CentralSyncItem second = centralSyncItemService.claimNextForUpload();
+        SyncItem first = syncItemService.claimNextForUpload();
+        SyncItem second = syncItemService.claimNextForUpload();
 
         assertNotNull(first);
         assertNotNull(second);
@@ -187,13 +188,13 @@ class ContinuousSyncServiceTest {
     }
 
     @Transactional
-    CentralSyncItem createInitItem(String groupId, String artifactId, String version) {
-        return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
+    SyncItem createInitItem(String groupId, String artifactId, String version) {
+        return syncItemService.findOrCreate(groupId, artifactId, version, Stage.INIT);
     }
 
     @Transactional
     void changeStage(String groupId, String artifactId, String version, Stage stage) {
-        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+        SyncItem item = SyncItem.findById(new Gav(groupId, artifactId, version));
         if (item != null) {
             item.stage = stage;
             item.persist();
@@ -202,18 +203,18 @@ class ContinuousSyncServiceTest {
 
     @Test
     void changeStage_sameStageIsNoOp() {
-        CentralSyncItem item = createItem("org.mvnpm", "noop-pkg", "1.0.0");
+        SyncItem item = createItem("org.mvnpm", "noop-pkg", "1.0.0");
         changeStage("org.mvnpm", "noop-pkg", "1.0.0", Stage.CLOSED);
 
         // First change to RELEASED should succeed
         item = reloadItem("org.mvnpm", "noop-pkg", "1.0.0");
-        CentralSyncItem result1 = centralSyncItemService.changeStage(item, Stage.RELEASED);
+        SyncItem result1 = syncItemService.changeStage(item, Stage.RELEASED);
         assertNotNull(result1);
         assertEquals(Stage.RELEASED, result1.stage);
 
         // Second change to RELEASED should be a no-op (same stage)
         item = reloadItem("org.mvnpm", "noop-pkg", "1.0.0");
-        CentralSyncItem result2 = centralSyncItemService.changeStage(item, Stage.RELEASED);
+        SyncItem result2 = syncItemService.changeStage(item, Stage.RELEASED);
         assertNotNull(result2);
         assertEquals(Stage.RELEASED, result2.stage);
     }
@@ -223,7 +224,7 @@ class ContinuousSyncServiceTest {
         createInitItem("org.mvnpm", "err-pkg", "1.0.0");
         changeStage("org.mvnpm", "err-pkg", "1.0.0", Stage.ERROR);
 
-        CentralSyncItem claimed = centralSyncItemService.claimNextForErrorRetry();
+        SyncItem claimed = syncItemService.claimNextForErrorRetry();
 
         assertNotNull(claimed);
         assertEquals("err-pkg", claimed.artifactId);
@@ -234,7 +235,7 @@ class ContinuousSyncServiceTest {
     void claimNextForErrorRetry_returnsNullWhenNoErrors() {
         createInitItem("org.mvnpm", "ok-pkg", "1.0.0");
 
-        CentralSyncItem claimed = centralSyncItemService.claimNextForErrorRetry();
+        SyncItem claimed = syncItemService.claimNextForErrorRetry();
         assertNull(claimed);
     }
 
@@ -245,8 +246,8 @@ class ContinuousSyncServiceTest {
         createInitItem("org.mvnpm", "err-b", "1.0.0");
         changeStage("org.mvnpm", "err-b", "1.0.0", Stage.ERROR);
 
-        CentralSyncItem first = centralSyncItemService.claimNextForErrorRetry();
-        CentralSyncItem second = centralSyncItemService.claimNextForErrorRetry();
+        SyncItem first = syncItemService.claimNextForErrorRetry();
+        SyncItem second = syncItemService.claimNextForErrorRetry();
 
         assertNotNull(first);
         assertNotNull(second);
@@ -258,7 +259,7 @@ class ContinuousSyncServiceTest {
         createInitItem("org.mvnpm", "pack-pkg", "1.0.0");
         changeStage("org.mvnpm", "pack-pkg", "1.0.0", Stage.PACKAGING);
 
-        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+        SyncItem claimed = syncItemService.claimNextForPackagingCheck();
 
         assertNotNull(claimed);
         assertEquals("pack-pkg", claimed.artifactId);
@@ -267,7 +268,7 @@ class ContinuousSyncServiceTest {
 
     @Test
     void claimNextForPackagingCheck_returnsNullWhenEmpty() {
-        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+        SyncItem claimed = syncItemService.claimNextForPackagingCheck();
         assertNull(claimed);
     }
 
@@ -275,7 +276,7 @@ class ContinuousSyncServiceTest {
     void claimNextForPackagingCheck_skipsNonPackagingItems() {
         createInitItem("org.mvnpm", "init-only", "1.0.0");
 
-        CentralSyncItem claimed = centralSyncItemService.claimNextForPackagingCheck();
+        SyncItem claimed = syncItemService.claimNextForPackagingCheck();
         assertNull(claimed);
     }
 
@@ -285,8 +286,7 @@ class ContinuousSyncServiceTest {
         changeStage("org.mvnpm", "err-specific", "1.0.0", Stage.ERROR);
         setAttemptCounters("org.mvnpm", "err-specific", "1.0.0", 3, 2);
 
-        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
-                new Gav("org.mvnpm", "err-specific", "1.0.0"));
+        SyncItem claimed = syncItemService.claimForErrorRetry(new Gav("org.mvnpm", "err-specific", "1.0.0"));
 
         assertNotNull(claimed);
         assertEquals("err-specific", claimed.artifactId);
@@ -299,16 +299,14 @@ class ContinuousSyncServiceTest {
     void claimForErrorRetry_returnsNullForNonErrorItem() {
         createInitItem("org.mvnpm", "not-error", "1.0.0");
 
-        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
-                new Gav("org.mvnpm", "not-error", "1.0.0"));
+        SyncItem claimed = syncItemService.claimForErrorRetry(new Gav("org.mvnpm", "not-error", "1.0.0"));
 
         assertNull(claimed);
     }
 
     @Test
     void claimForErrorRetry_returnsNullForNonExistentItem() {
-        CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
-                new Gav("org.mvnpm", "ghost", "1.0.0"));
+        SyncItem claimed = syncItemService.claimForErrorRetry(new Gav("org.mvnpm", "ghost", "1.0.0"));
 
         assertNull(claimed);
     }
@@ -316,7 +314,7 @@ class ContinuousSyncServiceTest {
     @Test
     void processUpload_ensuresFilesExistBeforeSync() {
         // Create an UPLOADING item (as if just claimed)
-        CentralSyncItem item = createInitItem("org.mvnpm", "ensure-files-pkg", "1.0.0");
+        SyncItem item = createInitItem("org.mvnpm", "ensure-files-pkg", "1.0.0");
         changeStage("org.mvnpm", "ensure-files-pkg", "1.0.0", Stage.UPLOADING);
         item = reloadItem("org.mvnpm", "ensure-files-pkg", "1.0.0");
 
@@ -324,8 +322,7 @@ class ContinuousSyncServiceTest {
         continuousSyncService.processNextAction(item);
 
         // Verify that getPath was called to ensure files exist
-        Mockito.verify(mavenRepositoryService).getPath(Mockito.any(Name.class), Mockito.eq("1.0.0"),
-                Mockito.any());
+        Mockito.verify(mavenRepositoryService).getPath(Mockito.any(Name.class), Mockito.eq("1.0.0"), Mockito.any());
         // Verify that createBundleFiles was called for remaining bundle files
         Mockito.verify(packageListener).createBundleFiles(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
@@ -335,7 +332,7 @@ class ContinuousSyncServiceTest {
         // Create an UPLOADING item
         createInitItem("org.mvnpm", "synced-pkg", "2.0.0");
         changeStage("org.mvnpm", "synced-pkg", "2.0.0", Stage.UPLOADING);
-        CentralSyncItem item = reloadItem("org.mvnpm", "synced-pkg", "2.0.0");
+        SyncItem item = reloadItem("org.mvnpm", "synced-pkg", "2.0.0");
 
         // Make getPath throw PackageAlreadySyncedException (package already on Central)
         Mockito.when(mavenRepositoryService.getPath(Mockito.any(Name.class), Mockito.eq("2.0.0"), Mockito.any()))
@@ -345,7 +342,7 @@ class ContinuousSyncServiceTest {
         continuousSyncService.processNextAction(item);
 
         // Item should be marked as RELEASED
-        CentralSyncItem updated = reloadItem("org.mvnpm", "synced-pkg", "2.0.0");
+        SyncItem updated = reloadItem("org.mvnpm", "synced-pkg", "2.0.0");
         assertEquals(Stage.RELEASED, updated.stage);
     }
 
@@ -359,7 +356,7 @@ class ContinuousSyncServiceTest {
 
         continuousSyncService.periodicResetUpload();
 
-        CentralSyncItem updated = reloadItem("org.mvnpm", "stuck-pkg", "1.0.0");
+        SyncItem updated = reloadItem("org.mvnpm", "stuck-pkg", "1.0.0");
         assertEquals(Stage.ERROR, updated.stage, "Item with 10+ attempts should move to ERROR");
     }
 
@@ -372,7 +369,7 @@ class ContinuousSyncServiceTest {
 
         continuousSyncService.periodicResetUpload();
 
-        CentralSyncItem updated = reloadItem("org.mvnpm", "retry-pkg", "1.0.0");
+        SyncItem updated = reloadItem("org.mvnpm", "retry-pkg", "1.0.0");
         assertEquals(Stage.INIT, updated.stage, "Item under attempt limit should reset to INIT");
     }
 
@@ -381,7 +378,7 @@ class ContinuousSyncServiceTest {
         // Create an UPLOADING item
         createInitItem("org.mvnpm.at.mvnpm", "composite-pkg", "1.0.0");
         changeStage("org.mvnpm.at.mvnpm", "composite-pkg", "1.0.0", Stage.UPLOADING);
-        CentralSyncItem item = reloadItem("org.mvnpm.at.mvnpm", "composite-pkg", "1.0.0");
+        SyncItem item = reloadItem("org.mvnpm.at.mvnpm", "composite-pkg", "1.0.0");
 
         // getPath returns a non-existent path (simulating composite with no tgz)
         Mockito.when(mavenRepositoryService.getPath(Mockito.any(Name.class), Mockito.eq("1.0.0"), Mockito.any()))
@@ -390,12 +387,13 @@ class ContinuousSyncServiceTest {
         continuousSyncService.processNextAction(item);
 
         // Verify createBundleFiles was called with null tgz (third argument)
-        Mockito.verify(packageListener).createBundleFiles(Mockito.any(), Mockito.any(), Mockito.isNull(), Mockito.any());
+        Mockito.verify(packageListener).createBundleFiles(Mockito.any(), Mockito.any(), Mockito.isNull(),
+                Mockito.any());
     }
 
     @Transactional
     void setStageChangeTime(String groupId, String artifactId, String version, LocalDateTime time) {
-        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+        SyncItem item = SyncItem.findById(new Gav(groupId, artifactId, version));
         if (item != null) {
             item.stageChangeTime = time;
             item.persist();
@@ -403,9 +401,9 @@ class ContinuousSyncServiceTest {
     }
 
     @Transactional
-    void setAttemptCounters(String groupId, String artifactId, String version,
-            int uploadAttempts, int promotionAttempts) {
-        CentralSyncItem item = CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+    void setAttemptCounters(String groupId, String artifactId, String version, int uploadAttempts,
+            int promotionAttempts) {
+        SyncItem item = SyncItem.findById(new Gav(groupId, artifactId, version));
         if (item != null) {
             item.uploadAttempts = uploadAttempts;
             item.promotionAttempts = promotionAttempts;
@@ -414,13 +412,13 @@ class ContinuousSyncServiceTest {
     }
 
     @Transactional
-    CentralSyncItem reloadItem(String groupId, String artifactId, String version) {
-        return CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+    SyncItem reloadItem(String groupId, String artifactId, String version) {
+        return SyncItem.findById(new Gav(groupId, artifactId, version));
     }
 
     @Transactional
-    CentralSyncItem createItem(String groupId, String artifactId, String version) {
-        return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.UPLOADED);
+    SyncItem createItem(String groupId, String artifactId, String version) {
+        return syncItemService.findOrCreate(groupId, artifactId, version, Stage.UPLOADED);
     }
 
     @Transactional

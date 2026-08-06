@@ -2,8 +2,8 @@ package io.mvnpm.notification.log;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.Stage;
+import io.mvnpm.maven.api.Stage;
+import io.mvnpm.maven.sync.SyncItem;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
@@ -16,11 +16,11 @@ import io.smallrye.common.annotation.Blocking;
 @ApplicationScoped
 public class LogNotification {
 
-    @ConsumeEvent("central-sync-item-stage-change")
+    @ConsumeEvent("sync-item-stage-change")
     @Blocking
-    public void artifactReleased(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.stage.equals(Stage.RELEASED)) {
-            String message = centralSyncItem.toGavString() + " released.";
+    public void artifactReleased(SyncItem syncItem) {
+        if (syncItem.stage.equals(Stage.RELEASED)) {
+            String message = syncItem.toGavString() + " released.";
             Log.info(message);
         }
     }

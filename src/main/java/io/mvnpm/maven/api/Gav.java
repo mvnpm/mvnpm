@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.api;
 
 import java.io.Serializable;
 import java.util.Objects;

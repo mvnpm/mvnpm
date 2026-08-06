@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.websocket.DecodeException;
@@ -15,30 +15,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @author Phillip Kruger(phillip.kruger@gmail.com)
  */
-public class CentralSyncItemEncoder implements Encoder.Text<CentralSyncItem>, Decoder.Text<CentralSyncItem> {
+public class SyncItemEncoder implements Encoder.Text<SyncItem>, Decoder.Text<SyncItem> {
 
     private final ObjectMapper objectMapper;
 
-    public CentralSyncItemEncoder() {
+    public SyncItemEncoder() {
         this.objectMapper = CDI.current().select(ObjectMapper.class).get();
     }
 
     @Override
-    public String encode(CentralSyncItem object) throws EncodeException {
+    public String encode(SyncItem object) throws EncodeException {
         try {
             return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(object);
         } catch (JsonProcessingException ex) {
-            throw new EncodeException(object, "Error encoding CentralSyncItem to Json", ex);
+            throw new EncodeException(object, "Error encoding SyncItem to Json", ex);
         }
     }
 
     @Override
-    public CentralSyncItem decode(String s) throws DecodeException {
+    public SyncItem decode(String s) throws DecodeException {
         try {
-            CentralSyncItem o = objectMapper.readValue(s, CentralSyncItem.class);
+            SyncItem o = objectMapper.readValue(s, SyncItem.class);
             return o;
         } catch (JsonProcessingException ex) {
-            throw new DecodeException(s, "Error decoding json to CentralSyncItem", ex);
+            throw new DecodeException(s, "Error decoding json to SyncItem", ex);
         }
     }
 

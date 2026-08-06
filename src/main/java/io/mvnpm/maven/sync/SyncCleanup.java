@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 
 import io.mvnpm.creator.PackageFileLocator;
+import io.mvnpm.maven.api.Stage;
 import io.quarkus.logging.Log;
 import io.quarkus.scheduler.Scheduled;
 import io.quarkus.vertx.ConsumeEvent;
@@ -33,28 +34,25 @@ import io.smallrye.mutiny.infrastructure.Infrastructure;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
-public class CentralSyncCleanup {
+public class SyncCleanup {
 
     @Inject
     PackageFileLocator packageFileLocator;
 
     @Inject
-    CentralSyncItemService centralSyncItemService;
+    SyncItemService syncItemService;
 
     void onStart(@Observes io.quarkus.runtime.StartupEvent ev) {
-        Uni.createFrom().voidItem()
-                .onItem().delayIt().by(Duration.ofMinutes(5))
-                .emitOn(Infrastructure.getDefaultWorkerPool())
-                .subscribe().with(v -> weeklyCleanup());
+        Uni.createFrom().voidItem().onItem().delayIt().by(Duration.ofMinutes(5))
+                .emitOn(Infrastructure.getDefaultWorkerPool()).subscribe().with(v -> weeklyCleanup());
     }
 
-    @ConsumeEvent("central-sync-item-stage-change")
+    @ConsumeEvent("sync-item-stage-change")
     @Blocking
-    public void artifactReleased(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.stage.equals(Stage.RELEASED)) {
-            Log.infof("Deleting cache directory for: %s", centralSyncItem);
-            Path dir = packageFileLocator.getLocalDirectory(centralSyncItem.groupId, centralSyncItem.artifactId,
-                    centralSyncItem.version);
+    public void artifactReleased(SyncItem syncItem) {
+        if (syncItem.stage.equals(Stage.RELEASED)) {
+            Log.infof("Deleting cache directory for: %s", syncItem);
+            Path dir = packageFileLocator.getLocalDirectory(syncItem.groupId, syncItem.artifactId, syncItem.version);
             FileUtils.deleteQuietly(dir.toFile());
         }
     }
@@ -123,7 +121,7 @@ public class CentralSyncCleanup {
         }
 
         String gav = groupId + ":" + artifactId + ":" + version;
-        CentralSyncItem item = centralSyncItemService.find(groupId.toString(), artifactId, version);
+        SyncItem item = syncItemService.find(groupId.toString(), artifactId, version);
         if (item == null) {
             Log.warnf("No sync item found for %s, skipping", gav);
             return false;

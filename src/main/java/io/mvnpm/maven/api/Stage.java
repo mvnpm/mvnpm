@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.api;
 
 public enum Stage {
     NONE, // 0: Only package info has been requested

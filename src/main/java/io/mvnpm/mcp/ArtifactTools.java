@@ -7,19 +7,18 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.zip.GZIPInputStream;
 
-import jakarta.inject.Inject;
-
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import io.mvnpm.creator.FileType;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.maven.NameVersion;
+import io.mvnpm.maven.api.NameVersion;
 import io.mvnpm.npm.model.Name;
 import io.quarkiverse.mcp.server.TextContent;
 import io.quarkiverse.mcp.server.Tool;
 import io.quarkiverse.mcp.server.ToolArg;
 import io.quarkiverse.mcp.server.ToolResponse;
+import jakarta.inject.Inject;
 
 public class ArtifactTools {
 
@@ -30,8 +29,7 @@ public class ArtifactTools {
     McpNameResolver nameResolver;
 
     @Tool(description = "Get the generated Maven POM XML for an NPM package version. Accepts NPM name or Maven coordinates.")
-    ToolResponse get_pom(
-            @ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
+    ToolResponse get_pom(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
             @ToolArg(description = "Version (defaults to 'latest')", defaultValue = "latest") String version) {
         try {
             Name resolved = nameResolver.resolve(name);
@@ -45,8 +43,7 @@ public class ArtifactTools {
     }
 
     @Tool(description = "Get the ES module import map JSON for an NPM package version. Accepts NPM name or Maven coordinates.")
-    ToolResponse get_import_map(
-            @ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
+    ToolResponse get_import_map(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
             @ToolArg(description = "Version (defaults to 'latest')", defaultValue = "latest") String version) {
         Name resolved = nameResolver.resolve(name);
         String ver = nameResolver.resolveVersion(resolved, version);
@@ -55,8 +52,7 @@ public class ArtifactTools {
     }
 
     @Tool(description = "Browse the file listing inside a JAR, TGZ, sources, or javadoc archive for an NPM package. Accepts NPM name or Maven coordinates.")
-    ToolResponse browse_artifact_contents(
-            @ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
+    ToolResponse browse_artifact_contents(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
             @ToolArg(description = "Version (defaults to 'latest')", defaultValue = "latest") String version,
             @ToolArg(description = "Archive type: jar, tgz, source, javadoc", defaultValue = "jar") String type) {
         try {
@@ -75,9 +71,8 @@ public class ArtifactTools {
         }
     }
 
-    @Tool(description = "Download/create the JAR for an NPM package version. This triggers a sync to Maven Central if not already synced. Accepts NPM name or Maven coordinates.")
-    ToolResponse download_jar(
-            @ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
+    @Tool(description = "Download/create the JAR for an NPM package version. This triggers a sync to Maven repository if not already synced. Accepts NPM name or Maven coordinates.")
+    ToolResponse download_jar(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
             @ToolArg(description = "Version (defaults to 'latest')", defaultValue = "latest") String version) {
         try {
             Name resolved = nameResolver.resolve(name);
@@ -90,7 +85,7 @@ public class ArtifactTools {
             sb.append("Size: ").append(formatSize(size)).append("\n");
             sb.append("Maven: ").append(resolved.mvnGroupId).append(":").append(resolved.mvnArtifactId).append(":")
                     .append(ver).append("\n");
-            sb.append("Note: Sync to Maven Central triggered if not already synced.\n");
+            sb.append("Note: Sync to Maven repository triggered if not already synced.\n");
             return ToolResponse.success(new TextContent(sb.toString()));
         } catch (Exception e) {
             return ToolResponse.error("Failed to get JAR: " + e.getMessage());

@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -13,18 +13,17 @@ import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.Table;
 
+import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.Stage;
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
 @IdClass(Gav.class)
-@Table(indexes = {
-        @Index(columnList = "stage, stageChangeTime DESC")
-})
+@Table(indexes = { @Index(columnList = "stage, stageChangeTime DESC") })
 @NamedQueries({
-        @NamedQuery(name = "CentralSyncItem.findByStage", query = "from CentralSyncItem where stage = ?1 order by stageChangeTime DESC LIMIT ?2"),
-        @NamedQuery(name = "CentralSyncItem.findUploadedButNotReleased", query = "from CentralSyncItem where stage IN ?1 order by stageChangeTime DESC")
-})
-public class CentralSyncItem extends PanacheEntityBase {
+        @NamedQuery(name = "SyncItem.findByStage", query = "from SyncItem where stage = ?1 order by stageChangeTime DESC LIMIT ?2"),
+        @NamedQuery(name = "SyncItem.findUploadedButNotReleased", query = "from SyncItem where stage IN ?1 order by stageChangeTime DESC") })
+public class SyncItem extends PanacheEntityBase {
     @Id
     public String groupId;
     @Id
@@ -34,7 +33,7 @@ public class CentralSyncItem extends PanacheEntityBase {
 
     public LocalDateTime startTime;
     public LocalDateTime stageChangeTime;
-    public String stagingRepoId; // TODO: This should be renamed to releaseId
+    public String releaseId;
     public Stage stage;
 
     public boolean dependenciesChecked = false;
@@ -42,11 +41,11 @@ public class CentralSyncItem extends PanacheEntityBase {
     public int uploadAttempts = 0;
     public int promotionAttempts = 0;
 
-    public CentralSyncItem() {
+    public SyncItem() {
 
     }
 
-    protected CentralSyncItem(String groupId, String artifactId, String version) {
+    protected SyncItem(String groupId, String artifactId, String version) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;
@@ -55,45 +54,40 @@ public class CentralSyncItem extends PanacheEntityBase {
         this.stageChangeTime = LocalDateTime.now();
     }
 
-    public static CentralSyncItem findOrCreate(Gav gav, Stage stage) {
+    public static SyncItem findOrCreate(Gav gav, Stage stage) {
         insertIfNotPresent(gav, stage);
         return findById(gav);
     }
 
     private static int insertIfNotPresent(Gav gav, Stage stage) {
         return getEntityManager().createNativeQuery(
-                "INSERT INTO centralsyncitem (groupid, artifactid, version, starttime, stage, stagechangetime, dependencieschecked, creationattempts, uploadattempts, promotionattempts)"
+                "INSERT INTO syncitem (groupid, artifactid, version, starttime, stage, stagechangetime, dependencieschecked, creationattempts, uploadattempts, promotionattempts)"
                         + " VALUES (:groupId, :artifactId, :version, :now, :stage, :now, false, 0, 0, 0)"
                         + " ON CONFLICT (groupid, artifactid, version) DO NOTHING")
-                .setParameter("groupId", gav.getGroupId())
-                .setParameter("artifactId", gav.getArtifactId())
-                .setParameter("version", gav.getVersion())
-                .setParameter("now", LocalDateTime.now())
-                .setParameter("stage", stage.ordinal())
-                .executeUpdate();
+                .setParameter("groupId", gav.getGroupId()).setParameter("artifactId", gav.getArtifactId())
+                .setParameter("version", gav.getVersion()).setParameter("now", LocalDateTime.now())
+                .setParameter("stage", stage.ordinal()).executeUpdate();
     }
 
-    public static List<CentralSyncItem> findByStage(Stage stage, int limit) {
-        return find("#CentralSyncItem.findByStage", stage, limit).list();
+    public static List<SyncItem> findByStage(Stage stage, int limit) {
+        return find("#SyncItem.findByStage", stage, limit).list();
     }
 
     // TEMPORARY
-    public static List<CentralSyncItem> findPackageWithUncheckedDependencies(int limit) {
+    public static List<SyncItem> findPackageWithUncheckedDependencies(int limit) {
         return find(
-                "from CentralSyncItem where stage = ?1 and dependenciesChecked = false order by stageChangeTime DESC LIMIT ?2",
+                "from SyncItem where stage = ?1 and dependenciesChecked = false order by stageChangeTime DESC LIMIT ?2",
                 Stage.RELEASED, limit).list();
     }
 
-    public static List<CentralSyncItem> findUpdloadedButNotReleased() {
+    public static List<SyncItem> findUpdloadedButNotReleased() {
         List<Stage> uploadedButNotReleased = Arrays.asList(Stage.UPLOADED, Stage.CLOSED, Stage.RELEASING);
-        return find("#CentralSyncItem.findUploadedButNotReleased", uploadedButNotReleased).list();
+        return find("#SyncItem.findUploadedButNotReleased", uploadedButNotReleased).list();
     }
 
     public boolean isInProgress() {
-        return this.stage.equals(Stage.CLOSED)
-                || this.stage.equals(Stage.RELEASING)
-                || this.stage.equals(Stage.UPLOADED)
-                || this.stage.equals(Stage.UPLOADING);
+        return this.stage.equals(Stage.CLOSED) || this.stage.equals(Stage.RELEASING)
+                || this.stage.equals(Stage.UPLOADED) || this.stage.equals(Stage.UPLOADING);
     }
 
     public boolean isStarted() {
@@ -153,7 +147,7 @@ public class CentralSyncItem extends PanacheEntityBase {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final CentralSyncItem other = (CentralSyncItem) obj;
+        final SyncItem other = (SyncItem) obj;
         if (!Objects.equals(this.groupId, other.groupId)) {
             return false;
         }

@@ -1,10 +1,11 @@
-package io.mvnpm.maven;
+package io.mvnpm.creator.utils;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.mvnpm.Constants;
+import io.mvnpm.maven.api.NameVersion;
 import io.mvnpm.maven.exceptions.InvalidUrlPathException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;

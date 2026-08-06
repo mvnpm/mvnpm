@@ -1,7 +1,5 @@
 package io.mvnpm.mcp;
 
-import jakarta.inject.Inject;
-
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.ProjectInfo;
@@ -11,6 +9,7 @@ import io.quarkiverse.mcp.server.TextContent;
 import io.quarkiverse.mcp.server.Tool;
 import io.quarkiverse.mcp.server.ToolArg;
 import io.quarkiverse.mcp.server.ToolResponse;
+import jakarta.inject.Inject;
 
 public class PackageTools {
 
@@ -45,8 +44,7 @@ public class PackageTools {
     }
 
     @Tool(description = "Get detailed metadata for an NPM package. Accepts NPM name (e.g. 'lit', '@hotwired/stimulus') or Maven coordinates (e.g. 'org.mvnpm:lit').")
-    ToolResponse get_package_info(
-            @ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
+    ToolResponse get_package_info(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name,
             @ToolArg(description = "Version (defaults to 'latest')", defaultValue = "latest") String version) {
         Name resolved = nameResolver.resolve(name);
         String ver = nameResolver.resolveVersion(resolved, version);
@@ -80,20 +78,19 @@ public class PackageTools {
             sb.append("Type: ").append(pkg.type()).append("\n");
         if (pkg.dependencies() != null && !pkg.dependencies().isEmpty()) {
             sb.append("Dependencies:\n");
-            pkg.dependencies()
-                    .forEach((dep, ver2) -> sb.append("  ").append(dep.npmFullName).append(": ").append(ver2).append("\n"));
+            pkg.dependencies().forEach(
+                    (dep, ver2) -> sb.append("  ").append(dep.npmFullName).append(": ").append(ver2).append("\n"));
         }
         if (pkg.peerDependencies() != null && !pkg.peerDependencies().isEmpty()) {
             sb.append("Peer Dependencies:\n");
-            pkg.peerDependencies()
-                    .forEach((dep, ver2) -> sb.append("  ").append(dep.npmFullName).append(": ").append(ver2).append("\n"));
+            pkg.peerDependencies().forEach(
+                    (dep, ver2) -> sb.append("  ").append(dep.npmFullName).append(": ").append(ver2).append("\n"));
         }
         return ToolResponse.success(new TextContent(sb.toString()));
     }
 
     @Tool(description = "List all available versions for an NPM package, including dist-tags (latest, next). Accepts NPM name or Maven coordinates.")
-    ToolResponse list_versions(
-            @ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
+    ToolResponse list_versions(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
         Name resolved = nameResolver.resolve(name);
         ProjectInfo info = npmRegistryFacade.getProjectInfo(resolved.npmFullName);
         StringBuilder sb = new StringBuilder();
@@ -112,8 +109,7 @@ public class PackageTools {
     }
 
     @Tool(description = "Get Maven coordinates and dependency snippet for an NPM package. Accepts NPM name (e.g. '@hotwired/stimulus') or Maven coordinates.")
-    ToolResponse get_maven_coordinates(
-            @ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
+    ToolResponse get_maven_coordinates(@ToolArg(description = "Package name (NPM or Maven coordinates)") String name) {
         Name resolved = nameResolver.resolve(name);
         ProjectInfo info = npmRegistryFacade.getProjectInfo(resolved.npmFullName);
         String latest = info.distTags() != null ? info.distTags().latest() : "LATEST";

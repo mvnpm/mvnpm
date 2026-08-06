@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral;
+package io.mvnpm.maven.api;
 
 public enum ReleaseStatus {
     PENDING,

@@ -16,11 +16,6 @@ import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jakarta.inject.Inject;
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -28,11 +23,15 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.jboss.resteasy.reactive.ResponseHeader;
 
 import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.utils.UrlPathParser;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.maven.NameVersion;
-import io.mvnpm.maven.UrlPathParser;
+import io.mvnpm.maven.api.NameVersion;
 import io.quarkus.logging.Log;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 
 /**
  * Get the file listing for a jar file
@@ -83,8 +82,8 @@ public class JarContentsApi {
     }
 
     private JarLibrary loadJarLibrary(NameVersion nameVersion, FileType filetype) {
-        final java.nio.file.Path jar = mavenRepositoryService.getOrDownloadFromMavenCentral(
-                nameVersion.name(), nameVersion.version(), filetype);
+        final java.nio.file.Path jar = mavenRepositoryService.getOrDownloadFromMavenCentral(nameVersion.name(),
+                nameVersion.version(), filetype);
         try (InputStream inputStream = Files.newInputStream(jar)) {
             return loadJarLibrary(nameVersion, filetype, inputStream);
         } catch (IOException e) {

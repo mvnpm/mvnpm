@@ -7,8 +7,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.Stage;
+import io.mvnpm.maven.api.Stage;
+import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.notification.Notification;
 import io.mvnpm.notification.NotificationFormatter;
 import io.quarkus.vertx.ConsumeEvent;
@@ -35,15 +35,16 @@ public class GitHubAnnouncement {
     @ConfigProperty(name = "mvnpm.notification.github.categoryId", defaultValue = "DIC_kwDOIL8Nhc4CYqTN")
     String categoryId;
 
-    @ConsumeEvent("central-sync-item-stage-change")
+    @ConsumeEvent("sync-item-stage-change")
     @Blocking
-    public void artifactReleased(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.stage.equals(Stage.RELEASED) && token.isPresent()) {
+    public void artifactReleased(SyncItem syncItem) {
+        if (syncItem.stage.equals(Stage.RELEASED) && token.isPresent()) {
 
-            Notification notification = NotificationFormatter.getNotificationAsMarkDown(centralSyncItem);
+            Notification notification = NotificationFormatter.getNotificationAsMarkDown(syncItem);
 
             String a = "Bearer " + token.get();
-            String query = ANNOUNCE_MUTATION.formatted(repositoryId, categoryId, notification.body(), notification.title());
+            String query = ANNOUNCE_MUTATION.formatted(repositoryId, categoryId, notification.body(),
+                    notification.title());
             gitHubClient.graphql(a, new JsonObject().put("query", query));
         }
     }

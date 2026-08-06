@@ -10,8 +10,8 @@ import jakarta.ws.rs.Path;
 
 import org.jboss.resteasy.reactive.NoCache;
 
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.CentralSyncItemService;
+import io.mvnpm.maven.sync.SyncItem;
+import io.mvnpm.maven.sync.SyncItemService;
 import io.quarkus.logging.Log;
 
 /**
@@ -23,19 +23,19 @@ import io.quarkus.logging.Log;
 public class BackupApi {
 
     @Inject
-    CentralSyncItemService centralSyncItemService;
+    SyncItemService syncItemService;
 
     @GET
     @NoCache
-    public List<CentralSyncItem> exportAll() {
-        return CentralSyncItem.findAll().list();
+    public List<SyncItem> exportAll() {
+        return SyncItem.findAll().list();
     }
 
     @POST
     @Consumes(value = "application/json")
-    public void importAll(List<CentralSyncItem> data) {
+    public void importAll(List<SyncItem> data) {
         data.forEach((d) -> {
-            centralSyncItemService.merge(d);
+            syncItemService.merge(d);
             Log.info(d.toGavString() + " added.");
         });
 

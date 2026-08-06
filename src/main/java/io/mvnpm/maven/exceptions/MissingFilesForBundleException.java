@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.exceptions;
+package io.mvnpm.maven.exceptions;
 
 public class MissingFilesForBundleException extends Exception {
 

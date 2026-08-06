@@ -4,21 +4,20 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.ws.rs.core.Response;
-
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.mvnpm.error.ErrorHandlingService;
-import io.mvnpm.mavencentral.exceptions.StatusCheckException;
-import io.mvnpm.mavencentral.exceptions.UploadFailedException;
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.CentralSyncItemService;
+import io.mvnpm.maven.api.ReleaseStatus;
+import io.mvnpm.maven.exceptions.StatusCheckException;
+import io.mvnpm.maven.exceptions.UploadFailedException;
+import io.mvnpm.maven.sync.SyncItem;
 import io.quarkus.logging.Log;
 import io.quarkus.security.UnauthorizedException;
 import io.vertx.core.json.JsonObject;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Facade on the Central server
@@ -33,9 +32,6 @@ public class MavenCentralFacade {
 
     @RestClient
     MavenCentralClient mavenCentralClient;
-
-    @Inject
-    CentralSyncItemService centralSyncItemService;
 
     @ConfigProperty(name = "mvnpm.mavencentral.authorization")
     Optional<String> authorization;
@@ -54,11 +50,13 @@ public class MavenCentralFacade {
                     return result.getBoolean("published", false);
                 }
             } else {
-                throw new UnauthorizedException("Authorization not present for " + groupId + ":" + artifactId + ":" + version);
+                throw new UnauthorizedException(
+                        "Authorization not present for " + groupId + ":" + artifactId + ":" + version);
             }
         } catch (Throwable t) {
             errorHandlingService.handle(groupId, artifactId, version,
-                    "Error while checking maven central publish state for [" + groupId + ":" + artifactId + ":" + version + "]",
+                    "Error while checking maven central publish state for [" + groupId + ":" + artifactId + ":"
+                            + version + "]",
                     t);
         }
         return false;
@@ -86,7 +84,8 @@ public class MavenCentralFacade {
                     Log.info("Uploaded bundle " + path + " to releaseId [" + releaseId + "]");
                     return releaseId;
                 } else {
-                    throw new UploadFailedException("HTTP Response status [" + uploadResponse.getStatus() + "] for " + path);
+                    throw new UploadFailedException(
+                            "HTTP Response status [" + uploadResponse.getStatus() + "] for " + path);
                 }
             } else {
                 throw new UnauthorizedException("Authorization not present for " + path);
@@ -96,7 +95,7 @@ public class MavenCentralFacade {
         }
     }
 
-    public ReleaseStatus status(CentralSyncItem csi, String releaseId) throws StatusCheckException {
+    public ReleaseStatus status(SyncItem csi, String releaseId) throws StatusCheckException {
         try {
             if (authorization.isPresent()) {
                 String a = "Bearer " + authorization.get();
@@ -120,8 +119,8 @@ public class MavenCentralFacade {
             if (isInCentral(csi.groupId, csi.artifactId, csi.version)) {
                 return ReleaseStatus.PUBLISHED;
             }
-            throw new StatusCheckException("Status check for " + csi.toGavString() + " failed (releaseId " + releaseId + ")",
-                    ex);
+            throw new StatusCheckException(
+                    "Status check for " + csi.toGavString() + " failed (releaseId " + releaseId + ")", ex);
         }
     }
 }

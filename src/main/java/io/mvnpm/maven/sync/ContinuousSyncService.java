@@ -1,7 +1,5 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
-import static io.mvnpm.mavencentral.ReleaseStatus.VALIDATED;
-import static io.mvnpm.mavencentral.ReleaseStatus.VALIDATING;
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
 import java.nio.file.Path;
@@ -11,12 +9,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.WebApplicationException;
 
 import org.apache.commons.io.FileUtils;
 
@@ -30,12 +22,13 @@ import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.api.ReleaseStatus;
+import io.mvnpm.maven.api.Stage;
+import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
+import io.mvnpm.maven.exceptions.StatusCheckException;
+import io.mvnpm.maven.exceptions.UploadFailedException;
 import io.mvnpm.mavencentral.MavenCentralFacade;
-import io.mvnpm.mavencentral.ReleaseStatus;
-import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
-import io.mvnpm.mavencentral.exceptions.StatusCheckException;
-import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
@@ -49,6 +42,11 @@ import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.common.annotation.RunOnVirtualThread;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.WebApplicationException;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -63,7 +61,7 @@ public class ContinuousSyncService {
     NpmRegistryFacade npmRegistryFacade;
 
     @Inject
-    CentralSyncService centralSyncService;
+    SyncService syncService;
 
     @Inject
     MavenCentralFacade mavenCentralFacade;
@@ -72,7 +70,7 @@ public class ContinuousSyncService {
     ErrorHandlingService errorHandlingService;
 
     @Inject
-    CentralSyncItemService centralSyncItemService;
+    SyncItemService syncItemService;
 
     @Inject
     PackageFileLocator packageFileLocator;
@@ -100,10 +98,10 @@ public class ContinuousSyncService {
     public void checkError() {
         try {
             Log.debug("Starting error retry...");
-            CentralSyncItem item;
+            SyncItem item;
             int count = 0;
-            while ((item = centralSyncItemService.claimNextForErrorRetry()) != null && count < 10) {
-                bus.publish("central-sync-item-stage-change", item);
+            while ((item = syncItemService.claimNextForErrorRetry()) != null && count < 10) {
+                bus.publish("sync-item-stage-change", item);
                 count++;
             }
         } catch (Throwable t) {
@@ -202,9 +200,9 @@ public class ContinuousSyncService {
     @Scheduled(every = "${mvnpm.check-versions.every:5m}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     void checkVersions() {
-        final List<CentralSyncItem> byStage = CentralSyncItem.findPackageWithUncheckedDependencies(1);
+        final List<SyncItem> byStage = SyncItem.findPackageWithUncheckedDependencies(1);
         if (!byStage.isEmpty()) {
-            for (CentralSyncItem item : byStage) {
+            for (SyncItem item : byStage) {
                 final Name name = NameParser.fromMavenGA(item.groupId, item.artifactId);
                 final String gavString = name.toGavString(item.version);
                 try {
@@ -225,24 +223,24 @@ public class ContinuousSyncService {
     @Scheduled(every = "${mvnpm.check-packaging.every:60s}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     void checkPackaging() {
-        CentralSyncItem itemToBeCreated = centralSyncItemService.claimNextForPackagingCheck();
+        SyncItem itemToBeCreated = syncItemService.claimNextForPackagingCheck();
         if (itemToBeCreated != null) {
-            if (centralSyncService.canProcessSync(itemToBeCreated)) {
+            if (syncService.canProcessSync(itemToBeCreated)) {
                 final Name name = NameParser.fromMavenGA(itemToBeCreated.groupId, itemToBeCreated.artifactId);
                 try {
                     final Path jar = packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
                     if (FileUtil.isOlderThanTimeout(jar, 60)) {
-                        centralSyncItemService.increaseCreationAttempt(itemToBeCreated);
+                        syncItemService.increaseCreationAttempt(itemToBeCreated);
                         if (itemToBeCreated.creationAttempts > 10) {
                             Log.errorf("Package creation failed after 10 attempts, removing: %s", itemToBeCreated);
                             deletePackagingItem(itemToBeCreated);
                             return;
                         }
                         // A jar which stays more than 60 minutes in NONE stage needs to be recreated
-                        Log.warnf("Re-creating package (attempt: %d): %s",
-                                itemToBeCreated.creationAttempts, itemToBeCreated);
-                        Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId, itemToBeCreated.artifactId,
-                                itemToBeCreated.version);
+                        Log.warnf("Re-creating package (attempt: %d): %s", itemToBeCreated.creationAttempts,
+                                itemToBeCreated);
+                        Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId,
+                                itemToBeCreated.artifactId, itemToBeCreated.version);
                         FileUtils.deleteQuietly(dir.toFile());
                         packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
                     }
@@ -269,8 +267,8 @@ public class ContinuousSyncService {
         }
     }
 
-    private void deletePackagingItem(CentralSyncItem item) {
-        centralSyncItemService.delete(item);
+    private void deletePackagingItem(SyncItem item) {
+        syncItemService.delete(item);
         Path dir = packageFileLocator.getLocalDirectory(item.groupId, item.artifactId, item.version);
         FileUtils.deleteQuietly(dir.toFile());
     }
@@ -285,84 +283,84 @@ public class ContinuousSyncService {
             Log.debug("Sync upload in progress");
             return;
         }
-        CentralSyncItem item = centralSyncItemService.claimNextForUpload();
+        SyncItem item = syncItemService.claimNextForUpload();
         if (item == null) {
             Log.debug("Nothing in the queue to sync");
             return;
         }
-        // Check if already in Central (avoid duplicate upload)
-        if (centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(item)) {
+        // Check if already in repository (avoid duplicate upload)
+        if (syncService.checkStatusAndUpdateStageIfNeeded(item)) {
             return; // Item moved to RELEASED inside the check
         }
-        Log.debugf("Version [%s] of %s is NOT in central. Kicking off sync...",
-                item.version, item.toGavString());
-        bus.publish("central-sync-item-stage-change", item);
+        Log.debugf("Version [%s] of %s is NOT in repository. Kicking off sync...", item.version, item.toGavString());
+        bus.publish("sync-item-stage-change", item);
     }
 
     @Scheduled(every = "${mvnpm.clean-release.every:3m}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     void cleanCentralStatuses() {
         // Check if this is in central, and update the status
-        List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
-        for (CentralSyncItem centralSyncItem : uploadedToCentral) {
-            centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem);
+        List<SyncItem> uploaded = SyncItem.findUpdloadedButNotReleased();
+        for (SyncItem syncItem : uploaded) {
+            syncService.checkStatusAndUpdateStageIfNeeded(syncItem);
         }
     }
 
     @Scheduled(every = "${mvnpm.release.every:60s}", concurrentExecution = SKIP)
     @RunOnVirtualThread
     void processCentralStatuses() {
-        List<CentralSyncItem> uploadedToCentral = CentralSyncItem.findUpdloadedButNotReleased();
-        if (!uploadedToCentral.isEmpty()) {
-            Map<String, CentralSyncItem> uploadedToCentralMap = mapByReleaseId(uploadedToCentral);
-            if (!uploadedToCentralMap.isEmpty()) {
+        List<SyncItem> uploaded = SyncItem.findUpdloadedButNotReleased();
+        if (!uploaded.isEmpty()) {
+            Map<String, SyncItem> uploadedMap = mapByReleaseId(uploaded);
+            if (!uploadedMap.isEmpty()) {
 
-                for (Map.Entry<String, CentralSyncItem> itemToCheck : uploadedToCentralMap.entrySet()) {
-                    CentralSyncItem uploadedItem = itemToCheck.getValue();
+                for (Map.Entry<String, SyncItem> itemToCheck : uploadedMap.entrySet()) {
+                    SyncItem uploadedItem = itemToCheck.getValue();
                     String releaseId = itemToCheck.getKey();
                     try {
                         ReleaseStatus releaseStatus = mavenCentralFacade.status(uploadedItem, releaseId);
                         switch (releaseStatus) {
-                            case PENDING:
-                            case VALIDATING:
-                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.UPLOADED);
-                                break;
-                            case VALIDATED:
-                            case PUBLISHING:
-                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.CLOSED);
-                                break;
-                            case PUBLISHED:
-                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.RELEASED);
-                                break;
-                            case FAILED:
-                                uploadedItem = centralSyncItemService.changeStage(uploadedItem, Stage.ERROR);
-                                // TODO: Here we should get more details, and do a drop maybe ?
-                                break;
-                            default:
-                                throw new AssertionError();
+                        case PENDING:
+                        case VALIDATING:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.UPLOADED);
+                            break;
+                        case VALIDATED:
+                        case PUBLISHING:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.CLOSED);
+                            break;
+                        case PUBLISHED:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.RELEASED);
+                            break;
+                        case FAILED:
+                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.ERROR);
+                            // TODO: Here we should get more details, and do a drop maybe ?
+                            break;
+                        default:
+                            throw new AssertionError();
                         }
                     } catch (StatusCheckException ex) {
                         // Nothing really. We will catch this with the next one
-                        Log.warn("Could not get status for " + uploadedItem.toGavString() + " (release Id: " + releaseId + ")");
+                        Log.warn("Could not get status for " + uploadedItem.toGavString() + " (release Id: " + releaseId
+                                + ")");
                     }
                 }
             }
         }
     }
 
-    @ConsumeEvent("central-sync-item-stage-change")
+    @ConsumeEvent("sync-item-stage-change")
     @Blocking
-    public void processNextAction(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.stage.equals(Stage.UPLOADING)) {
-            processNextUpload(centralSyncItem);
+    public void processNextAction(SyncItem syncItem) {
+        if (syncItem.stage.equals(Stage.UPLOADING)) {
+            processNextUpload(syncItem);
         }
     }
 
-    private Map<String, CentralSyncItem> mapByReleaseId(List<CentralSyncItem> uploadedToCentral) {
-        Map<String, CentralSyncItem> mapByReleaseId = new HashMap<>();
-        for (CentralSyncItem csi : uploadedToCentral) {
-            if (csi.stagingRepoId != null && !csi.stagingRepoId.isEmpty()) {
-                mapByReleaseId.put(csi.stagingRepoId, csi);
+    private Map<String, SyncItem> mapByReleaseId(List<SyncItem> uploaded) {
+        Map<String, SyncItem> mapByReleaseId = new HashMap<>();
+        for (SyncItem syncItem : uploaded) {
+            if (syncItem.releaseId != null && !syncItem.releaseId.isEmpty()) {
+                mapByReleaseId.put(syncItem.releaseId, syncItem);
             }
         }
         return mapByReleaseId;
@@ -370,7 +368,7 @@ public class ContinuousSyncService {
 
     private boolean isCurrentlyUploading() {
         // We only process one at a time, so first check that there is not another process in progress
-        long uploadingCount = CentralSyncItem.count("stage", Stage.UPLOADING);
+        long uploadingCount = SyncItem.count("stage", Stage.UPLOADING);
         return uploadingCount != 0;
     }
 
@@ -389,7 +387,7 @@ public class ContinuousSyncService {
                     String latest = info.distTags().latest();
                     // Queue for sync without creating files — files are created at upload time
                     // by ensureFilesExist() on the pod that will upload
-                    boolean queued = centralSyncService.initializeSync(name, latest);
+                    boolean queued = syncService.initializeSync(name, latest);
                     if (queued) {
                         Log.infof("Continuous Updater: New package %s %s queued for sync", name.npmFullName, latest);
                     } else {
@@ -405,32 +403,32 @@ public class ContinuousSyncService {
         }
     }
 
-    private void processNextUpload(CentralSyncItem centralSyncItem) {
-        if (!centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(centralSyncItem)) {
+    private void processNextUpload(SyncItem syncItem) {
+        if (!syncService.checkStatusAndUpdateStageIfNeeded(syncItem)) {
             // Ensure package files exist locally (may have been created on another pod)
             try {
-                ensureFilesExist(centralSyncItem);
+                ensureFilesExist(syncItem);
             } catch (PackageAlreadySyncedException e) {
-                Log.infof("Package already synced, marking as released: %s", centralSyncItem.toGavString());
-                centralSyncItemService.changeStage(centralSyncItem, Stage.RELEASED);
+                Log.infof("Package already synced, marking as released: %s", syncItem.toGavString());
+                syncItemService.changeStage(syncItem, Stage.RELEASED);
                 return;
             }
             try {
-                String releaseId = centralSyncService.sync(centralSyncItem);
-                centralSyncItem.stagingRepoId = releaseId;
-                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
+                String releaseId = syncService.sync(syncItem);
+                syncItem.releaseId = releaseId;
+                syncItem = syncItemService.changeStage(syncItem, Stage.UPLOADED);
             } catch (UploadFailedException exception) {
-                Log.warnf("Upload failed for '%s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
-                retryUpload(centralSyncItem, exception);
+                Log.warnf("Upload failed for '%s' because of: %s", syncItem.toGavString(), exception.getMessage());
+                retryUpload(syncItem, exception);
             } catch (UnauthorizedException unauthorizedException) {
                 unauthorizedException.printStackTrace();
-                errorHandlingService.handle(centralSyncItem, unauthorizedException);
+                errorHandlingService.handle(syncItem, unauthorizedException);
             } catch (MissingFilesForBundleException e) {
                 Log.info(e.getMessage());
-                retryUpload(centralSyncItem, e);
+                retryUpload(syncItem, e);
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
-                retryUpload(centralSyncItem, throwable);
+                retryUpload(syncItem, throwable);
             }
         }
     }
@@ -440,9 +438,9 @@ public class ContinuousSyncService {
      * Files may have been created on another pod — this recreates them if missing.
      * All creation services are idempotent (skip if file already exists).
      */
-    private void ensureFilesExist(CentralSyncItem centralSyncItem) {
-        Name name = NameParser.fromMavenGA(centralSyncItem.groupId, centralSyncItem.artifactId);
-        String version = centralSyncItem.version;
+    private void ensureFilesExist(SyncItem syncItem) {
+        Name name = NameParser.fromMavenGA(syncItem.groupId, syncItem.artifactId);
+        String version = syncItem.version;
         // getPath creates jar + pom + tgz if not cached (jar creation triggers pom/tgz internally)
         Path jarPath = mavenRepositoryService.getPath(name, version, FileType.jar);
         Path pomPath = packageFileLocator.getLocalFullPath(FileType.pom, name, version);
@@ -452,13 +450,13 @@ public class ContinuousSyncService {
         packageListener.createBundleFiles(pomPath, jarPath, tgzPath, List.of());
     }
 
-    private void retryUpload(CentralSyncItem centralSyncItem, Throwable t) {
-        if (centralSyncItem.uploadAttempts < 10) {
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+    private void retryUpload(SyncItem syncItem, Throwable t) {
+        if (syncItem.uploadAttempts < 10) {
+            syncItem = syncItemService.changeStage(syncItem, Stage.INIT);
         } else {
             t.printStackTrace();
-            errorHandlingService.handle(centralSyncItem, t);
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
+            errorHandlingService.handle(syncItem, t);
+            syncItem = syncItemService.changeStage(syncItem, Stage.ERROR);
         }
     }
 
@@ -476,42 +474,40 @@ public class ContinuousSyncService {
     }
 
     private void resetUpload() {
-        List<CentralSyncItem> uploading = CentralSyncItem.findByStage(Stage.UPLOADING, 50);
+        List<SyncItem> uploading = SyncItem.findByStage(Stage.UPLOADING, 50);
         LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
-        for (CentralSyncItem centralSyncItem : uploading) {
-            if (centralSyncItem.stageChangeTime != null && centralSyncItem.stageChangeTime.isAfter(cutoff)) {
+        for (SyncItem syncItem : uploading) {
+            if (syncItem.stageChangeTime != null && syncItem.stageChangeTime.isAfter(cutoff)) {
                 Log.debugf("[MULTI-POD] Skipping recent UPLOADING item %s (may be in progress on another pod)",
-                        centralSyncItem);
+                        syncItem);
                 continue;
             }
-            centralSyncItem.increaseUploadAttempt();
-            if (centralSyncItem.uploadAttempts >= 10) {
-                Log.errorf("Upload stuck after %d attempts, moving to ERROR: %s",
-                        centralSyncItem.uploadAttempts, centralSyncItem);
-                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
+            syncItem.increaseUploadAttempt();
+            if (syncItem.uploadAttempts >= 10) {
+                Log.errorf("Upload stuck after %d attempts, moving to ERROR: %s", syncItem.uploadAttempts, syncItem);
+                syncItem = syncItemService.changeStage(syncItem, Stage.ERROR);
             } else {
-                Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
-                centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.INIT);
+                Log.infof("[MULTI-POD] Resetting stale upload for %s", syncItem);
+                syncItem = syncItemService.changeStage(syncItem, Stage.INIT);
             }
         }
     }
 
     private void resetPromotion() {
-        List<CentralSyncItem> closed = CentralSyncItem.findByStage(Stage.CLOSED, 50);
-        for (CentralSyncItem centralSyncItem : closed) {
-            centralSyncItem.increasePromotionAttempt();
-            Log.info("Resetting promotion for " + centralSyncItem + " after restart");
-            centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
+        List<SyncItem> closed = SyncItem.findByStage(Stage.CLOSED, 50);
+        for (SyncItem syncItem : closed) {
+            syncItem.increasePromotionAttempt();
+            Log.info("Resetting promotion for " + syncItem + " after restart");
+            syncItem = syncItemService.changeStage(syncItem, Stage.UPLOADED);
         }
     }
 
     private boolean isInternal(String groupId, String artifactId) {
-        return groupId.equals("org.mvnpm.at.mvnpm") ||
-                (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit")) || // Failed attempt at hardcoding versions
+        return groupId.equals("org.mvnpm.at.mvnpm") || (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit"))
+                || // Failed attempt at hardcoding versions
                 (groupId.equals("org.mvnpm.locked.at.vaadin") && artifactId.equals("router")) ||
                 // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm") && artifactId.equals(
-                        "vaadin-web-components")); // Before we used the @mvnpm namespave
+                (groupId.equals("org.mvnpm") && artifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
     }
 
 }

@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.exceptions;
+package io.mvnpm.maven.exceptions;
 
 public class StatusCheckException extends Exception {
 
@@ -17,7 +17,8 @@ public class StatusCheckException extends Exception {
         super(cause);
     }
 
-    public StatusCheckException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public StatusCheckException(String message, Throwable cause, boolean enableSuppression,
+            boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 

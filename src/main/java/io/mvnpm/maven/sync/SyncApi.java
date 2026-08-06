@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import java.util.List;
 import java.util.Set;
@@ -21,6 +21,8 @@ import org.jboss.resteasy.reactive.NoCache;
 
 import io.mvnpm.creator.FileType;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.Stage;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
@@ -32,19 +34,20 @@ import io.vertx.core.impl.ConcurrentHashSet;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @Path("/api/sync")
-@ServerEndpoint(value = "/api/queue/", encoders = CentralSyncItemEncoder.class, decoders = CentralSyncItemEncoder.class)
+@ServerEndpoint(value = "/api/queue/", encoders = SyncItemEncoder.class, decoders = SyncItemEncoder.class)
 @ApplicationScoped
-public class CentralSyncApi {
+public class SyncApi {
 
     @Inject
-    CentralSyncService centralSyncService;
+    SyncService syncService;
+
+    @Inject
+    private SyncItemService syncItemService;
 
     @Inject
     private MavenRepositoryService mavenRepositoryService;
 
     private final Set<Session> sessions = new ConcurrentHashSet<>();
-    @Inject
-    private CentralSyncItemService centralSyncItemService;
 
     @OnOpen
     public void onOpen(Session session) {
@@ -63,9 +66,9 @@ public class CentralSyncApi {
         sessions.remove(session);
     }
 
-    private void broadcast(CentralSyncItem centralSyncItem) {
+    private void broadcast(SyncItem syncItem) {
         sessions.forEach(s -> {
-            s.getAsyncRemote().sendObject(centralSyncItem, result -> {
+            s.getAsyncRemote().sendObject(syncItem, result -> {
                 if (result.getException() != null) {
                     Log.error("Unable to send message: " + result.getException());
                     sessions.remove(s);
@@ -74,50 +77,49 @@ public class CentralSyncApi {
         });
     }
 
-    @ConsumeEvent("central-sync-item-stage-change")
+    @ConsumeEvent("sync-item-stage-change")
     @Blocking
-    public void stateChange(CentralSyncItem centralSyncItem) {
-        broadcast(centralSyncItem);
+    public void stateChange(SyncItem syncItem) {
+        broadcast(syncItem);
     }
 
     @GET
     @NoCache
     @Path("/info/{groupId}/{artifactId}")
-    public CentralSyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+    public SyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
-        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version, false);
+        return syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, false);
     }
 
     @GET
     @NoCache
     @Path("/request/{groupId}/{artifactId}")
-    public CentralSyncItem requestFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+    public SyncItem requestFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
         mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
-        return centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version, true);
+        return syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, true);
     }
 
     @GET
     @NoCache
     @Path("/retry/{groupId}/{artifactId}")
-    public CentralSyncItem retryFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+    public SyncItem retryFullSync(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
 
         if (version.equalsIgnoreCase("latest")) {
-            version = centralSyncService.getLatestVersion(groupId, artifactId);
+            version = syncService.getLatestVersion(groupId, artifactId);
         }
 
         mavenRepositoryService.getPath(groupId, artifactId, version, FileType.jar);
-        final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version,
-                true);
-        if (centralSyncItem.isInError()) {
-            CentralSyncItem claimed = centralSyncItemService.claimForErrorRetry(
-                    new Gav(centralSyncItem.groupId, centralSyncItem.artifactId, centralSyncItem.version));
+        final SyncItem syncItem = syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, true);
+        if (syncItem.isInError()) {
+            SyncItem claimed = syncItemService
+                    .claimForErrorRetry(new Gav(syncItem.groupId, syncItem.artifactId, syncItem.version));
             if (claimed != null) {
                 return claimed;
             }
         }
-        return centralSyncItem;
+        return syncItem;
 
     }
 
@@ -125,30 +127,28 @@ public class CentralSyncApi {
     @NoCache
     @Path("/remove/{groupId}/{artifactId}")
     @Transactional
-    public CentralSyncItem remove(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+    public SyncItem remove(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
-
         if (version.equalsIgnoreCase("latest")) {
-            version = centralSyncService.getLatestVersion(groupId, artifactId);
+            version = syncService.getLatestVersion(groupId, artifactId);
         }
-        final CentralSyncItem centralSyncItem = centralSyncService.checkReleaseInDbAndCentral(groupId, artifactId, version,
-                false);
-        centralSyncItem.delete();
-        return centralSyncItem;
+        final SyncItem syncItem = syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, false);
+        syncItem.delete();
+        return syncItem;
     }
 
     @GET
     @NoCache
     @Path("/item/{stage}")
-    public List<CentralSyncItem> getItems(@PathParam("stage") Stage stage) {
-        return CentralSyncItem.findByStage(stage, 150);
+    public List<SyncItem> getItems(@PathParam("stage") Stage stage) {
+        return SyncItem.findByStage(stage, 150);
     }
 
     @GET
     @NoCache
     @Path("/items")
-    public List<CentralSyncItem> getItems() {
-        return CentralSyncItem.findAll().list();
+    public List<SyncItem> getItems() {
+        return SyncItem.findAll().list();
     }
 
 }

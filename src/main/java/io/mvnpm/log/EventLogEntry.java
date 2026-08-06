@@ -8,7 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 
-import io.mvnpm.mavencentral.sync.Stage;
+import io.mvnpm.maven.api.Stage;
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
 /**
@@ -18,8 +18,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  */
 @Entity
 @NamedQueries({
-        @NamedQuery(name = "EventLogEntry.getByGav", query = "from EventLogEntry where groupId = ?1 and artifactId = ?2 and version = ?3 order by time")
-})
+        @NamedQuery(name = "EventLogEntry.getByGav", query = "from EventLogEntry where groupId = ?1 and artifactId = ?2 and version = ?3 order by time") })
 public class EventLogEntry extends PanacheEntity {
     public String groupId;
     public String artifactId;

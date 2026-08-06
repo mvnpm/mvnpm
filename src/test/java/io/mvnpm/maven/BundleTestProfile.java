@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven;
 
 import java.util.Map;
 
@@ -8,7 +8,6 @@ public class BundleTestProfile implements QuarkusTestProfile {
 
     @Override
     public Map<String, String> getConfigOverrides() {
-        return Map.of(
-                "mvnpm.local-m2-directory", "../src/test/resources");
+        return Map.of("mvnpm.local-m2-directory", "../src/test/resources");
     }
 }

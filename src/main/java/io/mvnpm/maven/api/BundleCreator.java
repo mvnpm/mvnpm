@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.api;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -19,7 +19,7 @@ import jakarta.inject.Inject;
 import io.mvnpm.Constants;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.utils.FileUtil;
-import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
+import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.quarkus.logging.Log;
 
 /**
@@ -86,7 +86,8 @@ public class BundleCreator {
         return bundlePath;
     }
 
-    private List<Path> getFiles(String groupId, String artifactId, String version) throws MissingFilesForBundleException {
+    private List<Path> getFiles(String groupId, String artifactId, String version)
+            throws MissingFilesForBundleException {
         // Files that needs to be in the bundle
         Path parent = packageFileLocator.getLocalDirectory(groupId, artifactId, version);
         String base = artifactId + Constants.HYPHEN + version;
@@ -104,17 +105,15 @@ public class BundleCreator {
             return fileNames;
 
         throw new MissingFilesForBundleException(
-                "Some files (%s) are not available yet to build the bundle for '%s:%s:%s' (waiting for next batch)".formatted(
-                        notReady, groupId, artifactId, version));
+                "Some files (%s) are not available yet to build the bundle for '%s:%s:%s' (waiting for next batch)"
+                        .formatted(notReady, groupId, artifactId, version));
     }
 
     private List<Path> getFileNamesInBundle(Path parent, String base) {
-        List<Path> fileNames = List.of(
-                parent.resolve(base + Constants.DOT_POM),
+        List<Path> fileNames = List.of(parent.resolve(base + Constants.DOT_POM),
                 parent.resolve(base + Constants.DOT_POM + Constants.DOT_ASC),
                 parent.resolve(base + Constants.DOT_POM + Constants.DOT_MD5),
-                parent.resolve(base + Constants.DOT_POM + Constants.DOT_SHA1),
-                parent.resolve(base + Constants.DOT_JAR),
+                parent.resolve(base + Constants.DOT_POM + Constants.DOT_SHA1), parent.resolve(base + Constants.DOT_JAR),
                 parent.resolve(base + Constants.DOT_JAR + Constants.DOT_ASC),
                 parent.resolve(base + Constants.DOT_JAR + Constants.DOT_MD5),
                 parent.resolve(base + Constants.DOT_JAR + Constants.DOT_SHA1),

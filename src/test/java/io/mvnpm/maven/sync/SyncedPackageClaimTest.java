@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,9 +46,7 @@ class SyncedPackageClaimTest {
         List<SyncedPackage> claimedItems = SyncedPackage.findClaimed(claimUntil);
         assertEquals(3, claimedItems.size());
 
-        Set<String> claimedArtifacts = claimedItems.stream()
-                .map(p -> p.artifactId)
-                .collect(Collectors.toSet());
+        Set<String> claimedArtifacts = claimedItems.stream().map(p -> p.artifactId).collect(Collectors.toSet());
         assertTrue(claimedArtifacts.contains("lit"));
         assertTrue(claimedArtifacts.contains("vue"));
         assertTrue(claimedArtifacts.contains("react"));

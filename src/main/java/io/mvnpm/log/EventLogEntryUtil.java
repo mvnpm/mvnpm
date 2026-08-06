@@ -1,52 +1,44 @@
 package io.mvnpm.log;
 
-import static io.mvnpm.mavencentral.sync.Stage.CLOSED;
-import static io.mvnpm.mavencentral.sync.Stage.INIT;
-import static io.mvnpm.mavencentral.sync.Stage.RELEASED;
-import static io.mvnpm.mavencentral.sync.Stage.RELEASING;
-import static io.mvnpm.mavencentral.sync.Stage.UPLOADED;
-import static io.mvnpm.mavencentral.sync.Stage.UPLOADING;
-
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.maven.sync.SyncItem;
 
 public class EventLogEntryUtil {
 
     private EventLogEntryUtil() {
     }
 
-    public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem) {
-        return EventLogEntryUtil.toEventLogEntry(centralSyncItem,
-                EventLogEntryUtil.generateMessage(centralSyncItem));
+    public static EventLogEntry toEventLogEntry(SyncItem syncItem) {
+        return EventLogEntryUtil.toEventLogEntry(syncItem, EventLogEntryUtil.generateMessage(syncItem));
     }
 
-    public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem, String message) {
-        return EventLogEntryUtil.toEventLogEntry(centralSyncItem, message, "lightgreen");
+    public static EventLogEntry toEventLogEntry(SyncItem syncItem, String message) {
+        return EventLogEntryUtil.toEventLogEntry(syncItem, message, "lightgreen");
     }
 
-    public static EventLogEntry toEventLogEntry(CentralSyncItem centralSyncItem, String message, String color) {
+    public static EventLogEntry toEventLogEntry(SyncItem syncItem, String message, String color) {
         EventLogEntry eventLogEntry = new EventLogEntry();
 
-        eventLogEntry.groupId = centralSyncItem.groupId;
-        eventLogEntry.artifactId = centralSyncItem.artifactId;
-        eventLogEntry.version = centralSyncItem.version;
-        eventLogEntry.stage = centralSyncItem.stage;
+        eventLogEntry.groupId = syncItem.groupId;
+        eventLogEntry.artifactId = syncItem.artifactId;
+        eventLogEntry.version = syncItem.version;
+        eventLogEntry.stage = syncItem.stage;
         eventLogEntry.message = message;
-        eventLogEntry.time = centralSyncItem.stageChangeTime;
+        eventLogEntry.time = syncItem.stageChangeTime;
         eventLogEntry.color = color;
         return eventLogEntry;
     }
 
-    private static String generateMessage(CentralSyncItem centralSyncItem) {
-        return switch (centralSyncItem.stage) {
+    private static String generateMessage(SyncItem syncItem) {
+        return switch (syncItem.stage) {
             case INIT -> "Syncing initialized";
-            case UPLOADING -> "Uploading to OSS sonatype (" + centralSyncItem.uploadAttempts + ")";
-            case UPLOADED -> "Uploaded to OSS sonatype, now validating (" + centralSyncItem.promotionAttempts + ")";
-            case CLOSED -> "Closed and validated. Will be auto releasing soon (" + centralSyncItem.promotionAttempts + ")";
-            case RELEASING -> "Closed, now releasing to Maven central (" + centralSyncItem.promotionAttempts + ")";
-            case RELEASED -> "Released to Maven central";
-            case ERROR -> "Error in workflow after " + centralSyncItem.uploadAttempts + " upload and "
-                    + centralSyncItem.promotionAttempts + " promotion attempts";
-            default -> centralSyncItem.stage.name().toLowerCase();
+            case UPLOADING -> "Uploading to OSS sonatype (" + syncItem.uploadAttempts + ")";
+            case UPLOADED -> "Uploaded to OSS sonatype, now validating (" + syncItem.promotionAttempts + ")";
+            case CLOSED -> "Closed and validated. Will be auto releasing soon (" + syncItem.promotionAttempts + ")";
+            case RELEASING -> "Closed, now releasing to Maven repository (" + syncItem.promotionAttempts + ")";
+            case RELEASED -> "Released to Maven repository";
+            case ERROR -> "Error in workflow after " + syncItem.uploadAttempts + " upload and " + syncItem.promotionAttempts
+                    + " promotion attempts";
+            default -> syncItem.stage.name().toLowerCase();
         };
 
     }

@@ -28,18 +28,20 @@ import io.vertx.mutiny.core.Vertx;
 
 @QuarkusTest
 public class PackageGenerationTest {
+
     @Inject
     MavenRepositoryService mavenRepositoryService;
+
     @Inject
     PackageFileLocator packageFileLocator;
+
     @Inject
     Vertx vertx;
 
     @BeforeEach
     void setUp() {
-        vertx.fileSystem().deleteRecursive(packageFileLocator.getCacheDir().toString(), true).onFailure().recoverWithNull()
-                .await()
-                .indefinitely();
+        vertx.fileSystem().deleteRecursive(packageFileLocator.getCacheDir().toString(), true).onFailure()
+                .recoverWithNull().await().indefinitely();
     }
 
     @Test
@@ -48,8 +50,8 @@ public class PackageGenerationTest {
         final Path tempFile = Files.createTempFile("webcomponents-fiori-1.20.1", ".jar");
         final Path nodeModules = Files.createTempDirectory("node_modules");
         Files.write(tempFile, jar);
-        WebDepsInstaller.install(nodeModules,
-                List.of(WebDependency.of("webcomponents-fiori-1.20.1", tempFile, WebDependency.WebDependencyType.MVNPM)));
+        WebDepsInstaller.install(nodeModules, List.of(WebDependency.of("webcomponents-fiori-1.20.1", tempFile,
+                WebDependency.WebDependencyType.MVNPM)));
         final MvnpmInfo mvnpmInfo = readMvnpmInfo(getMvnpmInfoPath(nodeModules));
         checkNodeModulesDir(nodeModules, mvnpmInfo);
         assertEquals(1, mvnpmInfo.installed().size());
@@ -61,8 +63,10 @@ public class PackageGenerationTest {
     public void testNormalJarWithEsbuildAndOtherFiles() throws IOException {
         final InstalledJarResult result = downloadAndInstallJar(new Name("lit"), "3.3.1");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.js")), "extraction failed");
-        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts")), "more extraction failed");
-        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts.map")), "more extraction failed");
+        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts")),
+                "more extraction failed");
+        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts.map")),
+                "more extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/decorators/custom-element.d.ts.map")),
                 "more extraction failed");
         assertEquals(1, result.dep().dirs().size());
@@ -72,24 +76,31 @@ public class PackageGenerationTest {
     @Test
     public void testNamespacedJarWithEsbuildAndOtherFiles() throws IOException {
         final InstalledJarResult result = downloadAndInstallJar(new Name("@tiptap/core"), "3.12.1");
-        assertTrue(Files.exists(result.nodeModules().resolve("@tiptap/core/dist/index.cjs.map")), "extraction failed");
+        assertTrue(Files.exists(result.nodeModules().resolve("@tiptap/core/dist/index.cjs.map")),
+                "extraction failed");
         assertEquals(1, result.dep().dirs().size());
-        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm.at.tiptap", "core", "3.12.1");
+        final Path pomFile = packageFileLocator.getLocalFullPath(FileType.pom, "org.mvnpm.at.tiptap", "core",
+                "3.12.1");
     }
 
     @Test
     // Reproducing https://github.com/quarkusio/quarkus/issues/46527
     public void testCompositeMoreWithEsbuild() throws IOException {
-        final InstalledJarResult result = downloadAndInstallJar(new Name("@mvnpm/vaadin-webcomponents"), "24.8.3");
+        final InstalledJarResult result = downloadAndInstallJar(new Name("@mvnpm/vaadin-webcomponents"),
+                "24.8.3");
         assertEquals(56, result.dep().dirs().size());
 
         // Test JS and TypeScript definition files
-        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/index.js")), "index.js missing");
-        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/index.d.ts")), "index.d.ts missing");
+        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/index.js")),
+                "index.js missing");
+        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/index.d.ts")),
+                "index.d.ts missing");
 
         // Test JSON files
-        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/package.json")), "package.json missing");
-        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/button/package.json")), "button package.json missing");
+        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/package.json")),
+                "package.json missing");
+        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/button/package.json")),
+                "button package.json missing");
 
         // Test files in subdirectories
         assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/a11y-base/src/active-mixin.js")),
@@ -98,14 +109,17 @@ public class PackageGenerationTest {
                 "active-mixin.d.ts missing");
 
         // Test web-types files
-        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/button/web-types.json")), "web-types.json missing");
+        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/button/web-types.json")),
+                "web-types.json missing");
         assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/button/web-types.lit.json")),
                 "web-types.lit.json missing");
 
         // Test theme-based files
-        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/button/theme/lumo/vaadin-button-styles.js")),
+        assertTrue(Files.exists(
+                result.nodeModules().resolve("@vaadin/button/theme/lumo/vaadin-button-styles.js")),
                 "Lumo theme button styles missing");
-        assertTrue(Files.exists(result.nodeModules().resolve("@vaadin/button/theme/material/vaadin-button-styles.js")),
+        assertTrue(Files.exists(
+                result.nodeModules().resolve("@vaadin/button/theme/material/vaadin-button-styles.js")),
                 "Material theme button styles missing");
 
         // Test Vaadin components
@@ -126,8 +140,10 @@ public class PackageGenerationTest {
         final InstalledJarResult result = downloadAndInstallJar(new Name("@mvnpm/lit"), "3.2.0");
         assertEquals(6, result.dep().dirs().size());
         assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.js")), "extraction failed");
-        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts")), "more extraction failed");
-        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts.map")), "more extraction failed");
+        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts")),
+                "more extraction failed");
+        assertTrue(Files.exists(result.nodeModules().resolve("lit/async-directive.d.ts.map")),
+                "more extraction failed");
         assertTrue(Files.exists(result.nodeModules().resolve("lit/decorators/custom-element.d.ts.map")));
     }
 
@@ -140,15 +156,14 @@ public class PackageGenerationTest {
         final Path nodeModules = Files.createTempDirectory("node_modules");
         System.out.println("NodeModules: " + nodeModules);
         Files.write(tempFile, jar);
-        WebDepsInstaller.install(nodeModules,
-                List.of(WebDependency.of(name.npmFullName, tempFile, WebDependency.WebDependencyType.MVNPM)));
+        WebDepsInstaller.install(nodeModules, List.of(
+                WebDependency.of(name.npmFullName, tempFile, WebDependency.WebDependencyType.MVNPM)));
         final MvnpmInfo mvnpmInfo = readMvnpmInfo(getMvnpmInfoPath(nodeModules));
         checkNodeModulesDir(nodeModules, mvnpmInfo);
         assertEquals(1, mvnpmInfo.installed().size());
         final MvnpmInfo.InstalledDependency installed = mvnpmInfo.installed().stream()
                 .filter(installedDependency -> installedDependency.id().equals(name.npmFullName))
-                .findFirst()
-                .get();
+                .findFirst().get();
         return new InstalledJarResult(installed, nodeModules);
     }
 

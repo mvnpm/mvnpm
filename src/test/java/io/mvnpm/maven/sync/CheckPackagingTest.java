@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral.sync;
+package io.mvnpm.maven.sync;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -15,6 +15,8 @@ import org.mockito.Mockito;
 
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageCreator;
+import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.Stage;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -26,28 +28,28 @@ class CheckPackagingTest {
     ContinuousSyncService continuousSyncService;
 
     @Inject
-    CentralSyncItemService centralSyncItemService;
+    SyncItemService syncItemService;
 
     @InjectMock
     PackageCreator packageCreator;
 
     @InjectMock
-    CentralSyncService centralSyncService;
+    SyncService syncService;
 
     @BeforeEach
     @AfterEach
     @Transactional
     void cleanup() {
-        CentralSyncItem.deleteAll();
+        SyncItem.deleteAll();
     }
 
     @Test
     void checkPackaging_npm404_deletesItem() {
         // Insert a PACKAGING item
-        CentralSyncItem item = insertPackagingItem("org.mvnpm", "nonexistent-pkg", "1.0.0");
+        SyncItem item = insertPackagingItem("org.mvnpm", "nonexistent-pkg", "1.0.0");
 
         // Mock canProcessSync to return true
-        Mockito.when(centralSyncService.canProcessSync(Mockito.any())).thenReturn(true);
+        Mockito.when(syncService.canProcessSync(Mockito.any())).thenReturn(true);
 
         // Mock packageCreator to throw GetPackageException with 404
         GetPackageException notFound = createGetPackageException(404);
@@ -57,7 +59,7 @@ class CheckPackagingTest {
         continuousSyncService.checkPackaging();
 
         // Item should be deleted from DB
-        CentralSyncItem found = findItem("org.mvnpm", "nonexistent-pkg", "1.0.0");
+        SyncItem found = findItem("org.mvnpm", "nonexistent-pkg", "1.0.0");
         assertNull(found, "PACKAGING item with NPM 404 should be deleted");
     }
 
@@ -67,7 +69,7 @@ class CheckPackagingTest {
         insertPackagingItem("org.mvnpm", "rate-limited-pkg", "1.0.0");
 
         // Mock canProcessSync to return true
-        Mockito.when(centralSyncService.canProcessSync(Mockito.any())).thenReturn(true);
+        Mockito.when(syncService.canProcessSync(Mockito.any())).thenReturn(true);
 
         // Mock packageCreator to throw GetPackageException with 429 (rate limited)
         GetPackageException rateLimited = createGetPackageException(429);
@@ -77,18 +79,18 @@ class CheckPackagingTest {
         continuousSyncService.checkPackaging();
 
         // Item should NOT be deleted — it's a transient error
-        CentralSyncItem found = findItem("org.mvnpm", "rate-limited-pkg", "1.0.0");
+        SyncItem found = findItem("org.mvnpm", "rate-limited-pkg", "1.0.0");
         assertEquals(Stage.PACKAGING, found.stage, "PACKAGING item with NPM 429 should remain");
     }
 
     @Transactional
-    CentralSyncItem insertPackagingItem(String groupId, String artifactId, String version) {
-        return centralSyncItemService.findOrCreate(groupId, artifactId, version, Stage.PACKAGING);
+    SyncItem insertPackagingItem(String groupId, String artifactId, String version) {
+        return syncItemService.findOrCreate(groupId, artifactId, version, Stage.PACKAGING);
     }
 
     @Transactional
-    CentralSyncItem findItem(String groupId, String artifactId, String version) {
-        return CentralSyncItem.findById(new Gav(groupId, artifactId, version));
+    SyncItem findItem(String groupId, String artifactId, String version) {
+        return SyncItem.findById(new Gav(groupId, artifactId, version));
     }
 
     private GetPackageException createGetPackageException(int status) {
