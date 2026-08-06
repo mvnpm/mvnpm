@@ -11,18 +11,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
-import jakarta.enterprise.context.ApplicationScoped;
-
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.IOUtils;
 
 import io.mvnpm.Constants;
 import io.mvnpm.creator.utils.FileUtil;
 import io.quarkus.logging.Log;
+import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Create source jar file from tgz
@@ -70,8 +69,8 @@ public class SourceService {
         try (GZIPInputStream inputStream = new GZIPInputStream(tarInput);
                 TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(inputStream)) {
 
-            for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry(); entry != null; entry = tarArchiveInputStream
-                    .getNextTarEntry()) {
+            for (TarArchiveEntry entry = tarArchiveInputStream
+                    .getNextEntry(); entry != null; entry = tarArchiveInputStream.getNextEntry()) {
                 tgzEntryToJarEntry(entry, tarArchiveInputStream, jarOutput);
             }
         }
@@ -90,7 +89,8 @@ public class SourceService {
 
     }
 
-    private void writeJarEntry(JarArchiveOutputStream jarOutput, String filename, byte[] filecontents) throws IOException {
+    private void writeJarEntry(JarArchiveOutputStream jarOutput, String filename, byte[] filecontents)
+            throws IOException {
         JarArchiveEntry entry = new JarArchiveEntry(filename);
         entry.setSize(filecontents.length);
         jarOutput.putArchiveEntry(entry);

@@ -4,9 +4,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.events.NewJarEvent;
 import io.mvnpm.creator.type.AscService;
@@ -21,6 +18,8 @@ import io.mvnpm.npm.NpmRegistryFacade;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 /**
  * Create different files when a new jar has been created
@@ -97,9 +96,8 @@ public class PackageListener {
     @ConsumeEvent(DependencyVersionCheckRequest.NAME)
     @Blocking
     public void onCheckDependencyRequest(DependencyVersionCheckRequest req) {
-        mavenRepositoryService.checkDependencies(req)
-                .onFailure().invoke(failure -> Log.error("Failed to process dependencies", failure))
-                .subscribe();
+        mavenRepositoryService.checkDependencies(req).onFailure()
+                .invoke(failure -> Log.error("Failed to process dependencies", failure)).subscribe();
     }
 
 }
