@@ -119,7 +119,7 @@ export class MvnpmReleases extends LitElement {
                 <vaadin-grid-sort-column header="Artifact Id" path="artifactId"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Version" path="version"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Last modified" path="stageChangeTime"></vaadin-grid-sort-column>
-                <vaadin-grid-sort-column header="Release Id" path="stagingRepoId"></vaadin-grid-sort-column>
+                <vaadin-grid-sort-column header="Release Id" path="releaseId"></vaadin-grid-sort-column>
                 <vaadin-grid-sort-column header="Upload attempts" path="uploadAttempts"></vaadin-grid-sort-column>
                 ${this._renderActionCol()}
                 
