@@ -20,10 +20,11 @@ import io.mvnpm.creator.composite.CompositeService;
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.utils.ImportMapUtil;
+import io.mvnpm.maven.api.NameVersion;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.CentralSyncItemService;
-import io.mvnpm.mavencentral.sync.CentralSyncService;
+import io.mvnpm.maven.sync.SyncItem;
+import io.mvnpm.maven.sync.SyncItemService;
+import io.mvnpm.maven.sync.SyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -55,16 +56,18 @@ public class MavenRepositoryService {
 
     @Inject
     ImportMapUtil importMapUtil;
+
     @Inject
     private MavenCentralService mavenCentralService;
 
     @Inject
     private PomService pomService;
-    @Inject
-    private CentralSyncItemService centralSyncItemService;
 
     @Inject
-    private CentralSyncService centralSyncService;
+    private SyncItemService syncItemService;
+
+    @Inject
+    private SyncService syncService;
 
     public byte[] getImportMap(NameVersion nameVersion) {
         if (nameVersion.name().isInternal()) {
@@ -106,46 +109,39 @@ public class MavenRepositoryService {
     }
 
     public Uni<Void> checkDependencies(DependencyVersionCheckRequest req) {
-        final CentralSyncItem item = centralSyncItemService.find(req.name().mvnGroupId, req.name().mvnArtifactId,
-                req.version());
+        final SyncItem item = syncItemService.find(req.name().mvnGroupId, req.name().mvnArtifactId, req.version());
         if (item == null || !item.alreadyReleased() || item.dependenciesChecked) {
             return Uni.createFrom().nullItem();
         }
         Model model = pomService.readPom(req.pomFile());
         final String reqGavString = req.name().toGavString(req.version());
-        return Multi.createFrom().iterable(PomService.resolveDependencies(model))
-                .onItem().transformToUniAndConcatenate(d -> Uni.createFrom().item(() -> {
+        return Multi.createFrom().iterable(PomService.resolveDependencies(model)).onItem()
+                .transformToUniAndConcatenate(d -> Uni.createFrom().item(() -> {
                     final String range = d.getVersion();
                     final Name name = NameParser.fromMavenGA(d.getGroupId(), d.getArtifactId());
                     ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
                     if (info == null) {
                         return null;
                     }
-                    final Set<Version> versions = info.versions().stream()
-                            .map(Version::fromString)
+                    final Set<Version> versions = info.versions().stream().map(Version::fromString)
                             .collect(Collectors.toSet());
                     final Version version = VersionMatcher.selectLatestMatchingVersion(versions, range);
                     return version != null ? new NameVersion(name, version.toString()) : null;
-                }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                        .onItem().delayIt().by(Duration.ofSeconds(1)))
-                .filter(Objects::nonNull)
-                .emitOn(Infrastructure.getDefaultWorkerPool())
-                .invoke(n -> {
+                }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool()).onItem().delayIt()
+                        .by(Duration.ofSeconds(1)))
+                .filter(Objects::nonNull).emitOn(Infrastructure.getDefaultWorkerPool()).invoke(n -> {
                     final String depGavString = n.name().toGavString(n.version());
                     Log.infof("Matching dependency version found for package %s -> %s", reqGavString, depGavString);
                     // Queue for sync without creating files — files are created at upload time
-                    boolean queued = centralSyncService.initializeSync(n.name(), n.version());
+                    boolean queued = syncService.initializeSync(n.name(), n.version());
                     if (queued) {
                         Log.infof("Dependency '%s' queued for sync", depGavString);
                     } else {
                         Log.debugf("Dependency '%s' already synced or in progress", depGavString);
                     }
-                })
-                .runSubscriptionOn(Infrastructure.getDefaultWorkerPool())
-                .collect().asList()
-                .invoke(() -> {
+                }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool()).collect().asList().invoke(() -> {
                     Log.infof("Package %s dependencies have been checked.", req.name().toGavString(req.version()));
-                    centralSyncItemService.dependenciesChecked(item);
+                    syncItemService.dependenciesChecked(item);
                 }).replaceWithVoid();
     }
 

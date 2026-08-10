@@ -1,6 +1,8 @@
 package io.mvnpm.version;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -9,6 +11,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 
 class VersionMatcherTest {
+
     @ParameterizedTest
     @CsvFileSource(resources = "/versions-matcher.csv", numLinesToSkip = 1)
     void testSelectLatestMatchingVersionFromCSV(String mavenRange, String expectedVersion, String versionStrings) {

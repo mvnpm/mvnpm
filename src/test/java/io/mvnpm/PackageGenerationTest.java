@@ -28,10 +28,13 @@ import io.vertx.mutiny.core.Vertx;
 
 @QuarkusTest
 public class PackageGenerationTest {
+
     @Inject
     MavenRepositoryService mavenRepositoryService;
+
     @Inject
     PackageFileLocator packageFileLocator;
+
     @Inject
     Vertx vertx;
 

@@ -28,10 +28,10 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.jboss.resteasy.reactive.ResponseHeader;
 
 import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.utils.UrlPathParser;
 import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.maven.NameVersion;
-import io.mvnpm.maven.UrlPathParser;
+import io.mvnpm.maven.api.NameVersion;
 import io.quarkus.logging.Log;
 
 /**
@@ -83,8 +83,8 @@ public class JarContentsApi {
     }
 
     private JarLibrary loadJarLibrary(NameVersion nameVersion, FileType filetype) {
-        final java.nio.file.Path jar = mavenRepositoryService.getOrDownloadFromMavenCentral(
-                nameVersion.name(), nameVersion.version(), filetype);
+        final java.nio.file.Path jar = mavenRepositoryService.getOrDownloadFromMavenCentral(nameVersion.name(),
+                nameVersion.version(), filetype);
         try (InputStream inputStream = Files.newInputStream(jar)) {
             return loadJarLibrary(nameVersion, filetype, inputStream);
         } catch (IOException e) {

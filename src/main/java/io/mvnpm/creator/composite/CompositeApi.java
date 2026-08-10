@@ -16,7 +16,7 @@ import org.jboss.resteasy.reactive.NoCache;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import io.mvnpm.creator.type.MetadataService;
-import io.mvnpm.maven.exceptions.NotFoundInMavenCentralException;
+import io.mvnpm.maven.exceptions.NotFoundInRepositoryException;
 import io.mvnpm.npm.model.Name;
 
 /**
@@ -52,7 +52,7 @@ public class CompositeApi {
         Name n = new Name("@mvnpm/" + name);
         try {
             return metadataService.getMetadata(n).getVersioning().getVersions();
-        } catch (NotFoundInMavenCentralException e) {
+        } catch (NotFoundInRepositoryException e) {
             return List.of();
         }
 

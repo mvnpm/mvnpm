@@ -18,7 +18,7 @@ import jakarta.ws.rs.QueryParam;
 
 import org.jboss.resteasy.reactive.NoCache;
 
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.maven.sync.SyncItem;
 import io.quarkus.logging.Log;
 import io.quarkus.panache.common.Sort;
 import io.quarkus.vertx.ConsumeEvent;
@@ -64,11 +64,11 @@ public class EventLogApi {
         });
     }
 
-    @ConsumeEvent("central-sync-item-stage-change")
+    @ConsumeEvent("sync-item-stage-change")
     @Blocking
     @Transactional
-    public void stateChange(CentralSyncItem centralSyncItem) {
-        EventLogEntry eventLogEntry = EventLogEntryUtil.toEventLogEntry(centralSyncItem);
+    public void stateChange(SyncItem syncItem) {
+        EventLogEntry eventLogEntry = EventLogEntryUtil.toEventLogEntry(syncItem);
         eventLogEntry.persist();
         broadcast(eventLogEntry);
     }
@@ -91,8 +91,8 @@ public class EventLogApi {
     @GET
     @NoCache
     @Path("/gav/{groupId}/{artifactId}/{version}")
-    public List<EventLogEntry> getGavLog(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
-            @PathParam("version") String version) {
+    public List<EventLogEntry> getGavLog(@PathParam("groupId") String groupId,
+            @PathParam("artifactId") String artifactId, @PathParam("version") String version) {
         return EventLogEntry.findByGav(groupId, artifactId, version);
     }
 

@@ -15,8 +15,7 @@ import io.mvnpm.creator.type.JavaDocService;
 import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.type.SourceService;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.mavencentral.sync.CentralSyncItemService;
-import io.mvnpm.mavencentral.sync.CentralSyncService;
+import io.mvnpm.maven.sync.SyncService;
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
@@ -52,9 +51,7 @@ public class PackageListener {
     MavenRepositoryService mavenRepositoryService;
 
     @Inject
-    private CentralSyncItemService centralSyncItemService;
-    @Inject
-    private CentralSyncService centralSyncService;
+    private SyncService syncService;
 
     @ConsumeEvent(NewJarEvent.EVENT_NAME)
     @Blocking
@@ -62,7 +59,7 @@ public class PackageListener {
         Log.infof("'%s' has been created.", fse.jarFile());
         createBundleFiles(fse.pomFile(), fse.jarFile(), fse.tgzFile(), fse.others());
         Log.infof("Package %s is ready for Sync", fse.name().displayName);
-        boolean queued = centralSyncService.initializeSync(fse.name(), fse.version());
+        boolean queued = syncService.initializeSync(fse.name(), fse.version());
         if (queued) {
             Log.info(fse.name().displayName + " " + fse.version() + " added to the sync queue");
         }

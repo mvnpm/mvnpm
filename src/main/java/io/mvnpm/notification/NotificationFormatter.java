@@ -1,6 +1,6 @@
 package io.mvnpm.notification;
 
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
+import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 
@@ -50,25 +50,25 @@ public class NotificationFormatter {
             Release has been attempted using the <code>%s</code> staging repo
             """;
 
-    public static Notification getErrorAsHTML(CentralSyncItem centralSyncItem) {
-        return getNotificationAsMarkUp(centralSyncItem, ERROR);
+    public static Notification getErrorAsHTML(SyncItem syncItem) {
+        return getNotificationAsMarkUp(syncItem, ERROR);
     }
 
-    public static Notification getNotificationAsHTML(CentralSyncItem centralSyncItem) {
-        return getNotificationAsMarkUp(centralSyncItem, HTML);
+    public static Notification getNotificationAsHTML(SyncItem syncItem) {
+        return getNotificationAsMarkUp(syncItem, HTML);
     }
 
-    public static Notification getNotificationAsMarkDown(CentralSyncItem centralSyncItem) {
-        return getNotificationAsMarkUp(centralSyncItem, MARKDOWN);
+    public static Notification getNotificationAsMarkDown(SyncItem syncItem) {
+        return getNotificationAsMarkUp(syncItem, MARKDOWN);
     }
 
-    private static Notification getNotificationAsMarkUp(CentralSyncItem centralSyncItem, String format) {
-        Name name = NameParser.fromMavenGA(centralSyncItem.groupId, centralSyncItem.artifactId);
+    private static Notification getNotificationAsMarkUp(SyncItem syncItem, String format) {
+        Name name = NameParser.fromMavenGA(syncItem.groupId, syncItem.artifactId);
         String groupId = name.mvnGroupId;
         String artifactId = name.mvnArtifactId;
-        String version = centralSyncItem.version;
+        String version = syncItem.version;
         String npmName = name.npmFullName;
-        String repo = centralSyncItem.stagingRepoId;
+        String repo = syncItem.releaseId;
 
         String title = groupId + ":" + artifactId + ":" + version;
         String body = format.formatted(groupId, artifactId, version, npmName, repo);

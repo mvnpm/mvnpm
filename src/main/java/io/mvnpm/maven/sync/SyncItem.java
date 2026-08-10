@@ -1,0 +1,159 @@
+package io.mvnpm.maven.sync;
+
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Index;
+import jakarta.persistence.NamedQueries;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
+
+import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.Stage;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+
+@Entity
+@IdClass(Gav.class)
+@Table(indexes = { @Index(columnList = "stage, stageChangeTime DESC") })
+@NamedQueries({
+        @NamedQuery(name = "SyncItem.findByStage", query = "from SyncItem where stage = ?1 order by stageChangeTime DESC LIMIT ?2"),
+        @NamedQuery(name = "SyncItem.findUploadedButNotReleased", query = "from SyncItem where stage IN ?1 order by stageChangeTime DESC") })
+public class SyncItem extends PanacheEntityBase {
+    @Id
+    public String groupId;
+    @Id
+    public String artifactId;
+    @Id
+    public String version;
+
+    public LocalDateTime startTime;
+    public LocalDateTime stageChangeTime;
+    public String releaseId;
+    public Stage stage;
+
+    public boolean dependenciesChecked = false;
+    public int creationAttempts = 0;
+    public int uploadAttempts = 0;
+    public int promotionAttempts = 0;
+
+    public SyncItem() {
+
+    }
+
+    protected SyncItem(String groupId, String artifactId, String version) {
+        this.groupId = groupId;
+        this.artifactId = artifactId;
+        this.version = version;
+        this.startTime = LocalDateTime.now();
+        this.stage = Stage.NONE;
+        this.stageChangeTime = LocalDateTime.now();
+    }
+
+    public static SyncItem findOrCreate(Gav gav, Stage stage) {
+        insertIfNotPresent(gav, stage);
+        return findById(gav);
+    }
+
+    private static int insertIfNotPresent(Gav gav, Stage stage) {
+        return getEntityManager().createNativeQuery(
+                "INSERT INTO syncitem (groupid, artifactid, version, starttime, stage, stagechangetime, dependencieschecked, creationattempts, uploadattempts, promotionattempts)"
+                        + " VALUES (:groupId, :artifactId, :version, :now, :stage, :now, false, 0, 0, 0)"
+                        + " ON CONFLICT (groupid, artifactid, version) DO NOTHING")
+                .setParameter("groupId", gav.getGroupId()).setParameter("artifactId", gav.getArtifactId())
+                .setParameter("version", gav.getVersion()).setParameter("now", LocalDateTime.now())
+                .setParameter("stage", stage.ordinal()).executeUpdate();
+    }
+
+    public static List<SyncItem> findByStage(Stage stage, int limit) {
+        return find("#SyncItem.findByStage", stage, limit).list();
+    }
+
+    // TEMPORARY
+    public static List<SyncItem> findPackageWithUncheckedDependencies(int limit) {
+        return find(
+                "from SyncItem where stage = ?1 and dependenciesChecked = false order by stageChangeTime DESC LIMIT ?2",
+                Stage.RELEASED, limit).list();
+    }
+
+    public static List<SyncItem> findUpdloadedButNotReleased() {
+        List<Stage> uploadedButNotReleased = Arrays.asList(Stage.UPLOADED, Stage.CLOSED, Stage.RELEASING);
+        return find("#SyncItem.findUploadedButNotReleased", uploadedButNotReleased).list();
+    }
+
+    public boolean isInProgress() {
+        return this.stage.equals(Stage.CLOSED) || this.stage.equals(Stage.RELEASING)
+                || this.stage.equals(Stage.UPLOADED) || this.stage.equals(Stage.UPLOADING);
+    }
+
+    public boolean isStarted() {
+        return this.isInProgress() || this.stage.equals(Stage.INIT) || this.stage.equals(Stage.PACKAGING);
+    }
+
+    public boolean isInError() {
+        return this.stage.equals(Stage.ERROR);
+    }
+
+    public boolean alreadyReleased() {
+        return this.stage.equals(Stage.RELEASED);
+    }
+
+    public void increaseCreationAttempt() {
+        this.creationAttempts = this.creationAttempts + 1;
+    }
+
+    public void increaseUploadAttempt() {
+        this.uploadAttempts = this.uploadAttempts + 1;
+    }
+
+    public void increasePromotionAttempt() {
+        this.promotionAttempts = this.promotionAttempts + 1;
+    }
+
+    public String toGaString() {
+        return groupId + ":" + artifactId;
+    }
+
+    public String toGavString() {
+        return toGaString() + ":" + version;
+    }
+
+    @Override
+    public String toString() {
+        return toGavString() + " [" + stage + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 17 * hash + Objects.hashCode(this.groupId);
+        hash = 17 * hash + Objects.hashCode(this.artifactId);
+        hash = 17 * hash + Objects.hashCode(this.version);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final SyncItem other = (SyncItem) obj;
+        if (!Objects.equals(this.groupId, other.groupId)) {
+            return false;
+        }
+        if (!Objects.equals(this.artifactId, other.artifactId)) {
+            return false;
+        }
+        return Objects.equals(this.version, other.version);
+    }
+}

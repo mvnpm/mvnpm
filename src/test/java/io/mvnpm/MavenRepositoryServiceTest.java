@@ -30,8 +30,10 @@ class MavenRepositoryServiceTest {
 
     @Inject
     MavenRepositoryService mavenRepositoryService;
+
     @Inject
     PackageFileLocator packageFileLocator;
+
     @Inject
     Vertx vertx;
 
@@ -56,8 +58,7 @@ class MavenRepositoryServiceTest {
         Path localPath = mavenRepositoryService.getPath(name, version, FileType.jar);
         assertEquals(jarFile.toString(), localPath.toString());
 
-        List<FileType> files = List.of(
-                FileType.jar, FileType.source, FileType.javadoc, FileType.pom);
+        List<FileType> files = List.of(FileType.jar, FileType.source, FileType.javadoc, FileType.pom);
         List<Optional<String>> extentions = List.of(Optional.empty(), Optional.of(Constants.DOT_SHA1),
                 Optional.of(Constants.DOT_MD5));
 
@@ -83,8 +84,8 @@ class MavenRepositoryServiceTest {
         CompletableFuture<Void> future = new CompletableFuture<>();
         Thread.startVirtualThread(() -> {
             try {
-                mavenRepositoryService.checkDependencies(new DependencyVersionCheckRequest(pom, name, version))
-                        .await().atMost(Duration.ofMinutes(2));
+                mavenRepositoryService.checkDependencies(new DependencyVersionCheckRequest(pom, name, version)).await()
+                        .atMost(Duration.ofMinutes(2));
                 future.complete(null);
             } catch (Exception e) {
                 future.completeExceptionally(e);
@@ -103,19 +104,14 @@ class MavenRepositoryServiceTest {
     }
 
     private void waitFor(final Path pomFile) {
-        Boolean exists = vertx.fileSystem().exists(pomFile.toString())
-                .onItem().transformToUni(e -> {
-                    if (e) {
-                        return Uni.createFrom().item(true);
-                    } else {
-                        return Uni.createFrom().failure(new Exception("File not found"));
-                    }
-                })
-                .onFailure().invoke(() -> System.out.println("(retry)"))
-                .onFailure().retry()
-                .withBackOff(Duration.of(100, ChronoUnit.MILLIS))
-                .expireIn(1000L * 300L)
-                .await().indefinitely();
+        Boolean exists = vertx.fileSystem().exists(pomFile.toString()).onItem().transformToUni(e -> {
+            if (e) {
+                return Uni.createFrom().item(true);
+            } else {
+                return Uni.createFrom().failure(new Exception("File not found"));
+            }
+        }).onFailure().invoke(() -> System.out.println("(retry)")).onFailure().retry()
+                .withBackOff(Duration.of(100, ChronoUnit.MILLIS)).expireIn(1000L * 300L).await().indefinitely();
         assertTrue(exists);
     }
 }

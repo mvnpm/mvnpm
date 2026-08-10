@@ -3,8 +3,8 @@ package io.mvnpm.notification.email;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import io.mvnpm.mavencentral.sync.CentralSyncItem;
-import io.mvnpm.mavencentral.sync.Stage;
+import io.mvnpm.maven.api.Stage;
+import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.notification.Notification;
 import io.mvnpm.notification.NotificationFormatter;
 import io.quarkus.logging.Log;
@@ -24,13 +24,14 @@ public class EmailNotification {
     @Inject
     Mailer mailer;
 
-    @ConsumeEvent("central-sync-item-stage-change")
+    @ConsumeEvent("sync-item-stage-change")
     @Blocking
-    public void artifactReleased(CentralSyncItem centralSyncItem) {
-        if (centralSyncItem.stage.equals(Stage.RELEASED)) {
-            Notification notification = NotificationFormatter.getNotificationAsHTML(centralSyncItem);
+    public void artifactReleased(SyncItem syncItem) {
+        if (syncItem.stage.equals(Stage.RELEASED)) {
+            Notification notification = NotificationFormatter.getNotificationAsHTML(syncItem);
             try {
-                mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
+                mailer.send(
+                        Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
             } catch (Exception e) {
                 if (Log.isDebugEnabled()) {
                     Log.error("Failed to send release notification.", e);
