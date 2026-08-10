@@ -89,7 +89,7 @@ public class SyncItemService {
     public SyncItem claimNextForUpload() {
         @SuppressWarnings("unchecked")
         List<SyncItem> candidates = Panache.getEntityManager()
-                .createNativeQuery("SELECT * FROM syncitem WHERE stage = :init "
+                .createNativeQuery("SELECT * FROM centralsyncitem WHERE stage = :init "
                         + "ORDER BY stagechangetime ASC LIMIT 1 FOR UPDATE SKIP LOCKED", SyncItem.class)
                 .setParameter("init", Stage.INIT.ordinal()).getResultList();
         if (candidates.isEmpty()) {
@@ -108,7 +108,7 @@ public class SyncItemService {
     public SyncItem claimNextForErrorRetry() {
         @SuppressWarnings("unchecked")
         List<SyncItem> candidates = Panache.getEntityManager()
-                .createNativeQuery("SELECT * FROM syncitem WHERE stage = :error "
+                .createNativeQuery("SELECT * FROM centralsyncitem WHERE stage = :error "
                         + "ORDER BY stagechangetime ASC LIMIT 1 FOR UPDATE SKIP LOCKED", SyncItem.class)
                 .setParameter("error", Stage.ERROR.ordinal()).getResultList();
         if (candidates.isEmpty()) {
@@ -135,7 +135,7 @@ public class SyncItemService {
     public SyncItem claimNextForPackagingCheck() {
         @SuppressWarnings("unchecked")
         List<SyncItem> candidates = Panache.getEntityManager()
-                .createNativeQuery("SELECT * FROM syncitem WHERE stage = :packaging "
+                .createNativeQuery("SELECT * FROM centralsyncitem WHERE stage = :packaging "
                         + "ORDER BY stagechangetime ASC LIMIT 1 FOR UPDATE SKIP LOCKED", SyncItem.class)
                 .setParameter("packaging", Stage.PACKAGING.ordinal()).getResultList();
         if (candidates.isEmpty()) {

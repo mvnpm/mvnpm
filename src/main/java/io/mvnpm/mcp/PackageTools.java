@@ -1,5 +1,7 @@
 package io.mvnpm.mcp;
 
+import jakarta.inject.Inject;
+
 import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.ProjectInfo;
@@ -9,7 +11,6 @@ import io.quarkiverse.mcp.server.TextContent;
 import io.quarkiverse.mcp.server.Tool;
 import io.quarkiverse.mcp.server.ToolArg;
 import io.quarkiverse.mcp.server.ToolResponse;
-import jakarta.inject.Inject;
 
 public class PackageTools {
 

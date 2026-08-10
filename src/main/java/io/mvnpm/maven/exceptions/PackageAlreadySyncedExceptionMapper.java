@@ -3,13 +3,14 @@ package io.mvnpm.maven.exceptions;
 import java.time.Duration;
 import java.util.List;
 
-import io.mvnpm.maven.MavenCentralService;
-import io.vertx.ext.web.RoutingContext;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
+
+import io.mvnpm.maven.MavenCentralService;
+import io.vertx.ext.web.RoutingContext;
 
 @Provider
 public class PackageAlreadySyncedExceptionMapper implements ExceptionMapper<PackageAlreadySyncedException> {

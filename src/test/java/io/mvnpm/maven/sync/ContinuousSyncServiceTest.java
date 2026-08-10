@@ -137,7 +137,7 @@ class ContinuousSyncServiceTest {
 
     @Test
     void changeStageToReleasedCreatesSyncedPackage() {
-        // Create a CentralSyncItem and move it to RELEASED
+        // Create a SyncItem and move it to RELEASED
         SyncItem item = createItem("org.mvnpm", "released-pkg", "2.0.0");
         syncItemService.changeStage(item, Stage.RELEASED);
 

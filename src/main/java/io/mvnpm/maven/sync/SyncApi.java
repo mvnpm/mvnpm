@@ -86,7 +86,7 @@ public class SyncApi {
     @GET
     @NoCache
     @Path("/info/{groupId}/{artifactId}")
-    public SyncItem getCentralSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
+    public SyncItem getSyncItem(@PathParam("groupId") String groupId, @PathParam("artifactId") String artifactId,
             @DefaultValue("latest") @QueryParam("version") String version) {
         return syncService.checkReleaseInDbAndRepo(groupId, artifactId, version, false);
     }

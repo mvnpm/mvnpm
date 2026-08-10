@@ -10,6 +10,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Observes;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.WebApplicationException;
+
 import org.apache.commons.io.FileUtils;
 
 import io.mvnpm.creator.FileType;
@@ -42,11 +48,6 @@ import io.quarkus.security.UnauthorizedException;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
 import io.smallrye.common.annotation.RunOnVirtualThread;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.event.Observes;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
-import jakarta.ws.rs.WebApplicationException;
 
 /**
  * This runs Continuous (on some schedule) and check if any updates for libraries we have is available,
@@ -320,23 +321,23 @@ public class ContinuousSyncService {
                     try {
                         ReleaseStatus releaseStatus = mavenCentralFacade.status(uploadedItem, releaseId);
                         switch (releaseStatus) {
-                        case PENDING:
-                        case VALIDATING:
-                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.UPLOADED);
-                            break;
-                        case VALIDATED:
-                        case PUBLISHING:
-                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.CLOSED);
-                            break;
-                        case PUBLISHED:
-                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.RELEASED);
-                            break;
-                        case FAILED:
-                            uploadedItem = syncItemService.changeStage(uploadedItem, Stage.ERROR);
-                            // TODO: Here we should get more details, and do a drop maybe ?
-                            break;
-                        default:
-                            throw new AssertionError();
+                            case PENDING:
+                            case VALIDATING:
+                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.UPLOADED);
+                                break;
+                            case VALIDATED:
+                            case PUBLISHING:
+                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.CLOSED);
+                                break;
+                            case PUBLISHED:
+                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.RELEASED);
+                                break;
+                            case FAILED:
+                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.ERROR);
+                                // TODO: Here we should get more details, and do a drop maybe ?
+                                break;
+                            default:
+                                throw new AssertionError();
                         }
                     } catch (StatusCheckException ex) {
                         // Nothing really. We will catch this with the next one

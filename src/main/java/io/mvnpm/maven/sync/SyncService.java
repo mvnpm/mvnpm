@@ -2,6 +2,10 @@ package io.mvnpm.maven.sync;
 
 import java.nio.file.Path;
 
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
 import io.mvnpm.maven.api.BundleCreator;
 import io.mvnpm.maven.api.Gav;
 import io.mvnpm.maven.api.Stage;
@@ -12,9 +16,6 @@ import io.mvnpm.npm.NpmRegistryFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.ProjectInfo;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 
 /**
  * This sync a package with maven central

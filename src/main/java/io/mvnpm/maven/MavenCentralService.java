@@ -12,6 +12,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.core.Response;
+
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.maven.exceptions.MavenRequestError;
@@ -23,9 +27,6 @@ import io.vertx.mutiny.core.Vertx;
 import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
-import jakarta.ws.rs.core.Response;
 
 @Singleton
 public class MavenCentralService {
@@ -55,7 +56,7 @@ public class MavenCentralService {
     public Path downloadFromMavenCentral(Name name, String version, FileType type) {
         final HttpResponse<Buffer> response = getFromMavenCentral(name, version,
                 packageFileLocator.getLocalFileName(type, name, version, Optional.empty())).await()
-                        .atMost(Duration.ofSeconds(15));
+                .atMost(Duration.ofSeconds(15));
         try {
             Path downloaded = Files.createTempFile(CENTRAL_TMP_PREFIX + name.toGavString(version),
                     type.toString().toLowerCase());
