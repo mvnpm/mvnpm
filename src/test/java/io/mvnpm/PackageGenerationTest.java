@@ -40,7 +40,7 @@ public class PackageGenerationTest {
 
     @BeforeEach
     void setUp() {
-        vertx.fileSystem().deleteRecursive(packageFileLocator.getCacheDir().toString(), true).onFailure()
+        vertx.fileSystem().deleteRecursive(packageFileLocator.getCacheDir().toString()).onFailure()
                 .recoverWithNull().await().indefinitely();
     }
 

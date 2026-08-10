@@ -33,10 +33,9 @@ class FileUtilAscTest {
     static PGPPublicKeyRing publicKeyRing;
 
     @BeforeAll
-    static void generateTestKey()
-            throws PGPException, InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+    static void generateTestKey() throws PGPException, InvalidAlgorithmParameterException, NoSuchAlgorithmException {
         // Use RSA key where the primary key can sign (matches production key setup)
-        secretKeyRing = PGPainless.generateKeyRing().simpleRsaKeyRing("test@mvnpm.io", RsaLength._2048);
+        secretKeyRing = PGPainless.generateKeyRing().simpleRsaKeyRing("test@mvnpm.io", RsaLength._3072);
         publicKeyRing = PGPainless.extractCertificate(secretKeyRing);
     }
 
@@ -58,10 +57,8 @@ class FileUtilAscTest {
         // Verify the signature is valid using SOP verify
         SOP sop = new SOPImpl();
         byte[] certBytes = PGPainless.asciiArmor(publicKeyRing).getBytes(StandardCharsets.UTF_8);
-        List<Verification> verifications = sop.detachedVerify()
-                .cert(new ByteArrayInputStream(certBytes))
-                .signatures(Files.newInputStream(ascFile))
-                .data(new ByteArrayInputStream(content));
+        List<Verification> verifications = sop.detachedVerify().cert(new ByteArrayInputStream(certBytes))
+                .signatures(Files.newInputStream(ascFile)).data(new ByteArrayInputStream(content));
 
         assertFalse(verifications.isEmpty(), "Signature should be valid");
     }
@@ -110,10 +107,8 @@ class FileUtilAscTest {
         // Verify signature
         SOP sop = new SOPImpl();
         byte[] certBytes = PGPainless.asciiArmor(publicKeyRing).getBytes(StandardCharsets.UTF_8);
-        List<Verification> verifications = sop.detachedVerify()
-                .cert(new ByteArrayInputStream(certBytes))
-                .signatures(Files.newInputStream(ascFile))
-                .data(new ByteArrayInputStream(content));
+        List<Verification> verifications = sop.detachedVerify().cert(new ByteArrayInputStream(certBytes))
+                .signatures(Files.newInputStream(ascFile)).data(new ByteArrayInputStream(content));
 
         assertFalse(verifications.isEmpty(), "Signature for large file should be valid");
     }
