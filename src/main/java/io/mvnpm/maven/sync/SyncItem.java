@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
@@ -20,7 +19,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
 @Entity
 @IdClass(Gav.class)
-@Table(name = "centralsyncitem", indexes = { @Index(columnList = "stage, stageChangeTime DESC") })
+@Table(indexes = { @Index(columnList = "stage, stageChangeTime DESC") })
 @NamedQueries({
         @NamedQuery(name = "SyncItem.findByStage", query = "from SyncItem where stage = ?1 order by stageChangeTime DESC LIMIT ?2"),
         @NamedQuery(name = "SyncItem.findUploadedButNotReleased", query = "from SyncItem where stage IN ?1 order by stageChangeTime DESC") })
@@ -34,7 +33,6 @@ public class SyncItem extends PanacheEntityBase {
 
     public LocalDateTime startTime;
     public LocalDateTime stageChangeTime;
-    @Column(name = "stagingrepoId")
     public String releaseId;
     public Stage stage;
 
@@ -63,7 +61,7 @@ public class SyncItem extends PanacheEntityBase {
 
     private static int insertIfNotPresent(Gav gav, Stage stage) {
         return getEntityManager().createNativeQuery(
-                "INSERT INTO centralsyncitem (groupid, artifactid, version, starttime, stage, stagechangetime, dependencieschecked, creationattempts, uploadattempts, promotionattempts)"
+                "INSERT INTO syncitem (groupid, artifactid, version, starttime, stage, stagechangetime, dependencieschecked, creationattempts, uploadattempts, promotionattempts)"
                         + " VALUES (:groupId, :artifactId, :version, :now, :stage, :now, false, 0, 0, 0)"
                         + " ON CONFLICT (groupid, artifactid, version) DO NOTHING")
                 .setParameter("groupId", gav.getGroupId()).setParameter("artifactId", gav.getArtifactId())
