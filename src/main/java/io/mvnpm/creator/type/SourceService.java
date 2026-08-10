@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.zip.GZIPInputStream;
 
+import jakarta.enterprise.context.ApplicationScoped;
+
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
 import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
@@ -21,7 +23,6 @@ import org.apache.commons.io.IOUtils;
 import io.mvnpm.Constants;
 import io.mvnpm.creator.utils.FileUtil;
 import io.quarkus.logging.Log;
-import jakarta.enterprise.context.ApplicationScoped;
 
 /**
  * Create source jar file from tgz
