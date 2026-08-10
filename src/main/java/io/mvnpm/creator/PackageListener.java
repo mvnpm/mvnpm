@@ -97,9 +97,8 @@ public class PackageListener {
     @ConsumeEvent(DependencyVersionCheckRequest.NAME)
     @Blocking
     public void onCheckDependencyRequest(DependencyVersionCheckRequest req) {
-        mavenRepositoryService.checkDependencies(req)
-                .onFailure().invoke(failure -> Log.error("Failed to process dependencies", failure))
-                .subscribe();
+        mavenRepositoryService.checkDependencies(req).onFailure()
+                .invoke(failure -> Log.error("Failed to process dependencies", failure)).subscribe();
     }
 
 }

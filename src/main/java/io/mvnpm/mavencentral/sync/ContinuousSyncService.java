@@ -1,7 +1,5 @@
 package io.mvnpm.mavencentral.sync;
 
-import static io.mvnpm.mavencentral.ReleaseStatus.VALIDATED;
-import static io.mvnpm.mavencentral.ReleaseStatus.VALIDATING;
 import static io.quarkus.scheduler.Scheduled.ConcurrentExecution.SKIP;
 
 import java.nio.file.Path;
@@ -239,10 +237,10 @@ public class ContinuousSyncService {
                             return;
                         }
                         // A jar which stays more than 60 minutes in NONE stage needs to be recreated
-                        Log.warnf("Re-creating package (attempt: %d): %s",
-                                itemToBeCreated.creationAttempts, itemToBeCreated);
-                        Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId, itemToBeCreated.artifactId,
-                                itemToBeCreated.version);
+                        Log.warnf("Re-creating package (attempt: %d): %s", itemToBeCreated.creationAttempts,
+                                itemToBeCreated);
+                        Path dir = packageFileLocator.getLocalDirectory(itemToBeCreated.groupId,
+                                itemToBeCreated.artifactId, itemToBeCreated.version);
                         FileUtils.deleteQuietly(dir.toFile());
                         packageCreator.getFromCacheOrCreate(FileType.jar, name, itemToBeCreated.version);
                     }
@@ -294,8 +292,7 @@ public class ContinuousSyncService {
         if (centralSyncService.checkCentralStatusAndUpdateStageIfNeeded(item)) {
             return; // Item moved to RELEASED inside the check
         }
-        Log.debugf("Version [%s] of %s is NOT in central. Kicking off sync...",
-                item.version, item.toGavString());
+        Log.debugf("Version [%s] of %s is NOT in central. Kicking off sync...", item.version, item.toGavString());
         bus.publish("central-sync-item-stage-change", item);
     }
 
@@ -343,7 +340,8 @@ public class ContinuousSyncService {
                         }
                     } catch (StatusCheckException ex) {
                         // Nothing really. We will catch this with the next one
-                        Log.warn("Could not get status for " + uploadedItem.toGavString() + " (release Id: " + releaseId + ")");
+                        Log.warn("Could not get status for " + uploadedItem.toGavString() + " (release Id: " + releaseId
+                                + ")");
                     }
                 }
             }
@@ -420,7 +418,8 @@ public class ContinuousSyncService {
                 centralSyncItem.stagingRepoId = releaseId;
                 centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.UPLOADED);
             } catch (UploadFailedException exception) {
-                Log.warnf("Upload failed for '%s' because of: %s", centralSyncItem.toGavString(), exception.getMessage());
+                Log.warnf("Upload failed for '%s' because of: %s", centralSyncItem.toGavString(),
+                        exception.getMessage());
                 retryUpload(centralSyncItem, exception);
             } catch (UnauthorizedException unauthorizedException) {
                 unauthorizedException.printStackTrace();
@@ -486,8 +485,8 @@ public class ContinuousSyncService {
             }
             centralSyncItem.increaseUploadAttempt();
             if (centralSyncItem.uploadAttempts >= 10) {
-                Log.errorf("Upload stuck after %d attempts, moving to ERROR: %s",
-                        centralSyncItem.uploadAttempts, centralSyncItem);
+                Log.errorf("Upload stuck after %d attempts, moving to ERROR: %s", centralSyncItem.uploadAttempts,
+                        centralSyncItem);
                 centralSyncItem = centralSyncItemService.changeStage(centralSyncItem, Stage.ERROR);
             } else {
                 Log.infof("[MULTI-POD] Resetting stale upload for %s", centralSyncItem);
@@ -506,12 +505,11 @@ public class ContinuousSyncService {
     }
 
     private boolean isInternal(String groupId, String artifactId) {
-        return groupId.equals("org.mvnpm.at.mvnpm") ||
-                (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit")) || // Failed attempt at hardcoding versions
+        return groupId.equals("org.mvnpm.at.mvnpm") || (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit"))
+                || // Failed attempt at hardcoding versions
                 (groupId.equals("org.mvnpm.locked.at.vaadin") && artifactId.equals("router")) ||
                 // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm") && artifactId.equals(
-                        "vaadin-web-components")); // Before we used the @mvnpm namespave
+                (groupId.equals("org.mvnpm") && artifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
     }
 
 }
