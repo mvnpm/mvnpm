@@ -51,7 +51,7 @@ public final class MavenArtifactUploader implements Constants {
      * @param records The {@link BundleRecord}s to upload for given artifact
      * @return The resulting {@link DeployResult} of the method
      *         {@link RepositorySystem#deploy(RepositorySystemSession, DeployRequest)}
-     * @throws Exception
+     * @throws Exception if something went wrong
      */
     public final DeployResult upload(Gav gav, List<BundleRecord> records) throws Exception {
         final RemoteRepository repository = gav.getVersion().endsWith("-SNAPSHOT") ? snapshotsRepository

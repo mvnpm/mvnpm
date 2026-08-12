@@ -1,8 +1,6 @@
 package io.mvnpm.notification;
 
 import io.mvnpm.maven.sync.SyncItem;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 
@@ -14,7 +12,7 @@ import io.mvnpm.npm.model.NameParser;
 public class NotificationFormatter {
 
     private static final String MARKDOWN_MSG = """
-            [%s](%s) has automatically released the following artifact:
+            [mvnpm.org](https://mvnpm.org) has automatically released the following artifact:
 
             **Group Id:** `%s`
             **Artifact Id:** `%s`
@@ -26,7 +24,7 @@ public class NotificationFormatter {
             """;
 
     private static final String HTML_MSG = """
-            <a href="%s">%s</a> has automatically released the following artifact: <br/>
+            <a href="https://mvnpm.org">mvnpm.org</a> has automatically released the following artifact: <br/>
             <br/>
             <b>Group Id:</b> <code>%s</code><br/>
             <b>Artifact Id:</b> <code>%s</code><br/>
@@ -38,7 +36,7 @@ public class NotificationFormatter {
             """;
 
     private static final String ERROR_MSG = """
-            <a href="%s">%s</a> has failed to released the following artifact: <br/>
+            <a href="https://mvnpm.org">mvnpm.org</a> has failed to released the following artifact: <br/>
             <br/>
             <b>Group Id:</b> <code>%s</code><br/>
             <b>Artifact Id:</b> <code>%s</code><br/>
@@ -54,12 +52,6 @@ public class NotificationFormatter {
         HTML,
         ERROR;
     }
-
-    @ConfigProperty(name = "mvnpm.domain")
-    String domain;
-
-    @ConfigProperty(name = "mvnpm.website")
-    String website;
 
     private final SyncItem syncItem;
 
@@ -91,11 +83,11 @@ public class NotificationFormatter {
 
         String body = switch (format) {
             case ERROR:
-                yield ERROR_MSG.formatted(website, domain, groupId, artifactId, version, npmName, repo);
+                yield ERROR_MSG.formatted(groupId, artifactId, version, npmName, repo);
             case HTML:
-                yield HTML_MSG.formatted(website, domain, groupId, artifactId, version, npmName, repo);
+                yield HTML_MSG.formatted(groupId, artifactId, version, npmName, repo);
             case MARKDOWN:
-                yield MARKDOWN_MSG.formatted(domain, website, groupId, artifactId, version, npmName, repo);
+                yield MARKDOWN_MSG.formatted(groupId, artifactId, version, npmName, repo);
         };
 
         return new Notification(title, body);

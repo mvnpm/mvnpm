@@ -3,8 +3,6 @@ package io.mvnpm.notification.email;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
 import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.notification.Notification;
@@ -26,16 +24,13 @@ public class EmailNotification {
     @Inject
     Mailer mailer;
 
-    @ConfigProperty(name = "mvnpm.email")
-    String email;
-
     @ConsumeEvent("sync-item-stage-change")
     @Blocking
     public void artifactReleased(SyncItem syncItem) {
         if (syncItem.stage.equals(Stage.RELEASED)) {
             Notification notification = new NotificationFormatter(syncItem).getNotificationAsHTML();
             try {
-                mailer.send(Mail.withHtml(email, notification.title(), notification.body()));
+                mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
             } catch (Exception e) {
                 if (Log.isDebugEnabled()) {
                     Log.error("Failed to send release notification.", e);

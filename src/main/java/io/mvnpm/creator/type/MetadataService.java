@@ -28,7 +28,6 @@ import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.composite.CompositeService;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.maven.MavenService;
-import io.mvnpm.maven.api.Namespace;
 import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.ProjectInfo;
@@ -60,9 +59,6 @@ public class MetadataService {
     @Inject
     PackageFileLocator packageFileLocator;
 
-    @Inject
-    Namespace namespace;
-
     @ConfigProperty(name = "mvnpm.metadata-timeout.minutes")
     int timeout;
 
@@ -82,7 +78,7 @@ public class MetadataService {
         if (!Files.exists(localFilePath) || !Files.isRegularFile(localFilePath)
                 || isOlderThanTimeout(localFilePath, timeout)) {
             createDir(localFilePath);
-            if (namespace.isInternalName(name)) {
+            if (name.isInternal()) {
                 final Buffer buffer = mavenService.get(name, null, Constants.MAVEN_METADATA_XML)
                         .map(HttpResponse::bodyAsBuffer).await().atMost(Duration.ofSeconds(10));
                 FileUtil.writeAtomic(localFilePath, buffer.getBytes());

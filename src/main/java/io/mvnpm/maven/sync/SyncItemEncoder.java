@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:src/main/java/io/mvnpm/maven/sync/SyncItemEncoder.java
 package io.mvnpm.maven.sync;
-========
-package io.mvnpm.maven.api;
->>>>>>>> 57d5c9c (Issue #41655: opening repository API for custom extension):src/main/java/io/mvnpm/maven/api/SyncItemEncoder.java
 
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.websocket.DecodeException;

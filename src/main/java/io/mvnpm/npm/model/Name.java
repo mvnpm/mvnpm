@@ -70,4 +70,10 @@ public class Name {
     public String mvnGroupIdPath() {
         return this.mvnGroupId.replaceAll(Constants.ESCAPED_DOT, File.separator);
     }
+
+    public boolean isInternal() {
+        return this.mvnGroupId.equals(INTERNAL_NS);
+    }
+
+    private static final String INTERNAL_NS = "org.mvnpm.at.mvnpm";
 }

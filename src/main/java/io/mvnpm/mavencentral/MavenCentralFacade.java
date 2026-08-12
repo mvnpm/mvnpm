@@ -13,17 +13,15 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import io.mvnpm.error.ErrorHandlingService;
-import io.mvnpm.maven.api.ReleaseStatus;
-import io.mvnpm.maven.exceptions.StatusCheckException;
-import io.mvnpm.maven.exceptions.UploadFailedException;
-import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
 import io.mvnpm.maven.api.Gav;
 import io.mvnpm.maven.api.MavenFacade;
+import io.mvnpm.maven.api.ReleaseStatus;
+import io.mvnpm.maven.api.Stage;
+import io.mvnpm.maven.exceptions.StatusCheckException;
+import io.mvnpm.maven.exceptions.UploadFailedException;
 import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.maven.sync.SyncItemService;
-import io.mvnpm.mavencentral.exceptions.StatusCheckException;
-import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
 import io.quarkus.security.UnauthorizedException;
@@ -48,7 +46,8 @@ public class MavenCentralFacade implements MavenFacade {
     @ConfigProperty(name = "mvnpm.mavencentral.autorelease")
     boolean autorelease;
 
-    public boolean isContained(String groupId, String artifactId, String version) {
+    @Override
+    public boolean contains(String groupId, String artifactId, String version) {
         try {
             if (authorization.isPresent()) {
                 String a = "Bearer " + authorization.get();
@@ -71,6 +70,7 @@ public class MavenCentralFacade implements MavenFacade {
         return false;
     }
 
+    @Override
     public String upload(Gav gav, List<BundleRecord> records) throws UploadFailedException {
         // should only have one entry, namely: ("", <BundleRecord>)
         if (records.size() > 1) {
@@ -110,6 +110,7 @@ public class MavenCentralFacade implements MavenFacade {
         }
     }
 
+    @Override
     public ReleaseStatus status(SyncItem csi, String releaseId) throws StatusCheckException {
         try {
             if (authorization.isPresent()) {
@@ -131,7 +132,7 @@ public class MavenCentralFacade implements MavenFacade {
             }
         } catch (Throwable ex) {
             // Since we moved over to the new api, the old repoId in the DB does not work, so here we can try another way
-            if (isContained(csi.groupId, csi.artifactId, csi.version)) {
+            if (contains(csi.groupId, csi.artifactId, csi.version)) {
                 return ReleaseStatus.PUBLISHED;
             }
             throw new StatusCheckException(
@@ -139,4 +140,15 @@ public class MavenCentralFacade implements MavenFacade {
         }
     }
 
+    @Override
+    public Stage transition(ReleaseStatus status) throws AssertionError {
+        return switch (status) {
+            case PENDING, VALIDATING -> Stage.UPLOADED;
+            case VALIDATED, PUBLISHING -> Stage.CLOSED;
+            case PUBLISHED -> Stage.RELEASED;
+            // TODO: Here we should get more details, and do a drop maybe ?
+            case FAILED -> Stage.ERROR;
+            default -> throw new AssertionError();
+        };
+    }
 }

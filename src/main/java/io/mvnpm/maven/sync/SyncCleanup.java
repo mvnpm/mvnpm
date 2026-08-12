@@ -42,9 +42,6 @@ public class SyncCleanup {
     @Inject
     SyncItemService syncItemService;
 
-    @Inject
-    Namespace namespace;
-
     void onStart(@Observes io.quarkus.runtime.StartupEvent ev) {
         Uni.createFrom().voidItem().onItem().delayIt().by(Duration.ofMinutes(5))
                 .emitOn(Infrastructure.getDefaultWorkerPool()).subscribe().with(v -> weeklyCleanup());
@@ -118,7 +115,7 @@ public class SyncCleanup {
 
         String version = relativePath.getFileName().toString();
         String artifactId = relativePath.getParent().getFileName().toString();
-        StringBuilder groupId = new StringBuilder(namespace.toGroupId());
+        StringBuilder groupId = new StringBuilder("org.mvnpm");
         for (int i = 0; i < nameCount - 2; i++) {
             groupId.append('.').append(relativePath.getName(i));
         }

@@ -4,6 +4,7 @@ import java.time.temporal.ChronoUnit;
 
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
@@ -15,8 +16,7 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
-
-import io.mvnpm.maven.api.MavenClient;
+import org.jboss.resteasy.reactive.PartType;
 
 /**
  * The main client on https://central.sonatype.com
@@ -24,7 +24,7 @@ import io.mvnpm.maven.api.MavenClient;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @RegisterRestClient(configKey = "mavencentral")
-public interface MavenCentralClient extends MavenClient {
+public interface MavenCentralClient {
 
     @POST
     @Path("/api/v1/publisher/upload")
@@ -44,4 +44,22 @@ public interface MavenCentralClient extends MavenClient {
     @Produces(MediaType.APPLICATION_JSON)
     Response isPublished(@HeaderParam("Authorization") String authorization, @QueryParam("namespace") String groupId,
             @QueryParam("name") String artifactId, @QueryParam("version") String version);
+
+    /**
+     * Multipart form for maven-central upload.
+     */
+    static class BundleUploadForm {
+
+        @FormParam("bundle")
+        @PartType(MediaType.APPLICATION_OCTET_STREAM)
+        public byte[] bundle;
+    }
+
+    /**
+     * Publishing enumeration.
+     */
+    static enum PublishingType {
+        AUTOMATIC,
+        USER_MANAGED
+    }
 }

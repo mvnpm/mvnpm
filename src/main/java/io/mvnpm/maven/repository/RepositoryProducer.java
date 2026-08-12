@@ -26,10 +26,10 @@ public final class RepositoryProducer implements Constants {
     @ConfigProperty(name = "quarkus.rest-client.repository.url")
     private String basePath;
 
-    @ConfigProperty(name = "mvnpm.custom-repository.username")
+    @ConfigProperty(name = "mvnpm.custom.mvn-repository.username")
     private String userName;
 
-    @ConfigProperty(name = "mvnpm.custom-repository.password")
+    @ConfigProperty(name = "mvnpm.custom.mvn-repository.password")
     private String password;
 
     @ConfigProperty(name = "mvnpm.custom.mvn-repository.releases")

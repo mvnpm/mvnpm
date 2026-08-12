@@ -3,9 +3,9 @@ package io.mvnpm.maven.api;
 import java.util.List;
 
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
-import io.mvnpm.mavencentral.ReleaseStatus;
-import io.mvnpm.mavencentral.exceptions.StatusCheckException;
-import io.mvnpm.mavencentral.exceptions.UploadFailedException;
+import io.mvnpm.maven.exceptions.StatusCheckException;
+import io.mvnpm.maven.exceptions.UploadFailedException;
+import io.mvnpm.maven.sync.SyncItem;
 
 /**
  * Facade interface for any kind of maven-repository.
@@ -23,9 +23,10 @@ public interface MavenFacade {
      * @return <code>true</code> if the dependency is already in the maven repository, <code>false</code>
      *         otherwise
      */
-    public boolean isContained(String groupId, String artifactId, String version);
+    boolean contains(String groupId, String artifactId, String version);
 
     /**
+     *
      * Should upload the given file to the maven repository and return the release-id
      * to the uploaded file.
      *
@@ -35,7 +36,7 @@ public interface MavenFacade {
      *         the status of the upload
      * @throws UploadFailedException if the upload failed
      */
-    public String upload(Gav gav, List<BundleRecord> records) throws UploadFailedException;
+    String upload(Gav gav, List<BundleRecord> records) throws UploadFailedException;
 
     /**
      * Checks the status of the given release-id and returns the status.
@@ -45,5 +46,14 @@ public interface MavenFacade {
      * @return the status of the upload
      * @throws StatusCheckException if the status check failed
      */
-    public ReleaseStatus status(SyncItem syncItem, String releaseId) throws StatusCheckException;
+    ReleaseStatus status(SyncItem syncItem, String releaseId) throws StatusCheckException;
+
+    /**
+     * Transitions a {@link ReleaseStatus} to according {@link Stage}.
+     *
+     * @param status The {@link ReleaseStatus} to transition from
+     * @return The {@link Stage} which results from transition
+     * @throws AssertionError if status is not covered by method
+     */
+    Stage transition(final ReleaseStatus status) throws AssertionError;
 }

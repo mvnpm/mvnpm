@@ -3,7 +3,6 @@ package io.mvnpm.mcp;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import io.mvnpm.maven.api.Namespace;
 import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
@@ -14,15 +13,12 @@ public class McpNameResolver {
     @Inject
     NpmFacade npmFacade;
 
-    @Inject
-    Namespace namespace;
-
     /**
      * Accepts either NPM name (e.g. "lit", "@hotwired/stimulus")
      * or Maven coordinates (e.g. "org.mvnpm:lit", "org.mvnpm.at.hotwired:stimulus")
      */
     public Name resolve(String nameOrCoordinates) {
-        if (nameOrCoordinates.contains(":") && nameOrCoordinates.startsWith(namespace.toGroupId())) {
+        if (nameOrCoordinates.contains(":") && nameOrCoordinates.startsWith("org.mvnpm")) {
             String[] parts = nameOrCoordinates.split(":", 2);
             return NameParser.fromMavenGA(parts[0], parts[1]);
         }

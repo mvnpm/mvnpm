@@ -27,19 +27,21 @@ import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.MavenService;
+import io.mvnpm.maven.api.MavenFacade;
 import io.mvnpm.maven.api.ReleaseStatus;
 import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.maven.exceptions.StatusCheckException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
-import io.mvnpm.maven.MavenService;
 import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.version.InvalidVersionException;
+import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
@@ -55,6 +57,7 @@ import io.smallrye.common.annotation.RunOnVirtualThread;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
+@DefaultBean
 public class ContinuousSyncService {
 
     @Inject
@@ -92,9 +95,6 @@ public class ContinuousSyncService {
 
     @Inject
     io.vertx.mutiny.core.eventbus.EventBus bus;
-
-    @Inject
-    private Namespace namespace;
 
     @Scheduled(cron = "{mvnpm.checkerror.cron.expr}", concurrentExecution = SKIP)
     @RunOnVirtualThread
@@ -158,10 +158,10 @@ public class ContinuousSyncService {
 
     private LocalDateTime computeNextCheck(String groupId, String artifactId) {
         try {
-            if (namespace.isInternal(groupId, artifactId)) {
+            Name name = NameParser.fromMavenGA(groupId, artifactId);
+            if (name.isInternal()) {
                 return LocalDateTime.now().plusDays(1);
             }
-            Name name = NameParser.fromMavenGA(groupId, artifactId);
             ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
             if (info != null && info.lastModified() != null) {
                 Instant lastModified = Instant.parse(info.lastModified());
@@ -316,31 +316,12 @@ public class ContinuousSyncService {
         if (!uploaded.isEmpty()) {
             Map<String, SyncItem> uploadedMap = mapByReleaseId(uploaded);
             if (!uploadedMap.isEmpty()) {
-
                 for (Map.Entry<String, SyncItem> itemToCheck : uploadedMap.entrySet()) {
                     SyncItem uploadedItem = itemToCheck.getValue();
                     String releaseId = itemToCheck.getKey();
                     try {
                         ReleaseStatus releaseStatus = mavenFacade.status(uploadedItem, releaseId);
-                        switch (releaseStatus) {
-                            case PENDING:
-                            case VALIDATING:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.UPLOADED);
-                                break;
-                            case VALIDATED:
-                            case PUBLISHING:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.CLOSED);
-                                break;
-                            case PUBLISHED:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.RELEASED);
-                                break;
-                            case FAILED:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.ERROR);
-                                // TODO: Here we should get more details, and do a drop maybe ?
-                                break;
-                            default:
-                                throw new AssertionError();
-                        }
+                        uploadedItem = syncItemService.changeStage(uploadedItem, mavenFacade.transition(releaseStatus));
                     } catch (StatusCheckException ex) {
                         // Nothing really. We will catch this with the next one
                         Log.warn("Could not get status for " + uploadedItem.toGavString() + " (release Id: " + releaseId
@@ -381,10 +362,10 @@ public class ContinuousSyncService {
     private void update(String groupId, String artifactId) {
         Log.debug("====== mvnpm: Continuous Updater ======");
         Log.debug("\tChecking " + groupId + ":" + artifactId);
-        if (!namespace.isInternal(groupId, artifactId)) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        if (!name.isInternal()) {
             // Get latest in NPM TODO: Later make this per patch release...
             try {
-                Name name = NameParser.fromMavenGA(groupId, artifactId);
                 ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
                 if (info != null) {
                     String latest = info.distTags().latest();
@@ -448,7 +429,7 @@ public class ContinuousSyncService {
         Path jarPath = mavenRepositoryService.getPath(name, version, FileType.jar);
         Path pomPath = packageFileLocator.getLocalFullPath(FileType.pom, name, version);
         // Composites (internal packages) don't have a tgz file
-        Path tgzPath = namespace.isInternalName(name) ? null
+        Path tgzPath = name.isInternal() ? null
                 : packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
         // Synchronously create remaining bundle files (source, javadoc, asc, hashes)
         packageListener.createBundleFiles(pomPath, jarPath, tgzPath, List.of());

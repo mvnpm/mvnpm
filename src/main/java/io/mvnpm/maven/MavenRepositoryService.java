@@ -21,10 +21,6 @@ import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.utils.ImportMapUtil;
 import io.mvnpm.maven.api.NameVersion;
-import io.mvnpm.maven.api.Namespace;
-import io.mvnpm.maven.api.SyncItem;
-import io.mvnpm.maven.api.SyncItemService;
-import io.mvnpm.maven.api.SyncService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.maven.sync.SyncItemService;
@@ -73,11 +69,8 @@ public class MavenRepositoryService {
     @Inject
     SyncService syncService;
 
-    @Inject
-    Namespace namespace;
-
     public byte[] getImportMap(NameVersion nameVersion) {
-        if (namespace.isInternalName(nameVersion.name())) {
+        if (nameVersion.name().isInternal()) {
             try {
                 return Files.readAllBytes(compositeService.getImportMap(nameVersion.name(), nameVersion.version()));
             } catch (IOException e) {
@@ -107,7 +100,7 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getPath(name, latestVersion, type);
         } else {
-            if (namespace.isInternalName(name)) {
+            if (name.isInternal()) {
                 return compositeService.getPath(name, version, type);
             } else {
                 return packageCreator.getFromCacheOrCreate(type, name, version);
@@ -162,7 +155,7 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getSha1(name, latestVersion, type);
         } else {
-            if (namespace.isInternalName(name)) {
+            if (name.isInternal()) {
                 return compositeService.getSha1Path(name, version, type);
             } else {
                 return packageCreator.getSha1FromCacheOrCreate(type, name, version);
@@ -180,7 +173,7 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getMd5(name, latestVersion, type);
         } else {
-            if (namespace.isInternalName(name)) {
+            if (name.isInternal()) {
                 return compositeService.getMd5Path(name, version, type);
             } else {
                 return packageCreator.getMd5FromCacheOrCreate(type, name, version);
@@ -198,7 +191,7 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getAsc(name, latestVersion, type);
         } else {
-            if (namespace.isInternalName(name)) {
+            if (name.isInternal()) {
                 return compositeService.getAscPath(name, version, type);
             } else {
                 return packageCreator.getAscFromCacheOrCreate(type, name, version);

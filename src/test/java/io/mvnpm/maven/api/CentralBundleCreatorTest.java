@@ -22,8 +22,8 @@ import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import io.mvnpm.Constants;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
+import io.mvnpm.maven.exceptions.UploadFailedException;
 import io.mvnpm.mavencentral.CentralBundleCreator;
-import io.mvnpm.mavencentral.exceptions.UploadFailedException;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 

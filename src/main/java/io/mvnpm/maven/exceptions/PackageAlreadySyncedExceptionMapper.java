@@ -9,7 +9,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 
-import io.mvnpm.maven.MavenCentralService;
+import io.mvnpm.maven.MavenService;
 import io.vertx.ext.web.RoutingContext;
 
 @Provider
@@ -30,7 +30,7 @@ public class PackageAlreadySyncedExceptionMapper implements ExceptionMapper<Pack
                     .build();
         }
         if (proxy.size() == 1 && proxy.get(0).equals("true")) {
-            return mavenService.proxyRequest(exception.name(), exception.version(), exception.fileName()).await()
+            return mavenService.proxyMavenRequest(exception.name(), exception.version(), exception.fileName()).await()
                     .atMost(Duration.ofSeconds(10));
         }
         return exception.getErrorResponse();

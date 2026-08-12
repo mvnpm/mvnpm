@@ -22,6 +22,7 @@ import org.mockito.Mockito;
 import io.mvnpm.creator.PackageListener;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.MavenFacade;
 import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.npm.api.NpmFacade;

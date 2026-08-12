@@ -30,11 +30,8 @@ import org.jboss.resteasy.reactive.ResponseHeader;
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.utils.UrlPathParser;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.maven.api.NameVersion;
 import io.mvnpm.maven.MavenService;
-import io.mvnpm.maven.NameVersion;
-import io.mvnpm.maven.UrlPathParser;
-import io.mvnpm.maven.api.Namespace;
+import io.mvnpm.maven.api.NameVersion;
 import io.quarkus.logging.Log;
 
 /**
@@ -53,41 +50,34 @@ public class JarContentsApi {
     @Inject
     MavenService mavenService;
 
-    @Inject
-    Namespace namespace;
-
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
-    @Path("/{namespace}/{gavt : (.+)?}.jar")
-    public JarLibrary getJar(@PathParam("namespace") String namespace, @PathParam("gavt") String gavt) {
-        this.namespace.check(namespace);
+    @Path("/org/mvnpm/{gavt : (.+)?}.jar")
+    public JarLibrary getJar(@PathParam("gavt") String gavt) {
         NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
         return loadJarLibrary(nameVersion, FileType.jar);
     }
 
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
-    @Path("/{namespace}/{gavt : (.+)?}-sources.jar")
-    public JarLibrary getSourcesJar(@PathParam("namespace") String namespace, @PathParam("gavt") String gavt) {
-        this.namespace.check(namespace);
+    @Path("/org/mvnpm/{gavt : (.+)?}-sources.jar")
+    public JarLibrary getSourcesJar(@PathParam("gavt") String gavt) {
         NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
         return loadJarLibrary(nameVersion, FileType.source);
     }
 
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
-    @Path("/{namespace}/{gavt : (.+)?}-javadoc.jar")
-    public JarLibrary getJavadocJar(@PathParam("namespace") String namespace, @PathParam("gavt") String gavt) {
-        this.namespace.check(namespace);
+    @Path("/org/mvnpm/{gavt : (.+)?}-javadoc.jar")
+    public JarLibrary getJavadocJar(@PathParam("gavt") String gavt) {
         NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
         return loadJarLibrary(nameVersion, FileType.javadoc);
     }
 
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
-    @Path("/{namespace}/{gavt : (.+)?}.tgz")
-    public JarLibrary getTgz(@PathParam("namespace") String namespace, @PathParam("gavt") String gavt) {
-        this.namespace.check(namespace);
+    @Path("/org/mvnpm/{gavt : (.+)?}.tgz")
+    public JarLibrary getTgz(@PathParam("gavt") String gavt) {
         NameVersion nameVersion = UrlPathParser.parseMavenFile(gavt);
         return loadTarGzLibrary(nameVersion);
     }

@@ -5,11 +5,12 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.inject.Inject;
+
 import io.mvnpm.Constants;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.quarkus.logging.Log;
-import jakarta.inject.Inject;
 
 /**
  * An interface for the creation of bundles in the format which is expected by a
@@ -55,7 +56,7 @@ public abstract class BundleCreator {
      * @param artifactId of the dependency to bundle
      * @param version of the dependency to bundle
      * @return the {@link List} with all {@link BundleRecord}s to the bundled in
-     * the dependency
+     *         the dependency
      * @throws MissingFilesForBundleException if files are missing
      */
     protected abstract List<BundleRecord> buildBundle(String groupId, String artifactId, String version)
@@ -67,9 +68,9 @@ public abstract class BundleCreator {
      *
      * @param parent {@link Path} from which file-names should be searched
      * @param base {@link String} which should be contained in returned
-     * {@link Path} file-names
+     *        {@link Path} file-names
      * @return a {@link List} of {@link Path}s where file-names matched the base
-     * {@link String}
+     *         {@link String}
      */
     protected abstract List<BundleRecord> getRecordsInBundle(Path parent, String base);
 
@@ -81,7 +82,7 @@ public abstract class BundleCreator {
      * @param artifactId of the dependency to bundle
      * @param version of the dependency to bundle
      * @return a {@link List} of {@link BundleRecord}s for the files contained
-     * in a dependency
+     *         in a dependency
      * @throws MissingFilesForBundleException if files are missing
      */
     protected List<BundleRecord> getRecordsOf(String groupId, String artifactId, String version)

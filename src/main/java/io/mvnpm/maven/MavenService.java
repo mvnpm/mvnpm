@@ -34,7 +34,7 @@ import io.vertx.mutiny.ext.web.client.WebClient;
 public final class MavenService {
 
     @ConfigProperty(name = "quarkus.maven-repository.url")
-    public static String MAVEN_REPO_URL;
+    public String repositoryUrl;
 
     @Inject
     private Vertx vertx;
@@ -54,7 +54,7 @@ public final class MavenService {
             file = "%s/%s".formatted(version, file);
         }
         return URI.create(
-                (MAVEN_REPO_URL + "/%s/%s/%s").formatted(name.mvnGroupIdPath(),
+                (repositoryUrl + "/%s/%s/%s").formatted(name.mvnGroupIdPath(),
                         name.mvnArtifactId, file));
     }
 
@@ -90,7 +90,7 @@ public final class MavenService {
     }
 
     public Uni<Response> proxyMavenRequest(Name name, String version, String fileName) {
-        return getFromMavenCentral(name, version, fileName).onItem().transform(response -> {
+        return get(name, version, fileName).onItem().transform(response -> {
             if (response.statusCode() == 200) {
                 final Response.ResponseBuilder builder = Response.ok(response.bodyAsBuffer());
                 for (Map.Entry<String, String> header : response.headers()) {

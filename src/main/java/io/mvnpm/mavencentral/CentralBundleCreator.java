@@ -17,7 +17,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import io.mvnpm.Constants;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.maven.api.BundleCreator;
-import io.mvnpm.mavencentral.exceptions.MissingFilesForBundleException;
+import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
 
