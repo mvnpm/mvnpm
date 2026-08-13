@@ -15,7 +15,7 @@ import io.mvnpm.maven.sync.SyncItem;
 import io.quarkus.arc.properties.IfBuildProperty;
 
 @ApplicationScoped
-@IfBuildProperty(name = "mvnpm.custom.mvn-repository.enabled", stringValue = "true")
+@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
 public class TestMavenFacade implements MavenFacade {
 
     @Override

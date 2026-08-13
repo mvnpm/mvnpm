@@ -10,7 +10,7 @@ import io.mvnpm.npm.model.SearchResults;
 import io.quarkus.arc.properties.IfBuildProperty;
 
 @ApplicationScoped
-@IfBuildProperty(name = "mvnpm.custom.mvn-repository.enabled", stringValue = "true")
+@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
 public class TestNpmFacade implements NpmFacade {
 
     @Override
