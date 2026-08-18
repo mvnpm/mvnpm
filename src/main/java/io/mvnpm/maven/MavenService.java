@@ -33,7 +33,7 @@ import io.vertx.mutiny.ext.web.client.WebClient;
 @Singleton
 public final class MavenService {
 
-    @ConfigProperty(name = "quarkus.maven-repository.url")
+    @ConfigProperty(name = "mvnpm.custom.repository.url")
     public String repositoryUrl;
 
     @Inject
