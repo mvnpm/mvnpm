@@ -31,7 +31,7 @@ import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 
 @Singleton
-public final class MavenService {
+public class MavenService {
 
     @ConfigProperty(name = "mvnpm.custom.repository.url")
     public String repositoryUrl;
