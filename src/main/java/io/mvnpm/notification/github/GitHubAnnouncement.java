@@ -42,7 +42,7 @@ public class GitHubAnnouncement {
     public void artifactReleased(SyncItem syncItem) {
         if (syncItem.stage.equals(Stage.RELEASED) && token.isPresent()) {
 
-            Notification notification = new NotificationFormatter(syncItem).getNotificationAsMarkDown();
+            Notification notification = NotificationFormatter.getNotificationAsMarkDown(syncItem);
 
             String a = "Bearer " + token.get();
             String query = ANNOUNCE_MUTATION.formatted(repositoryId, categoryId, notification.body(),

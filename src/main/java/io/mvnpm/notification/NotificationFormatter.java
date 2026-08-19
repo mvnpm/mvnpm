@@ -11,8 +11,11 @@ import io.mvnpm.npm.model.NameParser;
  */
 public class NotificationFormatter {
 
-    private static final String MARKDOWN_MSG = """
-            [mvnpm.org](https://mvnpm.org) has automatically released the following artifact:
+    private NotificationFormatter() {
+    }
+
+    private static final String MARKDOWN = """
+            [mvnpm.org](http://mvnpm.org) has automatically released the following artifact:
 
             **Group Id:** `%s`
             **Artifact Id:** `%s`
@@ -23,8 +26,8 @@ public class NotificationFormatter {
             Release has been done using the `%s` staging repo
             """;
 
-    private static final String HTML_MSG = """
-            <a href="https://mvnpm.org">mvnpm.org</a> has automatically released the following artifact: <br/>
+    private static final String HTML = """
+            <a href="http://mvnpm.org">mvnpm.org</a> has automatically released the following artifact: <br/>
             <br/>
             <b>Group Id:</b> <code>%s</code><br/>
             <b>Artifact Id:</b> <code>%s</code><br/>
@@ -35,8 +38,8 @@ public class NotificationFormatter {
             Release has been done using the <code>%s</code> staging repo
             """;
 
-    private static final String ERROR_MSG = """
-            <a href="https://mvnpm.org">mvnpm.org</a> has failed to released the following artifact: <br/>
+    private static final String ERROR = """
+            <a href="http://mvnpm.org">mvnpm.org</a> has failed to released the following artifact: <br/>
             <br/>
             <b>Group Id:</b> <code>%s</code><br/>
             <b>Artifact Id:</b> <code>%s</code><br/>
@@ -47,31 +50,19 @@ public class NotificationFormatter {
             Release has been attempted using the <code>%s</code> staging repo
             """;
 
-    private static enum Format {
-        MARKDOWN,
-        HTML,
-        ERROR;
+    public static Notification getErrorAsHTML(SyncItem syncItem) {
+        return getNotificationAsMarkUp(syncItem, ERROR);
     }
 
-    private final SyncItem syncItem;
-
-    public NotificationFormatter(final SyncItem syncItem) {
-        this.syncItem = syncItem;
+    public static Notification getNotificationAsHTML(SyncItem syncItem) {
+        return getNotificationAsMarkUp(syncItem, HTML);
     }
 
-    public final Notification getErrorAsHTML() {
-        return getNotificationAsMarkUp(syncItem, Format.ERROR);
+    public static Notification getNotificationAsMarkDown(SyncItem syncItem) {
+        return getNotificationAsMarkUp(syncItem, MARKDOWN);
     }
 
-    public final Notification getNotificationAsHTML() {
-        return getNotificationAsMarkUp(syncItem, Format.HTML);
-    }
-
-    public final Notification getNotificationAsMarkDown() {
-        return getNotificationAsMarkUp(syncItem, Format.MARKDOWN);
-    }
-
-    private final Notification getNotificationAsMarkUp(SyncItem syncItem, Format format) {
+    private static Notification getNotificationAsMarkUp(SyncItem syncItem, String format) {
         Name name = NameParser.fromMavenGA(syncItem.groupId, syncItem.artifactId);
         String groupId = name.mvnGroupId;
         String artifactId = name.mvnArtifactId;
@@ -80,15 +71,7 @@ public class NotificationFormatter {
         String repo = syncItem.releaseId;
 
         String title = groupId + ":" + artifactId + ":" + version;
-
-        String body = switch (format) {
-            case ERROR:
-                yield ERROR_MSG.formatted(groupId, artifactId, version, npmName, repo);
-            case HTML:
-                yield HTML_MSG.formatted(groupId, artifactId, version, npmName, repo);
-            case MARKDOWN:
-                yield MARKDOWN_MSG.formatted(groupId, artifactId, version, npmName, repo);
-        };
+        String body = format.formatted(groupId, artifactId, version, npmName, repo);
 
         return new Notification(title, body);
     }

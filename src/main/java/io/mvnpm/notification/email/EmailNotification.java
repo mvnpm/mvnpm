@@ -28,9 +28,10 @@ public class EmailNotification {
     @Blocking
     public void artifactReleased(SyncItem syncItem) {
         if (syncItem.stage.equals(Stage.RELEASED)) {
-            Notification notification = new NotificationFormatter(syncItem).getNotificationAsHTML();
+            Notification notification = NotificationFormatter.getNotificationAsHTML(syncItem);
             try {
-                mailer.send(Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
+                mailer.send(
+                        Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
             } catch (Exception e) {
                 if (Log.isDebugEnabled()) {
                     Log.error("Failed to send release notification.", e);
