@@ -1,4 +1,4 @@
-package io.mvnpm.maven;
+package io.mvnpm.maven.api;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -20,22 +21,22 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
 import io.mvnpm.Constants;
-import io.mvnpm.maven.api.BundleCreator;
+import io.mvnpm.maven.api.BundleCreator.BundleRecord;
 import io.mvnpm.maven.exceptions.UploadFailedException;
-import io.mvnpm.mavencentral.MavenCentralFacade;
+import io.mvnpm.mavencentral.CentralBundleCreator;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
 @QuarkusTest
 @TestProfile(BundleTestProfile.class)
 @EnabledIfEnvironmentVariable(named = "MVNPM_SONATYPE_AUTHORIZATION", matches = ".*")
-public class BundleCreatorTest {
+public class CentralBundleCreatorTest {
 
     @Inject
-    BundleCreator bundleCreator;
+    CentralBundleCreator bundleCreator;
 
     @Inject
-    MavenCentralFacade mavenCentralFacade;
+    MavenFacade mavenFacade;
 
     @Test
     public void testBundleUpload() throws Exception {
@@ -43,8 +44,9 @@ public class BundleCreatorTest {
         String artifactId = "lit";
         String version = "3.2.1";
 
-        Path bundlePath = bundleCreator.bundle(groupId, artifactId, version);
-
+        List<BundleRecord> bundleRecords = bundleCreator.bundle(groupId, artifactId, version);
+        assertTrue(bundleRecords.size() == 1, "Bundle records should be of size 1 for maven-central uploads");
+        final Path bundlePath = bundleRecords.get(0).path();
         assertNotNull(bundlePath, "Bundle path should not be null");
         assertTrue(Files.exists(bundlePath), "Bundle file should exist");
         assertTrue(Files.isRegularFile(bundlePath), "Bundle should be a regular file");
@@ -108,7 +110,7 @@ public class BundleCreatorTest {
 
         String uploadId = null;
         try {
-            uploadId = mavenCentralFacade.upload(target);
+            uploadId = mavenFacade.upload(new Gav(groupId, artifactId, version), bundleRecords);
         } catch (UploadFailedException e) {
             e.printStackTrace();
             fail("Upload failed: " + e.getMessage());
@@ -119,6 +121,5 @@ public class BundleCreatorTest {
         assertFalse(uploadId.isEmpty(), "UploadId should not be empty");
 
         System.out.println("Upload successful! Upload ID: " + uploadId);
-
     }
 }

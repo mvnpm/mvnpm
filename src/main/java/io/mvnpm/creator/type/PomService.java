@@ -32,7 +32,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import io.mvnpm.Constants;
 import io.mvnpm.creator.utils.FileUtil;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Bugs;
 import io.mvnpm.npm.model.Maintainer;
 import io.mvnpm.npm.model.Name;
@@ -50,7 +50,7 @@ import io.quarkus.logging.Log;
 public class PomService {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     HashService hashService;
@@ -175,7 +175,7 @@ public class PomService {
         } else if (model.getScm() != null && model.getScm().getDeveloperConnection() != null) {
             return model.getScm().getDeveloperConnection();
         } else {
-            return "http://mvnpm.org"; // If all else fail, set our URL, as an empty one fails the oss sonatype validation
+            return "https://mvnpm.org"; // If all else fail, set URL
         }
     }
 
@@ -315,7 +315,7 @@ public class PomService {
 
         // This is an open ended range. Let's get the latest for a bottom boundary
         if (trimVersion.equals(OPEN_BLOCK + COMMA + CLOSE_ROUND)) {
-            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
             return OPEN_BLOCK + info.distTags().latest() + COMMA + CLOSE_ROUND;
         }
         // TODO: Make other ranges more effient too ?

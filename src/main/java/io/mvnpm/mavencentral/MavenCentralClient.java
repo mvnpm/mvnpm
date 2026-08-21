@@ -31,34 +31,33 @@ public interface MavenCentralClient {
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     @Produces(MediaType.TEXT_PLAIN)
     @Timeout(unit = ChronoUnit.SECONDS, value = 300)
-    Response uploadBundle(
-            @HeaderParam("Authorization") String authorization,
-            @QueryParam("name") String name,
-            @QueryParam("publishingType") PublishingType publishingType,
-            @BeanParam BundleUploadForm form);
+    Response uploadBundle(@HeaderParam("Authorization") String authorization, @QueryParam("name") String name,
+            @QueryParam("publishingType") PublishingType publishingType, @BeanParam BundleUploadForm form);
 
     @POST
     @Path("/api/v1/publisher/status")
     @Produces(MediaType.APPLICATION_JSON)
-    Response getReleaseStatus(
-            @HeaderParam("Authorization") String authorization,
-            @QueryParam("id") String releaseId);
+    Response getReleaseStatus(@HeaderParam("Authorization") String authorization, @QueryParam("id") String releaseId);
 
     @GET
     @Path("/api/v1/publisher/published")
     @Produces(MediaType.APPLICATION_JSON)
-    Response isPublished(
-            @HeaderParam("Authorization") String authorization,
-            @QueryParam("namespace") String groupId,
-            @QueryParam("name") String artifactId,
-            @QueryParam("version") String version);
+    Response isPublished(@HeaderParam("Authorization") String authorization, @QueryParam("namespace") String groupId,
+            @QueryParam("name") String artifactId, @QueryParam("version") String version);
 
+    /**
+     * Multipart form for maven-central upload.
+     */
     static class BundleUploadForm {
+
         @FormParam("bundle")
         @PartType(MediaType.APPLICATION_OCTET_STREAM)
         public byte[] bundle;
     }
 
+    /**
+     * Publishing enumeration.
+     */
     static enum PublishingType {
         AUTOMATIC,
         USER_MANAGED

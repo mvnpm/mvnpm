@@ -1,131 +1,110 @@
 package io.mvnpm.maven.api;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import io.mvnpm.Constants;
 import io.mvnpm.creator.PackageFileLocator;
-import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.quarkus.logging.Log;
 
 /**
- * This creates a bundles (pom, jar, -sources, -javadoc) in the format Nexus expects
+ * An interface for the creation of bundles in the format which is expected by a
+ * repository-manager.
  *
- * @author Phillip Kruger (phillip.kruger@gmail.com)
+ * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
-@ApplicationScoped
-public class BundleCreator {
+public abstract class BundleCreator {
 
     @Inject
-    PackageFileLocator packageFileLocator;
+    protected PackageFileLocator packageFileLocator;
 
-    public Path bundle(String groupId, String artifactId, String version) throws MissingFilesForBundleException {
-        Log.debug("====== mvnpm: Nexus Bundler ======");
+    /**
+     * A helper class for combining the classifier which is uploaded, and the
+     * path to the file.
+     *
+     * @param classifier The classifier of the given file-{@link Path}
+     * @param path The {@link Path} to the file
+     */
+    public final record BundleRecord(String classifier, Path path) {
+    }
+
+    /**
+     * Calls the bundle method and returns the {@link Path} to the resulting
+     * bundle.
+     *
+     * @param groupId of the dependency to bundle
+     * @param artifactId of the dependency to bundle
+     * @param version of the dependency to bundle
+     * @return the {@link Path} to the bundled dependency
+     * @throws MissingFilesForBundleException if files are missing
+     */
+    public List<BundleRecord> bundle(String groupId, String artifactId, String version)
+            throws MissingFilesForBundleException {
+        Log.debug("====== mvnpm: Bundler ======");
         return buildBundle(groupId, artifactId, version);
     }
 
-    private Path buildBundle(String groupId, String artifactId, String version) throws MissingFilesForBundleException {
-        List<Path> files = getFiles(groupId, artifactId, version);
+    /**
+     * Should build the bundle for given dependency.
+     *
+     * @param groupId of the dependency to bundle
+     * @param artifactId of the dependency to bundle
+     * @param version of the dependency to bundle
+     * @return the {@link List} with all {@link BundleRecord}s to the bundled in
+     *         the dependency
+     * @throws MissingFilesForBundleException if files are missing
+     */
+    protected abstract List<BundleRecord> buildBundle(String groupId, String artifactId, String version)
+            throws MissingFilesForBundleException;
 
-        Path parent = packageFileLocator.getLocalDirectory(groupId, artifactId, version);
-        String bundlelocation = artifactId + Constants.HYPHEN + version + "-bundle.jar";
-        Path bundlePath = parent.resolve(bundlelocation);
+    /**
+     * Should return a list of {@link Path}s containing the <code>base</code>
+     * parameter.
+     *
+     * @param parent {@link Path} from which file-names should be searched
+     * @param base {@link String} which should be contained in returned
+     *        {@link Path} file-names
+     * @return a {@link List} of {@link Path}s where file-names matched the base
+     *         {@link String}
+     */
+    protected abstract List<BundleRecord> getRecordsInBundle(Path parent, String base);
 
-        Log.debug("\tBuilding bundle " + bundlePath + "...");
-
-        if (!Files.exists(bundlePath)) {
-            final Path temp = FileUtil.getTempFilePathFor(bundlePath);
-            File bundleFile = temp.toFile();
-            try (FileOutputStream fos = new FileOutputStream(bundleFile);
-                    BufferedOutputStream bos = new BufferedOutputStream(fos);
-                    ZipOutputStream zos = new ZipOutputStream(bos)) {
-
-                String basePath = groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
-
-                for (Path path : files) {
-                    String zipEntryName = basePath + path.getFileName();
-                    Log.debug("\tAdding to bundle: " + zipEntryName);
-
-                    ZipEntry zipEntry = new ZipEntry(zipEntryName);
-                    zos.putNextEntry(zipEntry);
-                    try (InputStream fileInputStream = Files.newInputStream(path)) {
-                        int bytesRead;
-                        byte[] buffer = new byte[4096];
-                        while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                            zos.write(buffer, 0, bytesRead);
-                        }
-                    } catch (IOException e) {
-                        throw new RuntimeException("Error streaming file content: " + path, e);
-                    }
-                    zos.closeEntry();
-                }
-
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-            try {
-                FileUtil.forceMoveAtomic(temp, bundlePath);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        }
-        return bundlePath;
-    }
-
-    private List<Path> getFiles(String groupId, String artifactId, String version)
+    /**
+     * Should return a {@link List} of {@link Path}s to all files for a given
+     * dependency.
+     *
+     * @param groupId of the dependency to bundle
+     * @param artifactId of the dependency to bundle
+     * @param version of the dependency to bundle
+     * @return a {@link List} of {@link BundleRecord}s for the files contained
+     *         in a dependency
+     * @throws MissingFilesForBundleException if files are missing
+     */
+    protected List<BundleRecord> getRecordsOf(String groupId, String artifactId, String version)
             throws MissingFilesForBundleException {
         // Files that needs to be in the bundle
         Path parent = packageFileLocator.getLocalDirectory(groupId, artifactId, version);
         String base = artifactId + Constants.HYPHEN + version;
-        List<Path> fileNames = getFileNamesInBundle(parent, base);
+        List<BundleRecord> records = getRecordsInBundle(parent, base);
         List<String> notReady = new ArrayList<>();
-        for (Path fileName : fileNames) {
-            boolean ready = Files.exists(fileName);
-            Log.debug("\tbundle: " + fileName + " [" + ready + "]");
+        for (BundleRecord record : records) {
+            boolean ready = Files.exists(record.path());
+            Log.debug("\tbundle: " + record.path() + " [" + ready + "]");
             if (!ready) {
-                notReady.add(fileName.toString());
+                notReady.add(record.path().toString());
             }
         }
 
         if (notReady.isEmpty())
-            return fileNames;
+            return records;
 
         throw new MissingFilesForBundleException(
                 "Some files (%s) are not available yet to build the bundle for '%s:%s:%s' (waiting for next batch)"
                         .formatted(notReady, groupId, artifactId, version));
-    }
-
-    private List<Path> getFileNamesInBundle(Path parent, String base) {
-        List<Path> fileNames = List.of(parent.resolve(base + Constants.DOT_POM),
-                parent.resolve(base + Constants.DOT_POM + Constants.DOT_ASC),
-                parent.resolve(base + Constants.DOT_POM + Constants.DOT_MD5),
-                parent.resolve(base + Constants.DOT_POM + Constants.DOT_SHA1), parent.resolve(base + Constants.DOT_JAR),
-                parent.resolve(base + Constants.DOT_JAR + Constants.DOT_ASC),
-                parent.resolve(base + Constants.DOT_JAR + Constants.DOT_MD5),
-                parent.resolve(base + Constants.DOT_JAR + Constants.DOT_SHA1),
-                parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR),
-                parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_ASC),
-                parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_MD5),
-                parent.resolve(base + Constants.DASH_SOURCES_DOT_JAR + Constants.DOT_SHA1),
-                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR),
-                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_ASC),
-                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_MD5),
-                parent.resolve(base + Constants.DASH_JAVADOC_DOT_JAR + Constants.DOT_SHA1));
-
-        return fileNames;
     }
 }

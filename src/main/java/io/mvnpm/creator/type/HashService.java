@@ -7,6 +7,7 @@ import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import io.mvnpm.creator.utils.FileUtil;
+import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
 
 /**
@@ -15,6 +16,7 @@ import io.quarkus.logging.Log;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
+@DefaultBean
 public class HashService {
 
     public List<Path> createHashes(Path filePath) {

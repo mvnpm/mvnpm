@@ -3,7 +3,7 @@ package io.mvnpm.mcp;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 
@@ -11,11 +11,11 @@ import io.mvnpm.npm.model.NameParser;
 public class McpNameResolver {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     /**
-     * Accepts either NPM name ("lit", "@hotwired/stimulus")
-     * or Maven coordinates ("org.mvnpm:lit", "org.mvnpm.at.hotwired:stimulus")
+     * Accepts either NPM name (e.g. "lit", "@hotwired/stimulus")
+     * or Maven coordinates (e.g. "org.mvnpm:lit", "org.mvnpm.at.hotwired:stimulus")
      */
     public Name resolve(String nameOrCoordinates) {
         if (nameOrCoordinates.contains(":") && nameOrCoordinates.startsWith("org.mvnpm")) {
@@ -30,7 +30,7 @@ public class McpNameResolver {
      */
     public String resolveVersion(Name name, String version) {
         if (version == null || version.isBlank() || "latest".equalsIgnoreCase(version)) {
-            return npmRegistryFacade.getProjectInfo(name.npmFullName).distTags().latest();
+            return npmFacade.getProjectInfo(name.npmFullName).distTags().latest();
         }
         return version;
     }

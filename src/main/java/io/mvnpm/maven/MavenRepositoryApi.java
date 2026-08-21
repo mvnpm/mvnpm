@@ -27,7 +27,7 @@ import io.mvnpm.maven.api.NameVersion;
 import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.maven.sync.SyncItemService;
 import io.mvnpm.maven.sync.SyncService;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.version.InvalidVersionException;
@@ -45,7 +45,7 @@ public class MavenRepositoryApi {
     MavenRepositoryService mavenRepositoryService;
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     MetadataService metadataService;
@@ -103,7 +103,7 @@ public class MavenRepositoryApi {
         if (nameVersion.name().isInternal()) {
             return Response.ok().header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE).build(); // TODO: Can we return this in some format ?
         } else {
-            return Response.ok(npmRegistryFacade.getPackage(nameVersion.name().npmFullName, nameVersion.version()))
+            return Response.ok(npmFacade.getPackage(nameVersion.name().npmFullName, nameVersion.version()))
                     .header(HEADER_CACHE_CONTROL, HEADER_CACHE_CONTROL_IMMUTABLE).build();
         }
     }

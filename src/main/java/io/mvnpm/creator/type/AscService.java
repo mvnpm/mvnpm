@@ -15,6 +15,7 @@ import org.jboss.logging.Logger;
 import org.pgpainless.PGPainless;
 
 import io.mvnpm.creator.utils.FileUtil;
+import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.LaunchMode;
 import io.quarkus.runtime.StartupEvent;
@@ -25,6 +26,7 @@ import io.quarkus.runtime.StartupEvent;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
+@DefaultBean
 public class AscService {
 
     private PGPSecretKeyRing secretKeyRing = null;

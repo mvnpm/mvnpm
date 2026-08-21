@@ -26,21 +26,22 @@ import io.mvnpm.creator.composite.CompositeCreator;
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.error.ErrorHandlingService;
-import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.MavenService;
+import io.mvnpm.maven.api.MavenFacade;
 import io.mvnpm.maven.api.ReleaseStatus;
 import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.maven.exceptions.StatusCheckException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
-import io.mvnpm.mavencentral.MavenCentralFacade;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.exceptions.GetPackageException;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.version.InvalidVersionException;
+import io.quarkus.arc.DefaultBean;
 import io.quarkus.logging.Log;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.scheduler.Scheduled;
@@ -56,16 +57,17 @@ import io.smallrye.common.annotation.RunOnVirtualThread;
  * @author Phillip Kruger (phillip.kruger@gmail.com)
  */
 @ApplicationScoped
+@DefaultBean
 public class ContinuousSyncService {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     SyncService syncService;
 
     @Inject
-    MavenCentralFacade mavenCentralFacade;
+    MavenFacade mavenFacade;
 
     @Inject
     ErrorHandlingService errorHandlingService;
@@ -89,7 +91,7 @@ public class ContinuousSyncService {
     PackageListener packageListener;
 
     @Inject
-    MavenCentralService mavenCentralService;
+    MavenService mavenService;
 
     @Inject
     io.vertx.mutiny.core.eventbus.EventBus bus;
@@ -156,11 +158,11 @@ public class ContinuousSyncService {
 
     private LocalDateTime computeNextCheck(String groupId, String artifactId) {
         try {
-            if (isInternal(groupId, artifactId)) {
+            Name name = NameParser.fromMavenGA(groupId, artifactId);
+            if (name.isInternal()) {
                 return LocalDateTime.now().plusDays(1);
             }
-            Name name = NameParser.fromMavenGA(groupId, artifactId);
-            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
             if (info != null && info.lastModified() != null) {
                 Instant lastModified = Instant.parse(info.lastModified());
                 long ageDays = Duration.between(lastModified, Instant.now()).toDays();
@@ -208,7 +210,7 @@ public class ContinuousSyncService {
                 final String gavString = name.toGavString(item.version);
                 try {
                     Log.infof("Checking versions for %s", gavString);
-                    final Path pom = mavenCentralService.downloadFromMavenCentral(name, item.version, FileType.pom);
+                    final Path pom = mavenService.download(name, item.version, FileType.pom);
                     mavenRepositoryService.checkDependencies(new DependencyVersionCheckRequest(pom, name, item.version))
                             .await().atMost(Duration.ofHours(1));
                 } catch (Exception e) {
@@ -314,31 +316,12 @@ public class ContinuousSyncService {
         if (!uploaded.isEmpty()) {
             Map<String, SyncItem> uploadedMap = mapByReleaseId(uploaded);
             if (!uploadedMap.isEmpty()) {
-
                 for (Map.Entry<String, SyncItem> itemToCheck : uploadedMap.entrySet()) {
                     SyncItem uploadedItem = itemToCheck.getValue();
                     String releaseId = itemToCheck.getKey();
                     try {
-                        ReleaseStatus releaseStatus = mavenCentralFacade.status(uploadedItem, releaseId);
-                        switch (releaseStatus) {
-                            case PENDING:
-                            case VALIDATING:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.UPLOADED);
-                                break;
-                            case VALIDATED:
-                            case PUBLISHING:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.CLOSED);
-                                break;
-                            case PUBLISHED:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.RELEASED);
-                                break;
-                            case FAILED:
-                                uploadedItem = syncItemService.changeStage(uploadedItem, Stage.ERROR);
-                                // TODO: Here we should get more details, and do a drop maybe ?
-                                break;
-                            default:
-                                throw new AssertionError();
-                        }
+                        ReleaseStatus releaseStatus = mavenFacade.status(uploadedItem, releaseId);
+                        uploadedItem = syncItemService.changeStage(uploadedItem, mavenFacade.transition(releaseStatus));
                     } catch (StatusCheckException ex) {
                         // Nothing really. We will catch this with the next one
                         Log.warn("Could not get status for " + uploadedItem.toGavString() + " (release Id: " + releaseId
@@ -379,11 +362,11 @@ public class ContinuousSyncService {
     private void update(String groupId, String artifactId) {
         Log.debug("====== mvnpm: Continuous Updater ======");
         Log.debug("\tChecking " + groupId + ":" + artifactId);
-        if (!isInternal(groupId, artifactId)) {
+        Name name = NameParser.fromMavenGA(groupId, artifactId);
+        if (!name.isInternal()) {
             // Get latest in NPM TODO: Later make this per patch release...
             try {
-                Name name = NameParser.fromMavenGA(groupId, artifactId);
-                ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+                ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
                 if (info != null) {
                     String latest = info.distTags().latest();
                     // Queue for sync without creating files — files are created at upload time
@@ -392,7 +375,7 @@ public class ContinuousSyncService {
                     if (queued) {
                         Log.infof("Continuous Updater: New package %s %s queued for sync", name.npmFullName, latest);
                     } else {
-                        Log.debugf("Continuous Updater: Package %s already synced or in progress", name.npmFullName);
+                        Log.infof("Continuous Updater: Package %s already synced or in progress", name.npmFullName);
                     }
                 }
             } catch (WebApplicationException wae) {
@@ -446,7 +429,8 @@ public class ContinuousSyncService {
         Path jarPath = mavenRepositoryService.getPath(name, version, FileType.jar);
         Path pomPath = packageFileLocator.getLocalFullPath(FileType.pom, name, version);
         // Composites (internal packages) don't have a tgz file
-        Path tgzPath = name.isInternal() ? null : packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
+        Path tgzPath = name.isInternal() ? null
+                : packageFileLocator.getLocalFullPath(FileType.tgz, name, version);
         // Synchronously create remaining bundle files (source, javadoc, asc, hashes)
         packageListener.createBundleFiles(pomPath, jarPath, tgzPath, List.of());
     }
@@ -502,13 +486,4 @@ public class ContinuousSyncService {
             syncItem = syncItemService.changeStage(syncItem, Stage.UPLOADED);
         }
     }
-
-    private boolean isInternal(String groupId, String artifactId) {
-        return groupId.equals("org.mvnpm.at.mvnpm") || (groupId.equals("org.mvnpm.locked") && artifactId.equals("lit"))
-                || // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm.locked.at.vaadin") && artifactId.equals("router")) ||
-                // Failed attempt at hardcoding versions
-                (groupId.equals("org.mvnpm") && artifactId.equals("vaadin-web-components")); // Before we used the @mvnpm namespave
-    }
-
 }

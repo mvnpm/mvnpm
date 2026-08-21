@@ -16,7 +16,7 @@ import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.type.SourceService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.sync.SyncService;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.quarkus.logging.Log;
 import io.quarkus.vertx.ConsumeEvent;
 import io.smallrye.common.annotation.Blocking;
@@ -45,7 +45,7 @@ public class PackageListener {
     PomService pomService;
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     MavenRepositoryService mavenRepositoryService;

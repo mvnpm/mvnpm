@@ -16,7 +16,7 @@ import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.type.TgzService;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.quarkus.logging.Log;
 import io.vertx.mutiny.core.eventbus.EventBus;
@@ -51,13 +51,12 @@ public class PackageCreator {
     MavenRepositoryService mavenRepositoryService;
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     public PackageAlreadySyncedException newPackageAlreadySyncedException(Name name, String version, FileType type,
             Optional<String> dotSigned) {
-        return new PackageAlreadySyncedException(packageFileLocator.getLocalFileName(type, name, version, dotSigned), name,
-                version,
-                type);
+        return new PackageAlreadySyncedException(packageFileLocator.getLocalFileName(type, name, version, dotSigned),
+                name, version, type);
     }
 
     public Path getFromCacheOrCreate(FileType type, Name name, String version) {
@@ -99,9 +98,8 @@ public class PackageCreator {
         }
     }
 
-    private Path create(FileType type, Name name, String version,
-            Path localFilePath) {
-        io.mvnpm.npm.model.Package p = npmRegistryFacade.getPackage(name.npmFullName, version);
+    private Path create(FileType type, Name name, String version, Path localFilePath) {
+        io.mvnpm.npm.model.Package p = npmFacade.getPackage(name.npmFullName, version);
         switch (type) {
             case tgz -> tgzService.fetchRemoteAndSave(p, localFilePath);
             case jar -> createAndSaveJar(localFilePath, p);
@@ -116,8 +114,7 @@ public class PackageCreator {
         Path tgzPath = mavenRepositoryService.getPath(p.name(), p.version(), FileType.tgz);
         jarService.createAndSaveJar(p, jarPath, pomPath, tgzPath);
         hashService.createHashes(jarPath);
-        bus.send(NewJarEvent.EVENT_NAME,
-                new NewJarEvent(pomPath, jarPath, tgzPath, List.of(), p.name(), p.version()));
+        bus.send(NewJarEvent.EVENT_NAME, new NewJarEvent(pomPath, jarPath, tgzPath, List.of(), p.name(), p.version()));
 
     }
 }

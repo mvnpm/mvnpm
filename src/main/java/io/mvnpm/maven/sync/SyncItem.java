@@ -24,10 +24,13 @@ import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
         @NamedQuery(name = "SyncItem.findByStage", query = "from SyncItem where stage = ?1 order by stageChangeTime DESC LIMIT ?2"),
         @NamedQuery(name = "SyncItem.findUploadedButNotReleased", query = "from SyncItem where stage IN ?1 order by stageChangeTime DESC") })
 public class SyncItem extends PanacheEntityBase {
+
     @Id
     public String groupId;
+
     @Id
     public String artifactId;
+
     @Id
     public String version;
 

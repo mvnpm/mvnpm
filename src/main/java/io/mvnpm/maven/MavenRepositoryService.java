@@ -25,7 +25,7 @@ import io.mvnpm.maven.exceptions.PackageAlreadySyncedException;
 import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.maven.sync.SyncItemService;
 import io.mvnpm.maven.sync.SyncService;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Package;
@@ -46,7 +46,7 @@ import io.smallrye.mutiny.infrastructure.Infrastructure;
 public class MavenRepositoryService {
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     CompositeService compositeService;
@@ -58,16 +58,16 @@ public class MavenRepositoryService {
     ImportMapUtil importMapUtil;
 
     @Inject
-    private MavenCentralService mavenCentralService;
+    MavenService mavenService;
 
     @Inject
-    private PomService pomService;
+    PomService pomService;
 
     @Inject
-    private SyncItemService syncItemService;
+    SyncItemService syncItemService;
 
     @Inject
-    private SyncService syncService;
+    SyncService syncService;
 
     public byte[] getImportMap(NameVersion nameVersion) {
         if (nameVersion.name().isInternal()) {
@@ -77,7 +77,7 @@ public class MavenRepositoryService {
                 throw new RuntimeException(e);
             }
         } else {
-            Package npmPackage = npmRegistryFacade.getPackage(nameVersion.name().npmFullName, nameVersion.version());
+            Package npmPackage = npmFacade.getPackage(nameVersion.name().npmFullName, nameVersion.version());
             return importMapUtil.createImportMap(npmPackage);
         }
     }
@@ -91,7 +91,7 @@ public class MavenRepositoryService {
         try {
             return getPath(name, version, type);
         } catch (PackageAlreadySyncedException e) {
-            return mavenCentralService.downloadFromMavenCentral(name, version, type);
+            return mavenService.download(name, version, type);
         }
     }
 
@@ -119,7 +119,7 @@ public class MavenRepositoryService {
                 .transformToUniAndConcatenate(d -> Uni.createFrom().item(() -> {
                     final String range = d.getVersion();
                     final Name name = NameParser.fromMavenGA(d.getGroupId(), d.getArtifactId());
-                    ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+                    ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
                     if (info == null) {
                         return null;
                     }
@@ -137,7 +137,7 @@ public class MavenRepositoryService {
                     if (queued) {
                         Log.infof("Dependency '%s' queued for sync", depGavString);
                     } else {
-                        Log.debugf("Dependency '%s' already synced or in progress", depGavString);
+                        Log.warnf("Dependency '%s' already synced or in progress", depGavString);
                     }
                 }).runSubscriptionOn(Infrastructure.getDefaultWorkerPool()).collect().asList().invoke(() -> {
                     Log.infof("Package %s dependencies have been checked.", req.name().toGavString(req.version()));
@@ -200,7 +200,7 @@ public class MavenRepositoryService {
     }
 
     private String getLatestVersion(Name fullName) {
-        ProjectInfo info = npmRegistryFacade.getProjectInfo(fullName.npmFullName);
+        ProjectInfo info = npmFacade.getProjectInfo(fullName.npmFullName);
         return info.distTags().latest();
     }
 }

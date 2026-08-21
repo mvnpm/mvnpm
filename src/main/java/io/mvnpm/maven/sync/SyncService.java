@@ -1,18 +1,19 @@
 package io.mvnpm.maven.sync;
 
-import java.nio.file.Path;
+import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import io.mvnpm.maven.api.BundleCreator;
+import io.mvnpm.maven.api.BundleCreator.BundleRecord;
 import io.mvnpm.maven.api.Gav;
+import io.mvnpm.maven.api.MavenFacade;
 import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.MissingFilesForBundleException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
-import io.mvnpm.mavencentral.MavenCentralFacade;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.ProjectInfo;
@@ -29,10 +30,10 @@ public class SyncService {
     BundleCreator bundleCreator;
 
     @Inject
-    MavenCentralFacade mavenCentralFacade;
+    MavenFacade mavenFacade;
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     SyncItemService syncItemService;
@@ -96,7 +97,7 @@ public class SyncService {
     }
 
     public boolean checkStatusAndUpdateStageIfNeeded(SyncItem syncItem) {
-        boolean isPublished = mavenCentralFacade.isInCentral(syncItem.groupId, syncItem.artifactId, syncItem.version);
+        boolean isPublished = mavenFacade.contains(syncItem.groupId, syncItem.artifactId, syncItem.version);
         if (isPublished) {
             syncItem = syncItemService.changeStage(syncItem, Stage.RELEASED);
         }
@@ -109,8 +110,8 @@ public class SyncService {
 
     public String sync(String groupId, String artifactId, String version)
             throws UploadFailedException, MissingFilesForBundleException {
-        Path bundlePath = bundleCreator.bundle(groupId, artifactId, version);
-        return mavenCentralFacade.upload(bundlePath);
+        List<BundleRecord> records = bundleCreator.bundle(groupId, artifactId, version);
+        return mavenFacade.upload(new Gav(groupId, artifactId, version), records);
     }
 
     public String getLatestVersion(String groupId, String artifactId) {
@@ -119,7 +120,7 @@ public class SyncService {
     }
 
     public String getLatestVersion(Name fullName) {
-        ProjectInfo info = npmRegistryFacade.getProjectInfo(fullName.npmFullName);
+        ProjectInfo info = npmFacade.getProjectInfo(fullName.npmFullName);
         return info.distTags().latest();
     }
 }

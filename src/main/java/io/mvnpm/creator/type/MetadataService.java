@@ -27,8 +27,8 @@ import io.mvnpm.Constants;
 import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.composite.CompositeService;
 import io.mvnpm.creator.utils.FileUtil;
-import io.mvnpm.maven.MavenCentralService;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.maven.MavenService;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.version.InvalidVersionException;
@@ -48,13 +48,13 @@ public class MetadataService {
     private final MetadataXpp3Reader metadataXpp3Reader = new MetadataXpp3Reader();
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     CompositeService compositeService;
 
     @Inject
-    MavenCentralService mavenCentralService;
+    MavenService mavenService;
 
     @Inject
     PackageFileLocator packageFileLocator;
@@ -75,12 +75,12 @@ public class MetadataService {
     public Path getMetadataXml(Name name) {
         Path localFilePath = packageFileLocator.getLocalMetadataXmlFullPath(name);
         // Create if does not exist.
-        if (!Files.exists(localFilePath) || !Files.isRegularFile(localFilePath) || isOlderThanTimeout(localFilePath, timeout)) {
+        if (!Files.exists(localFilePath) || !Files.isRegularFile(localFilePath)
+                || isOlderThanTimeout(localFilePath, timeout)) {
             createDir(localFilePath);
             if (name.isInternal()) {
-                final Buffer buffer = mavenCentralService.getFromMavenCentral(name, null, Constants.MAVEN_METADATA_XML)
-                        .map(HttpResponse::bodyAsBuffer)
-                        .await().atMost(Duration.ofSeconds(10));
+                final Buffer buffer = mavenService.get(name, null, Constants.MAVEN_METADATA_XML)
+                        .map(HttpResponse::bodyAsBuffer).await().atMost(Duration.ofSeconds(10));
                 FileUtil.writeAtomic(localFilePath, buffer.getBytes());
             } else {
                 try (StringWriter stringWriter = new StringWriter()) {
@@ -137,7 +137,7 @@ public class MetadataService {
     }
 
     private Versioning getNpmVersioning(Name name) {
-        ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+        ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
         Versioning versioning = new Versioning();
         String latest = info.distTags().latest();
         versioning.setLatest(latest);

@@ -1,4 +1,4 @@
-package io.mvnpm.maven;
+package io.mvnpm.maven.api;
 
 import java.util.Map;
 

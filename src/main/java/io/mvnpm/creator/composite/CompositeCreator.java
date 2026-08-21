@@ -49,9 +49,9 @@ import io.mvnpm.creator.type.PomService;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.importmap.Aggregator;
 import io.mvnpm.importmap.ImportsDataBinding;
-import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
-import io.mvnpm.npm.NpmRegistryFacade;
+import io.mvnpm.maven.MavenService;
+import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Name;
 import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.ProjectInfo;
@@ -77,7 +77,7 @@ public class CompositeCreator {
     MavenRepositoryService mavenRepositoryService;
 
     @Inject
-    NpmRegistryFacade npmRegistryFacade;
+    NpmFacade npmFacade;
 
     @Inject
     @RestClient
@@ -93,7 +93,7 @@ public class CompositeCreator {
     PomService pomService;
 
     @Inject
-    MavenCentralService mavenCentralService;
+    MavenService mavenService;
 
     private final AtomicReference<WebClient> webClient = new AtomicReference<>();
     private final Map<String, GitHubContent> compositesMap = new HashMap<>();
@@ -155,7 +155,7 @@ public class CompositeCreator {
         if (dependencies != null && !dependencies.isEmpty()) {
             Dependency first = dependencies.get(0);
             Name name = NameParser.fromMavenGA(first.getGroupId(), first.getArtifactId());
-            ProjectInfo info = npmRegistryFacade.getProjectInfo(name.npmFullName);
+            ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
             return info.distTags().latest();
         }
         return null;

@@ -29,8 +29,8 @@ import org.jboss.resteasy.reactive.ResponseHeader;
 
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.utils.UrlPathParser;
-import io.mvnpm.maven.MavenCentralService;
 import io.mvnpm.maven.MavenRepositoryService;
+import io.mvnpm.maven.MavenService;
 import io.mvnpm.maven.api.NameVersion;
 import io.quarkus.logging.Log;
 
@@ -48,7 +48,7 @@ public class JarContentsApi {
     MavenRepositoryService mavenRepositoryService;
 
     @Inject
-    MavenCentralService mavenCentralService;
+    MavenService mavenService;
 
     @GET
     @ResponseHeader(name = HEADER_CACHE_CONTROL, value = HEADER_CACHE_CONTROL_IMMUTABLE)
