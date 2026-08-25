@@ -72,10 +72,9 @@ public class MavenCentralFacade implements MavenFacade {
 
     @Override
     public String upload(Gav gav, List<BundleRecord> records) throws UploadFailedException {
-        // should only have one entry, namely: ("", <BundleRecord>)
         if (records.size() > 1) {
             throw new UploadFailedException(
-                    "Maven-Central uploads only require exactly one map-entry, namely: [key = \"bundle\"] and [value = <Bundle-Path>]");
+                    "Maven-Central uploads only require exactly one record");
         }
         final Path path = records.get(0).path();
         try {
