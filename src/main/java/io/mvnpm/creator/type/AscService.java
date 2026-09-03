@@ -29,6 +29,7 @@ import io.quarkus.runtime.StartupEvent;
 @DefaultBean
 public class AscService {
 
+    private final PGPainless pgPainless = new PGPainless();
     private PGPSecretKeyRing secretKeyRing = null;
 
     @ConfigProperty(name = "mvnpm.asckey.path")
@@ -47,7 +48,7 @@ public class AscService {
             try {
                 Path keyFilePath = Paths.get(asckeyPath.get());
                 byte[] keyBytes = Files.readAllBytes(keyFilePath);
-                this.secretKeyRing = PGPainless.readKeyRing().secretKeyRing(keyBytes);
+                this.secretKeyRing = pgPainless.readKey().parseKey(keyBytes).getPGPSecretKeyRing();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
