@@ -31,7 +31,7 @@ public class EmailNotification {
             Notification notification = NotificationFormatter.getNotificationAsHTML(syncItem);
             try {
                 mailer.send(
-                        Mail.withHtml("mvnpm@silbergrau.com", notification.title(), notification.body()));
+                        Mail.withHtml("mvnpm-releases@googlegroups.com", notification.title(), notification.body()));
             } catch (Exception e) {
                 if (Log.isDebugEnabled()) {
                     Log.error("Failed to send release notification.", e);
