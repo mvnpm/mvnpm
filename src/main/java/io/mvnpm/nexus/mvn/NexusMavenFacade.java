@@ -10,19 +10,19 @@ import org.eclipse.aether.deployment.DeployResult;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
+import io.mvnpm.Constants;
 import io.mvnpm.error.ErrorHandlingService;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
 import io.mvnpm.maven.api.Gav;
 import io.mvnpm.maven.api.MavenFacade;
-import io.mvnpm.maven.sync.SyncItem;
-import io.mvnpm.maven.sync.SyncItemService;
 import io.mvnpm.maven.api.ReleaseStatus;
 import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.StatusCheckException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
+import io.mvnpm.maven.sync.SyncItem;
+import io.mvnpm.maven.sync.SyncItemService;
 import io.mvnpm.nexus.mvn.model.MavenResponse;
 import io.mvnpm.nexus.mvn.upload.MavenArtifactUploader;
-import io.mvnpm.version.Version;
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.logging.Log;
 
@@ -32,8 +32,8 @@ import io.quarkus.logging.Log;
  * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
 @ApplicationScoped
-@IfBuildProperty(name = "mvnpm.nexus-repository.enabled", stringValue = "true")
-public class NexusMavenFacade implements MavenFacade {
+@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
+public class NexusMavenFacade implements MavenFacade, Constants {
 
     @Inject
     ErrorHandlingService errorHandlingService;
@@ -45,35 +45,33 @@ public class NexusMavenFacade implements MavenFacade {
     @Inject
     SyncItemService syncItemService;
 
-    @ConfigProperty(name = "mvnpm.nexus.mvn-repository.releases")
-    private String releaseRepository;
+    @ConfigProperty(name = "mvnpm.custom.repository.releases")
+    String releaseRepository;
 
-    @ConfigProperty(name = "mvnpm.nexus.mvn-repository.snapshots")
-    private String snapshotsRepository;
+    @ConfigProperty(name = "mvnpm.custom.repository.snapshots")
+    String snapshotsRepository;
 
     @Inject
-    private MavenArtifactUploader uploader;
+    MavenArtifactUploader uploader;
 
     @Override
     public boolean contains(String groupId, String artifactId, String version) {
-        final Version parsedVersion = Version.fromString(version);
-        String repository = releaseRepository;
-        if (parsedVersion.hasQualifier() && parsedVersion.qualifier().contains("SNAPSHOT")) {
-            // in semantic versioning this is the only path where SNAPSHOT version could be found
-            repository = snapshotsRepository;
-        }
-        try {
-            Response response = nexusClient.search(null, null, repository, "maven2", null, null, version, null, groupId,
-                    artifactId, null, null, null);
+        final boolean snapshot = version.endsWith(DASH_SNAPSHOT);
+        final String repository = snapshot ? snapshotsRepository : releaseRepository;
+        final String searchVersion = snapshot ? null : version;
+        final String baseVersion = snapshot ? version : null;
+
+        try (final Response response = nexusClient.search(null, null, repository, "maven2", null, null, searchVersion, null,
+                groupId, artifactId, baseVersion, null, null)) {
 
             if (response.getStatus() < 300) {
                 MavenResponse result = response.readEntity(MavenResponse.class);
                 return !result.items().isEmpty();
             }
-        } catch (Throwable t) {
+        } catch (Exception e) {
             errorHandlingService.handle(groupId, artifactId, version,
                     "Error while checking nexus publish state for [" + groupId + ":" + artifactId + ":" + version + "]",
-                    t);
+                    e);
         }
         return false;
     }
@@ -88,7 +86,7 @@ public class NexusMavenFacade implements MavenFacade {
                     gav.getVersion());
             return String.valueOf(uploadResult.hashCode());
         } catch (final Exception e) {
-            e.printStackTrace();
+            Log.debugf("Deployment failed with exception: \n%s", e);
             throw new UploadFailedException(
                     "Deployment for " + gav.getGroupId() + ":" + gav.getArtifactId() + " failed!");
         }
@@ -112,8 +110,8 @@ public class NexusMavenFacade implements MavenFacade {
     @Override
     public Stage transition(ReleaseStatus status) throws AssertionError {
         return switch (status) {
-            case PENDING, VALIDATING, VALIDATED, PUBLISHING -> Stage.UPLOADING;
-            case PUBLISHED -> Stage.UPLOADED;
+            case PENDING, VALIDATING, VALIDATED, PUBLISHING -> Stage.UPLOADED;
+            case PUBLISHED -> Stage.RELEASED;
             case FAILED -> Stage.ERROR;
             default -> throw new AssertionError();
         };

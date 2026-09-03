@@ -63,13 +63,13 @@ public abstract class BundleCreator {
             throws MissingFilesForBundleException;
 
     /**
-     * Should return a list of {@link Path}s containing the <code>base</code>
+     * Should return a list of {@link BundleRecord}s containing the <code>base</code>
      * parameter.
      *
      * @param parent {@link Path} from which file-names should be searched
      * @param base {@link String} which should be contained in returned
      *        {@link Path} file-names
-     * @return a {@link List} of {@link Path}s where file-names matched the base
+     * @return a {@link List} of {@link BundleRecord}s where file-names matched the base
      *         {@link String}
      */
     protected abstract List<BundleRecord> getRecordsInBundle(Path parent, String base);
@@ -92,11 +92,11 @@ public abstract class BundleCreator {
         String base = artifactId + Constants.HYPHEN + version;
         List<BundleRecord> records = getRecordsInBundle(parent, base);
         List<String> notReady = new ArrayList<>();
-        for (BundleRecord record : records) {
-            boolean ready = Files.exists(record.path());
-            Log.debug("\tbundle: " + record.path() + " [" + ready + "]");
+        for (BundleRecord bundleRecord : records) {
+            boolean ready = Files.exists(bundleRecord.path());
+            Log.debug("\tbundle: " + bundleRecord.path() + " [" + ready + "]");
             if (!ready) {
-                notReady.add(record.path().toString());
+                notReady.add(bundleRecord.path().toString());
             }
         }
 

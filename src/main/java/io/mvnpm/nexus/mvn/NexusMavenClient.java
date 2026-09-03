@@ -7,12 +7,15 @@ import jakarta.ws.rs.core.Response;
 
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 
+import io.quarkus.rest.client.reactive.ClientBasicAuth;
+
 /**
  * The main client for sonatype nexus.
  *
  * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
-@RegisterRestClient(configKey = "nexus-repository")
+@RegisterRestClient(configKey = "repository")
+@ClientBasicAuth(username = "${mvnpm.custom.repository.username}", password = "${mvnpm.custom.repository.password}")
 public interface NexusMavenClient {
 
     /**
@@ -31,9 +34,7 @@ public interface NexusMavenClient {
      *        returned.
      * @param repository The repository to search in. If null, all
      *        repositories are searched.
-     * @param format The format of the packages to search for. Possible
-     *        values are encapsulated in
-     *        {@link io.mvnpm.nexus.formats.Package.Format}. If
+     * @param format The format of the packages to search for. If
      *        null, all formats are searched.
      * @param group The group to search for. This is only applicable for
      *        maven packages. If null, all groups are searched.

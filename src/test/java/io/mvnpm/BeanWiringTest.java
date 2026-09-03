@@ -15,13 +15,13 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
 
 /**
- * Very blatantly tests if the {@link DefaultBean} and {@link IfBuildProperty} wiring works as expected.
+ * Very blatantly test if the {@link DefaultBean} and {@link IfBuildProperty} wiring works as expected.
  *
  * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
 @QuarkusTest
 @TestProfile(WiringTestProfile.class)
-public class BeanWiringTest {
+class BeanWiringTest {
 
     @Inject
     NpmFacade npmTestFacade;

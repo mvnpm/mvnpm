@@ -6,21 +6,25 @@ import java.util.List;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.deployment.DeployRequest;
 import org.eclipse.aether.deployment.DeployResult;
+import org.eclipse.aether.deployment.DeploymentException;
 import org.eclipse.aether.repository.RemoteRepository;
 
 import io.mvnpm.Constants;
-import io.mvnpm.maven.api.Gav;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
+import io.mvnpm.maven.api.Gav;
+import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.bootstrap.resolver.maven.BootstrapMavenContext;
 import io.quarkus.bootstrap.resolver.maven.BootstrapMavenException;
 
 @ApplicationScoped
+@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
 public final class MavenArtifactUploader implements Constants {
 
     private final RepositorySystem repositorySystem;
@@ -33,13 +37,13 @@ public final class MavenArtifactUploader implements Constants {
     public MavenArtifactUploader(BootstrapMavenContext mvnCtx, @Releases RemoteRepository releasesRepository,
             @Snapshots RemoteRepository snapshotsRepository) throws BootstrapMavenException {
         this.repositorySystem = mvnCtx.getRepositorySystem();
-        this.session = mvnCtx.getRepositorySystemSession();
+        this.session = initDefaultSession(mvnCtx.getRepositorySystemSession());
         this.releasesRepository = releasesRepository;
         this.snapshotsRepository = snapshotsRepository;
     }
 
-    public final DeployResult upload(Gav gav, List<BundleRecord> files) throws Exception {
-        final RemoteRepository repository = gav.getVersion().endsWith("-SNAPSHOT") ? snapshotsRepository
+    public final DeployResult upload(Gav gav, List<BundleRecord> files) throws DeploymentException {
+        final RemoteRepository repository = gav.getVersion().endsWith(DASH_SNAPSHOT) ? snapshotsRepository
                 : releasesRepository;
         final DeployRequest request = new DeployRequest().setRepository(repository).setArtifacts(
                 files.stream().map(entry -> createArtifact(gav, entry.classifier(), entry.path())).toList());
@@ -60,5 +64,12 @@ public final class MavenArtifactUploader implements Constants {
 
         return new DefaultArtifact(gav.getGroupId(), gav.getArtifactId(), classifier, type, gav.getVersion())
                 .setFile(file.toFile());
+    }
+
+    private final DefaultRepositorySystemSession initDefaultSession(final RepositorySystemSession session) {
+        final DefaultRepositorySystemSession defRepoSession = new DefaultRepositorySystemSession(session);
+        defRepoSession.setTransferListener(new MavenTransferLoggingListener());
+        defRepoSession.setReadOnly();
+        return defRepoSession;
     }
 }

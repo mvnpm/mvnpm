@@ -1,6 +1,7 @@
 package io.mvnpm.nexus.tooling;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 import io.mvnpm.nexus.npm.model.NpmAssets;
 import io.mvnpm.nexus.npm.model.NpmResponse;
@@ -18,6 +19,18 @@ import io.mvnpm.npm.model.SearchResults;
 @ApplicationScoped
 public final class TypeConversionTool {
 
+    @Inject
+    NpmAssetsTooling assetsTooling;
+
+    @Inject
+    NpmSearchTooling searchTooling;
+
+    /**
+     * Noop constructor
+     */
+    TypeConversionTool() {
+    }
+
     /**
      * Creates the fluent API object for converting {@link NpmAssets} to
      * {@link Package} (or {@link Project}).
@@ -25,8 +38,8 @@ public final class TypeConversionTool {
      * @param assets The parsed {@link NpmAssets} to convert.
      * @return An instance of the fluent API object.
      */
-    public static final NpmAssetsTooling from(final NpmAssets assets) {
-        return new NpmAssetsTooling(assets);
+    public final NpmAssetsTooling from(final NpmAssets assets) {
+        return assetsTooling.with(assets);
     }
 
     /**
@@ -36,7 +49,7 @@ public final class TypeConversionTool {
      * @param response The parsed {@link NpmResponse} to convert.
      * @return An instance of the fluent API object.
      */
-    public static final NpmSearchTooling from(final NpmResponse response) {
-        return new NpmSearchTooling(response);
+    public final NpmSearchTooling from(final NpmResponse response) {
+        return searchTooling.with(response);
     }
 }

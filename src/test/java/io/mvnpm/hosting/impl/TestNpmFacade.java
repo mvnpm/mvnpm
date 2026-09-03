@@ -1,16 +1,21 @@
 package io.mvnpm.hosting.impl;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Alternative;
 
 import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Package;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.ProjectInfo;
 import io.mvnpm.npm.model.SearchResults;
-import io.quarkus.arc.properties.IfBuildProperty;
 
+/**
+ * A test-implementation of the {@link NpmFacade} for smoke testing bean-selection.
+ *
+ * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
+ */
+@Alternative
 @ApplicationScoped
-@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
 public class TestNpmFacade implements NpmFacade {
 
     @Override

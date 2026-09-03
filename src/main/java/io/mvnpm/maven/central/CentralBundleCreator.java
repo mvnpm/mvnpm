@@ -1,4 +1,6 @@
-package io.mvnpm.mavencentral;
+package io.mvnpm.maven.central;
+
+import static io.mvnpm.Constants.SLASH;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -47,16 +49,16 @@ public class CentralBundleCreator extends BundleCreator {
                     BufferedOutputStream bos = new BufferedOutputStream(fos);
                     ZipOutputStream zos = new ZipOutputStream(bos)) {
 
-                String basePath = groupId.replace('.', '/') + "/" + artifactId + "/" + version + "/";
+                String basePath = groupId.replace('.', '/') + SLASH + artifactId + SLASH + version + SLASH;
 
-                for (BundleRecord record : records) {
-                    final Path path = record.path();
+                for (BundleRecord bundleRecord : records) {
+                    final Path path = bundleRecord.path();
                     String zipEntryName = basePath + path.getFileName();
                     Log.debug("\tAdding to bundle: " + zipEntryName);
 
                     ZipEntry zipEntry = new ZipEntry(zipEntryName);
                     zos.putNextEntry(zipEntry);
-                    try (InputStream fileInputStream = Files.newInputStream(path)) {
+                    try (final InputStream fileInputStream = Files.newInputStream(path)) {
                         int bytesRead;
                         byte[] buffer = new byte[4096];
                         while ((bytesRead = fileInputStream.read(buffer)) != -1) {

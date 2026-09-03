@@ -36,7 +36,7 @@ import io.smallrye.common.annotation.Blocking;
  * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
 @ApplicationScoped
-@IfBuildProperty(name = "mvnpm.nexus-repository.enabled", stringValue = "true")
+@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
 public class NexusRegistryFacade implements NpmFacade {
 
     @Inject
@@ -50,7 +50,7 @@ public class NexusRegistryFacade implements NpmFacade {
     @Inject
     TypeConversionTool conversionTool;
 
-    @ConfigProperty(name = "mvnpm.nexus.npm-repository")
+    @ConfigProperty(name = "mvnpm.custom.repository.npm")
     String repository;
 
     @Timeout(unit = ChronoUnit.SECONDS, value = 10)
@@ -58,18 +58,18 @@ public class NexusRegistryFacade implements NpmFacade {
     @Blocking
     public Project getProject(String project) {
         Name name = NameParser.fromNpmProject(project);
-        Response response = nexusClient.searchAsset(repository, "npm", name.npmNamespace.replace("@", ""), name.npmName,
-                null);
-        if (response.getStatus() < 300) {
+        try (final Response response = nexusClient.searchAsset(repository, "npm", name.mvnArtifactId, null,
+                nexusScope(name.npmNamespace))) {
+            requireSuccessfulSearch(response, "Nexus npm search for " + project);
             final NpmAssets assets = response.readEntity(NpmAssets.class);
-            if (assets.items().size() >= 1) {
-                Log.infof("obtaining project '%s' via nexus...", project);
-                return TypeConversionTool.from(assets).toProject();
+            if (!assets.items().isEmpty()) {
+                Log.infof("Obtaining project '%s' via nexus...", project);
+                return conversionTool.from(assets).toProject();
             }
         }
 
-        Log.infof("obtaining project '%s' via official npm-registry...", project);
-        response = npmRegistry.getProject(project);
+        Log.infof("Obtaining project '%s' via official npm-registry...", project);
+        final Response response = npmRegistry.getProject(project);
         if (response.getStatus() < 300) {
             return response.readEntity(Project.class);
         }
@@ -93,20 +93,20 @@ public class NexusRegistryFacade implements NpmFacade {
         }
 
         final Name name = NameParser.fromNpmProject(project);
-        Response response = name.npmNamespace.isEmpty()
-                ? nexusClient.searchAsset(repository, "npm", name.npmName, version)
-                : nexusClient.searchAsset(repository, "npm", name.npmNamespace.replace("@", ""), name.npmName, version);
-        if (response.getStatus() < 300) {
+        try (final Response response = nexusClient.searchAsset(repository, "npm", name.mvnArtifactId, version,
+                nexusScope(name.npmNamespace))) {
+            requireSuccessfulSearch(response, String.format("Nexus npm search for %s@%s", project, version));
+
             final NpmAssets assets = response.readEntity(NpmAssets.class);
-            if (assets.items().size() >= 1) {
+            if (!assets.items().isEmpty()) {
                 Log.infof("Obtaining package [%s:%s:%s] via nexus!", name.npmNamespace, name.npmName, version);
-                return TypeConversionTool.from(assets).toPackage(name, version);
+                return conversionTool.from(assets).toPackage(name, version);
             }
         }
 
         Log.infof("Obtaining package [%s:%s:%s] via official npm-registry...", name.npmNamespace, name.npmName,
                 version);
-        response = npmRegistry.getPackage(project, version);
+        final Response response = npmRegistry.getPackage(project, version);
         if (response.getStatus() < 300) {
             return response.readEntity(Package.class);
         }
@@ -118,17 +118,47 @@ public class NexusRegistryFacade implements NpmFacade {
     @Blocking
     public SearchResults search(String term, int page) {
         // NOTE: page current is ignored, because on nexus a continuationToken is used for pagination
-        final Response response = nexusClient.searchComponent(null, term, null, "npm", null, null, null, null, null,
-                null, null, null);
+        final Response response = nexusClient.searchComponent(repository, "npm", null, null, term);
 
         if (response.getStatus() < 300) {
             final NpmResponse npmResponse = response.readEntity(NpmResponse.class);
-            if (npmResponse.items().size() >= 1) {
-                return TypeConversionTool.from(npmResponse).toSearchResults();
+            if (!npmResponse.items().isEmpty()) {
+                return conversionTool.from(npmResponse).toSearchResults();
             }
         }
 
         Log.infof("Failed to obtain searched component for term '%s' from given nexus-client!", term, response);
         throw new WebApplicationException(response);
+    }
+
+    /**
+     * Converts the namespace of a {@link Name} into the searchable scope parameter on nexus.
+     *
+     * @param npmNamespace The namespace to convert
+     * @return The converted namespace for scope-searching
+     */
+    private String nexusScope(String npmNamespace) {
+        if (npmNamespace == null || npmNamespace.isBlank()) {
+            return null;
+        }
+
+        return npmNamespace.startsWith("@") ? npmNamespace.substring(1) : npmNamespace;
+    }
+
+    /**
+     * If a successful search is required, this method checks the response for success.
+     *
+     * @param response The {@link Response} to check
+     * @param description The description of what is searched
+     * @throws IllegalStateException if the response is not successful
+     */
+    private static void requireSuccessfulSearch(Response response, String description) {
+        if (response.getStatusInfo().getFamily() != Response.Status.Family.SUCCESSFUL) {
+
+            final int status = response.getStatus();
+            final String body = response.hasEntity() ? response.readEntity(String.class) : "";
+
+            throw new IllegalStateException(description + " failed: HTTP " + status + ": " + body);
+        }
     }
 }

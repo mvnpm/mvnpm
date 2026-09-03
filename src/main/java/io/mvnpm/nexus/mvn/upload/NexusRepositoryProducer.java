@@ -16,20 +16,20 @@ public final class NexusRepositoryProducer implements Constants {
 
     private static final String REPOSITORY = "repository";
 
-    @ConfigProperty(name = "quarkus.rest-client.nexus-repository.url")
-    private String basePath;
+    @ConfigProperty(name = "quarkus.rest-client.repository.url")
+    String basePath;
 
-    @ConfigProperty(name = "mvnpm.nexus.mvn-repository.releases")
-    private String releaseRepository;
+    @ConfigProperty(name = "mvnpm.custom.repository.releases")
+    String releaseRepository;
 
-    @ConfigProperty(name = "mvnpm.nexus.mvn-repository.snapshots")
-    private String snapshotsRepository;
+    @ConfigProperty(name = "mvnpm.custom.repository.snapshots")
+    String snapshotsRepository;
 
-    @ConfigProperty(name = "mvnpm.nexus.username")
-    private String userName;
+    @ConfigProperty(name = "mvnpm.custom.repository.username")
+    String userName;
 
-    @ConfigProperty(name = "mvnpm.nexus.password")
-    private String password;
+    @ConfigProperty(name = "mvnpm.custom.repository.password")
+    String password;
 
     @Produces
     @Dependent
@@ -51,6 +51,6 @@ public final class NexusRepositoryProducer implements Constants {
     }
 
     private final String repositoryPath(final String repo) {
-        return basePath + SLASH + REPOSITORY + repo + SLASH;
+        return basePath + SLASH + REPOSITORY + SLASH + repo + SLASH;
     }
 }

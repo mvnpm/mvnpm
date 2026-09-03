@@ -137,7 +137,7 @@ public class MavenRepositoryApi {
     @Path("/org/mvnpm/{gavt : (.+)?}.pom.md5")
     @Produces(MediaType.TEXT_PLAIN)
     public Response getPomMd5(@PathParam("gavt") String gavt) {
-        NameVersion nv = UrlPathParser.parseMavenFile(gavt + ".pom.mp5");
+        NameVersion nv = UrlPathParser.parseMavenFile(gavt + ".pom.md5");
         return resolveAndStream(nv, FileType.pom, Optional.of(Constants.DOT_MD5), mavenRepositoryService::getMd5);
     }
 

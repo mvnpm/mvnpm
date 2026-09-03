@@ -3,6 +3,7 @@ package io.mvnpm.hosting.impl;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Alternative;
 
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
 import io.mvnpm.maven.api.Gav;
@@ -12,10 +13,14 @@ import io.mvnpm.maven.api.Stage;
 import io.mvnpm.maven.exceptions.StatusCheckException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
 import io.mvnpm.maven.sync.SyncItem;
-import io.quarkus.arc.properties.IfBuildProperty;
 
+/**
+ * A test-implementation of the {@link MavenFacade} for smoke testing bean-selection.
+ *
+ * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
+ */
+@Alternative
 @ApplicationScoped
-@IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
 public class TestMavenFacade implements MavenFacade {
 
     @Override

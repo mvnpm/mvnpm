@@ -1,12 +1,12 @@
 package io.mvnpm.nexus.tooling;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,14 +14,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import jakarta.enterprise.context.Dependent;
+import jakarta.inject.Inject;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.mvnpm.Constants;
+import io.mvnpm.creator.FileType;
+import io.mvnpm.creator.PackageFileLocator;
+import io.mvnpm.creator.type.TgzService;
+import io.mvnpm.nexus.npm.NexusRegistryClient;
 import io.mvnpm.nexus.npm.model.NpmAsset;
 import io.mvnpm.nexus.npm.model.NpmAssets;
 import io.mvnpm.npm.model.Dist;
@@ -39,14 +49,41 @@ import io.quarkus.logging.Log;
  *
  * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
  */
-public final class NpmAssetsTooling {
+@Dependent
+public final class NpmAssetsTooling implements Constants {
+
+    @Inject
+    TgzService tgzService;
+
+    @Inject
+    PackageFileLocator packageFileLocator;
+
+    @Inject
+    @RestClient
+    NexusRegistryClient nexusClient;
+
+    @ConfigProperty(name = "quarkus.rest-client.repository.url")
+    String nexusBaseUrl;
 
     private static final ObjectMapper MAPPER = new ObjectMapper().configure(JsonParser.Feature.AUTO_CLOSE_SOURCE,
             false);
-    private final NpmAssets assets;
+    private NpmAssets assets;
 
-    NpmAssetsTooling(final NpmAssets assets) {
+    /**
+     * Noop constructor
+     */
+    NpmAssetsTooling() {
+    }
+
+    /**
+     * The entry-point to the {@link NpmAssets} tooling chain.
+     *
+     * @param assets The {@link NpmAssets} which should be converted.
+     * @return {@code this} instance with set {@code assets}
+     */
+    public final NpmAssetsTooling with(final NpmAssets assets) {
         this.assets = assets;
+        return this;
     }
 
     /**
@@ -79,21 +116,24 @@ public final class NpmAssetsTooling {
     private Package toPackage(final NpmAsset asset) throws TypeConversionException {
         Log.infof("The path of found package is '%s'", asset.path());
 
-        URI tarballUri;
-        URL tarballUrl;
         final Map<Name, String> dependencies = new HashMap<>();
         final Map<Name, String> peerDependencies = new HashMap<>();
         final Map<String, Map<String, Boolean>> peerDependencyMeta = new HashMap<>();
 
-        try {
-            tarballUri = URI.create(asset.downloadUrl());
-            tarballUrl = tarballUri.toURL();
-        } catch (final MalformedURLException e) {
-            throw new TypeConversionException(e);
+        final Name name = new Name(asset.npm().name());
+        final Path localFilePath = packageFileLocator.getLocalFullPath(FileType.tgz, name, asset.npm().version());
+        final URL tarballUrl = externallyReachableDownloadUrl(asset.downloadUrl());
+
+        Log.debugf("Nexus advertised npm asset URL '%s'; downloading via '%s'", asset.downloadUrl(), tarballUrl);
+
+        try (final InputStream tarball = nexusClient.download(tarballUrl.toString())) {
+            tgzService.save(tarball, localFilePath);
+        } catch (final Exception e) {
+            throw new TypeConversionException("Could not download Nexus npm asset from " + tarballUrl, e);
         }
 
         try {
-            readDependencies(tarballUri, dependencies, peerDependencies, peerDependencyMeta);
+            readDependencies(localFilePath, dependencies, peerDependencies, peerDependencyMeta);
         } catch (final Exception e) {
             Log.debugf("No dependencies found, continuing without dependencies.");
         }
@@ -102,9 +142,8 @@ public final class NpmAssetsTooling {
         Log.debugf("peer dependency-map is:\n%s", peerDependencies);
         Log.debugf("metadata of peer dependencies is:\n%s", peerDependencyMeta);
 
-        final Name name = new Name(asset.npm().name());
-        final Repository repo = new Repository(asset.format(), asset.downloadUrl(), asset.path());
-        final Dist dist = new Dist(null, null, tarballUrl, 1, asset.fileSize(), null);
+        final Repository repo = new Repository(asset.format(), tarballUrl.toString(), asset.path());
+        final Dist dist = new Dist(null, asset.checksum().sha1(), tarballUrl, 1, asset.fileSize(), null);
 
         return new Package(asset.id(), name, asset.npm().version(), null, null, null, null, repo, null, null, null,
                 asset.format(), null, dependencies, peerDependencies, peerDependencyMeta, dist);
@@ -119,37 +158,94 @@ public final class NpmAssetsTooling {
      */
     public final Project toProject() throws TypeConversionException {
         final List<NpmAsset> sortedAssets = assets.items().stream().sorted(versionComparator.reversed()).toList();
-        Log.infof("all versions found are: %s", sortedAssets.stream().map(asset -> asset.npm().version()).toList());
-
         final Set<String> versions = new HashSet<>();
         final Name name = new Name(assets.items().get(0).npm().name());
-        sortedAssets.stream().forEach(asset -> {
+        sortedAssets.forEach(asset -> {
             if (name.npmFullName.equals(asset.npm().name())) {
                 versions.add(asset.npm().version());
             }
         });
 
-        final DistTags distTags = new DistTags(sortedAssets.get(sortedAssets.size() - 1).npm().version(), null);
+        final DistTags distTags = new DistTags(sortedAssets.get(0).npm().version(), null);
         return new Project(name, null, distTags, null, null, versions, null);
+    }
+
+    /**
+     * Rebase an asset URL returned by Nexus onto the configured Nexus origin.
+     *
+     * Search responses can expose the server's internal/container origin in
+     * {@code downloadUrl}. That URL is not necessarily reachable by this process
+     * (for example, Testcontainers maps Nexus' 8081 to a random host port). The
+     * path still identifies the correct repository asset, so preserve it while
+     * using the configured REST-client scheme/authority.
+     */
+    private URL externallyReachableDownloadUrl(final String advertisedDownloadUrl) throws TypeConversionException {
+        try {
+            final URI advertised = URI.create(advertisedDownloadUrl);
+            final URI configured = URI.create(nexusBaseUrl);
+
+            if (configured.getScheme() == null || configured.getRawAuthority() == null) {
+                throw new IllegalArgumentException("Configured Nexus URL is not absolute: " + nexusBaseUrl);
+            }
+
+            String path = advertised.getRawPath();
+            if (path == null || path.isBlank()) {
+                throw new IllegalArgumentException("Nexus asset URL has no path: " + advertisedDownloadUrl);
+            }
+
+            final String configuredPath = configured.getRawPath();
+            if (configuredPath != null && !configuredPath.isBlank()
+                    && !SLASH.equals(configuredPath)
+                    && !path.startsWith(stripTrailingSlash(configuredPath) + SLASH)) {
+
+                path = stripTrailingSlash(configuredPath) + (path.startsWith(SLASH) ? path : SLASH + path);
+            }
+
+            final StringBuilder normalized = new StringBuilder().append(configured.getScheme())
+                    .append(URL_DELIMITER)
+                    .append(configured.getRawAuthority())
+                    .append(path.startsWith(SLASH) ? path : SLASH + path);
+
+            if (advertised.getRawQuery() != null) {
+                normalized.append('?').append(advertised.getRawQuery());
+            }
+
+            return URI.create(normalized.toString()).toURL();
+        } catch (final IllegalArgumentException | MalformedURLException e) {
+            throw new TypeConversionException(
+                    "Could not construct externally reachable Nexus asset URL from " + advertisedDownloadUrl, e);
+        }
+    }
+
+    /**
+     * Strips trailing slashes from given values.
+     *
+     * @param value The value to strip
+     * @return The stripped value
+     */
+    private static String stripTrailingSlash(final String value) {
+        int end = value.length();
+        while (end > 1 && value.charAt(end - 1) == '/') {
+            end--;
+        }
+        return value.substring(0, end);
     }
 
     /**
      * Helper method to read the dependencies, peer-dependencies and optional dependencies of a project
      * into the given {@link Map}s.
      *
-     * @param tarballUri The {@link URI} to the tarball
+     * @param localFilePath The {@link Path} to the tarball
      * @param deps The dependency {@link Map} to fill
      * @param peerDeps The peer-dependency {@link Map} to fill
      * @throws Exception if an exception occured in the process
      */
-    private final void readDependencies(final URI tarballUri, final Map<Name, String> deps,
-            final Map<Name, String> peerDeps, final Map<String, Map<String, Boolean>> peerDepsMeta) throws Exception {
-        final HttpClient client = HttpClient.newHttpClient();
-        final HttpRequest request = HttpRequest.newBuilder(tarballUri).GET().build();
-        final HttpResponse<InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+    private final void readDependencies(final Path localFilePath, final Map<Name, String> deps,
+            final Map<Name, String> peerDeps, final Map<String, Map<String, Boolean>> peerDepsMeta)
+            throws IOException {
 
-        try (final InputStream body = response.body();
-                final GzipCompressorInputStream gzip = new GzipCompressorInputStream(body);
+        try (final InputStream tgz = Files.newInputStream(localFilePath);
+                final GzipCompressorInputStream gzip = new GzipCompressorInputStream(tgz);
                 final TarArchiveInputStream tar = new TarArchiveInputStream(gzip)) {
 
             TarArchiveEntry entry;
@@ -166,7 +262,7 @@ public final class NpmAssetsTooling {
             }
         }
 
-        throw new IllegalStateException("package.json not found in tarball: " + tarballUri);
+        throw new IllegalStateException("package.json not found in tarball: " + localFilePath);
     }
 
     /**
