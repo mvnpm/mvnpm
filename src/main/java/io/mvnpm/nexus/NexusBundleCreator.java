@@ -2,7 +2,6 @@ package io.mvnpm.nexus;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -23,12 +22,12 @@ import io.quarkus.arc.properties.IfBuildProperty;
 public class NexusBundleCreator extends BundleCreator implements Constants {
 
     /**
-     * Builds the actual bundle and returns the created files in a path-map.
+     * Builds the actual bundle and returns the created files as {@link BundleRecord}s.
      *
      * @param groupId The groupId of the project to bundle.
      * @param artifactId The artifactId of the project to bundle.
      * @param version The version of the project to bundle.
-     * @return The path-map of created files for a bundle.
+     * @return The {@link BundleRecord}s of the created files for a bundle.
      * @throws MissingFilesForBundleException if some file is missing in the
      *         bundle-creation.
      */
@@ -38,11 +37,11 @@ public class NexusBundleCreator extends BundleCreator implements Constants {
     }
 
     /**
-     * Creates a map with all wanted paths for seperate asset-assignment.
+     * Creates the {@link BundleRecord}s for each asset (pom, jar, sources, javadoc).
      *
      * @param parent The parent directory as {@link Path}.
-     * @param base The base {@link Path} for the files.
-     * @return A {@link HashMap} of the files and corresponding keys.
+     * @param base The base name for the files.
+     * @return A {@link List} of {@link BundleRecord}s, one per asset.
      */
     protected List<BundleRecord> getRecordsInBundle(Path parent, String base) {
         final List<BundleRecord> records = new ArrayList<>();

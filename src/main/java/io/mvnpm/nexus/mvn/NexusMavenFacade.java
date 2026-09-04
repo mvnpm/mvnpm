@@ -84,6 +84,9 @@ public class NexusMavenFacade implements MavenFacade, Constants {
             DeployResult uploadResult = uploader.upload(gav, records);
             Log.infof("Complete upload of '%s:%s:%s' succeeded!", gav.getGroupId(), gav.getArtifactId(),
                     gav.getVersion());
+            // TODO: the MavenFacade contract is Maven-Central-shaped and expects a releaseId. Nexus has no
+            // equivalent, so we return a synthetic token for now. Revisit once the Central status/stage model
+            // is moved behind the facade (see PR #41659 discussion).
             return String.valueOf(uploadResult.hashCode());
         } catch (final Exception e) {
             Log.debugf("Deployment failed with exception: \n%s", e);
@@ -113,7 +116,9 @@ public class NexusMavenFacade implements MavenFacade, Constants {
             case PENDING, VALIDATING, VALIDATED, PUBLISHING -> Stage.UPLOADED;
             case PUBLISHED -> Stage.RELEASED;
             case FAILED -> Stage.ERROR;
-            default -> throw new AssertionError();
+            // TODO: bare AssertionError kept intentionally for now; revisit together with the releaseId
+            // handling once the Central status/stage model lives behind the facade (see PR #41659 discussion).
+            default -> throw new AssertionError("Unexpected release status: " + status);
         };
     }
 }

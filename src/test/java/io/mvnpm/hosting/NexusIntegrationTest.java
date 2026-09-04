@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.io.TempDir;
+import org.testcontainers.DockerClientFactory;
 
 import io.mvnpm.Constants;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
@@ -72,6 +73,16 @@ public abstract class NexusIntegrationTest implements Constants {
 
     @TempDir
     Path tempDir;
+
+    /**
+     * Gate for the Testcontainers-backed subclasses: skip (rather than hard-fail) when no Docker
+     * daemon is reachable, e.g. on a developer machine or a runner without Docker.
+     *
+     * @return {@code true} if a Docker daemon is available
+     */
+    static boolean dockerAvailable() {
+        return DockerClientFactory.instance().isDockerAvailable();
+    }
 
     @BeforeAll
     void nexusIsAvailable() {
@@ -132,7 +143,6 @@ public abstract class NexusIntegrationTest implements Constants {
     protected void logInfos(String variant) {
         Log.infof("%s nexus url is: '%s'", variant, nexusUrl);
         Log.infof("%s nexus user is: '%s'", variant, nexusUsername);
-        Log.infof("%s nexus password is: '%s'", variant, nexusPassword);
         Log.infof("%s nexus release repository is: %s/repository/%s", variant, nexusUrl, releaseRepo);
         Log.infof("%s nexus snapshot repository is: %s/repository/%s", variant, nexusUrl, snapshotRepo);
     }
