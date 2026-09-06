@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.io.TempDir;
-import org.testcontainers.DockerClientFactory;
 
 import io.mvnpm.Constants;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
@@ -78,10 +77,22 @@ public abstract class NexusIntegrationTest implements Constants {
      * Gate for the Testcontainers-backed subclasses: skip (rather than hard-fail) when no Docker
      * daemon is reachable, e.g. on a developer machine or a runner without Docker.
      *
-     * @return {@code true} if a Docker daemon is available
+     * <p>
+     * This is deliberately a pure-JDK probe (socket/env only). It must NOT touch Testcontainers
+     * classes: {@code @EnabledIf} is evaluated by JUnit outside the Quarkus test ClassLoader, where
+     * the Testcontainers {@code DockerClientProviderStrategy} SPI is not correctly wired and throws
+     * {@link java.util.ServiceConfigurationError}. Testcontainers is only used later, from inside the
+     * Quarkus test resource, where it resolves correctly.
+     * </p>
+     *
+     * @return {@code true} if a Docker daemon appears to be available
      */
     static boolean dockerAvailable() {
-        return DockerClientFactory.instance().isDockerAvailable();
+        final String dockerHost = System.getenv("DOCKER_HOST");
+        if (dockerHost != null && !dockerHost.isBlank()) {
+            return true;
+        }
+        return Files.exists(Path.of("/var/run/docker.sock"));
     }
 
     @BeforeAll
