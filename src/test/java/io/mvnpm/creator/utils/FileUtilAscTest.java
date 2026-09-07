@@ -9,11 +9,8 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
-import org.bouncycastle.openpgp.PGPException;
 import org.bouncycastle.openpgp.PGPPublicKeyRing;
 import org.bouncycastle.openpgp.PGPSecretKeyRing;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,14 +26,16 @@ import sop.Verification;
 
 class FileUtilAscTest {
 
+    private static final PGPainless PG_PAINLESS = new PGPainless();
+
     static PGPSecretKeyRing secretKeyRing;
     static PGPPublicKeyRing publicKeyRing;
 
     @BeforeAll
-    static void generateTestKey() throws PGPException, InvalidAlgorithmParameterException, NoSuchAlgorithmException {
+    static void generateTestKey() {
         // Use RSA key where the primary key can sign (matches production key setup)
-        secretKeyRing = PGPainless.generateKeyRing().simpleRsaKeyRing("test@mvnpm.io", RsaLength._3072);
-        publicKeyRing = PGPainless.extractCertificate(secretKeyRing);
+        secretKeyRing = PG_PAINLESS.generateKey().simpleRsaKeyRing("test@mvnpm.io", RsaLength._3072).getPGPSecretKeyRing();
+        publicKeyRing = PG_PAINLESS.toKey(secretKeyRing).getPGPPublicKeyRing();
     }
 
     @Test

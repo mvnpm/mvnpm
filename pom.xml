@@ -60,7 +60,7 @@
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
     <impsort.plugin.version>1.13.0</impsort.plugin.version>
     <quarkus.ide-config.version>${quarkus.platform.version}</quarkus.ide-config.version>
-    <pgpainless.version>1.5.5</pgpainless.version>
+    <pgpainless.version>2.0.4</pgpainless.version>
     <quarkus.maven.resolver.version>0.0.5</quarkus.maven.resolver.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>2.3.1</quarkus-web-bundler.version>
