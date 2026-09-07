@@ -42,6 +42,8 @@ public interface Constants {
     String SHA1 = "sha1";
     String DOT_SHA1 = DOT + SHA1;
 
+    String URL_DELIMITER = "://";
+
     String MD5 = "md5";
     String DOT_MD5 = DOT + MD5;
 
@@ -72,6 +74,9 @@ public interface Constants {
     String VERSION = "version";
     String GROUP_ID = "groupId";
     String ARTIFACT_ID = "artifactId";
+
+    String SNAPSHOT = "SNAPSHOT";
+    String DASH_SNAPSHOT = "-SNAPSHOT";
 
     String HTTPS = "https";
     String X_FORWARDED_FOR = "X-FORWARDED-FOR";

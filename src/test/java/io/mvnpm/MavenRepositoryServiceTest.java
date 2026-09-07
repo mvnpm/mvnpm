@@ -21,6 +21,7 @@ import io.mvnpm.creator.PackageFileLocator;
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.model.Name;
+import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.core.Vertx;
@@ -110,7 +111,7 @@ class MavenRepositoryServiceTest {
             } else {
                 return Uni.createFrom().failure(new Exception("File not found"));
             }
-        }).onFailure().invoke(() -> System.out.println("(retry)")).onFailure().retry()
+        }).onFailure().invoke(() -> Log.info("(retry)")).onFailure().retry()
                 .withBackOff(Duration.of(100, ChronoUnit.MILLIS)).expireIn(1000L * 300L).await().indefinitely();
         assertTrue(exists);
     }

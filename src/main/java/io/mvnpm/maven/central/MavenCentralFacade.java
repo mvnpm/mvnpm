@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral;
+package io.mvnpm.maven.central;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

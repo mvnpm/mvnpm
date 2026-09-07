@@ -13,8 +13,9 @@ import java.util.Set;
 
 import jakarta.inject.Inject;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageFileLocator;
@@ -23,10 +24,12 @@ import io.mvnpm.esbuild.install.WebDepsInstaller;
 import io.mvnpm.esbuild.model.WebDependency;
 import io.mvnpm.maven.MavenRepositoryService;
 import io.mvnpm.npm.model.Name;
+import io.quarkus.logging.Log;
 import io.quarkus.test.junit.QuarkusTest;
 import io.vertx.mutiny.core.Vertx;
 
 @QuarkusTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class PackageGenerationTest {
 
     @Inject
@@ -38,7 +41,7 @@ public class PackageGenerationTest {
     @Inject
     Vertx vertx;
 
-    @BeforeEach
+    @BeforeAll
     void setUp() {
         vertx.fileSystem().deleteRecursive(packageFileLocator.getCacheDir().toString()).onFailure()
                 .recoverWithNull().await().indefinitely();
@@ -154,7 +157,7 @@ public class PackageGenerationTest {
         final Path tempDirectory = Files.createTempDirectory("jar-download");
         final Path tempFile = tempDirectory.resolve(localPath.getFileName());
         final Path nodeModules = Files.createTempDirectory("node_modules");
-        System.out.println("NodeModules: " + nodeModules);
+        Log.infof("NodeModules: %s", nodeModules);
         Files.write(tempFile, jar);
         WebDepsInstaller.install(nodeModules, List.of(
                 WebDependency.of(name.npmFullName, tempFile, WebDependency.WebDependencyType.MVNPM)));

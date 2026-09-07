@@ -101,7 +101,7 @@ public class PackageCreator {
     private Path create(FileType type, Name name, String version, Path localFilePath) {
         io.mvnpm.npm.model.Package p = npmFacade.getPackage(name.npmFullName, version);
         switch (type) {
-            case tgz -> tgzService.fetchRemoteAndSave(p, localFilePath);
+            case tgz -> tgzService.fetchRemoteAndSave(p.dist().tarball(), localFilePath);
             case jar -> createAndSaveJar(localFilePath, p);
             case pom -> pomService.createAndSavePom(p, localFilePath); // Only create the POM to avoid extra processing
             default -> throw new PackageNotCreatedException(name, type, version);

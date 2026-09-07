@@ -47,7 +47,6 @@
     <url>https://github.com/mvnpm/mvnpm/issues</url>
   </issueManagement>
   <properties>
-    <compiler-plugin.version>3.15.0</compiler-plugin.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -57,18 +56,19 @@
     <skipITs>true</skipITs>
     <surefire-plugin.version>3.5.4</surefire-plugin.version>
     <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
-    
+
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
     <impsort.plugin.version>1.13.0</impsort.plugin.version>
     <quarkus.ide-config.version>${quarkus.platform.version}</quarkus.ide-config.version>
-    
     <pgpainless.version>1.5.5</pgpainless.version>
+    <quarkus.maven.resolver.version>0.0.5</quarkus.maven.resolver.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>2.3.1</quarkus-web-bundler.version>
     <quarkus-roq-frontmatter.version>2.1.1</quarkus-roq-frontmatter.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
     <esbuild-java.version>2.1.2</esbuild-java.version>
+    <testcontainers.version>2.0.5</testcontainers.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -100,8 +100,8 @@
 
     <!-- Health check -->
     <dependency>
-        <groupId>io.quarkus</groupId>
-        <artifactId>quarkus-smallrye-health</artifactId>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
     </dependency>
     <!-- To serve the maven files -->
     <dependency>
@@ -181,14 +181,14 @@
     </dependency>
     <!-- To sign the files (PGP) -->
     <dependency>
-        <groupId>org.pgpainless</groupId>
-        <artifactId>pgpainless-core</artifactId>
-        <version>${pgpainless.version}</version>
+      <groupId>org.pgpainless</groupId>
+      <artifactId>pgpainless-core</artifactId>
+      <version>${pgpainless.version}</version>
     </dependency>
     <dependency>
-        <groupId>org.pgpainless</groupId>
-        <artifactId>pgpainless-sop</artifactId>
-        <version>${pgpainless.version}</version>
+      <groupId>org.pgpainless</groupId>
+      <artifactId>pgpainless-sop</artifactId>
+      <version>${pgpainless.version}</version>
     </dependency>
     <!-- To create the importmap -->
     <dependency>
@@ -223,9 +223,9 @@
     </dependency>
     <!-- UI (from mvnpm) -->
     <dependency>
-        <groupId>org.mvnpm</groupId>
-        <artifactId>lit</artifactId>
-        <scope>provided</scope>
+      <groupId>org.mvnpm</groupId>
+      <artifactId>lit</artifactId>
+      <scope>provided</scope>
     </dependency>
     <!-- Vaadin Web components -->
     <dependency>
@@ -235,9 +235,9 @@
     </dependency>
     <!-- Loaders -->
     <dependency>
-	<groupId>org.mvnpm</groupId>
-	<artifactId>ldrs</artifactId>
-	<scope>provided</scope>
+      <groupId>org.mvnpm</groupId>
+      <artifactId>ldrs</artifactId>
+      <scope>provided</scope>
     </dependency>
     <!-- Router -->
     <dependency>
@@ -247,17 +247,17 @@
     </dependency>
     <!-- Codeblock -->
     <dependency>
-	<groupId>org.mvnpm.at.qomponent</groupId>
-	<artifactId>qui-code-block</artifactId>
-	<version>1.1.1</version>
-	<scope>provided</scope>
+      <groupId>org.mvnpm.at.qomponent</groupId>
+      <artifactId>qui-code-block</artifactId>
+      <version>1.1.1</version>
+      <scope>provided</scope>
     </dependency>
     <!-- Syntax highlighting for doc pages -->
     <dependency>
-	<groupId>org.mvnpm</groupId>
-	<artifactId>highlight.js</artifactId>
-	<version>11.11.1</version>
-	<scope>provided</scope>
+      <groupId>org.mvnpm</groupId>
+      <artifactId>highlight.js</artifactId>
+      <version>11.11.1</version>
+      <scope>provided</scope>
     </dependency>
     <!-- To compare versions -->
     <dependency>
@@ -268,23 +268,23 @@
     </dependency>
     <!-- To render Markdown -->
     <dependency>
-	<groupId>org.mvnpm</groupId>
-	<artifactId>marked</artifactId>
-	<scope>provided</scope>
+      <groupId>org.mvnpm</groupId>
+      <artifactId>marked</artifactId>
+      <scope>provided</scope>
     </dependency>
     <!-- Cards for display -->
     <dependency>
-	<groupId>org.mvnpm.at.qomponent</groupId>
-	<artifactId>qui-card</artifactId>
-	<version>1.0.2</version>
-	<scope>provided</scope>
+      <groupId>org.mvnpm.at.qomponent</groupId>
+      <artifactId>qui-card</artifactId>
+      <version>1.0.2</version>
+      <scope>provided</scope>
     </dependency>
     <!-- Badges for display -->
     <dependency>
-	<groupId>org.mvnpm.at.qomponent</groupId>
-	<artifactId>qui-badge</artifactId>
-	<version>1.0.4</version>
-	<scope>provided</scope>
+      <groupId>org.mvnpm.at.qomponent</groupId>
+      <artifactId>qui-badge</artifactId>
+      <version>1.0.4</version>
+      <scope>provided</scope>
     </dependency>
     <!-- Testing -->
     <dependency>
@@ -308,6 +308,18 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock</artifactId>
+      <version>3.13.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>io.quarkiverse.playwright</groupId>
       <artifactId>quarkus-playwright</artifactId>
       <version>${playwright.version}</version>
@@ -318,6 +330,11 @@
       <artifactId>esbuild-java</artifactId>
       <version>${esbuild-java.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.mavenresolver</groupId>
+      <artifactId>quarkus-maven-resolver</artifactId>
+      <version>${quarkus.maven.resolver.version}</version>
     </dependency>
   </dependencies>
   <build>
@@ -338,21 +355,15 @@
         </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>${compiler-plugin.version}</version>
-        <configuration>
-          <compilerArgs>
-            <arg>-parameters</arg>
-          </compilerArgs>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire-plugin.version}</version>
         <configuration>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
+            <test.resources.directory>
+              ${project.basedir}/src/test/resources
+            </test.resources.directory>
           </systemPropertyVariables>
           <argLine>@{argLine}</argLine>
         </configuration>
@@ -433,6 +444,38 @@
         <skipITs>false</skipITs>
         <quarkus.package.type>native</quarkus.package.type>
         <quarkus.native.additional-build-args>-H:ReflectionConfigurationFiles=reflection-config.json</quarkus.native.additional-build-args>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludedGroups>nexus-oss,nexus-community-latest</excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>normal</id>
+      <properties>
+        <skipITs>false</skipITs>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludedGroups>nexus-community-latest</excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>nexus</id>
+      <properties>
+        <skipITs>false</skipITs>
       </properties>
     </profile>
     <profile>
