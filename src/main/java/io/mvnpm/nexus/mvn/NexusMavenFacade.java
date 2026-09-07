@@ -89,9 +89,8 @@ public class NexusMavenFacade implements MavenFacade, Constants {
             // is moved behind the facade (see PR #41659 discussion).
             return String.valueOf(uploadResult.hashCode());
         } catch (final Exception e) {
-            Log.debugf("Deployment failed with exception: \n%s", e);
             throw new UploadFailedException(
-                    "Deployment for " + gav.getGroupId() + ":" + gav.getArtifactId() + " failed!");
+                    "Deployment for " + gav.getGroupId() + ":" + gav.getArtifactId() + " failed!", e);
         }
     }
 
