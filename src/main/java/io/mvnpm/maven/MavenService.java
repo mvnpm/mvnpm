@@ -37,10 +37,10 @@ public class MavenService {
     public String repositoryUrl;
 
     @Inject
-    private Vertx vertx;
+    Vertx vertx;
 
     @Inject
-    private PackageFileLocator packageFileLocator;
+    PackageFileLocator packageFileLocator;
 
     private final AtomicReference<WebClient> webClient = new AtomicReference<>();
 

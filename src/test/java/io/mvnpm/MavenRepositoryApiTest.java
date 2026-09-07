@@ -2,20 +2,31 @@ package io.mvnpm;
 
 import java.util.List;
 
+import jakarta.inject.Inject;
+
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.vertx.mutiny.core.Vertx;
 
 @QuarkusTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MavenRepositoryApiTest {
 
-    @BeforeEach
+    @Inject
+    Vertx vertx;
+
+    @BeforeAll
     void setUp() {
-        Vertx.vertx().fileSystem().deleteRecursive("target/cache").onFailure().recoverWithNull().await()
+        vertx.fileSystem()
+                .deleteRecursive("target/cache")
+                .onFailure()
+                .recoverWithNull()
+                .await()
                 .indefinitely();
     }
 

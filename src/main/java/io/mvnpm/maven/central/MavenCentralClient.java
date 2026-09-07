@@ -1,4 +1,4 @@
-package io.mvnpm.mavencentral;
+package io.mvnpm.maven.central;
 
 import java.time.temporal.ChronoUnit;
 
@@ -58,7 +58,7 @@ public interface MavenCentralClient {
     /**
      * Publishing enumeration.
      */
-    static enum PublishingType {
+    enum PublishingType {
         AUTOMATIC,
         USER_MANAGED
     }

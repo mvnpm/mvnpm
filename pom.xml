@@ -47,7 +47,6 @@
     <url>https://github.com/mvnpm/mvnpm/issues</url>
   </issueManagement>
   <properties>
-    <compiler-plugin.version>3.15.0</compiler-plugin.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -61,14 +60,15 @@
     <formatter.plugin.version>2.23.0</formatter.plugin.version>
     <impsort.plugin.version>1.13.0</impsort.plugin.version>
     <quarkus.ide-config.version>${quarkus.platform.version}</quarkus.ide-config.version>
-
     <pgpainless.version>2.0.4</pgpainless.version>
+    <quarkus.maven.resolver.version>0.0.5</quarkus.maven.resolver.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>2.3.1</quarkus-web-bundler.version>
     <quarkus-roq-frontmatter.version>2.1.1</quarkus-roq-frontmatter.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
     <esbuild-java.version>2.1.2</esbuild-java.version>
+    <testcontainers.version>2.0.5</testcontainers.version>
   </properties>
   <dependencyManagement>
     <dependencies>
@@ -308,6 +308,18 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <version>${testcontainers.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock</artifactId>
+      <version>3.13.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>io.quarkiverse.playwright</groupId>
       <artifactId>quarkus-playwright</artifactId>
       <version>${playwright.version}</version>
@@ -318,6 +330,11 @@
       <artifactId>esbuild-java</artifactId>
       <version>${esbuild-java.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.mavenresolver</groupId>
+      <artifactId>quarkus-maven-resolver</artifactId>
+      <version>${quarkus.maven.resolver.version}</version>
     </dependency>
   </dependencies>
   <build>
@@ -338,21 +355,15 @@
         </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>${compiler-plugin.version}</version>
-        <configuration>
-          <compilerArgs>
-            <arg>-parameters</arg>
-          </compilerArgs>
-        </configuration>
-      </plugin>
-      <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${surefire-plugin.version}</version>
         <configuration>
           <systemPropertyVariables>
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
             <maven.home>${maven.home}</maven.home>
+            <test.resources.directory>
+              ${project.basedir}/src/test/resources
+            </test.resources.directory>
           </systemPropertyVariables>
           <argLine>@{argLine}</argLine>
         </configuration>
@@ -433,6 +444,38 @@
         <skipITs>false</skipITs>
         <quarkus.package.type>native</quarkus.package.type>
         <quarkus.native.additional-build-args>-H:ReflectionConfigurationFiles=reflection-config.json</quarkus.native.additional-build-args>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludedGroups>nexus-oss,nexus-community-latest</excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>normal</id>
+      <properties>
+        <skipITs>false</skipITs>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <configuration>
+              <excludedGroups>nexus-community-latest</excludedGroups>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>nexus</id>
+      <properties>
+        <skipITs>false</skipITs>
       </properties>
     </profile>
     <profile>

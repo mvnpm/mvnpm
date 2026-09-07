@@ -51,7 +51,7 @@ public class PackageListener {
     MavenRepositoryService mavenRepositoryService;
 
     @Inject
-    private SyncService syncService;
+    SyncService syncService;
 
     @ConsumeEvent(NewJarEvent.EVENT_NAME)
     @Blocking
