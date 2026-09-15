@@ -61,6 +61,8 @@
     <impsort.plugin.version>1.13.0</impsort.plugin.version>
     <quarkus.ide-config.version>${quarkus.platform.version}</quarkus.ide-config.version>
     <pgpainless.version>2.0.4</pgpainless.version>
+    <!-- Only maven-resolver-supplier needs a version here; the Quarkus BOM manages the rest of Aether.
+         Keep this in step with the BOM's resolver version so the set cannot split across releases. -->
     <maven.resolver.version>1.9.27</maven.resolver.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>2.3.1</quarkus-web-bundler.version>
@@ -341,6 +343,13 @@
       <artifactId>maven-resolver-supplier</artifactId>
       <version>${maven.resolver.version}</version>
     </dependency>
+    <!-- Supplies MavenRepositorySystemUtils, which the producer uses to build the session. It arrives
+         transitively with the supplier anyway, but we call it directly, so declare it. Version comes
+         from the Quarkus BOM. -->
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-resolver-provider</artifactId>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -448,7 +457,10 @@
       <properties>
         <skipITs>false</skipITs>
         <quarkus.package.type>native</quarkus.package.type>
-        <quarkus.native.additional-build-args>-H:ReflectionConfigurationFiles=reflection-config.json</quarkus.native.additional-build-args>
+        <!-- NTLMEngineImpl holds a static SecureRandom, which GraalVM refuses to keep in the image heap.
+             It becomes reachable through maven-resolver-transport-http once the self-hosted upload path
+             is enabled, so without this the native build fails for anyone running their own repository. -->
+        <quarkus.native.additional-build-args>-H:ReflectionConfigurationFiles=reflection-config.json,--initialize-at-run-time=org.apache.http.impl.auth.NTLMEngineImpl</quarkus.native.additional-build-args>
       </properties>
       <build>
         <plugins>
