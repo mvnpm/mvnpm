@@ -61,7 +61,7 @@
     <impsort.plugin.version>1.13.0</impsort.plugin.version>
     <quarkus.ide-config.version>${quarkus.platform.version}</quarkus.ide-config.version>
     <pgpainless.version>2.0.4</pgpainless.version>
-    <quarkus.maven.resolver.version>0.0.5</quarkus.maven.resolver.version>
+    <maven.resolver.version>1.9.27</maven.resolver.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>2.3.1</quarkus-web-bundler.version>
     <quarkus-roq-frontmatter.version>2.1.1</quarkus-roq-frontmatter.version>
@@ -331,10 +331,15 @@
       <version>${esbuild-java.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- Aether, used by the self-hosted Nexus upload path to deploy artifacts to a custom repository.
+         Deliberately the plain resolver rather than the quarkus-maven-resolver extension: that extension
+         eagerly builds the RepositorySystem from a @Record(STATIC_INIT) recorder, which runs inside the
+         GraalVM image builder and deadlocks on Sisu's bean loader (see #41662). RepositorySystemSupplier
+         wires the same object graph with plain constructors and no DI container. -->
     <dependency>
-      <groupId>io.quarkiverse.mavenresolver</groupId>
-      <artifactId>quarkus-maven-resolver</artifactId>
-      <version>${quarkus.maven.resolver.version}</version>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-supplier</artifactId>
+      <version>${maven.resolver.version}</version>
     </dependency>
   </dependencies>
   <build>
