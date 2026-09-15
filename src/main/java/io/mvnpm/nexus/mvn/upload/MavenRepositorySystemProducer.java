@@ -1,6 +1,7 @@
 package io.mvnpm.nexus.mvn.upload;
 
 import java.nio.file.Path;
+import java.util.HashMap;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Disposes;
@@ -8,6 +9,9 @@ import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import org.apache.http.impl.auth.AuthSchemeBase;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.auth.RFC2617Scheme;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.aether.RepositorySystem;
@@ -17,6 +21,7 @@ import org.eclipse.aether.supplier.RepositorySystemSupplier;
 
 import io.mvnpm.creator.PackageFileLocator;
 import io.quarkus.arc.properties.IfBuildProperty;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * Produces the Aether {@link RepositorySystem} used to deploy artifacts to a self-hosted repository.
@@ -30,6 +35,10 @@ import io.quarkus.arc.properties.IfBuildProperty;
  */
 @ApplicationScoped
 @IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
+// The resolver's HTTP transport caches the negotiated auth scheme by serializing it, so in a native image
+// every request to the repository logs a ClassNotFoundException and re-does the 401 challenge.
+@RegisterForReflection(serialization = true, targets = { BasicScheme.class, RFC2617Scheme.class,
+        AuthSchemeBase.class, HashMap.class })
 public final class MavenRepositorySystemProducer {
 
     @Inject
