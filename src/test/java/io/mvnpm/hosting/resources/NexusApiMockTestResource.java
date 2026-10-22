@@ -1,7 +1,7 @@
 package io.mvnpm.hosting.resources;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static io.mvnpm.hosting.NexusTestFixtures.NPM_REPOSITORY;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_REPOSITORY;
 
 import java.util.Map;
 
