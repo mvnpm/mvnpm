@@ -31,6 +31,7 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import io.mvnpm.Constants;
+import io.mvnpm.creator.aliasing.AliasingUtil;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Bugs;
@@ -57,6 +58,9 @@ public class PomService {
 
     @Inject
     DependencyOverridesConfig overridesConfig;
+
+    @Inject
+    AliasingUtil aliasingUtil;
 
     private final MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
@@ -106,6 +110,27 @@ public class PomService {
             resolvedDependencies.add(dependency);
         }
         return resolvedDependencies;
+    }
+
+    public List<Dependency> toDependencies(io.mvnpm.npm.model.Package p) {
+        List<Dependency> deps = new ArrayList<>();
+        populateFromMap(deps, p.dependencies());
+        if (p.peerDependencies() != null && !p.peerDependencies().isEmpty()) {
+            for (Map.Entry<Name, String> e : p.peerDependencies().entrySet()) {
+                if (e.getValue().startsWith("file:")) {
+                    continue;
+                }
+                Name name = e.getKey();
+                String version = e.getValue();
+                Dependency d = toDependency(name, version);
+                d.setScope("provided");
+                if (p.isOptionalPeerDependency(name)) {
+                    d.setOptional(true);
+                }
+                deps.add(d);
+            }
+        }
+        return deps;
     }
 
     private static String resolveVersion(Properties properties, String propertyName, String projectVersion) {
@@ -271,27 +296,6 @@ public class PomService {
         return ds;
     }
 
-    private List<Dependency> toDependencies(io.mvnpm.npm.model.Package p) {
-        List<Dependency> deps = new ArrayList<>();
-        populateFromMap(deps, p.dependencies());
-        if (p.peerDependencies() != null && !p.peerDependencies().isEmpty()) {
-            for (Map.Entry<Name, String> e : p.peerDependencies().entrySet()) {
-                if (e.getValue().startsWith("file:")) {
-                    continue;
-                }
-                Name name = e.getKey();
-                String version = e.getValue();
-                Dependency d = toDependency(name, version);
-                d.setScope("provided");
-                if (p.isOptionalPeerDependency(name)) {
-                    d.setOptional(true);
-                }
-                deps.add(d);
-            }
-        }
-        return deps;
-    }
-
     private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies) {
         if (dependencies != null && !dependencies.isEmpty()) {
             for (Map.Entry<Name, String> e : dependencies.entrySet()) {
@@ -306,6 +310,10 @@ public class PomService {
     }
 
     private Dependency toDependency(Name name, String version) {
+        if (version.startsWith("npm:")) {
+            return aliasingUtil.curateDependency(name, version);
+        }
+
         Dependency d = new Dependency();
         d.setGroupId(name.mvnGroupId);
         d.setArtifactId(name.mvnArtifactId);

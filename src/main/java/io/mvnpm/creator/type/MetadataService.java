@@ -25,6 +25,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.mvnpm.Constants;
 import io.mvnpm.creator.PackageFileLocator;
+import io.mvnpm.creator.aliasing.AliasCodec;
 import io.mvnpm.creator.composite.CompositeService;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.maven.MavenService;
@@ -99,7 +100,7 @@ public class MetadataService {
     }
 
     public StreamingOutput getMetadataSha1(Name name) {
-
+        getMetadataXml(name);
         Path localSha1Path = packageFileLocator.getLocalMetadataXmlSha1FullPath(name);
 
         // Create if if does not exist.
@@ -112,7 +113,7 @@ public class MetadataService {
     }
 
     public StreamingOutput getMetadataMd5(Name name) {
-
+        getMetadataXml(name);
         Path localMd5Path = packageFileLocator.getLocalMetadataXmlMd5FullPath(name);
 
         // Create if if does not exist.
@@ -137,7 +138,14 @@ public class MetadataService {
     }
 
     private Versioning getNpmVersioning(Name name) {
-        ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
+        final String registryName;
+        if (AliasCodec.isAlias(name.mvnArtifactId)) {
+            registryName = AliasCodec.targetName(name.mvnArtifactId);
+        } else {
+            registryName = name.npmFullName;
+        }
+
+        ProjectInfo info = npmFacade.getProjectInfo(registryName);
         Versioning versioning = new Versioning();
         String latest = info.distTags().latest();
         versioning.setLatest(latest);
