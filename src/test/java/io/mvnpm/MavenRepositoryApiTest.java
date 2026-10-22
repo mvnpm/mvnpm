@@ -1,8 +1,10 @@
 package io.mvnpm;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
-
-import jakarta.inject.Inject;
 
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,23 +13,30 @@ import org.junit.jupiter.api.TestInstance;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
-import io.vertx.mutiny.core.Vertx;
 
 @QuarkusTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MavenRepositoryApiTest {
 
-    @Inject
-    Vertx vertx;
-
+    // Plain NIO rather than an injected Vertx: MavenRepositoryApiIT inherits this class and runs as an
+    // integration test against the packaged binary, where CDI injection into the test is rejected.
     @BeforeAll
     void setUp() {
-        vertx.fileSystem()
-                .deleteRecursive("target/cache")
-                .onFailure()
-                .recoverWithNull()
-                .await()
-                .indefinitely();
+        final Path cache = Path.of("target/cache");
+        if (!Files.exists(cache)) {
+            return;
+        }
+        try (var paths = Files.walk(cache)) {
+            paths.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.delete(path);
+                } catch (IOException ignored) {
+                    // best effort, the cache is rebuilt on demand
+                }
+            });
+        } catch (IOException ignored) {
+            // best effort, the cache is rebuilt on demand
+        }
     }
 
     @Test

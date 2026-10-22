@@ -13,8 +13,12 @@ import org.eclipse.microprofile.faulttolerance.Timeout;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.jboss.resteasy.reactive.ClientWebApplicationException;
 
+import io.mvnpm.nexus.npm.model.Checksums;
+import io.mvnpm.nexus.npm.model.NpmAsset;
 import io.mvnpm.nexus.npm.model.NpmAssets;
+import io.mvnpm.nexus.npm.model.NpmDetails;
 import io.mvnpm.nexus.npm.model.NpmResponse;
+import io.mvnpm.nexus.npm.model.NpmResponseItem;
 import io.mvnpm.nexus.tooling.TypeConversionTool;
 import io.mvnpm.npm.NpmRegistryClient;
 import io.mvnpm.npm.api.NpmFacade;
@@ -27,6 +31,7 @@ import io.mvnpm.npm.model.SearchResults;
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.cache.CacheResult;
 import io.quarkus.logging.Log;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 import io.smallrye.common.annotation.Blocking;
 
 /**
@@ -37,6 +42,10 @@ import io.smallrye.common.annotation.Blocking;
  */
 @ApplicationScoped
 @IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
+// These records are only ever named in a Response.readEntity(..) argument, never in a REST client or
+// resource signature, so the build time Jackson scan does not find them and native deserialization fails.
+@RegisterForReflection(targets = { NpmAssets.class, NpmAsset.class, NpmDetails.class, NpmResponse.class,
+        NpmResponseItem.class, Checksums.class })
 public class NexusRegistryFacade implements NpmFacade {
 
     @Inject

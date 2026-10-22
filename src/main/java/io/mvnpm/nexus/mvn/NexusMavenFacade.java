@@ -21,10 +21,14 @@ import io.mvnpm.maven.exceptions.StatusCheckException;
 import io.mvnpm.maven.exceptions.UploadFailedException;
 import io.mvnpm.maven.sync.SyncItem;
 import io.mvnpm.maven.sync.SyncItemService;
+import io.mvnpm.nexus.mvn.model.MavenAsset;
+import io.mvnpm.nexus.mvn.model.MavenDetails;
 import io.mvnpm.nexus.mvn.model.MavenResponse;
+import io.mvnpm.nexus.mvn.model.MavenResponseItem;
 import io.mvnpm.nexus.mvn.upload.MavenArtifactUploader;
 import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.logging.Log;
+import io.quarkus.runtime.annotations.RegisterForReflection;
 
 /**
  * The {@link MavenFacade}-implementation for nexus sonatype.
@@ -33,6 +37,10 @@ import io.quarkus.logging.Log;
  */
 @ApplicationScoped
 @IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
+// Same reason as in NexusRegistryFacade: the search response is read with readEntity, which the build time
+// Jackson scan cannot see, so without this the native image silently reports every artifact as missing.
+@RegisterForReflection(targets = { MavenResponse.class, MavenResponseItem.class, MavenAsset.class,
+        MavenDetails.class })
 public class NexusMavenFacade implements MavenFacade, Constants {
 
     @Inject

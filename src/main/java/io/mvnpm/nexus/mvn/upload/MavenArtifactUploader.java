@@ -20,8 +20,6 @@ import io.mvnpm.Constants;
 import io.mvnpm.maven.api.BundleCreator.BundleRecord;
 import io.mvnpm.maven.api.Gav;
 import io.quarkus.arc.properties.IfBuildProperty;
-import io.quarkus.bootstrap.resolver.maven.BootstrapMavenContext;
-import io.quarkus.bootstrap.resolver.maven.BootstrapMavenException;
 
 @ApplicationScoped
 @IfBuildProperty(name = "mvnpm.custom.repository.enabled", stringValue = "true")
@@ -34,10 +32,10 @@ public final class MavenArtifactUploader implements Constants {
     private final RemoteRepository snapshotsRepository;
 
     @Inject
-    public MavenArtifactUploader(BootstrapMavenContext mvnCtx, @Releases RemoteRepository releasesRepository,
-            @Snapshots RemoteRepository snapshotsRepository) throws BootstrapMavenException {
-        this.repositorySystem = mvnCtx.getRepositorySystem();
-        this.session = initDefaultSession(mvnCtx.getRepositorySystemSession());
+    public MavenArtifactUploader(RepositorySystem repositorySystem, RepositorySystemSession session,
+            @Releases RemoteRepository releasesRepository, @Snapshots RemoteRepository snapshotsRepository) {
+        this.repositorySystem = repositorySystem;
+        this.session = initDefaultSession(session);
         this.releasesRepository = releasesRepository;
         this.snapshotsRepository = snapshotsRepository;
     }
