@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.StringJoiner;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -333,8 +332,6 @@ public class PomService {
                 depManagement.addDependency(toDependency(rootOverride.getKey(), rootOverride.getValue()));
             }
         }
-
-        Log.infof("here is the dependency-management: \n%s", stringify(depManagement));
         return depManagement;
     }
 
@@ -380,15 +377,4 @@ public class PomService {
     private static final String MODEL_VERSION = "4.0.0";
     private static final String GIT_PLUS = "git+";
     private static final String DOT_GIT = ".git";
-
-    private final String stringify(DependencyManagement dependencyManagement) {
-        if (!dependencyManagement.getDependencies().isEmpty()) {
-            final StringJoiner joiner = new StringJoiner("\n");
-            for (final Dependency dep : dependencyManagement.getDependencies()) {
-                joiner.add(dep.toString());
-            }
-            return joiner.toString() + "\n";
-        }
-        return "[ empty ]\n";
-    }
 }

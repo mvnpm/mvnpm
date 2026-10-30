@@ -8,10 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 import jakarta.inject.Inject;
 
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.junit.jupiter.api.Test;
 
@@ -86,7 +88,8 @@ class OverridePomTest {
                     "Unexpected managed dependencies in case " + testCase);
             return;
         }
-        assertNotNull(model.getDependencyManagement(), "Missing dependencyManagement in case " + testCase);
+        assertNotNull(model.getDependencyManagement(), "Missing dependencyManagement in case " + testCase + "! Output was: \n"
+                + stringify(model.getDependencyManagement()));
 
         final Map<String, String> actual = new HashMap<>();
         for (final Dependency dependency : model.getDependencyManagement().getDependencies()) {
@@ -99,5 +102,16 @@ class OverridePomTest {
             assertEquals(entry.getValue(), actual.get(name.mvnGroupId + ":" + name.mvnArtifactId),
                     "Wrong managed version for " + entry.getKey());
         }
+    }
+
+    private final String stringify(DependencyManagement dependencyManagement) {
+        if (!dependencyManagement.getDependencies().isEmpty()) {
+            final StringJoiner joiner = new StringJoiner("\n");
+            for (final Dependency dep : dependencyManagement.getDependencies()) {
+                joiner.add(dep.toString());
+            }
+            return joiner.toString() + "\n";
+        }
+        return "[ empty ]\n";
     }
 }
