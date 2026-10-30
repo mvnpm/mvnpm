@@ -15,11 +15,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.StringJoiner;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.IssueManagement;
 import org.apache.maven.model.License;
@@ -31,6 +33,8 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import io.mvnpm.Constants;
+import io.mvnpm.creator.overriding.OverrideStore;
+import io.mvnpm.creator.overriding.Overrides;
 import io.mvnpm.creator.utils.FileUtil;
 import io.mvnpm.npm.api.NpmFacade;
 import io.mvnpm.npm.model.Bugs;
@@ -122,6 +126,7 @@ public class PomService {
             return;
         }
         List<Dependency> deps = toDependencies(p);
+        DependencyManagement depManagement = toDependencyManagement(p);
 
         Model model = new Model();
 
@@ -157,6 +162,10 @@ public class PomService {
 
             model.setProperties(properties);
             model.setDependencies(deps);
+        }
+
+        if (!depManagement.getDependencies().isEmpty()) {
+            model.setDependencyManagement(depManagement);
         }
 
         FileUtil.createDirectories(localFilePath);
@@ -292,6 +301,43 @@ public class PomService {
         return deps;
     }
 
+    /**
+     * Creates a {@link DependencyManagement} using the {@link io.mvnpm.npm.model.Package#overrides()}.
+     * If both overrides and resolutions are given, only resolutions are adapted, as yarn does not respect npm's override
+     * property.
+     *
+     * <p>
+     * <b>NOTE:</b> Currently only respects {@link io.mvnpm.creator.overriding.Overrides#rootOverrides()}.
+     * </p>
+     *
+     * @param p The {@link io.mvnpm.npm.model.Package} to take the {@link Overrides} from
+     * @return The constructed {@link DependencyManagement}
+     */
+    private final DependencyManagement toDependencyManagement(io.mvnpm.npm.model.Package p) {
+        final DependencyManagement depManagement = new DependencyManagement();
+
+        if (p.overrides() == null) {
+            // no supported override-mechanisms need activation
+            return depManagement;
+        }
+
+        // handling npm's overrides if present
+        final OverrideStore pmOverrideStore = p.overrides();
+
+        pmOverrideStore.includeDependenciesOf(p);
+        pmOverrideStore.process();
+
+        final Overrides overrides = pmOverrideStore.unload();
+        if (overrides != null) {
+            for (final Map.Entry<Name, String> rootOverride : overrides.flattened().entrySet()) {
+                depManagement.addDependency(toDependency(rootOverride.getKey(), rootOverride.getValue()));
+            }
+        }
+
+        Log.infof("here is the dependency-management: \n%s", stringify(depManagement));
+        return depManagement;
+    }
+
     private void populateFromMap(List<Dependency> listToPopulate, Map<Name, String> dependencies) {
         if (dependencies != null && !dependencies.isEmpty()) {
             for (Map.Entry<Name, String> e : dependencies.entrySet()) {
@@ -335,4 +381,14 @@ public class PomService {
     private static final String GIT_PLUS = "git+";
     private static final String DOT_GIT = ".git";
 
+    private final String stringify(DependencyManagement dependencyManagement) {
+        if (!dependencyManagement.getDependencies().isEmpty()) {
+            final StringJoiner joiner = new StringJoiner("\n");
+            for (final Dependency dep : dependencyManagement.getDependencies()) {
+                joiner.add(dep.toString());
+            }
+            return joiner.toString() + "\n";
+        }
+        return "[ empty ]\n";
+    }
 }

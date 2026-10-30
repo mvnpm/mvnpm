@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import jakarta.enterprise.context.Dependent;
@@ -39,7 +40,6 @@ import io.mvnpm.nexus.npm.model.NpmAssets;
 import io.mvnpm.npm.model.Dist;
 import io.mvnpm.npm.model.DistTags;
 import io.mvnpm.npm.model.Name;
-import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.Package;
 import io.mvnpm.npm.model.Project;
 import io.mvnpm.npm.model.Repository;
@@ -120,9 +120,10 @@ public final class NpmAssetsTooling implements Constants {
 
         final Map<Name, String> dependencies = new HashMap<>();
         final Map<Name, String> peerDependencies = new HashMap<>();
-        final Map<Name, Map<String, Boolean>> peerDependencyMeta = new HashMap<>();
-        final Map<Name, String> overrides = new HashMap<>();
-        final Map<Name, String> resolutions = new HashMap<>();
+        final Map<Name, String> devDependencies = new HashMap<>();
+        final Map<Name, String> optionalDependencies = new HashMap<>();
+        final Map<String, Map<String, Boolean>> peerDependencyMeta = new HashMap<>();
+        final AtomicReference<OverrideStore> overrides = new AtomicReference<>();
 
         final Name name = new Name(asset.npm().name());
         final Path localFilePath = packageFileLocator.getLocalFullPath(FileType.tgz, name, asset.npm().version());
@@ -137,8 +138,9 @@ public final class NpmAssetsTooling implements Constants {
         }
 
         try {
-            readDependencies(localFilePath, dependencies, peerDependencies, peerDependencyMeta);
-            readOverrides(localFilePath, overrides, resolutions);
+            readDependencies(localFilePath, dependencies, peerDependencies, devDependencies, optionalDependencies,
+                    peerDependencyMeta);
+            readOverrides(localFilePath, overrides);
         } catch (final Exception e) {
             Log.debugf("No dependencies or overrides found, continuing without them...");
         }
@@ -151,7 +153,9 @@ public final class NpmAssetsTooling implements Constants {
         final Dist dist = new Dist(null, asset.checksum().sha1(), tarballUrl, 1, asset.fileSize(), null);
 
         return new Package(asset.id(), name, asset.npm().version(), null, null, null, null, repo, null, null, null,
-                asset.format(), null, dependencies, peerDependencies, peerDependencyMeta, overrides, resolutions, dist);
+                asset.format(), null, dependencies, peerDependencies, devDependencies, optionalDependencies, peerDependencyMeta,
+                overrides.get(),
+                dist);
     }
 
     /**
@@ -239,7 +243,8 @@ public final class NpmAssetsTooling implements Constants {
      * @throws Exception if an exception occured in the process
      */
     private final void readDependencies(final Path localFilePath, final Map<Name, String> deps,
-            final Map<Name, String> peerDeps, final Map<Name, Map<String, Boolean>> peerDepsMeta) throws IOException {
+            final Map<Name, String> peerDeps, final Map<Name, String> devDeps, final Map<Name, String> optDeps,
+            final Map<String, Map<String, Boolean>> peerDepsMeta) throws IOException {
 
         try (final InputStream tgz = Files.newInputStream(localFilePath);
                 final GzipCompressorInputStream gzip = new GzipCompressorInputStream(tgz);
@@ -253,6 +258,8 @@ public final class NpmAssetsTooling implements Constants {
                     JsonNode root = MAPPER.readTree(tar);
                     extractInto("dependencies", root, deps);
                     extractInto("peerDependencies", root, peerDeps);
+                    extractInto("devDependencies", root, devDeps);
+                    extractInto("optionalDependencies", root, optDeps);
                     extractDepsMeta(root, peerDepsMeta);
                     return;
                 }
@@ -262,8 +269,8 @@ public final class NpmAssetsTooling implements Constants {
         throw new IOException("package.json not found in tarball: " + localFilePath);
     }
 
-    private final void readOverrides(final Path localFilePath, final Map<Name, String> overrides,
-            final Map<Name, String> resolutions) throws IOException, IllegalStateException {
+    private final void readOverrides(final Path localFilePath, final AtomicReference<OverrideStore> overrides)
+            throws IOException, IllegalStateException {
 
         try (final InputStream tgz = Files.newInputStream(localFilePath);
                 final GzipCompressorInputStream gzip = new GzipCompressorInputStream(tgz);
@@ -276,7 +283,6 @@ public final class NpmAssetsTooling implements Constants {
                 if (!entry.isDirectory() && entry.getName().equals("package/package.json")) {
                     JsonNode root = MAPPER.readTree(tar);
                     extractOverrides(root, overrides);
-                    extractResolutions(root, resolutions);
                     return;
                 }
             }
@@ -313,32 +319,13 @@ public final class NpmAssetsTooling implements Constants {
      * @param root The root {@link JsonNode}
      * @param target The target {@link Map} to extract the entry into
      */
-    private final void extractOverrides(final JsonNode root, final Map<Name, String> target) {
+    private final void extractOverrides(final JsonNode root, final AtomicReference<OverrideStore> target) {
         extract("overrides", root, overrides -> {
             final OverrideStore store = new OverrideStore(overrides.properties());
             store.process();
-            target.putAll(store.unload());
 
             Log.info("finished override-traversal, unloading store into target-collection...");
-        });
-    }
-
-    /**
-     * Extracts an entry of the {@code resolutions}-object in the {@code package.json} root object.
-     *
-     * @param root The root {@link JsonNode}
-     * @param target The target {@link Map} to extract the entry into
-     */
-    private final void extractResolutions(final JsonNode root, final Map<Name, String> target) {
-        extract("resolutions", root, resolutions -> {
-            final Set<Map.Entry<String, JsonNode>> fields = resolutions.properties();
-            for (final Map.Entry<String, JsonNode> entry : fields) {
-                final Name name = NameParser.fromNpmProject(entry.getKey());
-                final String version = entry.getValue().asText();
-
-                Log.infof("found override entry for '%s' with version '%s'...", name, version);
-                target.put(name, version);
-            }
+            target.set(store);
         });
     }
 
@@ -349,17 +336,19 @@ public final class NpmAssetsTooling implements Constants {
      * @param field The field which should be extracted.
      * @param target The {@link Map} into which the field should be extracted.
      */
-    private final void extractDepsMeta(final JsonNode root, final Map<Name, Map<String, Boolean>> target) {
+    private final void extractDepsMeta(final JsonNode root, final Map<String, Map<String, Boolean>> target) {
         extract("peerDependenciesMeta", root, fieldNode -> {
             final Set<Map.Entry<String, JsonNode>> fields = fieldNode.properties();
+
             for (final Map.Entry<String, JsonNode> entry : fields) {
-                final Name packageName = NameParser.fromNpmProject(entry.getKey());
+                final String packageName = entry.getKey();
                 final Map<String, Boolean> meta = new HashMap<>();
+
                 for (final Map.Entry<String, JsonNode> prop : entry.getValue().properties()) {
                     final String propName = prop.getKey();
                     final Boolean value = prop.getValue().asBoolean();
-                    meta.put(propName, value);
 
+                    meta.put(propName, value);
                     Log.infof("adding metadata [%s : %s] for package '%s'...", propName, value, packageName);
                 }
                 target.put(packageName, meta);

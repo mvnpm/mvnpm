@@ -124,6 +124,26 @@ public abstract class NexusIntegrationTest implements Constants {
     }
 
     @Test
+    void overrideFixturesAreProvisionedInNexus() {
+        assertOverrideFixture("@mvnpm-fixture/case-01-anchor", "1.0.0");
+        assertOverrideFixture("@mvnpm-fixture/case-06-d16-n16", "1.0.0");
+        assertOverrideFixture("@mvnpm-fixture/case-06-d16-n16", "2.0.0");
+        assertOverrideFixture("@mvnpm-fixture/case-15-target", "2.9.0");
+        assertOverrideFixture("@mvnpm-fixture/case-15-target", "2.10.0");
+    }
+
+    private void assertOverrideFixture(String name, String version) {
+        final Package npmPackage = npmFacade.getPackage(name, version);
+        assertNotNull(npmPackage, name + "@" + version);
+        assertEquals(name, npmPackage.name().npmFullName);
+        assertEquals(version, npmPackage.version());
+        assertNotNull(npmPackage.dist());
+        assertNotNull(npmPackage.dist().tarball());
+        assertTrue(npmPackage.dist().tarball().toString().startsWith(nexusUrl),
+                "Fixture must originate from test Nexus: " + name);
+    }
+
+    @Test
     void testMavenFacade() throws Exception {
         final Gav releaseGav = new Gav(MAVEN_GROUP_ID, MAVEN_ARTIFACT_ID, MAVEN_RELEASE_VERSION);
         final Gav snapshotGav = new Gav(MAVEN_GROUP_ID, MAVEN_ARTIFACT_ID, MAVEN_SNAPSHOT_VERSION);

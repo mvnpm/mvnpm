@@ -1,0 +1,14 @@
+{
+  "name": "mvnpm-override-case-14",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Nested selectors need not be adjacent",
+  "dependencies": {
+    "@mvnpm-fixture/case-14-anchor": "1.0.0"
+  },
+  "overrides": {
+    "@mvnpm-fixture/case-14-a": {
+      "@mvnpm-fixture/case-14-target": "2.0.0"
+    }
+  }
+}

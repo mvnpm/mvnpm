@@ -1,23 +1,43 @@
 package io.mvnpm.hosting.resources;
 
-import static io.mvnpm.hosting.MavenVersionPolicy.*;
-import static io.mvnpm.hosting.MavenWritePolicy.*;
-import static io.mvnpm.hosting.NexusTestFixtures.*;
+import static io.mvnpm.hosting.MavenVersionPolicy.RELEASE;
+import static io.mvnpm.hosting.MavenVersionPolicy.SNAPSHOT;
+import static io.mvnpm.hosting.MavenWritePolicy.ALLOW;
+import static io.mvnpm.hosting.MavenWritePolicy.ALLOW_ONCE;
+import static io.mvnpm.hosting.NexusTestFixtures.NPM_NAME;
+import static io.mvnpm.hosting.NexusTestFixtures.NPM_RELEASE_FIXTURE;
+import static io.mvnpm.hosting.NexusTestFixtures.NPM_RELEASE_VERSION;
+import static io.mvnpm.hosting.NexusTestFixtures.NPM_REPOSITORY;
+import static io.mvnpm.hosting.NexusTestFixtures.NPM_SCOPE;
+import static io.mvnpm.hosting.NexusTestFixtures.NPM_SNAPSHOT_FIXTURE;
+import static io.mvnpm.hosting.NexusTestFixtures.NPM_SNAPSHOT_VERSION;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.mvnpm.hosting.NexusTestClient;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
@@ -66,6 +86,7 @@ public abstract class NexusTestResource implements QuarkusTestResourceLifecycleM
         nexus.acceptEulaIfRequired();
         provisionTestRepositories(nexus);
         seedNpmPackages(nexus);
+        seedOverridePackages(nexus);
 
         return Map.ofEntries(
                 Map.entry(REST_CLIENT_URL_PROP, nexusUrl),
@@ -152,6 +173,56 @@ public abstract class NexusTestResource implements QuarkusTestResourceLifecycleM
                 NPM_SCOPE,
                 NPM_NAME,
                 NPM_SNAPSHOT_VERSION);
+    }
+
+    private void seedOverridePackages(NexusTestClient nexus) {
+        final String root = "npm-packages/overrides/packages";
+        final java.net.URL resource = NexusTestResource.class.getClassLoader().getResource(root);
+        if (resource == null) {
+            throw new IllegalStateException("Missing override package fixtures: " + root);
+        }
+        try {
+            final Path directory = Path.of(resource.toURI());
+            final List<Path> packages;
+            try (Stream<Path> paths = Files.walk(directory)) {
+                packages = paths.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".tgz"))
+                        .sorted(Comparator.comparing(Path::toString)).toList();
+            }
+            if (packages.isEmpty()) {
+                throw new IllegalStateException("No override tarballs found in " + directory);
+            }
+            final ObjectMapper mapper = new ObjectMapper();
+            for (Path path : packages) {
+                final byte[] archive = Files.readAllBytes(path);
+                final JsonNode manifest;
+                try (TarArchiveInputStream tar = new TarArchiveInputStream(
+                        new GZIPInputStream(new java.io.ByteArrayInputStream(archive)))) {
+                    JsonNode found = null;
+                    TarArchiveEntry entry;
+                    while ((entry = tar.getNextEntry()) != null) {
+                        if (entry.isFile() && entry.getName().equals("package/package.json")) {
+                            found = mapper.readTree(tar);
+                            break;
+                        }
+                    }
+                    if (found == null) {
+                        throw new IllegalStateException("No package/package.json in " + path);
+                    }
+                    manifest = found;
+                }
+                final String name = manifest.path("name").asText();
+                final String version = manifest.path("version").asText();
+                if (name.isBlank() || version.isBlank()) {
+                    throw new IllegalStateException("Invalid npm manifest in " + path);
+                }
+                final String scope = name.startsWith("@") ? name.substring(0, name.indexOf('/')) : null;
+                final String packageName = scope == null ? name : name.substring(name.indexOf('/') + 1);
+                nexus.uploadNpmPackage(NPM_REPOSITORY, name.replace('/', '-') + "-" + version + ".tgz", archive);
+                nexus.awaitNpmPackage(NPM_REPOSITORY, scope, packageName, version);
+            }
+        } catch (IOException | URISyntaxException e) {
+            throw new IllegalStateException("Could not provision override npm packages", e);
+        }
     }
 
     private byte[] readFixture(String resourceName) {

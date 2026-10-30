@@ -1,0 +1,120 @@
+{
+  "name": "mvnpm-override-case-05",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Independent override paths at depths 1..10",
+  "dependencies": {
+    "@mvnpm-fixture/case-05-anchor-d01": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d02": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d03": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d04": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d05": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d06": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d07": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d08": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d09": "1.0.0",
+    "@mvnpm-fixture/case-05-anchor-d10": "1.0.0"
+  },
+  "overrides": {
+    "@mvnpm-fixture/case-05-d01-n01": "2.0.0",
+    "@mvnpm-fixture/case-05-d02-n01": {
+      "@mvnpm-fixture/case-05-d02-n02": "2.0.0"
+    },
+    "@mvnpm-fixture/case-05-d03-n01": {
+      "@mvnpm-fixture/case-05-d03-n02": {
+        "@mvnpm-fixture/case-05-d03-n03": "2.0.0"
+      }
+    },
+    "@mvnpm-fixture/case-05-d04-n01": {
+      "@mvnpm-fixture/case-05-d04-n02": {
+        "@mvnpm-fixture/case-05-d04-n03": {
+          "@mvnpm-fixture/case-05-d04-n04": "2.0.0"
+        }
+      }
+    },
+    "@mvnpm-fixture/case-05-d05-n01": {
+      "@mvnpm-fixture/case-05-d05-n02": {
+        "@mvnpm-fixture/case-05-d05-n03": {
+          "@mvnpm-fixture/case-05-d05-n04": {
+            "@mvnpm-fixture/case-05-d05-n05": "2.0.0"
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-05-d06-n01": {
+      "@mvnpm-fixture/case-05-d06-n02": {
+        "@mvnpm-fixture/case-05-d06-n03": {
+          "@mvnpm-fixture/case-05-d06-n04": {
+            "@mvnpm-fixture/case-05-d06-n05": {
+              "@mvnpm-fixture/case-05-d06-n06": "2.0.0"
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-05-d07-n01": {
+      "@mvnpm-fixture/case-05-d07-n02": {
+        "@mvnpm-fixture/case-05-d07-n03": {
+          "@mvnpm-fixture/case-05-d07-n04": {
+            "@mvnpm-fixture/case-05-d07-n05": {
+              "@mvnpm-fixture/case-05-d07-n06": {
+                "@mvnpm-fixture/case-05-d07-n07": "2.0.0"
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-05-d08-n01": {
+      "@mvnpm-fixture/case-05-d08-n02": {
+        "@mvnpm-fixture/case-05-d08-n03": {
+          "@mvnpm-fixture/case-05-d08-n04": {
+            "@mvnpm-fixture/case-05-d08-n05": {
+              "@mvnpm-fixture/case-05-d08-n06": {
+                "@mvnpm-fixture/case-05-d08-n07": {
+                  "@mvnpm-fixture/case-05-d08-n08": "2.0.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-05-d09-n01": {
+      "@mvnpm-fixture/case-05-d09-n02": {
+        "@mvnpm-fixture/case-05-d09-n03": {
+          "@mvnpm-fixture/case-05-d09-n04": {
+            "@mvnpm-fixture/case-05-d09-n05": {
+              "@mvnpm-fixture/case-05-d09-n06": {
+                "@mvnpm-fixture/case-05-d09-n07": {
+                  "@mvnpm-fixture/case-05-d09-n08": {
+                    "@mvnpm-fixture/case-05-d09-n09": "2.0.0"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-05-d10-n01": {
+      "@mvnpm-fixture/case-05-d10-n02": {
+        "@mvnpm-fixture/case-05-d10-n03": {
+          "@mvnpm-fixture/case-05-d10-n04": {
+            "@mvnpm-fixture/case-05-d10-n05": {
+              "@mvnpm-fixture/case-05-d10-n06": {
+                "@mvnpm-fixture/case-05-d10-n07": {
+                  "@mvnpm-fixture/case-05-d10-n08": {
+                    "@mvnpm-fixture/case-05-d10-n09": {
+                      "@mvnpm-fixture/case-05-d10-n10": "2.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

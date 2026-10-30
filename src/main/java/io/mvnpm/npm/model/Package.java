@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import io.mvnpm.creator.overriding.OverrideDeserializer;
+import io.mvnpm.creator.overriding.OverrideStore;
 
 public record Package(
         @JsonProperty("_id") String id,
@@ -24,9 +25,10 @@ public record Package(
         @JsonDeserialize(using = MaintainersDeserializer.class) List<Maintainer> maintainers,
         Map<Name, String> dependencies,
         Map<Name, String> peerDependencies,
-        Map<Name, Map<String, Boolean>> peerDependenciesMeta,
-        @JsonDeserialize(using = OverrideDeserializer.class) Map<Name, String> overrides,
-        @JsonDeserialize(using = OverrideDeserializer.class) Map<Name, String> resolutions,
+        Map<Name, String> devDependencies,
+        Map<Name, String> optionalDependencies,
+        Map<String, Map<String, Boolean>> peerDependenciesMeta,
+        @JsonDeserialize(using = OverrideDeserializer.class) OverrideStore overrides,
         Dist dist) {
 
     public boolean isOptionalPeerDependency(Name name) {
