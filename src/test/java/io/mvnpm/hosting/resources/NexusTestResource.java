@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -177,7 +178,7 @@ public abstract class NexusTestResource implements QuarkusTestResourceLifecycleM
 
     private void seedOverridePackages(NexusTestClient nexus) {
         final String root = "npm-packages/overrides/packages";
-        final java.net.URL resource = NexusTestResource.class.getClassLoader().getResource(root);
+        final URL resource = NexusTestResource.class.getClassLoader().getResource(root);
         if (resource == null) {
             throw new IllegalStateException("Missing override package fixtures: " + root);
         }

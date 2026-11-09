@@ -103,7 +103,7 @@ class OverrideFixtureTest {
     }
 
     @Test
-    void rootLevelDotNotationIsRejected() throws Exception {
+    void rootLevelDotNotationIsRejected() {
         assertThrows(OverrideException.class, () -> load(12));
     }
 
@@ -175,7 +175,7 @@ class OverrideFixtureTest {
                         GZIPInputStream gzip = new GZIPInputStream(input);
                         TarArchiveInputStream tar = new TarArchiveInputStream(gzip)) {
                     TarArchiveEntry entry;
-                    while ((entry = tar.getNextTarEntry()) != null) {
+                    while ((entry = tar.getNextEntry()) != null) {
                         if (entry.isFile() && "package/package.json".equals(entry.getName())) {
                             final JsonNode json = mapper.readTree(tar.readNBytes((int) entry.getSize()));
                             assertTrue(json.path("name").isTextual(), "Missing package name in " + tarball);
