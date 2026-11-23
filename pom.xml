@@ -66,7 +66,7 @@
     <maven.resolver.version>1.9.27</maven.resolver.version>
     <!-- UI Libs -->
     <quarkus-web-bundler.version>2.3.1</quarkus-web-bundler.version>
-    <quarkus-roq-frontmatter.version>2.1.1</quarkus-roq-frontmatter.version>
+    <quarkus-roq-frontmatter.version>2.2.1</quarkus-roq-frontmatter.version>
     <!-- Testing-->
     <playwright.version>0.0.1</playwright.version>
     <esbuild-java.version>2.1.2</esbuild-java.version>
@@ -292,7 +292,12 @@
     <dependency>
       <groupId>io.quarkiverse.roq</groupId>
       <artifactId>quarkus-roq-plugin-sitemap</artifactId>
-      <version>2.1.0</version>
+      <version>${quarkus-roq-frontmatter.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.roq</groupId>
+      <artifactId>quarkus-roq-plugin-hybrid</artifactId>
+      <version>${quarkus-roq-frontmatter.version}</version>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
