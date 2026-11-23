@@ -57,9 +57,7 @@ import io.mvnpm.npm.model.NameParser;
 import io.mvnpm.npm.model.ProjectInfo;
 import io.quarkus.logging.Log;
 import io.vertx.mutiny.core.Vertx;
-import io.vertx.mutiny.core.buffer.Buffer;
 import io.vertx.mutiny.core.eventbus.EventBus;
-import io.vertx.mutiny.ext.web.client.HttpResponse;
 import io.vertx.mutiny.ext.web.client.WebClient;
 
 /**
@@ -94,6 +92,9 @@ public class CompositeCreator {
 
     @Inject
     MavenService mavenService;
+
+    private static final Duration DOWNLOAD_TIMEOUT = Duration.ofSeconds(30);
+    private static final int DOWNLOAD_ATTEMPTS = 3;
 
     private final AtomicReference<WebClient> webClient = new AtomicReference<>();
     private final Map<String, GitHubContent> compositesMap = new HashMap<>();
@@ -487,7 +488,18 @@ public class CompositeCreator {
     }
 
     private String downloadFileContent(String downloadUrl) throws InterruptedException {
-        final HttpResponse<Buffer> response = webClient().getAbs(downloadUrl).send().await().indefinitely();
-        return response.bodyAsString();
+        return webClient().getAbs(downloadUrl)
+                .timeout(DOWNLOAD_TIMEOUT.toMillis())
+                .send()
+                .map(response -> {
+                    if (response.statusCode() != 200) {
+                        throw new IllegalStateException(
+                                "HTTP " + response.statusCode() + " while downloading " + downloadUrl);
+                    }
+                    return response.bodyAsString();
+                })
+                .onFailure().invoke(e -> Log.warnf("Failed to download %s: %s", downloadUrl, e.getMessage()))
+                .onFailure().retry().withBackOff(Duration.ofSeconds(1)).atMost(DOWNLOAD_ATTEMPTS - 1)
+                .await().atMost(DOWNLOAD_TIMEOUT.multipliedBy(DOWNLOAD_ATTEMPTS + 1));
     }
 }
