@@ -7,5 +7,15 @@
     "allPublicMethods" : true,
     "allDeclaredFields" : true,
     "allPublicFields" : true
+  },
+  {
+    "name" : "com.github.benmanes.caffeine.cache.SSSMS",
+    "allDeclaredConstructors" : true,
+    "allDeclaredFields" : true
+  },
+  {
+    "name" : "com.github.benmanes.caffeine.cache.PSMS",
+    "allDeclaredConstructors" : true,
+    "allDeclaredFields" : true
   }
 ]
