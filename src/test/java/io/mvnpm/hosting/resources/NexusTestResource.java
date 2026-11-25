@@ -1,8 +1,25 @@
 package io.mvnpm.hosting.resources;
 
-import static io.mvnpm.hosting.MavenVersionPolicy.*;
-import static io.mvnpm.hosting.MavenWritePolicy.*;
-import static io.mvnpm.hosting.NexusTestFixtures.*;
+import static io.mvnpm.hosting.MavenVersionPolicy.RELEASE;
+import static io.mvnpm.hosting.MavenVersionPolicy.SNAPSHOT;
+import static io.mvnpm.hosting.MavenWritePolicy.ALLOW;
+import static io.mvnpm.hosting.MavenWritePolicy.ALLOW_ONCE;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_LEAF;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_LEAF_FIXTURE;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_LEAF_VERSION;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_ROOT;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_ROOT_FIXTURE;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_ROOT_VERSION;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_TARGET;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_TARGET_FIXTURE;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_ALIAS_TARGET_VERSION;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_NAME;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_RELEASE_FIXTURE;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_RELEASE_VERSION;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_REPOSITORY;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_SCOPE;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_SNAPSHOT_FIXTURE;
+import static io.mvnpm.hosting.SelfHostedTestFixtures.NPM_SNAPSHOT_VERSION;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +39,11 @@ import org.testcontainers.utility.DockerImageName;
 import io.mvnpm.hosting.NexusTestClient;
 import io.quarkus.test.common.QuarkusTestResourceLifecycleManager;
 
+/**
+ * The base test resource for the nexus tests.
+ *
+ * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
+ */
 public abstract class NexusTestResource implements QuarkusTestResourceLifecycleManager {
 
     public static final String CUSTOM_REPOSITORY_URL_PROP = "mvnpm.custom.repository.url";
@@ -110,7 +132,8 @@ public abstract class NexusTestResource implements QuarkusTestResourceLifecycleM
 
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new IllegalStateException(
-                        "Could not change Nexus admin password. " + "HTTP " + response.statusCode() + ": " + response.body());
+                        "Could not change Nexus admin password. " + "HTTP " + response.statusCode() + ": "
+                                + response.body());
             }
 
         } catch (IOException e) {
@@ -131,27 +154,22 @@ public abstract class NexusTestResource implements QuarkusTestResourceLifecycleM
     }
 
     private void seedNpmPackages(NexusTestClient nexus) {
-        nexus.uploadNpmPackage(
-                NPM_REPOSITORY,
-                "test-mvnpm-package-1.0.0.tgz",
-                readFixture(NPM_RELEASE_FIXTURE));
+        nexus.uploadNpmPackage(NPM_REPOSITORY, "test-mvnpm-package-1.0.0.tgz", readFixture(NPM_RELEASE_FIXTURE));
+        nexus.awaitNpmPackage(NPM_REPOSITORY, NPM_SCOPE, NPM_NAME, NPM_RELEASE_VERSION);
 
-        nexus.awaitNpmPackage(
-                NPM_REPOSITORY,
-                NPM_SCOPE,
-                NPM_NAME,
-                NPM_RELEASE_VERSION);
-
-        nexus.uploadNpmPackage(
-                NPM_REPOSITORY,
-                "test-mvnpm-package-1.0.0-SNAPSHOT.tgz",
+        nexus.uploadNpmPackage(NPM_REPOSITORY, "test-mvnpm-package-1.0.0-SNAPSHOT.tgz",
                 readFixture(NPM_SNAPSHOT_FIXTURE));
+        nexus.awaitNpmPackage(NPM_REPOSITORY, NPM_SCOPE, NPM_NAME, NPM_SNAPSHOT_VERSION);
 
-        nexus.awaitNpmPackage(
-                NPM_REPOSITORY,
-                NPM_SCOPE,
-                NPM_NAME,
-                NPM_SNAPSHOT_VERSION);
+        nexus.uploadNpmPackage(NPM_REPOSITORY, "mvnpm-test-alias-leaf-1.0.0.tgz", readFixture(NPM_ALIAS_LEAF_FIXTURE));
+        nexus.awaitNpmPackage(NPM_REPOSITORY, null, NPM_ALIAS_LEAF, NPM_ALIAS_LEAF_VERSION);
+
+        nexus.uploadNpmPackage(NPM_REPOSITORY, "mvnpm-test-alias-target-1.0.0.tgz",
+                readFixture(NPM_ALIAS_TARGET_FIXTURE));
+        nexus.awaitNpmPackage(NPM_REPOSITORY, null, NPM_ALIAS_TARGET, NPM_ALIAS_TARGET_VERSION);
+
+        nexus.uploadNpmPackage(NPM_REPOSITORY, "mvnpm-test-alias-root-1.0.0.tgz", readFixture(NPM_ALIAS_ROOT_FIXTURE));
+        nexus.awaitNpmPackage(NPM_REPOSITORY, null, NPM_ALIAS_ROOT, NPM_ALIAS_ROOT_VERSION);
     }
 
     private byte[] readFixture(String resourceName) {

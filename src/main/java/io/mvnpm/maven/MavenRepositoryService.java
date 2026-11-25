@@ -16,6 +16,8 @@ import org.apache.maven.model.Model;
 import io.mvnpm.Constants;
 import io.mvnpm.creator.FileType;
 import io.mvnpm.creator.PackageCreator;
+import io.mvnpm.creator.aliasing.AliasCodec;
+import io.mvnpm.creator.aliasing.AliasService;
 import io.mvnpm.creator.composite.CompositeService;
 import io.mvnpm.creator.events.DependencyVersionCheckRequest;
 import io.mvnpm.creator.type.PomService;
@@ -49,6 +51,9 @@ public class MavenRepositoryService {
     NpmFacade npmFacade;
 
     @Inject
+    AliasService aliasService;
+
+    @Inject
     CompositeService compositeService;
 
     @Inject
@@ -77,6 +82,25 @@ public class MavenRepositoryService {
                 throw new RuntimeException(e);
             }
         } else {
+            // check for aliased package here:
+            if (AliasCodec.isAlias(nameVersion.name().mvnArtifactId)) {
+                Name name = nameVersion.name();
+                String target = AliasCodec.targetName(name.mvnArtifactId);
+                String publicName = NameParser.fromMavenGA(name.mvnGroupId,
+                        AliasCodec.publicArtifactId(name.mvnArtifactId)).npmFullName;
+                Package original = npmFacade.getPackage(target, nameVersion.version());
+                Name synthetic = new Name(publicName, NameParser.fromNpmProject(publicName).npmNamespace,
+                        NameParser.fromNpmProject(publicName).npmName, name.mvnGroupId,
+                        name.mvnArtifactId, name.mvnPath, name.displayName);
+                Package aliased = new Package(original.id(), synthetic, original.version(),
+                        original.description(), original.license(), original.author(), original.homepage(),
+                        original.repository(), original.bugs(), original.main(), original.module(),
+                        original.type(), original.maintainers(), original.dependencies(),
+                        original.peerDependencies(), original.peerDependenciesMeta(), original.dist());
+
+                return importMapUtil.createImportMap(aliased);
+            }
+
             Package npmPackage = npmFacade.getPackage(nameVersion.name().npmFullName, nameVersion.version());
             return importMapUtil.createImportMap(npmPackage);
         }
@@ -100,6 +124,9 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getPath(name, latestVersion, type);
         } else {
+            if (AliasCodec.isAlias(name.mvnArtifactId)) {
+                return aliasService.ensure(name, version, type);
+            }
             if (name.isInternal()) {
                 return compositeService.getPath(name, version, type);
             } else {
@@ -119,6 +146,16 @@ public class MavenRepositoryService {
                 .transformToUniAndConcatenate(d -> Uni.createFrom().item(() -> {
                     final String range = d.getVersion();
                     final Name name = NameParser.fromMavenGA(d.getGroupId(), d.getArtifactId());
+
+                    if (AliasCodec.isAlias(name.mvnArtifactId)) {
+                        ProjectInfo targetInfo = npmFacade
+                                .getProjectInfo(AliasCodec.targetName(name.mvnArtifactId));
+                        Set<Version> targetVersions = targetInfo.versions().stream()
+                                .map(Version::fromString).collect(Collectors.toSet());
+                        Version match = VersionMatcher.selectLatestMatchingVersion(targetVersions, range);
+                        return match == null ? null : new NameVersion(name, match.toString());
+                    }
+
                     ProjectInfo info = npmFacade.getProjectInfo(name.npmFullName);
                     if (info == null) {
                         return null;
@@ -155,6 +192,9 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getSha1(name, latestVersion, type);
         } else {
+            if (AliasCodec.isAlias(name.mvnArtifactId)) {
+                return aliasService.sha1(name, version, type);
+            }
             if (name.isInternal()) {
                 return compositeService.getSha1Path(name, version, type);
             } else {
@@ -173,6 +213,9 @@ public class MavenRepositoryService {
             String latestVersion = getLatestVersion(name);
             return getMd5(name, latestVersion, type);
         } else {
+            if (AliasCodec.isAlias(name.mvnArtifactId)) {
+                return aliasService.md5(name, version, type);
+            }
             if (name.isInternal()) {
                 return compositeService.getMd5Path(name, version, type);
             } else {
@@ -200,7 +243,14 @@ public class MavenRepositoryService {
     }
 
     private String getLatestVersion(Name fullName) {
-        ProjectInfo info = npmFacade.getProjectInfo(fullName.npmFullName);
+        final String npmName;
+        if (AliasCodec.isAlias(fullName.mvnArtifactId)) {
+            npmName = AliasCodec.targetName(fullName.mvnArtifactId);
+        } else {
+            npmName = fullName.npmFullName;
+        }
+
+        ProjectInfo info = npmFacade.getProjectInfo(npmName);
         return info.distTags().latest();
     }
 }

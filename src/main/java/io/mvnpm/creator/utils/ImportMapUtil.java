@@ -47,6 +47,38 @@ public class ImportMapUtil {
         return createImportMap(mainPackageObject, packageJsonObjects);
     }
 
+    /**
+     * For the aliasing mechanism to successfully use a overriding package.
+     *
+     * @param packageJsonFiles The {@code package.json}-files for the package to override
+     * @param mainPackageOverride The overrride {@link Package}
+     * @return The resulting {@code byte} array
+     * @throws IOException
+     */
+    public byte[] createImportMap(Map<String, byte[]> packageJsonFiles, Package mainPackageOverride)
+            throws IOException {
+        Map<String, Package> otherPackages = new HashMap<>();
+
+        for (Map.Entry<String, byte[]> entry : packageJsonFiles.entrySet()) {
+            String path = entry.getKey();
+
+            if (PACKAGE_JSON.equals(path)) {
+                continue;
+            }
+
+            byte[] content = entry.getValue();
+            if (content != null) {
+                try {
+                    otherPackages.put(path, objectMapper.readValue(content, Package.class));
+                } catch (IOException ex) {
+                    Log.error(ex);
+                }
+            }
+        }
+
+        return createImportMap(mainPackageOverride, otherPackages);
+    }
+
     public byte[] createImportMap(io.mvnpm.npm.model.Package mainPackage,
             Map<String, io.mvnpm.npm.model.Package> otherPackages) {
 
