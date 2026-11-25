@@ -126,6 +126,16 @@ dependencyLocking {
 
 Then run `gradle dependencies --write-locks` to generate the lockfile.
 
+## Contributing
+
+Java code uses the Quarkus formatting rules: [formatter-maven-plugin](https://github.com/revelc/formatter-maven-plugin) with `eclipse-format.xml` from `io.quarkus:quarkus-ide-config`, and [impsort-maven-plugin](https://github.com/revelc/impsort-maven-plugin) with the import groups `java.,javax.,jakarta.,org.,com.` and unused imports removed. Both run on every build, so `./mvnw install` formats your changes. To format without building:
+
+```bash
+./mvnw formatter:format impsort:sort
+```
+
+To use the same rules in your IDE, import `eclipse-format.xml` from the `quarkus-ide-config` jar (see the [Quarkus IDE setup](https://github.com/quarkusio/quarkus/blob/main/CONTRIBUTING.md#ide-config-and-code-style)).
+
 ## Learn more
 
 - [Getting Started](https://mvnpm.org/doc/) - full documentation

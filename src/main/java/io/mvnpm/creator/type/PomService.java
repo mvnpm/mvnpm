@@ -55,6 +55,9 @@ public class PomService {
     @Inject
     HashService hashService;
 
+    @Inject
+    DependencyOverridesConfig overridesConfig;
+
     private final MavenXpp3Reader mavenXpp3Reader = new MavenXpp3Reader();
     private final MavenXpp3Writer mavenXpp3Writer = new MavenXpp3Writer();
 
@@ -310,7 +313,11 @@ public class PomService {
         return d;
     }
 
-    private String toVersion(Name name, String version) {
+    String toVersion(Name name, String version) {
+        String override = overridesConfig.versions().get(name.npmFullName);
+        if (override != null) {
+            version = override;
+        }
         String trimVersion = VersionConverter.convert(version).trim().replaceAll("\\s+", "");
 
         // This is an open ended range. Let's get the latest for a bottom boundary
