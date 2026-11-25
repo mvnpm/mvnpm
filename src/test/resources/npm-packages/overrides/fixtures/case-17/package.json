@@ -1,0 +1,15 @@
+{
+  "name": "mvnpm-override-case-17",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A compatible scoped range retains the concrete root version",
+  "dependencies": {
+    "@mvnpm-fixture/case-17-anchor": "1.0.0"
+  },
+  "overrides": {
+    "@mvnpm-fixture/case-17-target": "2.5.0",
+    "@mvnpm-fixture/case-17-parent": {
+      "@mvnpm-fixture/case-17-target": "^2.0.0"
+    }
+  }
+}

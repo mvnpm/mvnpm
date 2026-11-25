@@ -1,0 +1,282 @@
+{
+  "name": "mvnpm-override-case-06",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Independent override paths at depths 1..16",
+  "dependencies": {
+    "@mvnpm-fixture/case-06-anchor-d01": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d02": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d03": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d04": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d05": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d06": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d07": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d08": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d09": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d10": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d11": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d12": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d13": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d14": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d15": "1.0.0",
+    "@mvnpm-fixture/case-06-anchor-d16": "1.0.0"
+  },
+  "overrides": {
+    "@mvnpm-fixture/case-06-d01-n01": "2.0.0",
+    "@mvnpm-fixture/case-06-d02-n01": {
+      "@mvnpm-fixture/case-06-d02-n02": "2.0.0"
+    },
+    "@mvnpm-fixture/case-06-d03-n01": {
+      "@mvnpm-fixture/case-06-d03-n02": {
+        "@mvnpm-fixture/case-06-d03-n03": "2.0.0"
+      }
+    },
+    "@mvnpm-fixture/case-06-d04-n01": {
+      "@mvnpm-fixture/case-06-d04-n02": {
+        "@mvnpm-fixture/case-06-d04-n03": {
+          "@mvnpm-fixture/case-06-d04-n04": "2.0.0"
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d05-n01": {
+      "@mvnpm-fixture/case-06-d05-n02": {
+        "@mvnpm-fixture/case-06-d05-n03": {
+          "@mvnpm-fixture/case-06-d05-n04": {
+            "@mvnpm-fixture/case-06-d05-n05": "2.0.0"
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d06-n01": {
+      "@mvnpm-fixture/case-06-d06-n02": {
+        "@mvnpm-fixture/case-06-d06-n03": {
+          "@mvnpm-fixture/case-06-d06-n04": {
+            "@mvnpm-fixture/case-06-d06-n05": {
+              "@mvnpm-fixture/case-06-d06-n06": "2.0.0"
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d07-n01": {
+      "@mvnpm-fixture/case-06-d07-n02": {
+        "@mvnpm-fixture/case-06-d07-n03": {
+          "@mvnpm-fixture/case-06-d07-n04": {
+            "@mvnpm-fixture/case-06-d07-n05": {
+              "@mvnpm-fixture/case-06-d07-n06": {
+                "@mvnpm-fixture/case-06-d07-n07": "2.0.0"
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d08-n01": {
+      "@mvnpm-fixture/case-06-d08-n02": {
+        "@mvnpm-fixture/case-06-d08-n03": {
+          "@mvnpm-fixture/case-06-d08-n04": {
+            "@mvnpm-fixture/case-06-d08-n05": {
+              "@mvnpm-fixture/case-06-d08-n06": {
+                "@mvnpm-fixture/case-06-d08-n07": {
+                  "@mvnpm-fixture/case-06-d08-n08": "2.0.0"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d09-n01": {
+      "@mvnpm-fixture/case-06-d09-n02": {
+        "@mvnpm-fixture/case-06-d09-n03": {
+          "@mvnpm-fixture/case-06-d09-n04": {
+            "@mvnpm-fixture/case-06-d09-n05": {
+              "@mvnpm-fixture/case-06-d09-n06": {
+                "@mvnpm-fixture/case-06-d09-n07": {
+                  "@mvnpm-fixture/case-06-d09-n08": {
+                    "@mvnpm-fixture/case-06-d09-n09": "2.0.0"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d10-n01": {
+      "@mvnpm-fixture/case-06-d10-n02": {
+        "@mvnpm-fixture/case-06-d10-n03": {
+          "@mvnpm-fixture/case-06-d10-n04": {
+            "@mvnpm-fixture/case-06-d10-n05": {
+              "@mvnpm-fixture/case-06-d10-n06": {
+                "@mvnpm-fixture/case-06-d10-n07": {
+                  "@mvnpm-fixture/case-06-d10-n08": {
+                    "@mvnpm-fixture/case-06-d10-n09": {
+                      "@mvnpm-fixture/case-06-d10-n10": "2.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d11-n01": {
+      "@mvnpm-fixture/case-06-d11-n02": {
+        "@mvnpm-fixture/case-06-d11-n03": {
+          "@mvnpm-fixture/case-06-d11-n04": {
+            "@mvnpm-fixture/case-06-d11-n05": {
+              "@mvnpm-fixture/case-06-d11-n06": {
+                "@mvnpm-fixture/case-06-d11-n07": {
+                  "@mvnpm-fixture/case-06-d11-n08": {
+                    "@mvnpm-fixture/case-06-d11-n09": {
+                      "@mvnpm-fixture/case-06-d11-n10": {
+                        "@mvnpm-fixture/case-06-d11-n11": "2.0.0"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d12-n01": {
+      "@mvnpm-fixture/case-06-d12-n02": {
+        "@mvnpm-fixture/case-06-d12-n03": {
+          "@mvnpm-fixture/case-06-d12-n04": {
+            "@mvnpm-fixture/case-06-d12-n05": {
+              "@mvnpm-fixture/case-06-d12-n06": {
+                "@mvnpm-fixture/case-06-d12-n07": {
+                  "@mvnpm-fixture/case-06-d12-n08": {
+                    "@mvnpm-fixture/case-06-d12-n09": {
+                      "@mvnpm-fixture/case-06-d12-n10": {
+                        "@mvnpm-fixture/case-06-d12-n11": {
+                          "@mvnpm-fixture/case-06-d12-n12": "2.0.0"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d13-n01": {
+      "@mvnpm-fixture/case-06-d13-n02": {
+        "@mvnpm-fixture/case-06-d13-n03": {
+          "@mvnpm-fixture/case-06-d13-n04": {
+            "@mvnpm-fixture/case-06-d13-n05": {
+              "@mvnpm-fixture/case-06-d13-n06": {
+                "@mvnpm-fixture/case-06-d13-n07": {
+                  "@mvnpm-fixture/case-06-d13-n08": {
+                    "@mvnpm-fixture/case-06-d13-n09": {
+                      "@mvnpm-fixture/case-06-d13-n10": {
+                        "@mvnpm-fixture/case-06-d13-n11": {
+                          "@mvnpm-fixture/case-06-d13-n12": {
+                            "@mvnpm-fixture/case-06-d13-n13": "2.0.0"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d14-n01": {
+      "@mvnpm-fixture/case-06-d14-n02": {
+        "@mvnpm-fixture/case-06-d14-n03": {
+          "@mvnpm-fixture/case-06-d14-n04": {
+            "@mvnpm-fixture/case-06-d14-n05": {
+              "@mvnpm-fixture/case-06-d14-n06": {
+                "@mvnpm-fixture/case-06-d14-n07": {
+                  "@mvnpm-fixture/case-06-d14-n08": {
+                    "@mvnpm-fixture/case-06-d14-n09": {
+                      "@mvnpm-fixture/case-06-d14-n10": {
+                        "@mvnpm-fixture/case-06-d14-n11": {
+                          "@mvnpm-fixture/case-06-d14-n12": {
+                            "@mvnpm-fixture/case-06-d14-n13": {
+                              "@mvnpm-fixture/case-06-d14-n14": "2.0.0"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d15-n01": {
+      "@mvnpm-fixture/case-06-d15-n02": {
+        "@mvnpm-fixture/case-06-d15-n03": {
+          "@mvnpm-fixture/case-06-d15-n04": {
+            "@mvnpm-fixture/case-06-d15-n05": {
+              "@mvnpm-fixture/case-06-d15-n06": {
+                "@mvnpm-fixture/case-06-d15-n07": {
+                  "@mvnpm-fixture/case-06-d15-n08": {
+                    "@mvnpm-fixture/case-06-d15-n09": {
+                      "@mvnpm-fixture/case-06-d15-n10": {
+                        "@mvnpm-fixture/case-06-d15-n11": {
+                          "@mvnpm-fixture/case-06-d15-n12": {
+                            "@mvnpm-fixture/case-06-d15-n13": {
+                              "@mvnpm-fixture/case-06-d15-n14": {
+                                "@mvnpm-fixture/case-06-d15-n15": "2.0.0"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "@mvnpm-fixture/case-06-d16-n01": {
+      "@mvnpm-fixture/case-06-d16-n02": {
+        "@mvnpm-fixture/case-06-d16-n03": {
+          "@mvnpm-fixture/case-06-d16-n04": {
+            "@mvnpm-fixture/case-06-d16-n05": {
+              "@mvnpm-fixture/case-06-d16-n06": {
+                "@mvnpm-fixture/case-06-d16-n07": {
+                  "@mvnpm-fixture/case-06-d16-n08": {
+                    "@mvnpm-fixture/case-06-d16-n09": {
+                      "@mvnpm-fixture/case-06-d16-n10": {
+                        "@mvnpm-fixture/case-06-d16-n11": {
+                          "@mvnpm-fixture/case-06-d16-n12": {
+                            "@mvnpm-fixture/case-06-d16-n13": {
+                              "@mvnpm-fixture/case-06-d16-n14": {
+                                "@mvnpm-fixture/case-06-d16-n15": {
+                                  "@mvnpm-fixture/case-06-d16-n16": "2.0.0"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

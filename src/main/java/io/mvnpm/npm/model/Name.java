@@ -1,6 +1,7 @@
 package io.mvnpm.npm.model;
 
 import java.io.File;
+import java.util.Objects;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
@@ -52,6 +53,22 @@ public class Name {
 
     public Name(String npmFullName) {
         this(npmFullName, null, null, null, null, null, null);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof final Name other) {
+            return Objects.equals(npmFullName, other.npmFullName) && Objects.equals(npmNamespace, other.npmNamespace)
+                    && Objects.equals(npmName, other.npmName) && Objects.equals(mvnGroupId, other.mvnGroupId)
+                    && Objects.equals(mvnArtifactId, other.mvnArtifactId) && Objects.equals(mvnPath, other.mvnPath)
+                    && Objects.equals(displayName, other.displayName);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(npmFullName, npmNamespace, npmName, mvnGroupId, mvnArtifactId, mvnPath, displayName);
     }
 
     @Override

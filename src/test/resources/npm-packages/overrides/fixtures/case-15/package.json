@@ -1,0 +1,17 @@
+{
+  "name": "mvnpm-override-case-15",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Conflicting versions prove SemVer numeric ordering",
+  "dependencies": {
+    "@mvnpm-fixture/case-15-anchor": "1.0.0"
+  },
+  "overrides": {
+    "@mvnpm-fixture/case-15-a": {
+      "@mvnpm-fixture/case-15-target": "2.9.0"
+    },
+    "@mvnpm-fixture/case-15-b": {
+      "@mvnpm-fixture/case-15-target": "2.10.0"
+    }
+  }
+}

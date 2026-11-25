@@ -1,0 +1,9 @@
+{
+  "name": "@mvnpm-fixture/case-01-anchor",
+  "version": "1.0.0",
+  "description": "Synthetic mvnpm override test fixture",
+  "main": "index.js",
+  "dependencies": {
+    "@mvnpm-fixture/case-01-d01-n01": "1.0.0"
+  }
+}

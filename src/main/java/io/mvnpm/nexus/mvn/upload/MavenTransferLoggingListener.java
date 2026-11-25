@@ -6,6 +6,11 @@ import org.eclipse.aether.transfer.TransferResource;
 
 import io.quarkus.logging.Log;
 
+/**
+ * A custom {@link AbstractTransferListener} for logging artifact uploads.
+ *
+ * @author Luca Pfaffinger (luca.pfaffinger@gmail.com)
+ */
 public final class MavenTransferLoggingListener extends AbstractTransferListener {
 
     @Override

@@ -1,0 +1,6 @@
+{
+  "name": "@mvnpm-fixture/case-13-child",
+  "version": "1.0.0",
+  "description": "Synthetic mvnpm override test fixture",
+  "main": "index.js"
+}
